@@ -436,6 +436,8 @@ function GeorgeDashboard() {
           ))}
         </div>
       </Panel>
+
+      <MatchmakingPanel variant="george" />
     </div>
   );
 }
