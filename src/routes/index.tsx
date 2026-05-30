@@ -697,97 +697,531 @@ function MariaDashboard() {
 
 /* ---------------- GCH Admin: Ecosystem Control ---------------- */
 
-function AdminDashboard() {
+function AdminDashboard({ tab }: { tab: AdminTab }) {
+  const [settings, setSettings] = useState<MatchSettings>(() => loadSettings());
+  useEffect(() => { saveSettings(settings); }, [settings]);
+
+  if (tab === "overview")    return <AdminOverview settings={settings} />;
+  if (tab === "orgs")        return <AdminOrgsUsers />;
+  return <AdminMatchmaking settings={settings} setSettings={setSettings} />;
+}
+
+/* ----- Overview ----- */
+
+function AdminOverview({ settings }: { settings: MatchSettings }) {
+  const [selectedId, setSelectedId] = useState<string | null>("acme");
+  const [typeFilters, setTypeFilters] = useState<EcoOrgType[]>([]);
+  const [region, setRegion] = useState<string>("all");
+  const [onlyRisk, setOnlyRisk] = useState(false);
+  const [onlyMissing, setOnlyMissing] = useState(false);
+
+  const selected = ORGS.find((o) => o.id === selectedId) ?? null;
+  const suggestions = useMemo(
+    () => (selected ? topMatches(selected.id, settings, 5) : []),
+    [selected, settings],
+  );
+  const stats = useMemo(() => ecosystemMatchStats(settings), [settings]);
+
+  const toggleType = (t: EcoOrgType) =>
+    setTypeFilters((cur) => (cur.includes(t) ? cur.filter((x) => x !== t) : [...cur, t]));
+
+  const counts = useMemo(() => {
+    const c: Record<EcoOrgType, number> = { brand: 0, supplier: 0, verifier: 0, regulator: 0 };
+    ORGS.forEach((o) => { c[o.type]++; });
+    return c;
+  }, []);
+
+  const riskCount = ORGS.filter((o) => o.risk > 0.6).length;
+  const missingEdges = EDGES.filter((e) => e.evidenceCount === 0).length;
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Stat icon={<Network className="h-3.5 w-3.5" />} label="Organizations" value="248" delta="+12" tone="good" />
-        <Stat icon={<Users className="h-3.5 w-3.5" />} label="Active users" value="1,420" delta="+38" tone="good" />
-        <Stat icon={<Settings2 className="h-3.5 w-3.5" />} label="Matching rules" value="34" tone="default" />
-        <Stat icon={<ShieldAlert className="h-3.5 w-3.5" />} label="Governance alerts" value="6" delta="+2" tone="warn" />
+        <Stat icon={<Network className="h-3.5 w-3.5" />}     label="Organizations"      value={String(ORGS.length)} tone="default" />
+        <Stat icon={<Users className="h-3.5 w-3.5" />}        label="Active users"       value={String(USERS.filter(u => u.status === "Active").length)} tone="good" />
+        <Stat icon={<GitBranch className="h-3.5 w-3.5" />}    label="Connections"        value={String(EDGES.length)} tone="default" />
+        <Stat icon={<ShieldAlert className="h-3.5 w-3.5" />}  label="High-risk nodes"    value={String(riskCount)} tone="risk" />
       </div>
 
-      <Panel
-        title="Ecosystem graph"
-        subtitle="Every output below is derived from this graph."
-        right={
-          <div className="hidden gap-3 text-[11px] text-muted-foreground md:flex">
-            <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-400" />Core</span>
-            <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-sky-400" />Partner</span>
-            <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-400" />Prospect</span>
-            <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-rose-400" />Risk</span>
-          </div>
-        }
-      >
-        <div className="overflow-hidden rounded-xl border border-border bg-slate-950">
-          <div className="aspect-[16/9] w-full">
-            <EcosystemGraph />
-          </div>
-        </div>
-      </Panel>
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Panel title="User & organization management">
-          <ul className="divide-y divide-border">
-            {[
-              { name: "Acme Apparel", role: "Brand", users: 24, status: "Verified" },
-              { name: "Northwind Mills", role: "Supplier", users: 11, status: "Pending" },
-              { name: "Tyrell Dyeworks", role: "Supplier", users: 6, status: "Verified" },
-              { name: "Umbrella Co.", role: "Supplier", users: 4, status: "Flagged" },
-            ].map((o) => (
-              <li key={o.name} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
-                <div>
-                  <div className="text-sm font-medium text-foreground">{o.name}</div>
-                  <div className="text-[11px] text-muted-foreground">{o.role} · {o.users} users</div>
-                </div>
-                <Pill tone={o.status === "Verified" ? "good" : o.status === "Pending" ? "warn" : "risk"}>
-                  {o.status}
-                </Pill>
-              </li>
-            ))}
-          </ul>
-        </Panel>
-
-        <Panel title="Matching rules" subtitle="Predictive ecosystem suggestions">
-          <ul className="space-y-2">
-            {[
-              { rule: "Tier-2 dyehouse ↔ Tier-3 fiber", weight: 0.82, status: "Enabled" },
-              { rule: "Geo-proximity within 50km", weight: 0.55, status: "Enabled" },
-              { rule: "Shared certifications (GOTS/RCS)", weight: 0.73, status: "Enabled" },
-              { rule: "Historical co-orders > 3", weight: 0.46, status: "Draft" },
-            ].map((r) => (
-              <li key={r.rule} className="flex items-center justify-between rounded-md border border-border px-3 py-2">
-                <div>
-                  <div className="text-sm text-foreground">{r.rule}</div>
-                  <div className="text-[11px] text-muted-foreground">Weight {r.weight.toFixed(2)}</div>
-                </div>
-                <Pill tone={r.status === "Enabled" ? "good" : "info"}>{r.status}</Pill>
-              </li>
-            ))}
-          </ul>
-        </Panel>
-      </div>
-
-      <Panel title="Confidence governance" subtitle="Thresholds and exceptions">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          {[
-            { label: "Auto-accept threshold", value: "≥ 85%", tone: "good" as const },
-            { label: "Manual review band", value: "60–84%", tone: "warn" as const },
-            { label: "Reject threshold", value: "< 60%", tone: "risk" as const },
-          ].map((g) => (
-            <div key={g.label} className="rounded-lg border border-border p-3">
-              <div className="text-xs text-muted-foreground">{g.label}</div>
-              <div className="mt-1 flex items-center justify-between">
-                <span className="text-lg font-semibold text-foreground">{g.value}</span>
-                <Pill tone={g.tone}>policy</Pill>
-              </div>
+      {/* Graph + side detail */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <Panel
+          className="lg:col-span-2"
+          title="Ecosystem graph"
+          subtitle="Color = type · size = company size · halo = risk · dashed = missing evidence"
+          right={
+            <div className="hidden gap-3 text-[11px] text-muted-foreground md:flex">
+              <Legend dot="#f59e0b" label={`Brands · ${counts.brand}`} />
+              <Legend dot="#38bdf8" label={`Suppliers · ${counts.supplier}`} />
+              <Legend dot="#34d399" label={`Verifiers · ${counts.verifier}`} />
+              <Legend dot="#a78bfa" label={`Regulators · ${counts.regulator}`} />
             </div>
-          ))}
+          }
+        >
+          {/* Filter chips */}
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            {(["brand","supplier","verifier","regulator"] as EcoOrgType[]).map((t) => (
+              <button
+                key={t}
+                onClick={() => toggleType(t)}
+                className={`rounded-full border px-2.5 py-1 text-[11px] font-medium capitalize transition-colors ${
+                  typeFilters.includes(t) || typeFilters.length === 0
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-border text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+            <select
+              value={region}
+              onChange={(e) => setRegion(e.target.value)}
+              className="rounded-md border border-border bg-background px-2 py-1 text-[11px] text-foreground"
+            >
+              <option value="all">All regions</option>
+              <option value="EU">EU</option>
+              <option value="Americas">Americas</option>
+              <option value="APAC">APAC</option>
+              <option value="MEA">MEA</option>
+            </select>
+            <button
+              onClick={() => setOnlyRisk((v) => !v)}
+              className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                onlyRisk ? "border-rose-500 bg-rose-50 text-rose-700" : "border-border text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Only risk
+            </button>
+            <button
+              onClick={() => setOnlyMissing((v) => !v)}
+              className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                onlyMissing ? "border-amber-500 bg-amber-50 text-amber-700" : "border-border text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Missing evidence ({missingEdges})
+            </button>
+          </div>
+
+          <div className="overflow-hidden rounded-xl border border-border bg-slate-950">
+            <div className="aspect-[16/9] w-full">
+              <EcosystemGraph
+                filters={{
+                  types: typeFilters,
+                  region,
+                  onlyRisk,
+                  onlyMissingEvidence: onlyMissing,
+                }}
+                selectedId={selectedId}
+                onSelect={setSelectedId}
+              />
+            </div>
+          </div>
+        </Panel>
+
+        {/* Side detail */}
+        <div className="space-y-6">
+          <Panel title="Node detail" subtitle={selected ? "Click any node to inspect" : "Select a node"}>
+            {selected ? (
+              <div className="space-y-3">
+                <div>
+                  <div className="text-sm font-semibold text-foreground">{selected.name}</div>
+                  <div className="text-[11px] capitalize text-muted-foreground">
+                    {selected.type} · Tier {selected.tier} · {selected.country} · Size {selected.size}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                  <Mini label="Confidence" value={`${Math.round(selected.confidence * 100)}%`} tone={selected.confidence > 0.75 ? "good" : selected.confidence > 0.55 ? "warn" : "risk"} />
+                  <Mini label="Risk"       value={`${Math.round(selected.risk * 100)}%`}       tone={selected.risk < 0.3 ? "good" : selected.risk < 0.6 ? "warn" : "risk"} />
+                  <Mini label="Users"      value={String(selected.users)} tone="info" />
+                  <Mini label="Status"     value={selected.status} tone={selected.status === "Verified" ? "good" : selected.status === "Pending" ? "warn" : "risk"} />
+                </div>
+                {selected.certifications.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {selected.certifications.map((c) => (
+                      <span key={c} className="rounded border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground">{c}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">No selection.</p>
+            )}
+          </Panel>
+
+          <Panel title="Suggested matches" subtitle="From current matchmaking settings" right={<Pill tone="info">{suggestions.length}</Pill>}>
+            {suggestions.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No candidates pass the current filters.</p>
+            ) : (
+              <ul className="space-y-2">
+                {suggestions.map((s) => (
+                  <li key={s.org.id} className="flex items-center justify-between gap-2 rounded-md border border-border px-2.5 py-2">
+                    <div className="min-w-0">
+                      <div className="truncate text-xs font-medium text-foreground">{s.org.name}</div>
+                      <div className="text-[10px] capitalize text-muted-foreground">{s.org.type} · {s.org.country}</div>
+                    </div>
+                    <Pill tone={s.score >= settings.thresholds.autoAccept ? "good" : s.score >= settings.thresholds.reject ? "warn" : "risk"}>
+                      {s.score}%
+                    </Pill>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Panel>
+        </div>
+      </div>
+
+      {/* Match summary */}
+      <Panel title="Matchmaking summary" subtitle="What current settings would do across the ecosystem">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <Stat icon={<GitBranch className="h-3.5 w-3.5" />}    label="Candidate pairs"   value={String(stats.pairs)} tone="default" />
+          <Stat icon={<CheckCircle2 className="h-3.5 w-3.5" />} label="Auto-accept"       value={String(stats.auto)}  tone="good" />
+          <Stat icon={<Clock className="h-3.5 w-3.5" />}        label="Manual review"     value={String(stats.review)} tone="warn" />
+          <Stat icon={<ShieldAlert className="h-3.5 w-3.5" />}  label="Below threshold"   value={String(stats.reject)} tone="risk" />
         </div>
       </Panel>
     </div>
   );
 }
+
+function Legend({ dot, label }: { dot: string; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1">
+      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: dot }} />
+      {label}
+    </span>
+  );
+}
+
+function Mini({ label, value, tone }: { label: string; value: string; tone: "good" | "warn" | "risk" | "info" }) {
+  return (
+    <div className="rounded-md border border-border p-2">
+      <div className="text-[10px] text-muted-foreground">{label}</div>
+      <div className="mt-0.5 flex items-center justify-between">
+        <span className="text-xs font-semibold text-foreground">{value}</span>
+        <Pill tone={tone}>·</Pill>
+      </div>
+    </div>
+  );
+}
+
+/* ----- Orgs & Users ----- */
+
+function AdminOrgsUsers() {
+  const [typeF, setTypeF] = useState<EcoOrgType | "all">("all");
+  const [statusF, setStatusF] = useState<string>("all");
+  const [q, setQ] = useState("");
+
+  const orgs = ORGS.filter((o) =>
+    (typeF === "all" || o.type === typeF) &&
+    (statusF === "all" || o.status === statusF) &&
+    (q === "" || o.name.toLowerCase().includes(q.toLowerCase()) || o.country.toLowerCase().includes(q.toLowerCase())),
+  );
+
+  return (
+    <div className="space-y-6">
+      <Panel title="Organizations" subtitle={`${orgs.length} of ${ORGS.length} shown`}>
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search name or country…"
+            className="w-56 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-foreground"
+          />
+          <select value={typeF} onChange={(e) => setTypeF(e.target.value as EcoOrgType | "all")} className="rounded-md border border-border bg-background px-2 py-1.5 text-xs text-foreground">
+            <option value="all">All types</option>
+            <option value="brand">Brand</option>
+            <option value="supplier">Supplier</option>
+            <option value="verifier">Verifier</option>
+            <option value="regulator">Regulator</option>
+          </select>
+          <select value={statusF} onChange={(e) => setStatusF(e.target.value)} className="rounded-md border border-border bg-background px-2 py-1.5 text-xs text-foreground">
+            <option value="all">Any status</option>
+            <option value="Verified">Verified</option>
+            <option value="Pending">Pending</option>
+            <option value="Flagged">Flagged</option>
+          </select>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead className="text-left text-[11px] uppercase tracking-wider text-muted-foreground">
+              <tr className="border-b border-border">
+                <th className="py-2 pr-3 font-medium">Organization</th>
+                <th className="py-2 pr-3 font-medium">Type</th>
+                <th className="py-2 pr-3 font-medium">Country</th>
+                <th className="py-2 pr-3 font-medium">Size</th>
+                <th className="py-2 pr-3 font-medium">Users</th>
+                <th className="py-2 pr-3 font-medium">Confidence</th>
+                <th className="py-2 pr-3 font-medium">Risk</th>
+                <th className="py-2 pr-3 font-medium">Status</th>
+                <th className="py-2 pr-3 font-medium">Last active</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orgs.map((o) => (
+                <tr key={o.id} className="border-b border-border last:border-0 hover:bg-muted/40">
+                  <td className="py-2 pr-3 font-medium text-foreground">{o.name}</td>
+                  <td className="py-2 pr-3 capitalize text-muted-foreground">{o.type}</td>
+                  <td className="py-2 pr-3 text-muted-foreground">{o.country}</td>
+                  <td className="py-2 pr-3 text-muted-foreground">{o.size}</td>
+                  <td className="py-2 pr-3 text-muted-foreground">{o.users}</td>
+                  <td className="py-2 pr-3 text-muted-foreground">{Math.round(o.confidence * 100)}%</td>
+                  <td className="py-2 pr-3 text-muted-foreground">{Math.round(o.risk * 100)}%</td>
+                  <td className="py-2 pr-3"><Pill tone={o.status === "Verified" ? "good" : o.status === "Pending" ? "warn" : "risk"}>{o.status}</Pill></td>
+                  <td className="py-2 pr-3 text-muted-foreground">{o.lastActive}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Panel>
+
+      <Panel title="Users" subtitle={`${USERS.length} accounts`}>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead className="text-left text-[11px] uppercase tracking-wider text-muted-foreground">
+              <tr className="border-b border-border">
+                <th className="py-2 pr-3 font-medium">Name</th>
+                <th className="py-2 pr-3 font-medium">Email</th>
+                <th className="py-2 pr-3 font-medium">Organization</th>
+                <th className="py-2 pr-3 font-medium">Role</th>
+                <th className="py-2 pr-3 font-medium">Last login</th>
+                <th className="py-2 pr-3 font-medium">Status</th>
+                <th className="py-2 pr-3 font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {USERS.map((u) => {
+                const org = ORGS.find((o) => o.id === u.orgId);
+                return (
+                  <tr key={u.id} className="border-b border-border last:border-0 hover:bg-muted/40">
+                    <td className="py-2 pr-3 font-medium text-foreground">{u.name}</td>
+                    <td className="py-2 pr-3 text-muted-foreground">{u.email}</td>
+                    <td className="py-2 pr-3 text-muted-foreground">{org?.name ?? "—"}</td>
+                    <td className="py-2 pr-3 text-muted-foreground">{u.role}</td>
+                    <td className="py-2 pr-3 text-muted-foreground">{u.lastLogin}</td>
+                    <td className="py-2 pr-3"><Pill tone={u.status === "Active" ? "good" : u.status === "Invited" ? "info" : "risk"}>{u.status}</Pill></td>
+                    <td className="py-2 pr-3">
+                      <div className="flex gap-1">
+                        <button className="rounded-md border border-border px-2 py-0.5 text-[11px] hover:bg-muted">Edit</button>
+                        <button className="rounded-md border border-border px-2 py-0.5 text-[11px] hover:bg-muted">Suspend</button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </Panel>
+    </div>
+  );
+}
+
+/* ----- Matchmaking settings ----- */
+
+function AdminMatchmaking({
+  settings, setSettings,
+}: { settings: MatchSettings; setSettings: (s: MatchSettings) => void }) {
+  const stats = useMemo(() => ecosystemMatchStats(settings), [settings]);
+
+  const update = (patch: Partial<MatchSettings>) => setSettings({ ...settings, ...patch });
+  const setWeight = (f: MatchFactor, v: number) =>
+    update({ weights: { ...settings.weights, [f]: v } });
+  const toggleRule = (f: MatchFactor) =>
+    update({ rules: { ...settings.rules, [f]: !settings.rules[f] } });
+  const updateFilters = (patch: Partial<MatchSettings["filters"]>) =>
+    update({ filters: { ...settings.filters, ...patch } });
+  const updateThresholds = (patch: Partial<MatchSettings["thresholds"]>) =>
+    update({ thresholds: { ...settings.thresholds, ...patch } });
+
+  return (
+    <div className="space-y-6">
+      {/* Live preview */}
+      <Panel
+        title="Algorithm live preview"
+        subtitle="Recomputed instantly against the entire ecosystem"
+        right={
+          <label className="flex items-center gap-2 text-[11px] text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={settings.enabled}
+              onChange={(e) => update({ enabled: e.target.checked })}
+            />
+            Matchmaking enabled
+          </label>
+        }
+      >
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <Stat icon={<GitBranch className="h-3.5 w-3.5" />}    label="Candidate pairs" value={String(stats.pairs)}  tone="default" />
+          <Stat icon={<CheckCircle2 className="h-3.5 w-3.5" />} label="Auto-accept"     value={String(stats.auto)}   tone="good" />
+          <Stat icon={<Clock className="h-3.5 w-3.5" />}        label="Manual review"   value={String(stats.review)} tone="warn" />
+          <Stat icon={<ShieldAlert className="h-3.5 w-3.5" />}  label="Below threshold" value={String(stats.reject)} tone="risk" />
+        </div>
+      </Panel>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Weights & rules */}
+        <Panel title="Scoring factors" subtitle="Toggle a factor off, or drag its weight">
+          <ul className="space-y-3">
+            {(Object.keys(FACTOR_META) as MatchFactor[]).map((f) => {
+              const meta = FACTOR_META[f];
+              const enabled = settings.rules[f];
+              return (
+                <li key={f} className="rounded-md border border-border p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-foreground">{meta.label}</div>
+                      <div className="text-[11px] text-muted-foreground">{meta.description}</div>
+                    </div>
+                    <label className="inline-flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground">
+                      <input type="checkbox" checked={enabled} onChange={() => toggleRule(f)} />
+                      on
+                    </label>
+                  </div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <input
+                      type="range" min={0} max={100} step={5}
+                      value={settings.weights[f]}
+                      disabled={!enabled}
+                      onChange={(e) => setWeight(f, Number(e.target.value))}
+                      className="w-full accent-foreground disabled:opacity-40"
+                    />
+                    <span className="w-10 text-right text-[11px] tabular-nums text-muted-foreground">
+                      {settings.weights[f]}
+                    </span>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </Panel>
+
+        {/* Hard filters */}
+        <div className="space-y-6">
+          <Panel title="Hard filters" subtitle="Candidates failing any of these are excluded">
+            <div className="space-y-3">
+              <Row>
+                <span>Same country only</span>
+                <input
+                  type="checkbox"
+                  checked={settings.filters.sameCountryOnly}
+                  onChange={(e) => updateFilters({ sameCountryOnly: e.target.checked })}
+                />
+              </Row>
+              <Row>
+                <span>Same region only</span>
+                <input
+                  type="checkbox"
+                  checked={settings.filters.sameRegionOnly}
+                  onChange={(e) => updateFilters({ sameRegionOnly: e.target.checked })}
+                />
+              </Row>
+              <Row>
+                <span>Minimum company size</span>
+                <select
+                  value={settings.filters.minSize}
+                  onChange={(e) => updateFilters({ minSize: e.target.value as "S" | "M" | "L" })}
+                  className="rounded-md border border-border bg-background px-2 py-1 text-xs"
+                >
+                  <option value="S">S — any</option>
+                  <option value="M">M — mid+</option>
+                  <option value="L">L — large only</option>
+                </select>
+              </Row>
+              <Row>
+                <span>Exclude risk &gt;</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="range" min={0} max={100} step={5}
+                    value={Math.round(settings.filters.maxRisk * 100)}
+                    onChange={(e) => updateFilters({ maxRisk: Number(e.target.value) / 100 })}
+                    className="w-32 accent-foreground"
+                  />
+                  <span className="w-10 text-right text-[11px] tabular-nums text-muted-foreground">
+                    {Math.round(settings.filters.maxRisk * 100)}%
+                  </span>
+                </div>
+              </Row>
+              <div>
+                <div className="mb-1 text-xs text-foreground">Required certifications</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {ALL_CERTS.map((c) => {
+                    const on = settings.filters.requiredCerts.includes(c);
+                    return (
+                      <button
+                        key={c}
+                        onClick={() =>
+                          updateFilters({
+                            requiredCerts: on
+                              ? settings.filters.requiredCerts.filter((x) => x !== c)
+                              : [...settings.filters.requiredCerts, c],
+                          })
+                        }
+                        className={`rounded-full border px-2 py-0.5 text-[11px] transition-colors ${
+                          on
+                            ? "border-foreground bg-foreground text-background"
+                            : "border-border text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {c}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </Panel>
+
+          <Panel title="Confidence governance" subtitle="Score thresholds for the algorithm's outputs">
+            <div className="space-y-3">
+              <Row>
+                <span>Auto-accept ≥</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="range" min={50} max={100} step={1}
+                    value={settings.thresholds.autoAccept}
+                    onChange={(e) => updateThresholds({ autoAccept: Number(e.target.value) })}
+                    className="w-32 accent-foreground"
+                  />
+                  <span className="w-10 text-right text-[11px] tabular-nums text-muted-foreground">{settings.thresholds.autoAccept}%</span>
+                </div>
+              </Row>
+              <Row>
+                <span>Reject &lt;</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="range" min={0} max={80} step={1}
+                    value={settings.thresholds.reject}
+                    onChange={(e) => updateThresholds({ reject: Number(e.target.value) })}
+                    className="w-32 accent-foreground"
+                  />
+                  <span className="w-10 text-right text-[11px] tabular-nums text-muted-foreground">{settings.thresholds.reject}%</span>
+                </div>
+              </Row>
+              <p className="text-[11px] text-muted-foreground">
+                Scores between are routed to a human reviewer (Maria).
+              </p>
+            </div>
+          </Panel>
+
+          <div className="flex justify-end">
+            <button
+              onClick={() => setSettings({ ...settings })}
+              className="rounded-md border border-border bg-background px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+            >
+              Settings auto-save to this browser
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Row({ children }: { children: React.ReactNode }) {
+  return <div className="flex items-center justify-between gap-3 text-xs text-foreground">{children}</div>;
+}
+
 
 /* ---------------- Organization Profile ---------------- */
 
