@@ -71,8 +71,19 @@ function Workspace() {
     if (!getCurrentUser()) navigate({ to: "/login" });
   }, [navigate]);
 
-  const [active, setActive] = useState<RoleId>((user?.role as RoleId) ?? "rahul");
-  const current = ROLES.find((r) => r.id === active)!;
+  const initialRole = (user?.role as RoleId) ?? "rahul";
+  const [active, setActive] = useState<RoleId>(initialRole);
+
+  // Non-admin users can only see their own workspace + Org Profile
+  const visibleRoles = useMemo(() => {
+    if (user?.role === "admin") return ROLES;
+    return ROLES.filter((r) => r.id === user?.role || r.id === "org");
+  }, [user?.role]);
+
+  // Hard guard: clamp `active` to an allowed role
+  const allowedIds = visibleRoles.map((r) => r.id);
+  const safeActive: RoleId = allowedIds.includes(active) ? active : initialRole;
+  const current = ROLES.find((r) => r.id === safeActive)!;
 
   if (!user) return null;
 
