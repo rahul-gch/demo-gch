@@ -4,12 +4,9 @@ import { EcosystemGraph } from "@/components/EcosystemGraph";
 import {
   AlertTriangle,
   FileSearch,
-  Sparkles,
-  Target,
   TrendingUp,
   Network,
   ShieldAlert,
-  Layers,
   CheckCircle2,
   Clock,
   Upload,
