@@ -249,6 +249,10 @@ function Workspace() {
         {(!isAdmin || previewAs) && renderRole === "maria" && <MariaDashboard />}
         {(!isAdmin || previewAs) && renderRole === "org" && <OrgProfile />}
       </main>
+
+      {messagesOpen && (
+        <MessagesPanel me={user.role as Participant} onClose={() => setMessagesOpen(false)} />
+      )}
     </div>
   );
 }
