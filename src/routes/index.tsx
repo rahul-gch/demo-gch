@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { EcosystemGraph } from "@/components/EcosystemGraph";
+import { MessagesPanel } from "@/components/MessagesPanel";
+import { subscribeComms, unreadCountFor, type Participant } from "@/lib/messaging";
 import { getCurrentUser, signOut, type AuthRole } from "@/lib/auth";
 import { LogOut, LayoutDashboard, Sliders, Eye } from "lucide-react";
 import { ORGS, USERS, EDGES, type OrgType as EcoOrgType } from "@/lib/ecosystem-data";
@@ -98,6 +100,15 @@ function Workspace() {
   const renderRole: RoleId | null = isAdmin ? previewAs : safeActive;
   const current = ROLES.find((r) => r.id === (renderRole ?? "admin"))!;
 
+  const [messagesOpen, setMessagesOpen] = useState(false);
+  const [unread, setUnread] = useState(0);
+  useEffect(() => {
+    if (!user) return;
+    const refresh = () => setUnread(unreadCountFor(user.role as Participant));
+    refresh();
+    return subscribeComms(refresh);
+  }, [user?.role]);
+
   if (!user) return null;
 
   function handleSignOut() {
@@ -183,6 +194,18 @@ function Workspace() {
               <span className="font-medium text-foreground">{user.name}</span>
             </div>
             <button
+              onClick={() => setMessagesOpen(true)}
+              className="relative inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+            >
+              <MessageSquare className="h-3.5 w-3.5" />
+              Messages
+              {unread > 0 && (
+                <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white">
+                  {unread}
+                </span>
+              )}
+            </button>
+            <button
               onClick={handleSignOut}
               className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
@@ -226,6 +249,10 @@ function Workspace() {
         {(!isAdmin || previewAs) && renderRole === "maria" && <MariaDashboard />}
         {(!isAdmin || previewAs) && renderRole === "org" && <OrgProfile />}
       </main>
+
+      {messagesOpen && (
+        <MessagesPanel me={user.role as Participant} onClose={() => setMessagesOpen(false)} />
+      )}
     </div>
   );
 }

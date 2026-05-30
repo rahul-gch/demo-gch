@@ -1,32 +1,47 @@
 
 ## Goal
-Make the ecosystem graph readable and clean by showing only a focused core subset (6 nodes) with smaller, better-spaced nodes and clearer labels.
+Add in-app communication so personas (Rahul, George, Maria, Admin) can send messages, request meetings, and respond to each other — visible across logins on the same browser.
 
-## Changes
+## Scope (frontend-only, demo-grade)
+- Persisted in `localStorage` (no backend). Keyed store survives logout/login and reloads.
+- 4 participants: `rahul`, `george`, `maria`, `admin`.
+- Inbox visible to the logged-in user only — they see threads where they are sender or recipient.
 
-### 1. `src/components/EcosystemGraph.tsx`
-- Add a `coreOnly` prop (default `true` for the overview tab) that filters to a curated set of 6 anchor orgs:
-  - `acme` (brand), `lumon` (brand), `northwind` (supplier T2), `tyrell` (supplier T2), `starkv` (verifier), `ngo1` (regulator).
-- Reduce node radius significantly:
-  - `SIZE_R` → `{ S: 1.4, M: 1.9, L: 2.4 }` (was 2.2 / 3.2 / 4.2).
-  - Inner core dot reduced proportionally; glow blur reduced (`stdDeviation 0.35`).
-- Rebalance layout coordinates for the 6 core nodes into a clean hex/pentagon spread so labels don't collide:
-  - acme (50,52), lumon (24,38), northwind (40,30), tyrell (66,32), starkv (72,60), ngo1 (44,76).
-- Labels:
-  - Smaller font (`1.4`), softer color (`#cbd5e1`), placed below with consistent offset.
-  - Add subtle text shadow via a `<filter>` so labels remain readable over edges.
-- Edges:
-  - Thinner strokes (`0.12 + strength*0.3`), lower opacity baseline.
-  - Only render edges where both endpoints are in the visible set (already the case).
-- Keep risk halo + selected ring, but scaled down.
+## New files
 
-### 2. `src/routes/index.tsx` (admin overview only)
-- Pass `coreOnly` to `<EcosystemGraph />` in the admin Overview tab.
-- Add a small toggle above the graph: "Core view (6) / Full ecosystem (18)" so admin can expand when needed.
-- No data changes — `ORGS`/`EDGES` in `ecosystem-data.ts` stay intact; the full graph remains available via the toggle.
+### 1. `src/lib/messaging.ts`
+- Types:
+  - `Message { id, from, to, text, ts, read }`
+  - `MeetingRequest { id, from, to, title, proposedAt, durationMin, agenda, status: "pending" | "accepted" | "declined" | "rescheduled", responseNote?, rescheduledAt?, ts }`
+- Store shape: `{ messages: Message[], meetings: MeetingRequest[] }` under key `gch_comms`.
+- Helpers: `loadComms`, `saveComms`, `sendMessage`, `markThreadRead`, `createMeeting`, `respondMeeting`, `threadsFor(user)`, `messagesBetween(a,b)`, `meetingsFor(user)`.
+- Light pub/sub (`window`-level event `gch:comms`) so the UI re-renders after any mutation in the same tab.
+- Seed defaults on first load: a few sample messages and one pending meeting between Rahul↔George and Rahul↔Maria so the inbox isn't empty.
 
-### Out of scope
-- No backend changes, no new orgs, no auth changes, no matchmaking algorithm changes.
+## Modified files
+
+### 2. `src/routes/index.tsx`
+- Add a `Messages` tab/section visible to all logged-in users (not just admin):
+  - Header: a small "Messages" pill with unread badge next to the user/profile area.
+  - Clicking opens a Messages panel below the dashboard (toggled state, no new route).
+- `MessagesPanel` component:
+  - Left column: thread list (one per other participant). Shows name, last message preview, timestamp, unread badge.
+  - Right column: active thread.
+    - Message bubbles (mine vs theirs) chronologically.
+    - Composer: textarea + Send button.
+    - "Request meeting" button → opens inline form (title, date/time, duration, agenda) → creates pending meeting.
+    - Meeting cards inline in the thread, with action buttons for the recipient:
+      - Accept, Decline (with optional note), Propose new time (date/time input → status `rescheduled` with `rescheduledAt`).
+    - Sender sees response status + note.
+- Admin view: same component, but admin can see/select threads with any of the 3 users; non-admin users see threads with the other 3 participants only (including admin).
+
+### 3. Small UI affordance on existing dashboards
+- On Rahul/George/Maria dashboards, add a "Message" button on relevant items (e.g., matchmaking suggestion cards) that opens the Messages panel pre-filled to that recipient. Keep this minimal — just a button that sets the active thread.
+
+## Out of scope
+- No real-time across browsers/devices, no email, no calendar export.
+- No new routes, no auth changes, no Lovable Cloud / backend.
+- No file attachments, no group threads.
 
 ## Result
-Default admin Overview shows a calm 6-node graph with small nodes, breathing room, and readable labels matching the dark theme. Toggle expands to the full 18-node ecosystem when needed.
+After login, every persona has a Messages inbox where they can chat 1:1 with the other personas, send meeting requests, and accept / decline / reschedule. State persists locally so switching accounts in the same browser shows the conversation from the other side.
