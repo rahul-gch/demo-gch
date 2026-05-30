@@ -2,7 +2,12 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { EcosystemGraph } from "@/components/EcosystemGraph";
 import { getCurrentUser, signOut, type AuthRole } from "@/lib/auth";
-import { LogOut } from "lucide-react";
+import { LogOut, LayoutDashboard, Sliders, Eye } from "lucide-react";
+import { ORGS, USERS, EDGES, type OrgType as EcoOrgType } from "@/lib/ecosystem-data";
+import {
+  loadSettings, saveSettings, scorePair, topMatches, ecosystemMatchStats,
+  FACTOR_META, ALL_CERTS, type MatchSettings, type MatchFactor,
+} from "@/lib/matchmaking";
 import {
   AlertTriangle,
   FileSearch,
