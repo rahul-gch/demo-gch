@@ -100,6 +100,15 @@ function Workspace() {
   const renderRole: RoleId | null = isAdmin ? previewAs : safeActive;
   const current = ROLES.find((r) => r.id === (renderRole ?? "admin"))!;
 
+  const [messagesOpen, setMessagesOpen] = useState(false);
+  const [unread, setUnread] = useState(0);
+  useEffect(() => {
+    if (!user) return;
+    const refresh = () => setUnread(unreadCountFor(user.role as Participant));
+    refresh();
+    return subscribeComms(refresh);
+  }, [user?.role]);
+
   if (!user) return null;
 
   function handleSignOut() {
