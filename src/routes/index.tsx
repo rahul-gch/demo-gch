@@ -76,19 +76,27 @@ function Workspace() {
     if (!getCurrentUser()) navigate({ to: "/login" });
   }, [navigate]);
 
+  const isAdmin = user?.role === "admin";
   const initialRole = (user?.role as RoleId) ?? "rahul";
+
+  // Non-admin: stick to their own role (+ Org Profile pill)
   const [active, setActive] = useState<RoleId>(initialRole);
 
-  // Non-admin users can only see their own workspace + Org Profile
-  const visibleRoles = useMemo(() => {
-    if (user?.role === "admin") return ROLES;
-    return ROLES.filter((r) => r.id === user?.role || r.id === "org");
-  }, [user?.role]);
+  // Admin: tab + optional "view as" preview
+  const [adminTab, setAdminTab] = useState<AdminTab>("overview");
+  const [previewAs, setPreviewAs] = useState<RoleId | null>(null);
 
-  // Hard guard: clamp `active` to an allowed role
+  const visibleRoles = useMemo(() => {
+    if (isAdmin) return [];
+    return ROLES.filter((r) => r.id === user?.role || r.id === "org");
+  }, [isAdmin, user?.role]);
+
   const allowedIds = visibleRoles.map((r) => r.id);
   const safeActive: RoleId = allowedIds.includes(active) ? active : initialRole;
-  const current = ROLES.find((r) => r.id === safeActive)!;
+
+  // Resolve what to render
+  const renderRole: RoleId | null = isAdmin ? previewAs : safeActive;
+  const current = ROLES.find((r) => r.id === (renderRole ?? "admin"))!;
 
   if (!user) return null;
 
@@ -97,11 +105,10 @@ function Workspace() {
     navigate({ to: "/login" });
   }
 
-
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-30 border-b border-border bg-card/80 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-3">
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-foreground text-background">
               <Network className="h-4 w-4" />
@@ -111,33 +118,69 @@ function Workspace() {
               <div className="text-[11px] text-muted-foreground">Enterprise traceability platform</div>
             </div>
           </div>
-          <nav className="flex items-center gap-1 rounded-full border border-border bg-background p-1">
-            {visibleRoles.map((r) => {
-              const isActive = r.id === safeActive;
-              return (
-                <button
-                  key={r.id}
-                  onClick={() => setActive(r.id)}
-                  className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                    isActive
-                      ? "bg-foreground text-background"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <span
-                    className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold text-white ${r.tone}`}
+
+          {isAdmin ? (
+            <nav className="flex items-center gap-1 rounded-full border border-border bg-background p-1">
+              {ADMIN_TABS.map((t) => {
+                const Icon = t.icon;
+                const isActive = !previewAs && adminTab === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => { setPreviewAs(null); setAdminTab(t.id); }}
+                    className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                      isActive ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
+                    }`}
                   >
-                    {r.initials}
-                  </span>
-                  {r.id === "org" ? "Org Profile" : r.name}
-                </button>
-              );
-            })}
-          </nav>
+                    <Icon className="h-3.5 w-3.5" />
+                    {t.label}
+                  </button>
+                );
+              })}
+            </nav>
+          ) : (
+            <nav className="flex items-center gap-1 rounded-full border border-border bg-background p-1">
+              {visibleRoles.map((r) => {
+                const isActive = r.id === safeActive;
+                return (
+                  <button
+                    key={r.id}
+                    onClick={() => setActive(r.id)}
+                    className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                      isActive ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold text-white ${r.tone}`}>
+                      {r.initials}
+                    </span>
+                    {r.id === "org" ? "Org Profile" : r.name}
+                  </button>
+                );
+              })}
+            </nav>
+          )}
+
           <div className="flex items-center gap-3">
+            {isAdmin && (
+              <label className="hidden items-center gap-1.5 text-[11px] text-muted-foreground md:flex">
+                <Eye className="h-3.5 w-3.5" />
+                View as
+                <select
+                  value={previewAs ?? ""}
+                  onChange={(e) => setPreviewAs((e.target.value || null) as RoleId | null)}
+                  className="rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground"
+                >
+                  <option value="">— admin —</option>
+                  <option value="rahul">Rahul (Brand)</option>
+                  <option value="george">George (Supplier)</option>
+                  <option value="maria">Maria (Reviewer)</option>
+                  <option value="org">Org Profile</option>
+                </select>
+              </label>
+            )}
             <div className="hidden items-center gap-2 text-xs text-muted-foreground md:flex">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              Signed in as <span className="font-medium text-foreground">{user.name}</span>
+              <span className="font-medium text-foreground">{user.name}</span>
             </div>
             <button
               onClick={handleSignOut}
@@ -148,38 +191,52 @@ function Workspace() {
             </button>
           </div>
         </div>
+        {isAdmin && previewAs && (
+          <div className="border-t border-border bg-amber-50 px-6 py-1.5 text-[11px] text-amber-800">
+            Previewing as <span className="font-semibold">{ROLES.find((r) => r.id === previewAs)?.name}</span>. Read-only persona view.{" "}
+            <button onClick={() => setPreviewAs(null)} className="font-semibold underline">Exit preview</button>
+          </div>
+        )}
       </header>
 
       <main className="mx-auto max-w-7xl px-6 py-8">
         <div className="mb-6 flex items-end justify-between">
           <div>
             <div className="text-xs uppercase tracking-wider text-muted-foreground">
-              {current.role}
+              {isAdmin && !previewAs ? "Platform Operator" : current.role}
             </div>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground">
-              {safeActive === "org" ? "Organization profile" : `${current.name}'s workspace`}
+              {isAdmin && !previewAs
+                ? ADMIN_TABS.find((t) => t.id === adminTab)!.heading
+                : renderRole === "org"
+                  ? "Organization profile"
+                  : `${current.name}'s workspace`}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              {roleTagline(safeActive)}
+              {isAdmin && !previewAs
+                ? ADMIN_TABS.find((t) => t.id === adminTab)!.subtitle
+                : roleTagline((renderRole ?? "rahul") as RoleId)}
             </p>
           </div>
-          {safeActive !== "org" && (
-            <div className="hidden items-center gap-2 text-xs text-muted-foreground md:flex">
-              <Building2 className="h-3.5 w-3.5" />
-              {current.org}
-            </div>
-          )}
         </div>
 
-        {safeActive === "rahul" && <RahulDashboard />}
-        {safeActive === "george" && <GeorgeDashboard />}
-        {safeActive === "maria" && <MariaDashboard />}
-        {safeActive === "admin" && <AdminDashboard />}
-        {safeActive === "org" && <OrgProfile />}
+        {isAdmin && !previewAs && <AdminDashboard tab={adminTab} />}
+        {(!isAdmin || previewAs) && renderRole === "rahul" && <RahulDashboard />}
+        {(!isAdmin || previewAs) && renderRole === "george" && <GeorgeDashboard />}
+        {(!isAdmin || previewAs) && renderRole === "maria" && <MariaDashboard />}
+        {(!isAdmin || previewAs) && renderRole === "org" && <OrgProfile />}
       </main>
     </div>
   );
 }
+
+type AdminTab = "overview" | "orgs" | "matchmaking";
+const ADMIN_TABS: { id: AdminTab; label: string; heading: string; subtitle: string; icon: typeof LayoutDashboard }[] = [
+  { id: "overview",    label: "Overview",          heading: "Ecosystem overview",        subtitle: "Live graph of organizations, connections, and confidence.", icon: LayoutDashboard },
+  { id: "orgs",        label: "Orgs & Users",      heading: "Organizations & users",     subtitle: "Manage every organization and user on the platform.",       icon: Users },
+  { id: "matchmaking", label: "Matchmaking",       heading: "Matchmaking settings",      subtitle: "Tune the algorithm that powers ecosystem suggestions.",     icon: Sliders },
+];
+
 
 function roleTagline(id: RoleId) {
   switch (id) {
