@@ -529,6 +529,8 @@ function MariaDashboard() {
           ))}
         </div>
       </Panel>
+
+      <MatchmakingPanel variant="maria" />
     </div>
   );
 }
