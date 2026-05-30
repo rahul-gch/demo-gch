@@ -71,8 +71,19 @@ function Workspace() {
     if (!getCurrentUser()) navigate({ to: "/login" });
   }, [navigate]);
 
-  const [active, setActive] = useState<RoleId>((user?.role as RoleId) ?? "rahul");
-  const current = ROLES.find((r) => r.id === active)!;
+  const initialRole = (user?.role as RoleId) ?? "rahul";
+  const [active, setActive] = useState<RoleId>(initialRole);
+
+  // Non-admin users can only see their own workspace + Org Profile
+  const visibleRoles = useMemo(() => {
+    if (user?.role === "admin") return ROLES;
+    return ROLES.filter((r) => r.id === user?.role || r.id === "org");
+  }, [user?.role]);
+
+  // Hard guard: clamp `active` to an allowed role
+  const allowedIds = visibleRoles.map((r) => r.id);
+  const safeActive: RoleId = allowedIds.includes(active) ? active : initialRole;
+  const current = ROLES.find((r) => r.id === safeActive)!;
 
   if (!user) return null;
 
@@ -96,8 +107,8 @@ function Workspace() {
             </div>
           </div>
           <nav className="flex items-center gap-1 rounded-full border border-border bg-background p-1">
-            {ROLES.map((r) => {
-              const isActive = r.id === active;
+            {visibleRoles.map((r) => {
+              const isActive = r.id === safeActive;
               return (
                 <button
                   key={r.id}
@@ -141,13 +152,13 @@ function Workspace() {
               {current.role}
             </div>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground">
-              {active === "org" ? "Organization profile" : `${current.name}'s workspace`}
+              {safeActive === "org" ? "Organization profile" : `${current.name}'s workspace`}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              {roleTagline(active)}
+              {roleTagline(safeActive)}
             </p>
           </div>
-          {active !== "org" && (
+          {safeActive !== "org" && (
             <div className="hidden items-center gap-2 text-xs text-muted-foreground md:flex">
               <Building2 className="h-3.5 w-3.5" />
               {current.org}
@@ -155,11 +166,11 @@ function Workspace() {
           )}
         </div>
 
-        {active === "rahul" && <RahulDashboard />}
-        {active === "george" && <GeorgeDashboard />}
-        {active === "maria" && <MariaDashboard />}
-        {active === "admin" && <AdminDashboard />}
-        {active === "org" && <OrgProfile />}
+        {safeActive === "rahul" && <RahulDashboard />}
+        {safeActive === "george" && <GeorgeDashboard />}
+        {safeActive === "maria" && <MariaDashboard />}
+        {safeActive === "admin" && <AdminDashboard />}
+        {safeActive === "org" && <OrgProfile />}
       </main>
     </div>
   );
@@ -260,6 +271,104 @@ function Pill({ tone, children }: { tone: "good" | "warn" | "risk" | "info"; chi
   );
 }
 
+/* ---------------- Matchmaking (per-persona) ---------------- */
+
+type MatchVariant = "rahul" | "george" | "maria";
+
+const MATCH_CONFIG: Record<
+  MatchVariant,
+  {
+    title: string;
+    subtitle: string;
+    primaryLabel: string;
+    secondaryLabel: string;
+    matches: { name: string; reason: string; score: number; meta: string }[];
+  }
+> = {
+  rahul: {
+    title: "Matchmaking · Suggested suppliers & verifiers",
+    subtitle: "AI-ranked partners that fill gaps in your product tiers",
+    primaryLabel: "Invite to connect",
+    secondaryLabel: "Request evidence",
+    matches: [
+      { name: "Tyrell Dyeworks", reason: "Fills Tier-2 dye gap for Hemp Knit Sweater", score: 92, meta: "GOTS · 38km · Tier 2" },
+      { name: "Soylent Fiber Co.", reason: "Organic cotton at scale, matches OC-001 spec", score: 88, meta: "RCS · India · Tier 3" },
+      { name: "Hooli Knit", reason: "Knitting capacity for Q4 launch window", score: 81, meta: "Oeko-Tex · Portugal · Tier 2" },
+      { name: "Stark Verification", reason: "Independent auditor for upcoming SMETA cycle", score: 76, meta: "SMETA 4P · Verifier" },
+      { name: "Northwind Mills", reason: "Existing partner — expand to Linen Trouser line", score: 71, meta: "GOTS · Tier 2" },
+    ],
+  },
+  george: {
+    title: "Matchmaking · Brand opportunities",
+    subtitle: "Brands actively sourcing capacity that matches your facility",
+    primaryLabel: "Express interest",
+    secondaryLabel: "Send capability deck",
+    matches: [
+      { name: "Acme Apparel", reason: "Needs GOTS-certified knitting, 12k units / month", score: 88, meta: "8-wk lead · GOTS required" },
+      { name: "Lumon Outerwear", reason: "Recycled fiber capacity for AW26 collection", score: 84, meta: "20k units · RCS preferred" },
+      { name: "Initech Basics", reason: "Backup supplier for organic cotton tees", score: 78, meta: "6-wk lead · 5k units" },
+      { name: "Cyberdyne Active", reason: "Performance knit pilot, low MOQ", score: 73, meta: "MOQ 800 · pilot batch" },
+      { name: "Wayne Heritage", reason: "Linen / hemp blend exploration", score: 68, meta: "Sample stage · EU only" },
+    ],
+  },
+  maria: {
+    title: "Matchmaking · Verification assignments",
+    subtitle: "Partner pairs routed to you for evidence review",
+    primaryLabel: "Claim review",
+    secondaryLabel: "Reassign",
+    matches: [
+      { name: "Acme ↔ Northwind", reason: "Chain-of-custody review for OC-001 shipment", score: 94, meta: "SLA 24h · Medium complexity" },
+      { name: "Acme ↔ Tyrell", reason: "SMETA corrective action follow-up", score: 89, meta: "SLA 48h · High complexity" },
+      { name: "Lumon ↔ Hooli", reason: "Geolocation evidence validation", score: 82, meta: "SLA 24h · Low complexity" },
+      { name: "Initech ↔ Soylent", reason: "RCS certificate scope check", score: 77, meta: "SLA 72h · Low complexity" },
+      { name: "Wayne ↔ Umbrella", reason: "Effluent treatment cert renewal", score: 71, meta: "SLA 48h · Medium complexity" },
+    ],
+  },
+};
+
+function MatchmakingPanel({ variant }: { variant: MatchVariant }) {
+  const cfg = MATCH_CONFIG[variant];
+  return (
+    <Panel
+      title={cfg.title}
+      subtitle={cfg.subtitle}
+      right={<Pill tone="info">{cfg.matches.length} suggestions</Pill>}
+    >
+      <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        {cfg.matches.map((m) => {
+          const tone: "good" | "warn" | "info" =
+            m.score >= 85 ? "good" : m.score >= 75 ? "info" : "warn";
+          return (
+            <li key={m.name} className="rounded-lg border border-border p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-medium text-foreground">{m.name}</div>
+                  <div className="mt-0.5 text-xs text-muted-foreground">{m.reason}</div>
+                </div>
+                <Pill tone={tone}>{m.score}% match</Pill>
+              </div>
+              <div className="mt-2 text-[11px] text-muted-foreground">{m.meta}</div>
+              <div className="mt-3 flex gap-2">
+                <button className="rounded-md bg-foreground px-2.5 py-1 text-[11px] font-medium text-background hover:opacity-90">
+                  {cfg.primaryLabel}
+                </button>
+                <button className="rounded-md border border-border px-2.5 py-1 text-[11px] font-medium text-foreground hover:bg-muted">
+                  {cfg.secondaryLabel}
+                </button>
+                <button className="ml-auto rounded-md px-2 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground">
+                  Dismiss
+                </button>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </Panel>
+  );
+}
+
+
+
 /* ---------------- Rahul: Brand & Product Traceability ---------------- */
 
 function RahulDashboard() {
@@ -336,6 +445,8 @@ function RahulDashboard() {
           </ul>
         </Panel>
       </div>
+
+      <MatchmakingPanel variant="rahul" />
     </div>
   );
 }
@@ -423,6 +534,8 @@ function GeorgeDashboard() {
           ))}
         </div>
       </Panel>
+
+      <MatchmakingPanel variant="george" />
     </div>
   );
 }
@@ -514,6 +627,8 @@ function MariaDashboard() {
           ))}
         </div>
       </Panel>
+
+      <MatchmakingPanel variant="maria" />
     </div>
   );
 }
