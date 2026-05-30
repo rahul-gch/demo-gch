@@ -1,6 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
 import { EcosystemGraph } from "@/components/EcosystemGraph";
+import { getCurrentUser, signOut, type AuthRole } from "@/lib/auth";
+import { LogOut } from "lucide-react";
 import {
   AlertTriangle,
   FileSearch,
@@ -62,8 +64,23 @@ const ROLES: {
 ];
 
 function Workspace() {
-  const [active, setActive] = useState<RoleId>("rahul");
+  const navigate = useNavigate();
+  const user = typeof window !== "undefined" ? getCurrentUser() : null;
+
+  useEffect(() => {
+    if (!getCurrentUser()) navigate({ to: "/login" });
+  }, [navigate]);
+
+  const [active, setActive] = useState<RoleId>((user?.role as RoleId) ?? "rahul");
   const current = ROLES.find((r) => r.id === active)!;
+
+  if (!user) return null;
+
+  function handleSignOut() {
+    signOut();
+    navigate({ to: "/login" });
+  }
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -101,9 +118,18 @@ function Workspace() {
               );
             })}
           </nav>
-          <div className="hidden items-center gap-2 text-xs text-muted-foreground md:flex">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            Live
+          <div className="flex items-center gap-3">
+            <div className="hidden items-center gap-2 text-xs text-muted-foreground md:flex">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              Signed in as <span className="font-medium text-foreground">{user.name}</span>
+            </div>
+            <button
+              onClick={handleSignOut}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              Sign out
+            </button>
           </div>
         </div>
       </header>
