@@ -107,8 +107,8 @@ function Workspace() {
             </div>
           </div>
           <nav className="flex items-center gap-1 rounded-full border border-border bg-background p-1">
-            {ROLES.map((r) => {
-              const isActive = r.id === active;
+            {visibleRoles.map((r) => {
+              const isActive = r.id === safeActive;
               return (
                 <button
                   key={r.id}
@@ -152,13 +152,13 @@ function Workspace() {
               {current.role}
             </div>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground">
-              {active === "org" ? "Organization profile" : `${current.name}'s workspace`}
+              {safeActive === "org" ? "Organization profile" : `${current.name}'s workspace`}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              {roleTagline(active)}
+              {roleTagline(safeActive)}
             </p>
           </div>
-          {active !== "org" && (
+          {safeActive !== "org" && (
             <div className="hidden items-center gap-2 text-xs text-muted-foreground md:flex">
               <Building2 className="h-3.5 w-3.5" />
               {current.org}
@@ -166,11 +166,11 @@ function Workspace() {
           )}
         </div>
 
-        {active === "rahul" && <RahulDashboard />}
-        {active === "george" && <GeorgeDashboard />}
-        {active === "maria" && <MariaDashboard />}
-        {active === "admin" && <AdminDashboard />}
-        {active === "org" && <OrgProfile />}
+        {safeActive === "rahul" && <RahulDashboard />}
+        {safeActive === "george" && <GeorgeDashboard />}
+        {safeActive === "maria" && <MariaDashboard />}
+        {safeActive === "admin" && <AdminDashboard />}
+        {safeActive === "org" && <OrgProfile />}
       </main>
     </div>
   );
