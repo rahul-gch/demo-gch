@@ -347,6 +347,8 @@ function RahulDashboard() {
           </ul>
         </Panel>
       </div>
+
+      <MatchmakingPanel variant="rahul" />
     </div>
   );
 }
