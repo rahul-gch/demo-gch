@@ -182,18 +182,16 @@ function Workspace() {
               <HelpCircle className="h-3.5 w-3.5" />
               How it works
             </Link>
-            {(() => {
-              const slug = DEMO_ACCOUNTS.find((a) => a.role === user.role)?.orgSlug;
-              return slug ? (
-                <Link
-                  to="/org/$slug"
-                  params={{ slug }}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
-                >
-                  My organisation
-                </Link>
-              ) : null;
-            })()}
+            {user.orgSlug ? (
+              <Link
+                to="/org/$slug"
+                params={{ slug: user.orgSlug }}
+                className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+              >
+                My organisation
+              </Link>
+            ) : null}
+
             <button
               onClick={() => setMessagesOpen(true)}
               className="relative inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
