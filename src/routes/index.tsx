@@ -750,6 +750,7 @@ function AdminOverview({ settings }: { settings: MatchSettings }) {
   const [onlyRisk, setOnlyRisk] = useState(false);
   const [onlyMissing, setOnlyMissing] = useState(false);
   const [coreOnly, setCoreOnly] = useState(true);
+  const [view, setView] = useState<"graph" | "map">("graph");
 
   const selected = ORGS.find((o) => o.id === selectedId) ?? null;
   const suggestions = useMemo(
