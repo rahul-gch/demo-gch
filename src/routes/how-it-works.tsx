@@ -19,6 +19,7 @@ import {
   Sparkles,
   Layers,
   ShieldCheck,
+  Building2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/how-it-works")({
