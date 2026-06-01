@@ -839,33 +839,53 @@ function AdminOverview({ settings }: { settings: MatchSettings }) {
             </button>
             <div className="ml-auto inline-flex overflow-hidden rounded-full border border-border text-[11px] font-medium">
               <button
-                onClick={() => setCoreOnly(true)}
-                className={`px-2.5 py-1 transition-colors ${coreOnly ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"}`}
+                onClick={() => setView("graph")}
+                className={`inline-flex items-center gap-1 px-2.5 py-1 transition-colors ${view === "graph" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"}`}
               >
-                Core (6)
+                <Network className="h-3 w-3" /> Graph
               </button>
               <button
-                onClick={() => setCoreOnly(false)}
-                className={`px-2.5 py-1 transition-colors ${!coreOnly ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"}`}
+                onClick={() => setView("map")}
+                className={`inline-flex items-center gap-1 px-2.5 py-1 transition-colors ${view === "map" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"}`}
               >
-                Full ecosystem
+                <MapIcon className="h-3 w-3" /> Map
               </button>
             </div>
+            {view === "graph" && (
+              <div className="inline-flex overflow-hidden rounded-full border border-border text-[11px] font-medium">
+                <button
+                  onClick={() => setCoreOnly(true)}
+                  className={`px-2.5 py-1 transition-colors ${coreOnly ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  Core (6)
+                </button>
+                <button
+                  onClick={() => setCoreOnly(false)}
+                  className={`px-2.5 py-1 transition-colors ${!coreOnly ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  Full ecosystem
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="overflow-hidden rounded-xl border border-border bg-slate-950">
             <div className="aspect-[16/9] w-full">
-              <EcosystemGraph
-                coreOnly={coreOnly}
-                filters={{
-                  types: typeFilters,
-                  region,
-                  onlyRisk,
-                  onlyMissingEvidence: onlyMissing,
-                }}
-                selectedId={selectedId}
-                onSelect={setSelectedId}
-              />
+              {view === "graph" ? (
+                <EcosystemGraph
+                  coreOnly={coreOnly}
+                  filters={{
+                    types: typeFilters,
+                    region,
+                    onlyRisk,
+                    onlyMissingEvidence: onlyMissing,
+                  }}
+                  selectedId={selectedId}
+                  onSelect={setSelectedId}
+                />
+              ) : (
+                <EcosystemMap selectedId={selectedId} onSelect={setSelectedId} />
+              )}
             </div>
           </div>
         </Panel>
