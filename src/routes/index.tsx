@@ -1,11 +1,13 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { EcosystemGraph } from "@/components/EcosystemGraph";
 import { EcosystemMap } from "@/components/EcosystemMap";
 import { MessagesPanel } from "@/components/MessagesPanel";
 import { UserDashboard } from "@/components/UserDashboard";
 import { subscribeComms, unreadCountFor, type Participant } from "@/lib/messaging";
-import { getCurrentUser, signOut, type AuthRole } from "@/lib/auth";
+import { getCurrentUser, signOut, DEMO_ACCOUNTS, type AuthRole } from "@/lib/auth";
+import { ensureSeed } from "@/lib/org.functions";
 import { LogOut, LayoutDashboard, Sliders, Eye, HelpCircle, Map as MapIcon } from "lucide-react";
 import { ORGS, USERS, EDGES, type OrgType as EcoOrgType } from "@/lib/ecosystem-data";
 import {
@@ -76,9 +78,11 @@ function Workspace() {
   const navigate = useNavigate();
   const user = typeof window !== "undefined" ? getCurrentUser() : null;
 
+  const seedFn = useServerFn(ensureSeed);
   useEffect(() => {
     if (!getCurrentUser()) navigate({ to: "/login" });
-  }, [navigate]);
+    else seedFn().catch((e: unknown) => console.warn("[seed]", e));
+  }, [navigate, seedFn]);
 
   const isAdmin = user?.role === "admin";
   const initialRole = (user?.role as RoleId) ?? "rahul";
@@ -113,8 +117,8 @@ function Workspace() {
 
   if (!user) return null;
 
-  function handleSignOut() {
-    signOut();
+  async function handleSignOut() {
+    await signOut();
     navigate({ to: "/login" });
   }
 
@@ -202,6 +206,18 @@ function Workspace() {
               <HelpCircle className="h-3.5 w-3.5" />
               How it works
             </Link>
+            {(() => {
+              const slug = DEMO_ACCOUNTS.find((a) => a.role === user.role)?.orgSlug;
+              return slug ? (
+                <Link
+                  to="/org/$slug"
+                  params={{ slug }}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                >
+                  My organisation
+                </Link>
+              ) : null;
+            })()}
             <button
               onClick={() => setMessagesOpen(true)}
               className="relative inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"

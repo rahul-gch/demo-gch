@@ -14,16 +14,165 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      org_documents: {
+        Row: {
+          category: Database["public"]["Enums"]["doc_category"]
+          created_at: string
+          description: string | null
+          id: string
+          mime_type: string | null
+          org_id: string
+          size_bytes: number | null
+          storage_path: string
+          title: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["doc_category"]
+          created_at?: string
+          description?: string | null
+          id?: string
+          mime_type?: string | null
+          org_id: string
+          size_bytes?: number | null
+          storage_path: string
+          title: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["doc_category"]
+          created_at?: string
+          description?: string | null
+          id?: string
+          mime_type?: string | null
+          org_id?: string
+          size_bytes?: number | null
+          storage_path?: string
+          title?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_documents_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_members: {
+        Row: {
+          avatar_url: string | null
+          display_name: string
+          id: string
+          invited_by: string | null
+          joined_at: string
+          org_id: string
+          role: Database["public"]["Enums"]["org_role"]
+          title: string | null
+          user_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          display_name: string
+          id?: string
+          invited_by?: string | null
+          joined_at?: string
+          org_id: string
+          role?: Database["public"]["Enums"]["org_role"]
+          title?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          display_name?: string
+          id?: string
+          invited_by?: string | null
+          joined_at?: string
+          org_id?: string
+          role?: Database["public"]["Enums"]["org_role"]
+          title?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orgs: {
+        Row: {
+          certifications: string[]
+          country: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          region: string | null
+          size: string | null
+          slug: string
+          tier: number | null
+          type: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          certifications?: string[]
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          region?: string | null
+          size?: string | null
+          slug: string
+          tier?: number | null
+          type?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          certifications?: string[]
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          region?: string | null
+          size?: string | null
+          slug?: string
+          tier?: number | null
+          type?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_org_member: { Args: { _org: string; _user: string }; Returns: boolean }
+      user_can_edit: { Args: { _org: string; _user: string }; Returns: boolean }
+      user_can_manage: {
+        Args: { _org: string; _user: string }
+        Returns: boolean
+      }
+      user_is_owner: { Args: { _org: string; _user: string }; Returns: boolean }
+      user_org_role: {
+        Args: { _org: string; _user: string }
+        Returns: Database["public"]["Enums"]["org_role"]
+      }
     }
     Enums: {
-      [_ in never]: never
+      doc_category: "certification" | "evidence" | "org_document"
+      org_role: "owner" | "admin" | "editor" | "viewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +299,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      doc_category: ["certification", "evidence", "org_document"],
+      org_role: ["owner", "admin", "editor", "viewer"],
+    },
   },
 } as const

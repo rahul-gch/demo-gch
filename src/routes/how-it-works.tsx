@@ -19,6 +19,7 @@ import {
   Sparkles,
   Layers,
   ShieldCheck,
+  Building2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/how-it-works")({
@@ -149,6 +150,90 @@ function HowItWorks() {
             the header.
           </p>
         </Section>
+
+        {/* Orgs, members, access */}
+        <Section
+          id="orgs"
+          icon={<Building2 className="h-4 w-4" />}
+          kicker="01b · Organisations, members & access"
+          title="How an org, its team, and its files are structured"
+        >
+          <p>
+            Each persona is the <span className="font-medium text-foreground">Owner</span> of one
+            organisation. Real orgs have multiple people in them, so every org also gets seeded
+            teammates with different roles. From the header, hit{" "}
+            <span className="font-medium text-foreground">My organisation</span> to open the org
+            profile and see members, edit the profile, and manage documents.
+          </p>
+
+          <div className="rounded-lg border border-border bg-card p-4 text-xs">
+            <div className="mb-2 font-semibold text-foreground">Example: Acme Apparel</div>
+            <pre className="overflow-x-auto rounded bg-muted p-2 text-[11px] leading-relaxed text-foreground">{`Acme Apparel
+├─ Rahul          Owner    — Brand Lead
+├─ Priya Shah     Admin    — Sustainability Manager
+├─ Sam Webb       Editor   — Product Developer
+└─ Leah Park      Viewer   — Sourcing Analyst`}</pre>
+          </div>
+
+          <div className="rounded-lg border border-border bg-card p-4">
+            <div className="mb-2 text-xs font-semibold text-foreground">Four roles, who can do what</div>
+            <div className="overflow-hidden rounded-md border border-border">
+              <table className="w-full text-xs">
+                <thead className="bg-muted text-muted-foreground">
+                  <tr>
+                    <th className="px-2 py-1.5 text-left font-medium">Capability</th>
+                    <th className="px-2 py-1.5 text-center font-medium">Owner</th>
+                    <th className="px-2 py-1.5 text-center font-medium">Admin</th>
+                    <th className="px-2 py-1.5 text-center font-medium">Editor</th>
+                    <th className="px-2 py-1.5 text-center font-medium">Viewer</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    ["View org profile & documents", "✓", "✓", "✓", "✓"],
+                    ["Edit org profile (name, certs, description)", "✓", "✓", "✓", ""],
+                    ["Upload & delete own documents", "✓", "✓", "✓", ""],
+                    ["Invite or remove members", "✓", "✓", "", ""],
+                    ["Change member roles", "✓", "✓*", "", ""],
+                    ["Transfer ownership · delete org", "✓", "", "", ""],
+                  ].map(([cap, ...cells]) => (
+                    <tr key={cap} className="border-t border-border">
+                      <td className="px-2 py-1.5 text-foreground">{cap}</td>
+                      {cells.map((c, i) => (
+                        <td key={i} className="px-2 py-1.5 text-center text-foreground">{c}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-2 text-[11px] text-muted-foreground">*Admins can manage Admin/Editor/Viewer roles but only an Owner can promote someone to Owner.</p>
+          </div>
+
+          <div className="rounded-lg border border-border bg-card p-4">
+            <div className="mb-2 text-xs font-semibold text-foreground">Documents — three categories</div>
+            <ul className="space-y-1.5 text-xs">
+              <li>• <span className="font-medium text-foreground">Certifications</span> (ISO, GOTS, SMETA…) — visible to <em>every</em> signed-in user across the ecosystem. They feed the matchmaking "Certifications" factor and build trust at first contact.</li>
+              <li>• <span className="font-medium text-foreground">Evidence files</span> (shipments, dye-lots, audit reports) — readable only by members of the org that owns them. Missing evidence raises the risk meter shown in partner dashboards.</li>
+              <li>• <span className="font-medium text-foreground">Org documents</span> (insurance, policies, registration) — internal only.</li>
+            </ul>
+          </div>
+
+          <div className="rounded-lg border border-dashed border-border bg-muted/30 p-4 text-xs">
+            <div className="mb-1 font-semibold text-foreground">Where it lives</div>
+            <p>
+              Orgs, members, and documents are now persisted in Lovable Cloud, in Postgres tables{" "}
+              <code className="rounded bg-muted px-1 py-0.5 text-[11px]">orgs</code>,{" "}
+              <code className="rounded bg-muted px-1 py-0.5 text-[11px]">org_members</code>, and{" "}
+              <code className="rounded bg-muted px-1 py-0.5 text-[11px]">org_documents</code>, with
+              files in a private storage bucket. Row-Level Security guarantees a Northwind viewer
+              can never read Acme's internal documents — the rules are enforced at the database,
+              not just in the UI.
+            </p>
+          </div>
+        </Section>
+
+
 
         {/* Graph */}
         <Section
