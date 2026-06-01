@@ -8,39 +8,17 @@ import { UserDashboard } from "@/components/UserDashboard";
 import { subscribeComms, unreadCountFor, type Participant } from "@/lib/messaging";
 import { getCurrentUser, signOut, DEMO_ACCOUNTS, type AuthRole } from "@/lib/auth";
 import { ensureSeed } from "@/lib/org.functions";
-import { LogOut, LayoutDashboard, Sliders, Eye, HelpCircle, Map as MapIcon } from "lucide-react";
 import { ORGS, USERS, EDGES, type OrgType as EcoOrgType } from "@/lib/ecosystem-data";
 import {
   loadSettings, saveSettings, scorePair, topMatches, ecosystemMatchStats,
   FACTOR_META, ALL_CERTS, type MatchSettings, type MatchFactor,
 } from "@/lib/matchmaking";
 import {
-  AlertTriangle,
-  FileSearch,
-  TrendingUp,
-  Network,
-  ShieldAlert,
-  CheckCircle2,
-  Clock,
-  Upload,
-  Factory,
-  Boxes,
-  GitBranch,
-  Inbox,
-  Users,
-  Settings2,
-  ShieldCheck,
-  Building2,
-  Mail,
-  Phone,
-  MessageSquare,
-  Globe,
-  BadgeCheck,
-  CircleHelp,
-  ArrowRight,
-  ClipboardList,
-  FileCheck2,
-  PackageSearch,
+  LogOut, LayoutDashboard, Sliders, Eye, HelpCircle, Map as MapIcon,
+  AlertTriangle, FileSearch, TrendingUp, Network, ShieldAlert, CheckCircle2,
+  Clock, Upload, Factory, Boxes, GitBranch, Inbox, Users, Settings2, ShieldCheck,
+  Building2, Mail, Phone, MessageSquare, Globe, BadgeCheck, CircleHelp, ArrowRight,
+  ClipboardList, FileCheck2, PackageSearch,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
