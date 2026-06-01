@@ -69,9 +69,13 @@ function loadGoogleMaps(): Promise<void> {
 export function EcosystemMap({
   selectedId,
   onSelect,
+  includeIds,
+  centerId,
 }: {
   selectedId?: string | null;
   onSelect?: (id: string) => void;
+  includeIds?: Set<string>;
+  centerId?: string;
 }) {
   const ref = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
