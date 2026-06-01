@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { EcosystemGraph } from "@/components/EcosystemGraph";
 import { EcosystemMap } from "@/components/EcosystemMap";
 import { MessagesPanel } from "@/components/MessagesPanel";
+import { UserDashboard } from "@/components/UserDashboard";
 import { subscribeComms, unreadCountFor, type Participant } from "@/lib/messaging";
 import { getCurrentUser, signOut, type AuthRole } from "@/lib/auth";
 import { LogOut, LayoutDashboard, Sliders, Eye, HelpCircle, Map as MapIcon } from "lucide-react";
