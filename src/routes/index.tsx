@@ -8,7 +8,7 @@ import { UserDashboard } from "@/components/UserDashboard";
 import { subscribeComms, unreadCountFor, type Participant } from "@/lib/messaging";
 import { getCurrentUser, signOut, DEMO_ACCOUNTS, type AuthRole } from "@/lib/auth";
 import { ensureSeed } from "@/lib/org.functions";
-import { LogOut, LayoutDashboard, Sliders, Eye, HelpCircle, Map as MapIcon, Building2 } from "lucide-react";
+import { LogOut, LayoutDashboard, Sliders, Eye, HelpCircle, Map as MapIcon } from "lucide-react";
 import { ORGS, USERS, EDGES, type OrgType as EcoOrgType } from "@/lib/ecosystem-data";
 import {
   loadSettings, saveSettings, scorePair, topMatches, ecosystemMatchStats,
