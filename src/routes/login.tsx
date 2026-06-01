@@ -23,9 +23,10 @@ function LoginPage() {
     if (getCurrentUser()) navigate({ to: "/" });
   }, [navigate]);
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
-    const user = signIn(username, password);
+    setError(null);
+    const user = await signIn(username, password);
     if (!user) {
       setError("Invalid username or password.");
       return;

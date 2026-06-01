@@ -113,8 +113,8 @@ function Workspace() {
 
   if (!user) return null;
 
-  function handleSignOut() {
-    signOut();
+  async function handleSignOut() {
+    await signOut();
     navigate({ to: "/login" });
   }
 
