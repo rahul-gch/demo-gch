@@ -1,10 +1,11 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { EcosystemGraph } from "@/components/EcosystemGraph";
+import { EcosystemMap } from "@/components/EcosystemMap";
 import { MessagesPanel } from "@/components/MessagesPanel";
 import { subscribeComms, unreadCountFor, type Participant } from "@/lib/messaging";
 import { getCurrentUser, signOut, type AuthRole } from "@/lib/auth";
-import { LogOut, LayoutDashboard, Sliders, Eye } from "lucide-react";
+import { LogOut, LayoutDashboard, Sliders, Eye, HelpCircle, Map as MapIcon } from "lucide-react";
 import { ORGS, USERS, EDGES, type OrgType as EcoOrgType } from "@/lib/ecosystem-data";
 import {
   loadSettings, saveSettings, scorePair, topMatches, ecosystemMatchStats,
@@ -193,6 +194,13 @@ function Workspace() {
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               <span className="font-medium text-foreground">{user.name}</span>
             </div>
+            <Link
+              to="/how-it-works"
+              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <HelpCircle className="h-3.5 w-3.5" />
+              How it works
+            </Link>
             <button
               onClick={() => setMessagesOpen(true)}
               className="relative inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
