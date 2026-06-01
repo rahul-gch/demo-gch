@@ -110,20 +110,23 @@ export function EcosystemMap({
         mapRef.current = map;
         infoRef.current = new g.maps.InfoWindow();
 
-        ORGS.forEach((o) => {
+        const orgsToShow = includeIds ? ORGS.filter((o) => includeIds.has(o.id)) : ORGS;
+
+        orgsToShow.forEach((o) => {
           const pos = orgLatLng(o);
           const size = o.size === "L" ? 10 : o.size === "M" ? 8 : 6;
+          const isCenter = centerId === o.id;
           const marker = new g.maps.Marker({
             position: pos,
             map,
             title: o.name,
             icon: {
               path: g.maps.SymbolPath.CIRCLE,
-              scale: size,
+              scale: isCenter ? size + 3 : size,
               fillColor: TYPE_COLOR[o.type],
               fillOpacity: 0.85,
-              strokeColor: o.risk > 0.6 ? "#f43f5e" : "#0f172a",
-              strokeWeight: o.risk > 0.6 ? 2.5 : 1.5,
+              strokeColor: isCenter ? "#ffffff" : o.risk > 0.6 ? "#f43f5e" : "#0f172a",
+              strokeWeight: isCenter ? 3 : o.risk > 0.6 ? 2.5 : 1.5,
             },
           });
           marker.addListener("click", () => {
@@ -151,6 +154,30 @@ export function EcosystemMap({
           });
           markersRef.current[o.id] = marker;
         });
+
+        // Connecting lines from center to partners
+        if (includeIds && centerId) {
+          const center = orgsToShow.find((o) => o.id === centerId);
+          if (center) {
+            const centerPos = orgLatLng(center);
+            orgsToShow.filter((o) => o.id !== centerId).forEach((o) => {
+              new g.maps.Polyline({
+                path: [centerPos, orgLatLng(o)],
+                geodesic: true,
+                strokeColor: TYPE_COLOR[o.type],
+                strokeOpacity: 0.5,
+                strokeWeight: 1.5,
+                map,
+              });
+            });
+          }
+        }
+
+        if (includeIds && orgsToShow.length > 0) {
+          const bounds = new g.maps.LatLngBounds();
+          orgsToShow.forEach((o) => bounds.extend(orgLatLng(o)));
+          map.fitBounds(bounds, 60);
+        }
 
         setState("ready");
       })
