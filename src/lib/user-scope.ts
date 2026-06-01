@@ -3,9 +3,9 @@ import { topMatches, loadSettings, type MatchSettings } from "./matchmaking";
 import type { AuthRole } from "./auth";
 
 const ROLE_ORG: Record<Exclude<AuthRole, "admin">, string> = {
-  rahul: "acme",
-  george: "northwind",
-  maria: "starkv",
+  rahul: "patagonia",
+  george: "arvind",
+  maria: "control-union",
 };
 
 export function getOrgForUser(role: AuthRole): EcosystemOrg | null {

@@ -3,89 +3,99 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-// Seeded organisations (mirrors src/lib/ecosystem-data.ts ORGS subset)
-const SEED_ORGS = [
-  { slug: "acme",      name: "Acme Apparel",      type: "brand",    country: "Portugal", region: "EU",       size: "L", tier: 1, certifications: ["GOTS", "RCS"],         description: "Premium organic apparel brand." },
-  { slug: "northwind", name: "Northwind Mills",   type: "supplier", country: "Portugal", region: "EU",       size: "L", tier: 2, certifications: ["GOTS", "OEKO-TEX"],    description: "Vertically integrated knit & woven mill." },
-  { slug: "starkv",    name: "Stark Verification",type: "verifier", country: "UK",       region: "EU",       size: "M", tier: 2, certifications: ["SMETA 4P", "ISO 17021"], description: "Independent third-party audit body." },
-  { slug: "lumon",     name: "Lumon Outerwear",   type: "brand",    country: "USA",      region: "Americas", size: "L", tier: 1, certifications: ["RCS", "BlueSign"],     description: "Technical outdoor outerwear." },
-  { slug: "wayne",     name: "Wayne Heritage",    type: "brand",    country: "UK",       region: "EU",       size: "M", tier: 1, certifications: ["GOTS"],                description: "Heritage British clothing brand." },
-  { slug: "initech",   name: "Initech Basics",    type: "brand",    country: "Germany",  region: "EU",       size: "M", tier: 1, certifications: ["GOTS", "OEKO-TEX"],    description: "Essentials at scale." },
-  { slug: "cyber",     name: "Cyberdyne Active",  type: "brand",    country: "Japan",    region: "APAC",     size: "M", tier: 1, certifications: ["BlueSign"],            description: "Performance activewear." },
-  { slug: "tyrell",    name: "Tyrell Dyeworks",   type: "supplier", country: "Portugal", region: "EU",       size: "M", tier: 2, certifications: ["GOTS", "BlueSign"],    description: "Low-impact dye specialist." },
-  { slug: "hooli",     name: "Hooli Knit",        type: "supplier", country: "Portugal", region: "EU",       size: "S", tier: 2, certifications: ["OEKO-TEX"],           description: "Boutique knitting facility." },
-  { slug: "ouroboros", name: "Ouroboros Audit",   type: "verifier", country: "Netherlands", region: "EU",    size: "L", tier: 2, certifications: ["SMETA 4P", "ZDHC"],    description: "Pan-European audit firm." },
-];
-
-// Persona email → org + ghost teammates seeded with them.
-const PERSONA_OWNERSHIP: Record<string, { orgSlug: string; displayName: string; title: string; teammates: { name: string; title: string; role: "admin" | "editor" | "viewer" }[] }> = {
-  "rahul@gch.local":  { orgSlug: "acme",      displayName: "Rahul",   title: "Brand Lead",         teammates: [
-    { name: "Priya Shah",   title: "Sustainability Manager", role: "admin" },
-    { name: "Sam Webb",     title: "Product Developer",      role: "editor" },
-    { name: "Leah Park",    title: "Sourcing Analyst",       role: "viewer" },
-  ]},
-  "george@gch.local": { orgSlug: "northwind", displayName: "George",  title: "Operations Lead",    teammates: [
-    { name: "Joana Pires",  title: "Production Manager",     role: "admin" },
-    { name: "Bruno Lopes",  title: "Quality Engineer",       role: "editor" },
-    { name: "Marta Silva",  title: "Logistics",              role: "viewer" },
-  ]},
-  "maria@gch.local":  { orgSlug: "starkv",    displayName: "Maria",   title: "Lead Reviewer",      teammates: [
-    { name: "Tom Becker",   title: "Senior Auditor",         role: "admin" },
-    { name: "Lia Romano",   title: "Evidence Analyst",       role: "editor" },
-    { name: "Owen Wright",  title: "Compliance Trainee",     role: "viewer" },
-  ]},
-};
-
-/**
- * Idempotent seed: upserts orgs, makes the calling user Owner of their persona's org,
- * and inserts ghost teammates the first time.
- */
-export const ensureSeed = createServerFn({ method: "POST" })
+/** Returns the calling user's session: their primary org membership + admin flag. */
+export const getMySession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId, claims } = context;
-    const email = (claims?.email as string | undefined)?.toLowerCase();
+    const email = (claims?.email as string | undefined) ?? "";
+    const displayName =
+      (claims?.user_metadata as { display_name?: string } | undefined)?.display_name ??
+      email.split("@")[0] ??
+      "Member";
 
-    // Upsert all seed orgs
-    for (const o of SEED_ORGS) {
-      await supabaseAdmin.from("orgs").upsert({
-        slug: o.slug, name: o.name, type: o.type, country: o.country,
-        region: o.region, size: o.size, tier: o.tier,
-        certifications: o.certifications, description: o.description,
-      }, { onConflict: "slug" });
+    const { data: membership } = await supabaseAdmin
+      .from("org_members")
+      .select("role, orgs:org_id(id, slug, name, type)")
+      .eq("user_id", userId)
+      .order("joined_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    // No admin role table yet — admin flag stays false for now.
+    const roleRow: { role: string } | null = null;
+
+
+
+    const org = (membership?.orgs as { id: string; slug: string; name: string; type: string } | null) ?? null;
+
+    return {
+      userId,
+      email,
+      displayName,
+      isAdmin: !!roleRow,
+      orgId: org?.id ?? null,
+      orgSlug: org?.slug ?? null,
+      orgName: org?.name ?? null,
+      orgType: org?.type ?? null,
+      memberRole: (membership?.role as string | undefined) ?? null,
+    };
+  });
+
+/** Creates the calling user's organisation and makes them Owner. Idempotent if slug exists they get an error. */
+export const createMyOrg = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      name: z.string().min(2).max(120),
+      type: z.enum(["brand", "supplier", "verifier", "regulator"]),
+      country: z.string().min(2).max(64),
+      website: z.string().url().max(255).optional().or(z.literal("")),
+      description: z.string().max(500).optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { userId, claims } = context;
+    const displayName =
+      (claims?.user_metadata as { display_name?: string } | undefined)?.display_name ??
+      (claims?.email as string | undefined)?.split("@")[0] ??
+      "Owner";
+
+    // Slugify
+    const baseSlug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 48) || "org";
+    let slug = baseSlug;
+    for (let i = 2; ; i++) {
+      const { data: existing } = await supabaseAdmin.from("orgs").select("id").eq("slug", slug).maybeSingle();
+      if (!existing) break;
+      slug = `${baseSlug}-${i}`;
+      if (i > 50) throw new Error("Could not generate a unique slug");
     }
 
-    if (!email || !PERSONA_OWNERSHIP[email]) return { seeded: false, reason: "not a persona" };
+    const { data: org, error } = await supabaseAdmin
+      .from("orgs")
+      .insert({
+        slug,
+        name: data.name,
+        type: data.type,
+        country: data.country,
+        website: data.website || null,
+        description: data.description ?? null,
+        certifications: [],
+      })
+      .select("id, slug")
+      .single();
+    if (error || !org) throw new Error(error?.message ?? "Failed to create organisation");
 
-    const persona = PERSONA_OWNERSHIP[email];
-    const { data: org } = await supabaseAdmin.from("orgs").select("id").eq("slug", persona.orgSlug).single();
-    if (!org) return { seeded: false, reason: "org missing" };
-
-    // Owner membership for the real user
-    await supabaseAdmin.from("org_members").upsert({
-      org_id: org.id, user_id: userId,
-      display_name: persona.displayName, title: persona.title,
+    const { error: memErr } = await supabaseAdmin.from("org_members").insert({
+      org_id: org.id,
+      user_id: userId,
       role: "owner",
-    }, { onConflict: "org_id,user_id" });
+      display_name: displayName,
+      title: "Owner",
+    });
+    if (memErr) throw new Error(memErr.message);
 
-    // Ghost teammates — insert only if org has fewer than expected members
-    const { count } = await supabaseAdmin
-      .from("org_members").select("*", { count: "exact", head: true })
-      .eq("org_id", org.id);
-    if ((count ?? 0) < persona.teammates.length + 1) {
-      for (const t of persona.teammates) {
-        const { data: existing } = await supabaseAdmin
-          .from("org_members").select("id").eq("org_id", org.id).eq("display_name", t.name).maybeSingle();
-        if (!existing) {
-          await supabaseAdmin.from("org_members").insert({
-            org_id: org.id, user_id: null,
-            display_name: t.name, title: t.title, role: t.role,
-          });
-        }
-      }
-    }
-
-    return { seeded: true, orgSlug: persona.orgSlug };
+    return { orgId: org.id, slug: org.slug };
   });
 
 export const getOrgBySlug = createServerFn({ method: "POST" })
@@ -161,7 +171,6 @@ export const updateMemberRole = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    // Only an Owner can grant the Owner role.
     if (data.role === "owner") {
       const { data: target } = await supabase.from("org_members").select("org_id").eq("id", data.memberId).single();
       if (target) {

@@ -7,7 +7,7 @@ import {
   getTopMatchSuggestions, getIncomingVerifications, getPrimaryUserForOrg,
 } from "@/lib/user-scope";
 import { unreadCountFor, subscribeComms, type Participant } from "@/lib/messaging";
-import type { DemoAccount } from "@/lib/auth";
+import type { SessionUser } from "@/lib/auth";
 import {
   Network, Map as MapIcon, ShieldAlert, Sparkles, Activity,
   MessageSquare, Building2, Users, AlertTriangle, FileSearch, CheckCircle2,
@@ -19,7 +19,7 @@ const ROLE_TO_PARTICIPANT: Record<string, Participant> = {
   rahul: "rahul", george: "george", maria: "maria", admin: "admin",
 };
 
-export function UserDashboard({ user }: { user: DemoAccount }) {
+export function UserDashboard({ user }: { user: SessionUser }) {
   const org = getOrgForUser(user.role);
   const me = ROLE_TO_PARTICIPANT[user.role];
   const [tab, setTab] = useState<Tab>("network");
@@ -60,7 +60,7 @@ export function UserDashboard({ user }: { user: DemoAccount }) {
     const u = getPrimaryUserForOrg(orgId);
     // map known org primary users back to demo participants
     const map: Record<string, Participant> = {
-      acme: "rahul", northwind: "george", starkv: "maria",
+      patagonia: "rahul", arvind: "george", "control-union": "maria",
     };
     const p = map[orgId];
     if (p && p !== me) {
