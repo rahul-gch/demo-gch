@@ -1,53 +1,78 @@
 
-# Plan — "How It Works" page + Map view
+# Per-user dashboards (Rahul / George / Maria / Admin)
 
-Build one explanatory page that walks through the whole prototype (roles, matchmaking algorithm, messaging, ecosystem graph) and adds a real geographic **map view** of all organisations using the Google Maps connector.
+Today `/` shows the same ecosystem to everyone and only the admin tab has the graph/map. We'll give each non-admin persona their own dashboard that is **scoped to their org and direct partners**, with a map view, a risk panel, and quick actions (message / request meeting / view evidence).
 
-## 1. New route — `/how-it-works`
+No backend changes in this step — we keep using `ORGS`/`EDGES`/`USERS` from `src/lib/ecosystem-data.ts` and the existing `localStorage` messaging. (Cloud migration stays as a separate follow-up.)
 
-File: `src/routes/how-it-works.tsx` (own `head()` for SEO).
+## 1. New helper — `src/lib/user-scope.ts`
 
-Sections, in order:
+Pure functions, no UI:
 
-1. **Prototype overview** — what GCH demo is, the 4 personas (Rahul / George / Maria / Admin), and how to switch between them on `/`.
-2. **Ecosystem graph** — live embed of `<EcosystemGraph coreOnly />` with a legend explaining node colour (type), node size (S/M/L), ring (high risk), edge colour (supply / verification / partnership), dashed = missing evidence.
-3. **Matchmaking algorithm** — explained from `src/lib/matchmaking.ts`:
-   - Hard filters: `sameCountryOnly`, `sameRegionOnly`, `minSize`, `maxRisk`, `requiredCerts`.
-   - 8 scoring factors with their formulas, pulled from `FACTOR_META`: type fit, tier adjacency, geo proximity, size fit, cert overlap, co-order history, confidence floor, risk penalty.
-   - Weighted-sum normalisation → 0–100 score, then thresholds → auto / review / reject.
-   - Worked example: score one real pair (e.g. Acme ↔ Northwind) and show the per-factor breakdown via `scorePair()`.
-   - **"Parameters we could also consider"** callout (purely informational — not implemented): lead-time, MOQ, price band, payment terms, language, ESG score, capacity utilisation, sanctions list, carbon intensity, on-time delivery, defect rate, IP/data-handling maturity.
-4. **Messaging & meetings** — how `gch_comms_v1` works: direct threads between any two participants, unread badges, meeting requests with accept / decline / reschedule. Includes a screenshot-style mini-mockup linking to the Messages button on `/`.
-5. **Map view** — embedded `<EcosystemMap />` (see §2).
-6. **Tech notes** — localStorage stores, no backend, seeded demo data; one paragraph.
+- `getOrgForUser(role)` → returns the `EcosystemOrg` for Rahul (`acme`), George (`northwind`), Maria (`starkv`).
+- `getPartners(orgId)` → walks `EDGES` and returns `{ org, edge, direction: "in"|"out", kind }[]` for every org directly connected to `orgId` (supply + verification + partnership).
+- `getPartnerIds(orgId)` → `Set<string>` of `orgId + partners`, used to filter graph/map.
+- `getRiskSignals(orgId)` → for the org's partners, returns:
+  - `highRiskPartners`: partners where `risk > 0.5`
+  - `missingEvidenceEdges`: edges where `evidenceCount === 0`
+  - `lowConfidencePartners`: partners where `confidence < 0.6`
+  - `flaggedPartners`: partners where `status === "Flagged"`
+  - aggregate `avgPartnerRisk`, `avgPartnerConfidence`
+- `getTopMatchSuggestions(orgId, n)` → reuses `topMatches()` from `matchmaking.ts` filtered to orgs that are **not already partners** (i.e. new connection suggestions).
 
-Add a "How it works" link in the header on `src/routes/index.tsx` (next to the Messages button) so users can find the page.
+## 2. New component — `src/components/UserDashboard.tsx`
 
-## 2. New component — `src/components/EcosystemMap.tsx`
+Single component that takes `{ user: DemoAccount }` and renders the scoped dashboard. Layout:
 
-Geographic map of all `ORGS`, rendered with Google Maps JS API via the existing **Google Maps connector** (`VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY`, loaded with `loading=async` + global `initMap` callback, per connector knowledge).
+```text
+┌─ Header strip: org name, type, country, tier, size, status, confidence/risk meters
+├─ KPI row (4 cards): Partners count · High-risk partners · Missing evidence · Open messages
+├─ Tabs: [ My Network ] [ Map ] [ Risk ] [ Suggested Matches ] [ Activity ]
+│   • My Network: <EcosystemGraph> filtered to {org + partners}, click → side drawer
+│       with partner details, "Message" + "Request meeting" buttons (open MessagesPanel
+│       prefilled with that orgId's primary user from USERS).
+│   • Map: <EcosystemMap> filtered to the same id set, same drawer behaviour.
+│   • Risk: table of partners sorted by risk desc, with badges (risk, confidence,
+│       evidence count, status) + per-row "Request evidence" action that opens
+│       a meeting request prefilled with subject "Evidence review".
+│   • Suggested Matches: list from getTopMatchSuggestions() with score breakdown
+│       (reusing the factor display from how-it-works), each with "Introduce" CTA
+│       (sends a message via existing messaging.ts).
+│   • Activity: recent messages + meetings involving this user (read from
+│       gch_comms_v1 via existing messaging.ts helpers).
+```
 
-- A hard-coded `COUNTRY_COORDS` map (Portugal, USA, UK, Germany, Japan, Mexico, India, China, Vietnam, Brazil, Netherlands, Belgium, Singapore) gives each org a lat/lng — small jitter per org so co-located orgs don't overlap exactly.
-- One `google.maps.Marker` per org, colour-coded by `TYPE_COLOR` (re-export from `EcosystemGraph`).
-- Click marker → `InfoWindow` with org name, type, country, tier, size, confidence, risk, status, top 3 matches (`topMatches(orgId, loadSettings(), 3)`), and a "View details" button.
-- Legend overlay (type colours) in a corner.
-- Loading + error states; if connector key is missing, show an inline notice with a "Connect Google Maps" hint instead of crashing.
+Maria (verifier) sees the same layout but her "partners" are the brands/suppliers she verifies (already encoded as `verification` edges from `starkv`), and the Suggested Matches tab is renamed "Audit candidates".
 
-If the Google Maps connector is not yet linked to this project, call `standard_connectors--connect` for `google_maps` before writing the map code.
+## 3. Extend `EcosystemGraph` and `EcosystemMap`
 
-## 3. Map view on `/` (dashboard)
+Both already accept org lists implicitly through `ORGS`. Add an optional `includeIds?: Set<string>` prop:
 
-In `src/routes/index.tsx`, add a small **view toggle** above the existing ecosystem graph in the admin dashboard: `Graph | Map`. Map mode renders `<EcosystemMap />` in the same panel; graph mode keeps current behaviour. Clicking a marker selects that org (same `onSelect` contract as the graph) so the existing detail drawer logic still works.
+- `EcosystemGraph`: when `includeIds` is passed, filter `visible` to those ids and skip `coreOnly` layout. Re-flow nodes onto a simple radial layout centred on the user's org (org in centre at 50/50, partners spaced on a circle of radius 32). Edges already filter by `visibleIds`.
+- `EcosystemMap`: when `includeIds` is passed, only plot those orgs and auto-fit bounds to them; also draw thin polylines between the user's org and each partner, coloured by edge kind.
 
-No other behaviour changes.
+No change to existing call sites (admin view keeps full ecosystem).
+
+## 4. Wire into `src/routes/index.tsx`
+
+- Detect current persona via `getCurrentUser()`.
+- If `role === "admin"` → keep current admin overview (graph/map toggle stays).
+- Otherwise → render `<UserDashboard user={...} />` instead of the current shared content.
+- Header keeps "How it works", "Messages", and persona switcher.
+
+## 5. "Risk assessment from other entities"
+
+Inside the Risk tab, for each partner also show **incoming verifications** (edges of kind `verification` pointing at that partner from any verifier) with the verifier's name, evidence count, and last-active timestamp. This is a read-only roll-up from `EDGES` — gives Rahul a "what do auditors say about my suppliers" view and George a "who has verified me" view.
 
 ## Files
 
-- **Create:** `src/routes/how-it-works.tsx`, `src/components/EcosystemMap.tsx`
-- **Modify:** `src/routes/index.tsx` (header link + Graph/Map toggle in admin view)
+- **Create:** `src/lib/user-scope.ts`, `src/components/UserDashboard.tsx`
+- **Modify:** `src/components/EcosystemGraph.tsx` (add `includeIds` + radial layout branch), `src/components/EcosystemMap.tsx` (add `includeIds` + fit-bounds + partner polylines), `src/routes/index.tsx` (persona-based switch)
 
 ## Out of scope
 
-- Custom map tiles / Mapbox.
-- Real geocoding (we use the hard-coded country centroids — accurate enough for a demo).
-- Editing matchmaking logic itself; this page only explains what's already in `matchmaking.ts`.
+- Persisting dashboards / per-user customisation (no backend yet).
+- New matchmaking factors — Suggested Matches reuses existing `scorePair`.
+- Editing `how-it-works` content.
+
+Once you approve I'll implement it.

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { EcosystemGraph } from "@/components/EcosystemGraph";
 import { EcosystemMap } from "@/components/EcosystemMap";
 import { MessagesPanel } from "@/components/MessagesPanel";
+import { UserDashboard } from "@/components/UserDashboard";
 import { subscribeComms, unreadCountFor, type Participant } from "@/lib/messaging";
 import { getCurrentUser, signOut, type AuthRole } from "@/lib/auth";
 import { LogOut, LayoutDashboard, Sliders, Eye, HelpCircle, Map as MapIcon } from "lucide-react";
@@ -252,6 +253,11 @@ function Workspace() {
         </div>
 
         {isAdmin && !previewAs && <AdminDashboard tab={adminTab} />}
+        {(!isAdmin || previewAs) && renderRole && renderRole !== "org" && renderRole !== "admin" && (
+          <div className="mb-6">
+            <UserDashboard user={{ ...user, role: renderRole as AuthRole, name: ROLES.find(r => r.id === renderRole)?.name ?? user.name }} />
+          </div>
+        )}
         {(!isAdmin || previewAs) && renderRole === "rahul" && <RahulDashboard />}
         {(!isAdmin || previewAs) && renderRole === "george" && <GeorgeDashboard />}
         {(!isAdmin || previewAs) && renderRole === "maria" && <MariaDashboard />}
