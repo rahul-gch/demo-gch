@@ -1,47 +1,53 @@
 
-## Goal
-Add in-app communication so personas (Rahul, George, Maria, Admin) can send messages, request meetings, and respond to each other — visible across logins on the same browser.
+# Plan — "How It Works" page + Map view
 
-## Scope (frontend-only, demo-grade)
-- Persisted in `localStorage` (no backend). Keyed store survives logout/login and reloads.
-- 4 participants: `rahul`, `george`, `maria`, `admin`.
-- Inbox visible to the logged-in user only — they see threads where they are sender or recipient.
+Build one explanatory page that walks through the whole prototype (roles, matchmaking algorithm, messaging, ecosystem graph) and adds a real geographic **map view** of all organisations using the Google Maps connector.
 
-## New files
+## 1. New route — `/how-it-works`
 
-### 1. `src/lib/messaging.ts`
-- Types:
-  - `Message { id, from, to, text, ts, read }`
-  - `MeetingRequest { id, from, to, title, proposedAt, durationMin, agenda, status: "pending" | "accepted" | "declined" | "rescheduled", responseNote?, rescheduledAt?, ts }`
-- Store shape: `{ messages: Message[], meetings: MeetingRequest[] }` under key `gch_comms`.
-- Helpers: `loadComms`, `saveComms`, `sendMessage`, `markThreadRead`, `createMeeting`, `respondMeeting`, `threadsFor(user)`, `messagesBetween(a,b)`, `meetingsFor(user)`.
-- Light pub/sub (`window`-level event `gch:comms`) so the UI re-renders after any mutation in the same tab.
-- Seed defaults on first load: a few sample messages and one pending meeting between Rahul↔George and Rahul↔Maria so the inbox isn't empty.
+File: `src/routes/how-it-works.tsx` (own `head()` for SEO).
 
-## Modified files
+Sections, in order:
 
-### 2. `src/routes/index.tsx`
-- Add a `Messages` tab/section visible to all logged-in users (not just admin):
-  - Header: a small "Messages" pill with unread badge next to the user/profile area.
-  - Clicking opens a Messages panel below the dashboard (toggled state, no new route).
-- `MessagesPanel` component:
-  - Left column: thread list (one per other participant). Shows name, last message preview, timestamp, unread badge.
-  - Right column: active thread.
-    - Message bubbles (mine vs theirs) chronologically.
-    - Composer: textarea + Send button.
-    - "Request meeting" button → opens inline form (title, date/time, duration, agenda) → creates pending meeting.
-    - Meeting cards inline in the thread, with action buttons for the recipient:
-      - Accept, Decline (with optional note), Propose new time (date/time input → status `rescheduled` with `rescheduledAt`).
-    - Sender sees response status + note.
-- Admin view: same component, but admin can see/select threads with any of the 3 users; non-admin users see threads with the other 3 participants only (including admin).
+1. **Prototype overview** — what GCH demo is, the 4 personas (Rahul / George / Maria / Admin), and how to switch between them on `/`.
+2. **Ecosystem graph** — live embed of `<EcosystemGraph coreOnly />` with a legend explaining node colour (type), node size (S/M/L), ring (high risk), edge colour (supply / verification / partnership), dashed = missing evidence.
+3. **Matchmaking algorithm** — explained from `src/lib/matchmaking.ts`:
+   - Hard filters: `sameCountryOnly`, `sameRegionOnly`, `minSize`, `maxRisk`, `requiredCerts`.
+   - 8 scoring factors with their formulas, pulled from `FACTOR_META`: type fit, tier adjacency, geo proximity, size fit, cert overlap, co-order history, confidence floor, risk penalty.
+   - Weighted-sum normalisation → 0–100 score, then thresholds → auto / review / reject.
+   - Worked example: score one real pair (e.g. Acme ↔ Northwind) and show the per-factor breakdown via `scorePair()`.
+   - **"Parameters we could also consider"** callout (purely informational — not implemented): lead-time, MOQ, price band, payment terms, language, ESG score, capacity utilisation, sanctions list, carbon intensity, on-time delivery, defect rate, IP/data-handling maturity.
+4. **Messaging & meetings** — how `gch_comms_v1` works: direct threads between any two participants, unread badges, meeting requests with accept / decline / reschedule. Includes a screenshot-style mini-mockup linking to the Messages button on `/`.
+5. **Map view** — embedded `<EcosystemMap />` (see §2).
+6. **Tech notes** — localStorage stores, no backend, seeded demo data; one paragraph.
 
-### 3. Small UI affordance on existing dashboards
-- On Rahul/George/Maria dashboards, add a "Message" button on relevant items (e.g., matchmaking suggestion cards) that opens the Messages panel pre-filled to that recipient. Keep this minimal — just a button that sets the active thread.
+Add a "How it works" link in the header on `src/routes/index.tsx` (next to the Messages button) so users can find the page.
+
+## 2. New component — `src/components/EcosystemMap.tsx`
+
+Geographic map of all `ORGS`, rendered with Google Maps JS API via the existing **Google Maps connector** (`VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY`, loaded with `loading=async` + global `initMap` callback, per connector knowledge).
+
+- A hard-coded `COUNTRY_COORDS` map (Portugal, USA, UK, Germany, Japan, Mexico, India, China, Vietnam, Brazil, Netherlands, Belgium, Singapore) gives each org a lat/lng — small jitter per org so co-located orgs don't overlap exactly.
+- One `google.maps.Marker` per org, colour-coded by `TYPE_COLOR` (re-export from `EcosystemGraph`).
+- Click marker → `InfoWindow` with org name, type, country, tier, size, confidence, risk, status, top 3 matches (`topMatches(orgId, loadSettings(), 3)`), and a "View details" button.
+- Legend overlay (type colours) in a corner.
+- Loading + error states; if connector key is missing, show an inline notice with a "Connect Google Maps" hint instead of crashing.
+
+If the Google Maps connector is not yet linked to this project, call `standard_connectors--connect` for `google_maps` before writing the map code.
+
+## 3. Map view on `/` (dashboard)
+
+In `src/routes/index.tsx`, add a small **view toggle** above the existing ecosystem graph in the admin dashboard: `Graph | Map`. Map mode renders `<EcosystemMap />` in the same panel; graph mode keeps current behaviour. Clicking a marker selects that org (same `onSelect` contract as the graph) so the existing detail drawer logic still works.
+
+No other behaviour changes.
+
+## Files
+
+- **Create:** `src/routes/how-it-works.tsx`, `src/components/EcosystemMap.tsx`
+- **Modify:** `src/routes/index.tsx` (header link + Graph/Map toggle in admin view)
 
 ## Out of scope
-- No real-time across browsers/devices, no email, no calendar export.
-- No new routes, no auth changes, no Lovable Cloud / backend.
-- No file attachments, no group threads.
 
-## Result
-After login, every persona has a Messages inbox where they can chat 1:1 with the other personas, send meeting requests, and accept / decline / reschedule. State persists locally so switching accounts in the same browser shows the conversation from the other side.
+- Custom map tiles / Mapbox.
+- Real geocoding (we use the hard-coded country centroids — accurate enough for a demo).
+- Editing matchmaking logic itself; this page only explains what's already in `matchmaking.ts`.
