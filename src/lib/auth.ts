@@ -1,68 +1,77 @@
 import { supabase } from "@/integrations/supabase/client";
 
+// Internal "workspace type" — derived from the user's org type (brand/supplier/verifier)
+// or the user_roles table (admin). Kept as a stable enum so existing UI keeps working.
 export type AuthRole = "rahul" | "george" | "maria" | "admin";
 
-export type DemoAccount = {
-  username: string;
-  password: string;
+export type SessionUser = {
+  id: string;            // supabase auth user id
   email: string;
-  role: AuthRole;
   name: string;
+  role: AuthRole;        // workspace type
   roleLabel: string;
   orgSlug: string | null;
 };
 
-// Deterministic emails/passwords so the demo always maps to the same Supabase auth users.
-export const DEMO_ACCOUNTS: DemoAccount[] = [
-  { username: "admin",  password: "GchDemo!Admin2025",  email: "admin@gch.local",    role: "admin",  name: "GCH Admin", roleLabel: "Platform Operator",  orgSlug: null },
-  { username: "rahul",  password: "GchDemo!Rahul2025",  email: "rahul@gch.local",    role: "rahul",  name: "Rahul",     roleLabel: "Brand Lead",         orgSlug: "acme" },
-  { username: "george", password: "GchDemo!George2025", email: "george@gch.local",   role: "george", name: "George",    roleLabel: "Supplier Ops",       orgSlug: "northwind" },
-  { username: "maria",  password: "GchDemo!Maria2025",  email: "maria@gch.local",    role: "maria",  name: "Maria",     roleLabel: "Evidence Reviewer",  orgSlug: "starkv" },
-];
+const SESSION_KEY = "gch_session_v2";
 
-const STORAGE_KEY = "gch_demo_auth";
-
-export function getCurrentUser(): DemoAccount | null {
+export function getCurrentUser(): SessionUser | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    return DEMO_ACCOUNTS.find((a) => a.role === (raw as AuthRole)) ?? null;
+    const raw = localStorage.getItem(SESSION_KEY);
+    return raw ? (JSON.parse(raw) as SessionUser) : null;
   } catch {
     return null;
   }
 }
 
-export async function signIn(username: string, password: string): Promise<DemoAccount | null> {
-  const match = DEMO_ACCOUNTS.find(
-    (a) => a.username.toLowerCase() === username.trim().toLowerCase() && a.password === password,
-  );
-  if (!match) return null;
+export function setCurrentUser(user: SessionUser | null) {
+  if (typeof window === "undefined") return;
+  if (user) localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+  else localStorage.removeItem(SESSION_KEY);
+}
 
-  // Bridge to real Supabase auth. Try sign-in; if user doesn't exist, sign up first.
-  let { error } = await supabase.auth.signInWithPassword({ email: match.email, password: match.password });
-  if (error) {
-    const { error: signUpErr } = await supabase.auth.signUp({
-      email: match.email,
-      password: match.password,
-      options: { emailRedirectTo: typeof window !== "undefined" ? window.location.origin : undefined },
-    });
-    if (signUpErr && !/registered/i.test(signUpErr.message)) {
-      console.error("[auth] signup failed", signUpErr);
-      return null;
-    }
-    const retry = await supabase.auth.signInWithPassword({ email: match.email, password: match.password });
-    if (retry.error) {
-      console.error("[auth] signin failed after signup", retry.error);
-      return null;
-    }
+export function roleLabelFor(role: AuthRole): string {
+  switch (role) {
+    case "rahul": return "Brand Workspace";
+    case "george": return "Supplier Workspace";
+    case "maria": return "Verifier Workspace";
+    case "admin": return "Platform Admin";
   }
+}
 
-  if (typeof window !== "undefined") localStorage.setItem(STORAGE_KEY, match.role);
-  return match;
+export function roleForOrgType(type: "brand" | "supplier" | "verifier" | "regulator"): AuthRole {
+  if (type === "brand") return "rahul";
+  if (type === "supplier") return "george";
+  return "maria"; // verifier & regulator share the reviewer workspace
+}
+
+export async function signUpWithEmail(email: string, password: string, displayName: string) {
+  const redirect = typeof window !== "undefined" ? window.location.origin : undefined;
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: redirect,
+      data: { display_name: displayName },
+    },
+  });
+  return { data, error };
+}
+
+export async function signInWithEmail(email: string, password: string) {
+  return supabase.auth.signInWithPassword({ email, password });
+}
+
+export async function signInWithGoogle() {
+  const redirect = typeof window !== "undefined" ? window.location.origin : undefined;
+  return supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: redirect },
+  });
 }
 
 export async function signOut() {
-  if (typeof window !== "undefined") localStorage.removeItem(STORAGE_KEY);
+  setCurrentUser(null);
   await supabase.auth.signOut().catch(() => {});
 }

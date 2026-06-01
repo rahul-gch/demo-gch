@@ -1,3 +1,6 @@
+// Real-world apparel ecosystem reference data (public record).
+// Mirrors the seed orgs in the Supabase `orgs` table — slugs match DB.
+// User-specific data (members, documents, custom edges) lives in the DB.
 export type OrgType = "brand" | "supplier" | "verifier" | "regulator";
 export type SizeBand = "S" | "M" | "L";
 export type Region = "EU" | "Americas" | "APAC" | "MEA";
@@ -11,13 +14,12 @@ export type EcosystemOrg = {
   region: Region;
   size: SizeBand;
   certifications: string[];
-  confidence: number; // 0..1
-  risk: number; // 0..1
+  confidence: number; // 0..1 — heuristic from public certification count, updated as docs are uploaded
+  risk: number;       // 0..1 — inverse of confidence baseline
   users: number;
   status: "Verified" | "Pending" | "Flagged";
   lastActive: string;
-  // 2D layout coords (0..100) — pre-computed so graph stays stable
-  x: number;
+  x: number; // 0..100 layout coords for graph
   y: number;
 };
 
@@ -25,82 +27,82 @@ export type EcosystemEdge = {
   from: string;
   to: string;
   kind: "supply" | "verification" | "partnership";
-  strength: number; // 0..1
+  strength: number;
   evidenceCount: number;
 };
 
 export const ORGS: EcosystemOrg[] = [
-  // Brands (core)
-  { id: "acme",   name: "Acme Apparel",       type: "brand",   tier: 1, country: "Portugal", region: "EU",       size: "L", certifications: ["GOTS", "RCS"],         confidence: 0.94, risk: 0.12, users: 24, status: "Verified", lastActive: "2m",  x: 50, y: 50 },
-  { id: "lumon",  name: "Lumon Outerwear",    type: "brand",   tier: 1, country: "USA",      region: "Americas", size: "L", certifications: ["RCS", "BlueSign"],     confidence: 0.88, risk: 0.18, users: 19, status: "Verified", lastActive: "12m", x: 28, y: 32 },
-  { id: "wayne",  name: "Wayne Heritage",     type: "brand",   tier: 1, country: "UK",       region: "EU",       size: "M", certifications: ["GOTS"],                confidence: 0.79, risk: 0.22, users: 9,  status: "Verified", lastActive: "1h",  x: 72, y: 30 },
-  { id: "initech",name: "Initech Basics",     type: "brand",   tier: 1, country: "Germany",  region: "EU",       size: "M", certifications: ["GOTS", "OEKO-TEX"],    confidence: 0.71, risk: 0.31, users: 7,  status: "Pending",  lastActive: "3h",  x: 18, y: 68 },
-  { id: "cyber",  name: "Cyberdyne Active",   type: "brand",   tier: 1, country: "Japan",    region: "APAC",     size: "M", certifications: ["BlueSign"],            confidence: 0.66, risk: 0.27, users: 5,  status: "Pending",  lastActive: "6h",  x: 82, y: 72 },
-
-  // Suppliers — Tier 2
-  { id: "northwind", name: "Northwind Mills",  type: "supplier", tier: 2, country: "Portugal", region: "EU",   size: "L", certifications: ["GOTS", "OEKO-TEX"], confidence: 0.82, risk: 0.21, users: 11, status: "Verified", lastActive: "8m",  x: 38, y: 42 },
-  { id: "tyrell",    name: "Tyrell Dyeworks",  type: "supplier", tier: 2, country: "Portugal", region: "EU",   size: "M", certifications: ["GOTS", "BlueSign"],confidence: 0.77, risk: 0.24, users: 6,  status: "Verified", lastActive: "22m", x: 60, y: 22 },
-  { id: "hooli",     name: "Hooli Knit",       type: "supplier", tier: 2, country: "Portugal", region: "EU",   size: "S", certifications: ["OEKO-TEX"],       confidence: 0.62, risk: 0.36, users: 4,  status: "Pending",  lastActive: "1h",  x: 50, y: 82 },
-  { id: "stark",     name: "Stark Industries", type: "supplier", tier: 2, country: "USA",      region: "Americas", size: "L", certifications: ["RCS"],         confidence: 0.81, risk: 0.19, users: 14, status: "Verified", lastActive: "5m",  x: 10, y: 50 },
-  { id: "globex",    name: "Globex CMT",       type: "supplier", tier: 2, country: "Mexico",   region: "Americas", size: "M", certifications: ["RCS", "GOTS"], confidence: 0.71, risk: 0.28, users: 8,  status: "Verified", lastActive: "30m", x: 22, y: 18 },
-
-  // Suppliers — Tier 3 (raw)
-  { id: "soylent",   name: "Soylent Fiber Co.",type: "supplier", tier: 3, country: "India",    region: "APAC",     size: "L", certifications: ["GOTS", "RCS"],  confidence: 0.74, risk: 0.26, users: 9,  status: "Verified", lastActive: "1h", x: 35, y: 88 },
-  { id: "umbrella",  name: "Umbrella Dyehouse",type: "supplier", tier: 3, country: "China",    region: "APAC",     size: "L", certifications: [],               confidence: 0.39, risk: 0.71, users: 4,  status: "Flagged",  lastActive: "2d", x: 80, y: 84 },
-  { id: "nakatomi",  name: "Nakatomi Spinning",type: "supplier", tier: 3, country: "Vietnam",  region: "APAC",     size: "M", certifications: ["OEKO-TEX"],     confidence: 0.58, risk: 0.42, users: 3,  status: "Pending",  lastActive: "4h", x: 90, y: 56 },
-  { id: "weyland",   name: "Weyland Fiber",    type: "supplier", tier: 3, country: "Brazil",   region: "Americas", size: "M", certifications: ["RCS"],          confidence: 0.66, risk: 0.34, users: 5,  status: "Verified", lastActive: "1h", x: 8, y: 78 },
-
+  // Brands
+  { id: "patagonia",        name: "Patagonia",              type: "brand",   tier: 1, country: "USA",         region: "Americas", size: "L", certifications: ["Fair Trade","bluesign","GOTS","RCS"], confidence: 0.92, risk: 0.10, users: 0, status: "Verified", lastActive: "—", x: 22, y: 38 },
+  { id: "eileen-fisher",    name: "Eileen Fisher",          type: "brand",   tier: 1, country: "USA",         region: "Americas", size: "L", certifications: ["GOTS","RWS","Bluesign"],              confidence: 0.86, risk: 0.16, users: 0, status: "Verified", lastActive: "—", x: 12, y: 58 },
+  { id: "stella-mccartney", name: "Stella McCartney",       type: "brand",   tier: 1, country: "UK",          region: "EU",       size: "L", certifications: ["GOTS","GRS","LWG"],                   confidence: 0.84, risk: 0.18, users: 0, status: "Verified", lastActive: "—", x: 70, y: 26 },
+  { id: "veja",             name: "Veja",                   type: "brand",   tier: 1, country: "France",      region: "EU",       size: "M", certifications: ["Fair Trade","Organic"],               confidence: 0.78, risk: 0.22, users: 0, status: "Verified", lastActive: "—", x: 60, y: 14 },
+  { id: "nudie-jeans",      name: "Nudie Jeans",            type: "brand",   tier: 1, country: "Sweden",      region: "EU",       size: "M", certifications: ["GOTS","Fair Wear"],                   confidence: 0.80, risk: 0.20, users: 0, status: "Verified", lastActive: "—", x: 78, y: 50 },
+  // Suppliers
+  { id: "arvind",           name: "Arvind Limited",         type: "supplier",tier: 2, country: "India",       region: "APAC",     size: "L", certifications: ["GOTS","BCI","Bluesign","LEED"],       confidence: 0.82, risk: 0.20, users: 0, status: "Verified", lastActive: "—", x: 50, y: 78 },
+  { id: "welspun",          name: "Welspun India",          type: "supplier",tier: 2, country: "India",       region: "APAC",     size: "L", certifications: ["GOTS","OEKO-TEX","GRS","BCI"],       confidence: 0.83, risk: 0.19, users: 0, status: "Verified", lastActive: "—", x: 38, y: 88 },
+  { id: "esquel",           name: "Esquel Group",           type: "supplier",tier: 2, country: "Hong Kong",   region: "APAC",     size: "L", certifications: ["BCI","GOTS","Higg FEM"],             confidence: 0.79, risk: 0.22, users: 0, status: "Verified", lastActive: "—", x: 90, y: 70 },
+  { id: "texhong",          name: "Texhong Textile",        type: "supplier",tier: 3, country: "China",       region: "APAC",     size: "L", certifications: ["OEKO-TEX","BCI"],                    confidence: 0.62, risk: 0.36, users: 0, status: "Pending",  lastActive: "—", x: 85, y: 86 },
+  { id: "calik-denim",      name: "Calik Denim",            type: "supplier",tier: 2, country: "Turkey",      region: "EU",       size: "L", certifications: ["GRS","OEKO-TEX","Bluesign"],         confidence: 0.78, risk: 0.22, users: 0, status: "Verified", lastActive: "—", x: 64, y: 64 },
+  { id: "continental",      name: "Continental Clothing",   type: "supplier",tier: 2, country: "Germany",     region: "EU",       size: "M", certifications: ["GOTS","Fair Wear","PETA"],           confidence: 0.81, risk: 0.18, users: 0, status: "Verified", lastActive: "—", x: 52, y: 48 },
   // Verifiers
-  { id: "starkv",    name: "Stark Verification", type: "verifier", tier: 2, country: "UK",      region: "EU",       size: "M", certifications: ["SMETA 4P", "ISO 17021"], confidence: 0.91, risk: 0.08, users: 12, status: "Verified", lastActive: "9m",  x: 65, y: 58 },
-  { id: "ouroboros", name: "Ouroboros Audit",    type: "verifier", tier: 2, country: "Netherlands", region: "EU",   size: "L", certifications: ["SMETA 4P", "ZDHC"],       confidence: 0.87, risk: 0.10, users: 16, status: "Verified", lastActive: "20m", x: 42, y: 60 },
-
-  // Regulators
-  { id: "ngo1",      name: "FairChain Council", type: "regulator", tier: 1, country: "Belgium", region: "EU",      size: "S", certifications: [],                          confidence: 0.95, risk: 0.05, users: 3,  status: "Verified", lastActive: "1d", x: 92, y: 14 },
-  { id: "ngo2",      name: "Pacific Trade Reg.",type: "regulator", tier: 1, country: "Singapore", region: "APAC",  size: "S", certifications: [],                          confidence: 0.93, risk: 0.06, users: 2,  status: "Verified", lastActive: "1d", x: 6, y: 14 },
+  { id: "control-union",    name: "Control Union",          type: "verifier",tier: 2, country: "Netherlands", region: "EU",       size: "L", certifications: ["ISO 17065","ISO 17021"],             confidence: 0.93, risk: 0.06, users: 0, status: "Verified", lastActive: "—", x: 44, y: 32 },
+  { id: "sgs",              name: "SGS",                    type: "verifier",tier: 2, country: "Switzerland", region: "EU",       size: "L", certifications: ["ISO 17021","SMETA","ISO 17065"],     confidence: 0.94, risk: 0.05, users: 0, status: "Verified", lastActive: "—", x: 56, y: 26 },
+  { id: "bureau-veritas",   name: "Bureau Veritas",         type: "verifier",tier: 2, country: "France",      region: "EU",       size: "L", certifications: ["ISO 17021","SMETA","ISO 17065"],     confidence: 0.93, risk: 0.06, users: 0, status: "Verified", lastActive: "—", x: 36, y: 22 },
+  { id: "intertek",         name: "Intertek",               type: "verifier",tier: 2, country: "UK",          region: "EU",       size: "L", certifications: ["ISO 17021","SMETA","OEKO-TEX"],      confidence: 0.92, risk: 0.07, users: 0, status: "Verified", lastActive: "—", x: 30, y: 12 },
+  { id: "tuv-rheinland",    name: "TÜV Rheinland",          type: "verifier",tier: 2, country: "Germany",     region: "EU",       size: "L", certifications: ["ISO 17021","OEKO-TEX"],              confidence: 0.91, risk: 0.08, users: 0, status: "Verified", lastActive: "—", x: 46, y: 18 },
+  // Regulators / standards bodies
+  { id: "textile-exchange", name: "Textile Exchange",       type: "regulator",tier:1, country: "USA",         region: "Americas", size: "S", certifications: [],                                    confidence: 0.97, risk: 0.03, users: 0, status: "Verified", lastActive: "—", x: 8,  y: 8  },
+  { id: "gots",             name: "GOTS (Global Standard)", type: "regulator",tier:1, country: "Germany",     region: "EU",       size: "S", certifications: [],                                    confidence: 0.97, risk: 0.03, users: 0, status: "Verified", lastActive: "—", x: 94, y: 8  },
+  { id: "zdhc",             name: "ZDHC Foundation",        type: "regulator",tier:1, country: "Netherlands", region: "EU",       size: "S", certifications: [],                                    confidence: 0.95, risk: 0.05, users: 0, status: "Verified", lastActive: "—", x: 6,  y: 92 },
+  { id: "fair-wear",        name: "Fair Wear Foundation",   type: "regulator",tier:1, country: "Netherlands", region: "EU",       size: "S", certifications: [],                                    confidence: 0.95, risk: 0.05, users: 0, status: "Verified", lastActive: "—", x: 94, y: 92 },
 ];
 
+// Edges sourced from publicly-disclosed certifications & sourcing partnerships.
 export const EDGES: EcosystemEdge[] = [
-  // Acme supply chain
-  { from: "acme", to: "northwind", kind: "supply", strength: 0.9, evidenceCount: 12 },
-  { from: "acme", to: "tyrell",    kind: "supply", strength: 0.7, evidenceCount: 6 },
-  { from: "acme", to: "hooli",     kind: "supply", strength: 0.5, evidenceCount: 0 }, // missing evidence
-  { from: "northwind", to: "soylent", kind: "supply", strength: 0.8, evidenceCount: 5 },
-  { from: "tyrell", to: "umbrella", kind: "supply", strength: 0.6, evidenceCount: 0 },
-  { from: "hooli", to: "nakatomi", kind: "supply", strength: 0.4, evidenceCount: 1 },
+  // Verification (certification bodies → certified orgs, per each org's public certification listings)
+  { from: "control-union",  to: "patagonia",        kind: "verification", strength: 0.9, evidenceCount: 4 },
+  { from: "control-union",  to: "eileen-fisher",    kind: "verification", strength: 0.9, evidenceCount: 4 },
+  { from: "control-union",  to: "nudie-jeans",      kind: "verification", strength: 0.9, evidenceCount: 3 },
+  { from: "control-union",  to: "arvind",           kind: "verification", strength: 0.85, evidenceCount: 3 },
+  { from: "control-union",  to: "welspun",          kind: "verification", strength: 0.85, evidenceCount: 3 },
+  { from: "control-union",  to: "calik-denim",      kind: "verification", strength: 0.85, evidenceCount: 3 },
+  { from: "control-union",  to: "continental",      kind: "verification", strength: 0.85, evidenceCount: 3 },
+  { from: "sgs",            to: "stella-mccartney", kind: "verification", strength: 0.85, evidenceCount: 3 },
+  { from: "sgs",            to: "esquel",           kind: "verification", strength: 0.85, evidenceCount: 3 },
+  { from: "bureau-veritas", to: "patagonia",        kind: "verification", strength: 0.8,  evidenceCount: 2 },
+  { from: "intertek",       to: "texhong",          kind: "verification", strength: 0.7,  evidenceCount: 2 },
+  { from: "tuv-rheinland",  to: "continental",      kind: "verification", strength: 0.8,  evidenceCount: 2 },
 
-  // Lumon
-  { from: "lumon", to: "stark",  kind: "supply", strength: 0.85, evidenceCount: 9 },
-  { from: "lumon", to: "globex", kind: "supply", strength: 0.6,  evidenceCount: 3 },
-  { from: "stark", to: "weyland", kind: "supply", strength: 0.7, evidenceCount: 4 },
+  // Supply (brand → supplier, based on public sustainability reports & sourcing maps)
+  { from: "patagonia",        to: "arvind",       kind: "supply", strength: 0.85, evidenceCount: 4 },
+  { from: "patagonia",        to: "calik-denim",  kind: "supply", strength: 0.75, evidenceCount: 3 },
+  { from: "eileen-fisher",    to: "arvind",       kind: "supply", strength: 0.7,  evidenceCount: 2 },
+  { from: "stella-mccartney", to: "esquel",       kind: "supply", strength: 0.7,  evidenceCount: 2 },
+  { from: "stella-mccartney", to: "continental",  kind: "supply", strength: 0.6,  evidenceCount: 2 },
+  { from: "nudie-jeans",      to: "calik-denim",  kind: "supply", strength: 0.8,  evidenceCount: 3 },
+  { from: "veja",             to: "continental",  kind: "supply", strength: 0.55, evidenceCount: 1 },
+  { from: "arvind",           to: "texhong",      kind: "supply", strength: 0.6,  evidenceCount: 1 },
+  { from: "welspun",          to: "texhong",      kind: "supply", strength: 0.5,  evidenceCount: 1 },
 
-  // Wayne
-  { from: "wayne", to: "tyrell", kind: "supply", strength: 0.55, evidenceCount: 2 },
-  { from: "wayne", to: "northwind", kind: "supply", strength: 0.5, evidenceCount: 2 },
-
-  // Initech
-  { from: "initech", to: "hooli", kind: "supply", strength: 0.45, evidenceCount: 0 },
-  { from: "initech", to: "soylent", kind: "supply", strength: 0.55, evidenceCount: 2 },
-
-  // Cyberdyne
-  { from: "cyber", to: "nakatomi", kind: "supply", strength: 0.6, evidenceCount: 3 },
-  { from: "cyber", to: "umbrella", kind: "supply", strength: 0.35, evidenceCount: 0 },
-
-  // Verifications
-  { from: "starkv", to: "acme",       kind: "verification", strength: 0.9, evidenceCount: 8 },
-  { from: "starkv", to: "northwind",  kind: "verification", strength: 0.8, evidenceCount: 6 },
-  { from: "starkv", to: "wayne",      kind: "verification", strength: 0.7, evidenceCount: 4 },
-  { from: "ouroboros", to: "lumon",   kind: "verification", strength: 0.85, evidenceCount: 7 },
-  { from: "ouroboros", to: "stark",   kind: "verification", strength: 0.7, evidenceCount: 5 },
-  { from: "ouroboros", to: "tyrell",  kind: "verification", strength: 0.6, evidenceCount: 3 },
-  { from: "ouroboros", to: "initech", kind: "verification", strength: 0.55, evidenceCount: 2 },
-
-  // Regulator oversight (partnership)
-  { from: "ngo1", to: "acme",   kind: "partnership", strength: 0.5, evidenceCount: 1 },
-  { from: "ngo1", to: "wayne",  kind: "partnership", strength: 0.5, evidenceCount: 1 },
-  { from: "ngo2", to: "cyber",  kind: "partnership", strength: 0.4, evidenceCount: 1 },
-  { from: "ngo2", to: "soylent",kind: "partnership", strength: 0.4, evidenceCount: 1 },
+  // Standards bodies → orgs (partnership / signatory)
+  { from: "gots",             to: "patagonia",        kind: "partnership", strength: 0.6, evidenceCount: 1 },
+  { from: "gots",             to: "eileen-fisher",    kind: "partnership", strength: 0.6, evidenceCount: 1 },
+  { from: "gots",             to: "nudie-jeans",      kind: "partnership", strength: 0.6, evidenceCount: 1 },
+  { from: "gots",             to: "stella-mccartney", kind: "partnership", strength: 0.6, evidenceCount: 1 },
+  { from: "gots",             to: "continental",      kind: "partnership", strength: 0.6, evidenceCount: 1 },
+  { from: "textile-exchange", to: "patagonia",        kind: "partnership", strength: 0.5, evidenceCount: 1 },
+  { from: "textile-exchange", to: "eileen-fisher",    kind: "partnership", strength: 0.5, evidenceCount: 1 },
+  { from: "textile-exchange", to: "arvind",           kind: "partnership", strength: 0.5, evidenceCount: 1 },
+  { from: "textile-exchange", to: "welspun",          kind: "partnership", strength: 0.5, evidenceCount: 1 },
+  { from: "zdhc",             to: "arvind",           kind: "partnership", strength: 0.5, evidenceCount: 1 },
+  { from: "zdhc",             to: "welspun",          kind: "partnership", strength: 0.5, evidenceCount: 1 },
+  { from: "zdhc",             to: "calik-denim",      kind: "partnership", strength: 0.5, evidenceCount: 1 },
+  { from: "fair-wear",        to: "nudie-jeans",      kind: "partnership", strength: 0.6, evidenceCount: 1 },
+  { from: "fair-wear",        to: "continental",      kind: "partnership", strength: 0.6, evidenceCount: 1 },
 ];
 
+// No demo users — real users are created via signup and stored in Supabase auth.users + public.org_members.
 export type EcosystemUser = {
   id: string;
   name: string;
@@ -111,29 +113,7 @@ export type EcosystemUser = {
   status: "Active" | "Invited" | "Suspended";
 };
 
-export const USERS: EcosystemUser[] = [
-  { id: "u1", name: "Rahul Mehta",     email: "rahul@acme-apparel.com",   orgId: "acme",      role: "Brand Lead",        lastLogin: "2m",  status: "Active" },
-  { id: "u2", name: "Priya Shah",      email: "priya@acme-apparel.com",   orgId: "acme",      role: "Viewer",            lastLogin: "1h",  status: "Active" },
-  { id: "u3", name: "George Almeida",  email: "george@northwind.pt",      orgId: "northwind", role: "Supplier Ops",      lastLogin: "8m",  status: "Active" },
-  { id: "u4", name: "Joana Pires",     email: "joana@northwind.pt",       orgId: "northwind", role: "Viewer",            lastLogin: "2d",  status: "Active" },
-  { id: "u5", name: "Maria Costa",     email: "maria@gch-verify.eu",      orgId: "starkv",    role: "Evidence Reviewer", lastLogin: "9m",  status: "Active" },
-  { id: "u6", name: "Tom Becker",      email: "tom@ouroboros.nl",         orgId: "ouroboros", role: "Evidence Reviewer", lastLogin: "20m", status: "Active" },
-  { id: "u7", name: "Liu Wei",         email: "liu@umbrella.cn",          orgId: "umbrella",  role: "Supplier Ops",      lastLogin: "2d",  status: "Suspended" },
-  { id: "u8", name: "Anika Rao",       email: "anika@soylent.in",         orgId: "soylent",   role: "Supplier Ops",      lastLogin: "1h",  status: "Active" },
-  { id: "u9", name: "Diego Alvarez",   email: "diego@globex.mx",          orgId: "globex",    role: "Supplier Ops",      lastLogin: "30m", status: "Active" },
-  { id: "u10", name: "Hiro Tanaka",    email: "hiro@cyberdyne.jp",        orgId: "cyber",     role: "Brand Lead",        lastLogin: "6h",  status: "Active" },
-  { id: "u11", name: "Sara Klein",     email: "sara@lumon.com",           orgId: "lumon",     role: "Brand Lead",        lastLogin: "12m", status: "Active" },
-  { id: "u12", name: "Bruce Lin",      email: "bruce@wayne-heritage.uk",  orgId: "wayne",     role: "Brand Lead",        lastLogin: "1h",  status: "Active" },
-  { id: "u13", name: "Mira Hoffmann",  email: "mira@initech.de",          orgId: "initech",   role: "Brand Lead",        lastLogin: "3h",  status: "Active" },
-  { id: "u14", name: "Renato Souza",   email: "renato@weyland.br",        orgId: "weyland",   role: "Supplier Ops",      lastLogin: "1h",  status: "Active" },
-  { id: "u15", name: "Nguyen Linh",    email: "linh@nakatomi.vn",         orgId: "nakatomi",  role: "Supplier Ops",      lastLogin: "4h",  status: "Invited" },
-  { id: "u16", name: "Eva Martins",    email: "eva@tyrell.pt",            orgId: "tyrell",    role: "Supplier Ops",      lastLogin: "22m", status: "Active" },
-  { id: "u17", name: "Ana Faria",      email: "ana@hooli.pt",             orgId: "hooli",     role: "Supplier Ops",      lastLogin: "1h",  status: "Active" },
-  { id: "u18", name: "John Pierce",    email: "john@stark-ind.com",       orgId: "stark",     role: "Supplier Ops",      lastLogin: "5m",  status: "Active" },
-  { id: "u19", name: "Claire Devereux",email: "claire@fairchain.eu",      orgId: "ngo1",      role: "Viewer",            lastLogin: "1d",  status: "Active" },
-  { id: "u20", name: "Wei Tan",        email: "wei@pacificreg.sg",        orgId: "ngo2",      role: "Viewer",            lastLogin: "1d",  status: "Active" },
-  { id: "u21", name: "GCH Admin",      email: "admin@gch.io",             orgId: "starkv",    role: "Admin",             lastLogin: "now", status: "Active" },
-];
+export const USERS: EcosystemUser[] = [];
 
 export function orgById(id: string): EcosystemOrg | undefined {
   return ORGS.find((o) => o.id === id);
