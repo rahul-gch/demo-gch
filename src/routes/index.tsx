@@ -55,11 +55,10 @@ function Workspace() {
   const navigate = useNavigate();
   const user = typeof window !== "undefined" ? getCurrentUser() : null;
 
-  const seedFn = useServerFn(ensureSeed);
   useEffect(() => {
     if (!getCurrentUser()) navigate({ to: "/login" });
-    else seedFn().catch((e: unknown) => console.warn("[seed]", e));
-  }, [navigate, seedFn]);
+  }, [navigate]);
+
 
   const isAdmin = user?.role === "admin";
   const initialRole = (user?.role as RoleId) ?? "rahul";
