@@ -6,8 +6,7 @@ import { EcosystemMap } from "@/components/EcosystemMap";
 import { MessagesPanel } from "@/components/MessagesPanel";
 import { UserDashboard } from "@/components/UserDashboard";
 import { subscribeComms, unreadCountFor, type Participant } from "@/lib/messaging";
-import { getCurrentUser, signOut, DEMO_ACCOUNTS, type AuthRole } from "@/lib/auth";
-import { ensureSeed } from "@/lib/org.functions";
+import { getCurrentUser, signOut, type AuthRole, type SessionUser } from "@/lib/auth";
 import { ORGS, USERS, EDGES, type OrgType as EcoOrgType } from "@/lib/ecosystem-data";
 import {
   loadSettings, saveSettings, scorePair, topMatches, ecosystemMatchStats,

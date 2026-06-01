@@ -22,13 +22,10 @@ export const getMySession = createServerFn({ method: "POST" })
       .limit(1)
       .maybeSingle();
 
-    const { data: roleRow } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "admin")
-      .maybeSingle()
-      .then((r) => r, () => ({ data: null }));
+    // No admin role table yet — admin flag stays false for now.
+    const roleRow: { role: string } | null = null;
+
+
 
     const org = (membership?.orgs as { id: string; slug: string; name: string; type: string } | null) ?? null;
 
