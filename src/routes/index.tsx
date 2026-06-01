@@ -81,7 +81,7 @@ function Workspace() {
   const seedFn = useServerFn(ensureSeed);
   useEffect(() => {
     if (!getCurrentUser()) navigate({ to: "/login" });
-    else seedFn({ data: undefined as never }).catch((e) => console.warn("[seed]", e));
+    else seedFn().catch((e: unknown) => console.warn("[seed]", e));
   }, [navigate, seedFn]);
 
   const isAdmin = user?.role === "admin";
@@ -206,6 +206,18 @@ function Workspace() {
               <HelpCircle className="h-3.5 w-3.5" />
               How it works
             </Link>
+            {(() => {
+              const slug = DEMO_ACCOUNTS.find((a) => a.role === user.role)?.orgSlug;
+              return slug ? (
+                <Link
+                  to="/org/$slug"
+                  params={{ slug }}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                >
+                  My organisation
+                </Link>
+              ) : null;
+            })()}
             <button
               onClick={() => setMessagesOpen(true)}
               className="relative inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
