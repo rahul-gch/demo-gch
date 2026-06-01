@@ -33,13 +33,29 @@ export function EcosystemGraph({
   selectedId,
   onSelect,
   coreOnly = false,
+  includeIds,
+  centerId,
 }: {
   filters?: GraphFilters;
   selectedId?: string | null;
   onSelect?: (id: string) => void;
   coreOnly?: boolean;
+  includeIds?: Set<string>;
+  centerId?: string;
 }) {
   const visible = useMemo(() => {
+    if (includeIds) {
+      const list = ORGS.filter((o) => includeIds.has(o.id));
+      const center = centerId ?? list[0]?.id;
+      const partners = list.filter((o) => o.id !== center);
+      const n = Math.max(1, partners.length);
+      return list.map((o) => {
+        if (o.id === center) return { ...o, x: 50, y: 50 };
+        const i = partners.findIndex((p) => p.id === o.id);
+        const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
+        return { ...o, x: 50 + Math.cos(angle) * 32, y: 50 + Math.sin(angle) * 32 };
+      });
+    }
     const base = coreOnly
       ? ORGS.filter((o) => (CORE_IDS as readonly string[]).includes(o.id))
                 .map((o) => ({ ...o, ...CORE_POS[o.id] }))
@@ -50,7 +66,7 @@ export function EcosystemGraph({
       if (filters?.onlyRisk && o.risk <= 0.5) return false;
       return true;
     });
-  }, [filters, coreOnly]);
+  }, [filters, coreOnly, includeIds, centerId]);
 
   const visibleIds = useMemo(() => new Set(visible.map((o) => o.id)), [visible]);
 
