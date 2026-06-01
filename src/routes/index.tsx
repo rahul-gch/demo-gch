@@ -252,6 +252,11 @@ function Workspace() {
         </div>
 
         {isAdmin && !previewAs && <AdminDashboard tab={adminTab} />}
+        {(!isAdmin || previewAs) && renderRole && renderRole !== "org" && renderRole !== "admin" && (
+          <div className="mb-6">
+            <UserDashboard user={{ ...user, role: renderRole as AuthRole, name: ROLES.find(r => r.id === renderRole)?.name ?? user.name }} />
+          </div>
+        )}
         {(!isAdmin || previewAs) && renderRole === "rahul" && <RahulDashboard />}
         {(!isAdmin || previewAs) && renderRole === "george" && <GeorgeDashboard />}
         {(!isAdmin || previewAs) && renderRole === "maria" && <MariaDashboard />}
