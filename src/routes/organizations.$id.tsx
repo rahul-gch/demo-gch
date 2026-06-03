@@ -294,7 +294,7 @@ function OrgProfilePage() {
               <CardTitle className="text-base font-semibold">Location</CardTitle>
             </CardHeader>
             <CardContent>
-              <GoogleMap entities={[e]} height={300} zoom={6} />
+              <MockWorldMap entities={[e]} height={300} showLegend={false} showRegions={false} />
               <div className="mt-3 text-xs text-muted-foreground">
                 {e.address && `${e.address} · `}
                 {e.latitude.toFixed(3)}, {e.longitude.toFixed(3)}
@@ -333,6 +333,20 @@ function OrgProfilePage() {
             </Card>
           </div>
         </section>
+
+        {showcase && (
+          <section className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <MessageChannel entity={e} />
+            </div>
+            <div className="space-y-6">
+              <ActivityFeed entity={e} />
+            </div>
+          </section>
+        )}
+
+        {showcase && <DocumentsList entity={e} />}
+
 
         <Card className="border-slate-200 bg-slate-50 shadow-sm">
           <CardHeader>
