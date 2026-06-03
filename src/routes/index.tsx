@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { VerificationBadge } from "@/components/StatusBadge";
-import { MockWorldMap } from "@/components/MockWorldMap";
+import { EcosystemGoogleMap } from "@/components/EcosystemGoogleMap";
 import { ENTITIES, ENTITY_TYPE_BREAKDOWN, summaryMetrics } from "@/seed/entities";
 import { ArrowUpRight } from "lucide-react";
 
@@ -156,7 +156,7 @@ function DashboardPage() {
               </Button>
             </CardHeader>
             <CardContent>
-              <MockWorldMap entities={ENTITIES} height={240} compact showLegend={false} />
+              <EcosystemGoogleMap entities={ENTITIES} height={280} compact showLegend />
             </CardContent>
           </Card>
         </section>
