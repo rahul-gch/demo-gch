@@ -96,7 +96,7 @@ function MapPage() {
           <div className="lg:col-span-2">
             <Card className="shadow-sm">
               <CardContent className="p-4">
-                <MockWorldMap
+                <EcosystemGoogleMap
                   entities={filtered}
                   onSelect={setSelected}
                   selectedId={selected?.id}
