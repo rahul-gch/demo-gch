@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { VerificationBadge, RiskBadge } from "@/components/StatusBadge";
-import { MockWorldMap } from "@/components/MockWorldMap";
+import { EcosystemGoogleMap } from "@/components/EcosystemGoogleMap";
 import { ENTITIES, ENTITY_TYPES } from "@/seed/entities";
 import type { Entity } from "@/seed/types";
 import { X } from "lucide-react";
@@ -96,7 +96,7 @@ function MapPage() {
           <div className="lg:col-span-2">
             <Card className="shadow-sm">
               <CardContent className="p-4">
-                <MockWorldMap
+                <EcosystemGoogleMap
                   entities={filtered}
                   onSelect={setSelected}
                   selectedId={selected?.id}
