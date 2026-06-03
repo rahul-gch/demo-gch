@@ -155,7 +155,7 @@ function OrgProfilePage() {
                   <p className="text-sm text-muted-foreground">No missing fields.</p>
                 ) : (
                   <ul className="space-y-1.5 text-sm">
-                    {e.missingFields.map((f) => (
+                    {e.missingFields.map((f: string) => (
                       <li key={f} className="flex items-start gap-2">
                         <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-amber-500" />
                         <span>{f}</span>
