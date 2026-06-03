@@ -162,14 +162,6 @@ function MapPage() {
   );
 }
 
-function Legend({ dot, label }: { dot: string; label: string }) {
-  return (
-    <span className="inline-flex items-center gap-1.5">
-      <span className={`h-2 w-2 rounded-full ${dot}`} />
-      {label}
-    </span>
-  );
-}
 
 function Block({ label, items }: { label: string; items: string[] }) {
   if (items.length === 0) return null;
