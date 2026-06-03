@@ -13,7 +13,10 @@ import {
 import { VerificationBadge } from "@/components/StatusBadge";
 import { EcosystemGoogleMap } from "@/components/EcosystemGoogleMap";
 import { ENTITIES, ENTITY_TYPE_BREAKDOWN, summaryMetrics } from "@/seed/entities";
-import { ArrowUpRight } from "lucide-react";
+import { COMPANY_BENCHMARK } from "@/seed/kpi";
+import { Badge } from "@/components/ui/badge";
+import { ArrowUpRight, TrendingUp } from "lucide-react";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
