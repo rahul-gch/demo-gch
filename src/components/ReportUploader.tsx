@@ -10,10 +10,11 @@ import { Link } from "@tanstack/react-router";
 
 interface FileEntry {
   name: string;
-  size: number;
-  updated_at?: string;
+  metadata?: { size?: number } | null;
   created_at?: string;
+  updated_at?: string;
 }
+
 
 export function ReportUploader({ entity }: { entity: Entity }) {
   const [session, setSession] = useState<unknown | null>(null);
@@ -40,7 +41,7 @@ export function ReportUploader({ entity }: { entity: Entity }) {
       setFiles([]);
       return;
     }
-    setFiles((data || []) as FileEntry[]);
+    setFiles((data || []) as unknown as FileEntry[]);
   };
 
   useEffect(() => {
@@ -111,7 +112,7 @@ export function ReportUploader({ entity }: { entity: Entity }) {
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-medium">{f.name.replace(/^\d+-/, "")}</div>
                   <div className="text-xs text-muted-foreground">
-                    {Math.max(1, Math.round((f.size || 0) / 1024))} KB · uploaded {(f.created_at || "").slice(0, 10)}
+                    {Math.max(1, Math.round((f.metadata?.size || 0) / 1024))} KB · uploaded {(f.created_at || "").slice(0, 10)}
                   </div>
                 </div>
                 <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
