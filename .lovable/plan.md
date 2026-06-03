@@ -1,81 +1,94 @@
+## Goals
 
-# Global Chain Hub — Registry Prototype Plan
+1. The map currently shows no organizations — replace the Google Maps embed with the previous styled mock world map (same look as before), and group pins by country/region.
+2. For the first 20 seeded entities, build a fuller "organization profile" experience: detailed profile, mini dashboard with KPI widgets, and an internal messaging channel UI (prototype only, no real backend).
+3. For the remaining 169 entities, keep the existing lighter profile so registry/filters still work.
 
-Rebuild the app as a calm, premium B2B SaaS admin tool focused only on the entity registry foundation. No auth, no Supabase, no comms, no traceability.
+Out of scope: real backend, auth, real messaging, real map tiles, AI extraction.
 
-## 1. Cleanup (remove everything out of scope)
+---
 
-Delete:
-- `src/routes/login.tsx`, `src/routes/how-it-works.tsx`, `src/routes/org.$slug.tsx`
-- `src/components/UserDashboard.tsx`, `MessagesPanel.tsx`, `RoleGate.tsx`, `EcosystemGraph.tsx`, `EcosystemMap.tsx` (replaced by new components)
-- `src/lib/auth.ts`, `org.functions.ts`, `user-scope.ts`, `messaging.ts`, `matchmaking.ts`, `ecosystem-data.ts`
-- Server-fn / Supabase auth wiring usage in routes (files in `src/integrations/supabase/` stay untouched but unused)
+## 1. Fix the Map — revert to styled mock world map
 
-Keep: shadcn UI, `__root.tsx`, router, styles, types.
+**Why nothing renders today:** the Google Maps browser key is referrer-restricted and the current preview domain is being blocked, so the map div stays empty. Rather than wrestle with that, go back to the SVG-based `MockWorldMap` look from the earlier iteration — same premium aesthetic, deterministic, no API key needed.
 
-## 2. Seed data from your Excel
+**Changes:**
+- Use `src/components/MockWorldMap.tsx` (already in repo) as the base, but upgrade it:
+  - SVG world outline (neutral slate fill, soft border).
+  - Equirectangular projection of `latitude` / `longitude` → x/y.
+  - Pins colored by `verificationStatus` (Verified / Pending / Incomplete / Flagged).
+  - Hover tooltip with name + country.
+  - Click pin → calls `onSelect(entity)`.
+  - Selected pin gets a ring + larger radius.
+- **Regions overlay:** group entities by `country`; render a faint translucent cluster bubble per country with the entity count (e.g. "India · 42", "Bangladesh · 31"). Bubble center = average lat/lng of that country's pins; radius scales with count. This gives the "regions based on address/country" the user asked for.
+- Add a side legend: status colors + top 6 countries with counts.
+- Replace `<GoogleMap />` usages on:
+  - `/` (Dashboard map preview)
+  - `/map` (full map view + side panel — keep existing filters and detail card)
+  - `/organizations/$id` (single-pin mini map on profile)
+- Delete `src/components/GoogleMap.tsx` (no longer used).
 
-Parse `Entity Database GCH.xlsx` (957 rows) → pick 20 representative entities across the required mix:
-2 Brands, 2 Farmers, 2 Ginners, 2 Spinners, 2 Fabric Mills, 2 Dye Houses, 3 Garment Factories, 2 Logistics, 1 Certification Body, 2 Sustainability Partners — biased toward IN, BD, TR, PT, DE, SE, NL, VN, PK, IT.
+---
 
-Generate `src/seed/entities.ts` with the full schema you specified (id, name, entityType, organizationType, actorType, country/region/city, lat/lng, description, materials, capabilities, capacity, moq, leadTimeDays, certifications, confidenceScore, riskLevel, evidenceCount, missingDataCount, profileCompleteness, verificationStatus, preferredCommunicationChannel, kpiReadiness, traceabilityReadiness, matchmakingReadiness, missingFields, recommendedNextAction).
+## 2. Rich profiles for the first 20 entities
 
-Real fields (name, GCH-Number, country, city, address, tier, entity type) come from the Excel; readiness/score/risk fields are deterministically derived from completeness so the prototype feels real.
+The first 20 entities in `src/seed/entities.ts` (gch-001 … gch-020) become "showcase" profiles. Mark them with a `showcase: true` flag in seed data (extend `Entity` type) so the profile route can branch.
 
-Also export `TOTAL_ENTITIES = 200`, `entityTypeBreakdown()`, `summaryMetrics()` helpers.
+**On `/organizations/$id` for showcase entities, add three new sections under the existing header:**
 
-## 3. App shell
+### a. Mini Dashboard (KPI widgets)
+A 4-card grid:
+- **Profile Completeness** — big % + progress bar.
+- **Confidence Score** — % + delta vs registry average.
+- **Active Orders (mock)** — number + small sparkline (static SVG path from seeded values).
+- **On-time Delivery (mock)** — % + trend arrow.
 
-New `src/components/AppShell.tsx` with a shadcn `Sidebar` (collapsible="icon") + top header. Sidebar links:
-- Platform Dashboard `/`
-- Organizations `/organizations`
-- Map View `/map`
-- Settings `/settings`
+Below: two-column charts (static SVG / CSS bars, no chart lib needed):
+- Monthly volume (last 6 months, mocked per entity).
+- Material mix (horizontal bars from `materials[]`).
 
-Mounted in `__root.tsx`. White bg, slate text, soft borders, subtle shadows — no bright colors.
+### b. Internal Message Channel (prototype UI only)
+- Channel header: entity name + "GCH Platform ↔ {entity}".
+- Thread of 4–6 seeded messages (mix of admin + entity replies) with avatars, timestamps, read receipts.
+- Disabled composer at bottom (`<Textarea disabled placeholder="Messaging is read-only in this prototype" />` + Send button).
+- Seed messages live in `src/seed/messages.ts` keyed by entity id.
 
-## 4. Routes
+### c. Activity & Documents
+- Recent activity feed (5 events: "Certification uploaded", "Profile reviewed", "Score updated", etc.) seeded per entity.
+- Documents list (mock filenames: `GOTS_Certificate_2026.pdf`, `Factory_Audit.pdf`, etc.) — list rows with file icon + status badge, no real download.
 
-- `src/routes/index.tsx` — Platform Dashboard: 6 KPI cards + 4 sections (Registry Preview top-5 table, Entity Type Breakdown list, Data Readiness summary, Map Preview card with "Open Map View" CTA → `/map`). Calm, generous spacing.
-- `src/routes/organizations.tsx` — Registry table with search + 8 filter dropdowns (Entity Type, Actor Type, Country, Certification, Risk, Confidence, Verification, Completeness). All 14 columns scrollable. Row click → profile.
-- `src/routes/organizations.$id.tsx` — Profile: header, 4-card mini dashboard, profile details, readiness section (3 progress bars), location card (mock map with single pin), missing-data list, recommended next action.
-- `src/routes/map.tsx` — Full map view with filters + side panel on pin click. Mock map (equirectangular world SVG background with absolute-positioned pins from lat/lng) — no API key required. Pin color encodes verification/risk via slate/neutral tones with subtle indicators. Side panel shows summary + "View Full Profile" button.
-- `src/routes/settings.tsx` — Static UI: Confidence Settings (sliders/inputs), Profile Requirements (checkbox list), Matching Parameters (chips), Matching Weights table with the 8 weights you listed. No persistence.
+**Seed data additions:**
+- Extend `src/seed/types.ts`: `showcase?: boolean`, optional `mockKpis`, `mockMessages`, `mockActivity`, `mockDocuments` (or keep them in separate seed files keyed by entity id).
+- Create `src/seed/showcase.ts` that maps the 20 ids → mock dashboards/messages/activity/documents. Generated deterministically from each entity's existing fields so numbers feel coherent (e.g. brand vs factory differ).
 
-## 5. Map approach
+**Non-showcase entities (gch-021 … gch-189):** keep current profile as-is. Add a small banner "Lite profile — full dashboard not enabled for this entity in the prototype."
 
-Pure CSS/SVG mock map using a world outline SVG + absolute pins positioned by lat/lng→x/y projection. Clean, neutral, no Google key. Pins are small slate circles with a ring indicating verification state.
+---
 
-## 6. Design tokens
+## 3. Files
 
-Adjust `src/styles.css` to a premium neutral palette: white bg, slate-900 text, slate-200 borders, single muted accent (slate-700). Soft shadows, rounded-xl cards. Remove any prior vivid tokens.
+**Edit:**
+- `src/components/MockWorldMap.tsx` — upgrade with regions, legend, selection.
+- `src/routes/index.tsx` — swap GoogleMap → MockWorldMap.
+- `src/routes/map.tsx` — swap GoogleMap → MockWorldMap, keep filters/side panel.
+- `src/routes/organizations.$id.tsx` — single-pin mini map + new sections for showcase entities.
+- `src/seed/types.ts` — add showcase + mock fields.
+- `src/seed/entities.ts` — mark first 20 with `showcase: true`.
 
-## 7. Out of scope (explicitly not built)
+**Create:**
+- `src/seed/showcase.ts` — mock KPIs, messages, activity, documents for 20 entities.
+- `src/components/MiniDashboard.tsx`
+- `src/components/MessageChannel.tsx`
+- `src/components/ActivityFeed.tsx`
+- `src/components/DocumentsList.tsx`
 
-Login, accounts, personas, communications, product journey, traceability, uploads, backend, Supabase calls, AI, blockchain, payments.
+**Delete:**
+- `src/components/GoogleMap.tsx`
 
-## File tree (after)
+---
 
-```text
-src/
-  components/
-    AppShell.tsx
-    AppSidebar.tsx
-    MockWorldMap.tsx
-    StatCard.tsx
-    ReadinessBar.tsx
-    ui/*  (unchanged)
-  seed/
-    entities.ts
-    types.ts
-  routes/
-    __root.tsx
-    index.tsx
-    organizations.tsx
-    organizations.$id.tsx
-    map.tsx
-    settings.tsx
-  styles.css
-```
+## 4. Notes
 
-Ready to switch to build mode and execute.
+- All design tokens stay on the existing slate/white premium palette.
+- No backend, no Supabase, no real messaging — purely seeded TS data.
+- The "reports" the user mentioned for later are not built in this round; the showcase profile structure leaves room to plug them in.
