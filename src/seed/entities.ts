@@ -10715,6 +10715,8 @@ export function getEntity(id: string): Entity | undefined {
 
 export const summaryMetrics = {
   total: ENTITIES.length,
+  totalRegistry: ENTITIES.length,
+  seededVisible: ENTITIES.length,
   verified: ENTITIES.filter(e => e.verificationStatus === 'Verified').length,
   pending: ENTITIES.filter(e => e.verificationStatus === 'Pending').length,
   incomplete: ENTITIES.filter(e => e.verificationStatus === 'Incomplete').length,
@@ -10723,16 +10725,9 @@ export const summaryMetrics = {
   avgConfidence: Math.round(ENTITIES.reduce((s,e)=>s+e.confidenceScore,0)/ENTITIES.length),
   avgCompleteness: Math.round(ENTITIES.reduce((s,e)=>s+e.profileCompleteness,0)/ENTITIES.length),
   countries: new Set(ENTITIES.map(e => e.country)).size,
+  missingTotal: ENTITIES.reduce((s,e)=>s+e.missingDataCount,0),
+  matchmakingReady: ENTITIES.filter(e=>e.matchmakingReadiness>=60).length,
 };
-
-const _missing = ENTITIES.reduce((s,e)=>s+e.missingDataCount,0);
-const _matchReady = ENTITIES.filter(e=>e.matchmakingReadiness>=60).length;
-Object.assign(summaryMetrics, {
-  totalRegistry: ENTITIES.length,
-  seededVisible: ENTITIES.length,
-  matchmakingReady: _matchReady,
-  missingTotal: _missing,
-});
 
 export const ENTITY_TYPE_BREAKDOWN: { type: string; count: number }[] = (() => {
   const map = new Map<string, number>();
