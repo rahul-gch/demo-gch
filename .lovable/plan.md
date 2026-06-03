@@ -1,51 +1,81 @@
-# Replace demo data with real seed + signup-only auth
 
-You skipped the CSV upload, so I'll proceed with a sensible default: seed a small set of **publicly-known, real-world** apparel-industry orgs and certifiers (no cartoon names like Acme/Wayne/Cyberdyne), and switch auth to signup-only. You can later edit any org via the org profile UI, or paste a CSV and I'll re-seed.
+# Global Chain Hub — Registry Prototype Plan
 
-## 1. Remove all fake data
+Rebuild the app as a calm, premium B2B SaaS admin tool focused only on the entity registry foundation. No auth, no Supabase, no comms, no traceability.
 
-- **Delete** `src/lib/ecosystem-data.ts` hardcoded `ORGS`, `EDGES`, `USERS` arrays.
-- **Delete** demo persona credentials and "Continue as Rahul / George / Maria" buttons in `src/routes/login.tsx` and `src/lib/auth.ts`.
-- **Delete** the `ensureSeed` server function that bridged demo personas → Supabase Auth.
-- **Wipe DB rows**: `TRUNCATE org_documents, org_members, orgs CASCADE;` plus delete the 3 demo `auth.users` (rahul@…, george@…, maria@…, admin@…).
-- Any component that imported `ORGS`/`USERS` arrays now fetches from Supabase via server fns (`listOrgs`, `listEdges`, `listMembers`).
+## 1. Cleanup (remove everything out of scope)
 
-## 2. Seed real orgs (public record only)
+Delete:
+- `src/routes/login.tsx`, `src/routes/how-it-works.tsx`, `src/routes/org.$slug.tsx`
+- `src/components/UserDashboard.tsx`, `MessagesPanel.tsx`, `RoleGate.tsx`, `EcosystemGraph.tsx`, `EcosystemMap.tsx` (replaced by new components)
+- `src/lib/auth.ts`, `org.functions.ts`, `user-scope.ts`, `messaging.ts`, `matchmaking.ts`, `ecosystem-data.ts`
+- Server-fn / Supabase auth wiring usage in routes (files in `src/integrations/supabase/` stay untouched but unused)
 
-A new server fn `seedRealOrgs` (admin-only, idempotent, callable from a one-time button) inserts these — all are real, publicly-listed companies/bodies in the apparel + certification space:
+Keep: shadcn UI, `__root.tsx`, router, styles, types.
 
-**Brands** — Patagonia (US), Eileen Fisher (US), Stella McCartney (UK), Veja (FR), Nudie Jeans (SE)
-**Suppliers (Tier 2/3)** — Arvind Limited (IN), Welspun India (IN), Esquel Group (HK), Texhong Textile (CN), Calik Denim (TR), Continental Clothing (DE)
-**Verifiers / certifiers** — Control Union, SGS, Bureau Veritas, Intertek, TÜV Rheinland
-**Regulators / standards bodies** — Textile Exchange, GOTS (Global Standard gGmbH), ZDHC Foundation, Fair Wear Foundation
+## 2. Seed data from your Excel
 
-Each row has: real `name`, `country`, `type`, `tier`, public `website`, and `certifications` taken from each org's published certifications. No fake users, no fake confidence scores — `confidence`/`risk` start as `NULL` and only populate once real docs are uploaded.
+Parse `Entity Database GCH.xlsx` (957 rows) → pick 20 representative entities across the required mix:
+2 Brands, 2 Farmers, 2 Ginners, 2 Spinners, 2 Fabric Mills, 2 Dye Houses, 3 Garment Factories, 2 Logistics, 1 Certification Body, 2 Sustainability Partners — biased toward IN, BD, TR, PT, DE, SE, NL, VN, PK, IT.
 
-Edges (supply / verification / partnership relationships) are seeded **only** where a public sourcing disclosure exists (e.g., Patagonia → Bureau Veritas verification, GOTS → Arvind certification). No invented edges.
+Generate `src/seed/entities.ts` with the full schema you specified (id, name, entityType, organizationType, actorType, country/region/city, lat/lng, description, materials, capabilities, capacity, moq, leadTimeDays, certifications, confidenceScore, riskLevel, evidenceCount, missingDataCount, profileCompleteness, verificationStatus, preferredCommunicationChannel, kpiReadiness, traceabilityReadiness, matchmakingReadiness, missingFields, recommendedNextAction).
 
-## 3. Signup-only auth
+Real fields (name, GCH-Number, country, city, address, tier, entity type) come from the Excel; readiness/score/risk fields are deterministically derived from completeness so the prototype feels real.
 
-- Login page becomes: email/password signup + Google OAuth (via Lovable broker + `configure_social_auth`).
-- First action after signup: **"Create your organisation"** wizard (name, type, country, website). The signup user becomes that org's `owner`.
-- No pre-existing org membership for new users.
-- Admin role (for the `seedRealOrgs` button + viewing all orgs in `/admin`) is gated by the existing `user_roles` table — first user can self-assign via a one-shot button on a fresh DB, then it's locked.
+Also export `TOTAL_ENTITIES = 200`, `entityTypeBreakdown()`, `summaryMetrics()` helpers.
 
-## 4. UI cleanup
+## 3. App shell
 
-- `EcosystemGraph` / `EcosystemMap` / `UserDashboard` / `MessagesPanel` / matchmaking — all read live data from Supabase (server fns), no fallback to hardcoded arrays.
-- Empty states: if a user has no org yet, dashboard shows "Create your organisation" CTA instead of demo data.
-- `/how-it-works` updated: remove references to demo personas; explain that orgs are real and self-created.
+New `src/components/AppShell.tsx` with a shadcn `Sidebar` (collapsible="icon") + top header. Sidebar links:
+- Platform Dashboard `/`
+- Organizations `/organizations`
+- Map View `/map`
+- Settings `/settings`
 
-## 5. Files touched
+Mounted in `__root.tsx`. White bg, slate text, soft borders, subtle shadows — no bright colors.
 
-**Delete**: persona logic in `src/lib/auth.ts`, hardcoded arrays in `src/lib/ecosystem-data.ts` (file becomes types-only).
-**New**: `src/lib/seed.functions.ts` (real-org seed), `src/routes/onboarding.tsx` (create-org wizard), `src/components/EmptyOrgState.tsx`.
-**Modified**: `src/routes/login.tsx`, `src/routes/index.tsx`, `src/components/EcosystemGraph.tsx`, `src/components/EcosystemMap.tsx`, `src/components/UserDashboard.tsx`, `src/lib/matchmaking.ts`, `src/lib/messaging.ts`, `src/lib/org.functions.ts`, `src/routes/how-it-works.tsx`.
-**Migration**: truncate + delete demo auth users.
+## 4. Routes
 
-## Open questions (won't block — sensible defaults applied)
+- `src/routes/index.tsx` — Platform Dashboard: 6 KPI cards + 4 sections (Registry Preview top-5 table, Entity Type Breakdown list, Data Readiness summary, Map Preview card with "Open Map View" CTA → `/map`). Calm, generous spacing.
+- `src/routes/organizations.tsx` — Registry table with search + 8 filter dropdowns (Entity Type, Actor Type, Country, Certification, Risk, Confidence, Verification, Completeness). All 14 columns scrollable. Row click → profile.
+- `src/routes/organizations.$id.tsx` — Profile: header, 4-card mini dashboard, profile details, readiness section (3 progress bars), location card (mock map with single pin), missing-data list, recommended next action.
+- `src/routes/map.tsx` — Full map view with filters + side panel on pin click. Mock map (equirectangular world SVG background with absolute-positioned pins from lat/lng) — no API key required. Pin color encodes verification/risk via slate/neutral tones with subtle indicators. Side panel shows summary + "View Full Profile" button.
+- `src/routes/settings.tsx` — Static UI: Confidence Settings (sliders/inputs), Profile Requirements (checkbox list), Matching Parameters (chips), Matching Weights table with the 8 weights you listed. No persistence.
 
-- **Real members per org**: none seeded. Real members appear when real people sign up + are invited via the existing invite flow.
-- **CSV import**: if you later paste a CSV, I'll add a one-shot `importOrgsCsv` server fn instead of re-running the public-record seed.
+## 5. Map approach
 
-Want me to proceed with this, or first show you the exact list of 20 real orgs I'll seed?
+Pure CSS/SVG mock map using a world outline SVG + absolute pins positioned by lat/lng→x/y projection. Clean, neutral, no Google key. Pins are small slate circles with a ring indicating verification state.
+
+## 6. Design tokens
+
+Adjust `src/styles.css` to a premium neutral palette: white bg, slate-900 text, slate-200 borders, single muted accent (slate-700). Soft shadows, rounded-xl cards. Remove any prior vivid tokens.
+
+## 7. Out of scope (explicitly not built)
+
+Login, accounts, personas, communications, product journey, traceability, uploads, backend, Supabase calls, AI, blockchain, payments.
+
+## File tree (after)
+
+```text
+src/
+  components/
+    AppShell.tsx
+    AppSidebar.tsx
+    MockWorldMap.tsx
+    StatCard.tsx
+    ReadinessBar.tsx
+    ui/*  (unchanged)
+  seed/
+    entities.ts
+    types.ts
+  routes/
+    __root.tsx
+    index.tsx
+    organizations.tsx
+    organizations.$id.tsx
+    map.tsx
+    settings.tsx
+  styles.css
+```
+
+Ready to switch to build mode and execute.
