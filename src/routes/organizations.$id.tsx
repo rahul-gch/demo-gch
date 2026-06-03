@@ -13,10 +13,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { VerificationBadge, RiskBadge } from "@/components/StatusBadge";
-import { GoogleMap } from "@/components/GoogleMap";
+import { MockWorldMap } from "@/components/MockWorldMap";
+import { MiniDashboard } from "@/components/MiniDashboard";
+import { MessageChannel } from "@/components/MessageChannel";
+import { ActivityFeed } from "@/components/ActivityFeed";
+import { DocumentsList } from "@/components/DocumentsList";
+import { isShowcase } from "@/seed/showcase";
 import { getEntity } from "@/seed/entities";
 import type { CertificationDetail, Contact } from "@/seed/types";
-import { ArrowLeft, MapPin, Mail, Phone, Info } from "lucide-react";
+import { ArrowLeft, MapPin, Mail, Phone, Info, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/organizations/$id")({
   loader: ({ params }) => {
@@ -86,6 +91,7 @@ function TagBlock({ label, items }: { label: string; items: string[] }) {
 
 function OrgProfilePage() {
   const { entity: e } = Route.useLoaderData();
+  const showcase = isShowcase(e.id);
 
   return (
     <AppShell>
@@ -117,16 +123,32 @@ function OrgProfilePage() {
             <div className="text-right">
               <div className="text-xs uppercase tracking-wide text-muted-foreground">Confidence</div>
               <div className="text-3xl font-semibold tabular-nums">{e.confidenceScore}%</div>
+              {showcase && (
+                <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-slate-900 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white">
+                  <Sparkles className="h-3 w-3" /> Showcase profile
+                </div>
+              )}
             </div>
           </div>
         </header>
 
-        <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <Stat label="Profile completeness" value={`${e.profileCompleteness}%`} />
-          <Stat label="Verified certs" value={e.verifiedCertCount} hint={`${e.expiredCertCount} expired`} />
-          <Stat label="Evidence count" value={e.evidenceCount} />
-          <Stat label="Missing fields" value={e.missingDataCount} />
-        </section>
+        {showcase ? (
+          <MiniDashboard entity={e} />
+        ) : (
+          <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <Stat label="Profile completeness" value={`${e.profileCompleteness}%`} />
+            <Stat label="Verified certs" value={e.verifiedCertCount} hint={`${e.expiredCertCount} expired`} />
+            <Stat label="Evidence count" value={e.evidenceCount} />
+            <Stat label="Missing fields" value={e.missingDataCount} />
+          </section>
+        )}
+
+        {!showcase && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-900">
+            Lite profile — full dashboard, messaging and documents are only enabled for the first 20 showcase entities in this prototype.
+          </div>
+        )}
+
 
         <section className="grid gap-6 lg:grid-cols-3">
           <Card className="shadow-sm lg:col-span-2">
@@ -272,7 +294,7 @@ function OrgProfilePage() {
               <CardTitle className="text-base font-semibold">Location</CardTitle>
             </CardHeader>
             <CardContent>
-              <GoogleMap entities={[e]} height={300} zoom={6} />
+              <MockWorldMap entities={[e]} height={300} showLegend={false} showRegions={false} />
               <div className="mt-3 text-xs text-muted-foreground">
                 {e.address && `${e.address} · `}
                 {e.latitude.toFixed(3)}, {e.longitude.toFixed(3)}
@@ -311,6 +333,20 @@ function OrgProfilePage() {
             </Card>
           </div>
         </section>
+
+        {showcase && (
+          <section className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <MessageChannel entity={e} />
+            </div>
+            <div className="space-y-6">
+              <ActivityFeed entity={e} />
+            </div>
+          </section>
+        )}
+
+        {showcase && <DocumentsList entity={e} />}
+
 
         <Card className="border-slate-200 bg-slate-50 shadow-sm">
           <CardHeader>

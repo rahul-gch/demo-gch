@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { VerificationBadge, RiskBadge } from "@/components/StatusBadge";
-import { GoogleMap } from "@/components/GoogleMap";
+import { MockWorldMap } from "@/components/MockWorldMap";
 import { ENTITIES, ENTITY_TYPES } from "@/seed/entities";
 import type { Entity } from "@/seed/types";
 import { X } from "lucide-react";
@@ -95,20 +95,14 @@ function MapPage() {
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <Card className="shadow-sm">
-              <CardContent className="p-3">
-                <GoogleMap
+              <CardContent className="p-4">
+                <MockWorldMap
                   entities={filtered}
                   onSelect={setSelected}
                   selectedId={selected?.id}
                   height={560}
                 />
-                <div className="mt-3 flex flex-wrap items-center gap-3 px-2 text-xs text-muted-foreground">
-                  <Legend dot="bg-slate-900" label="Verified" />
-                  <Legend dot="bg-slate-500" label="Pending" />
-                  <Legend dot="bg-slate-300" label="Incomplete" />
-                  <Legend dot="bg-red-600" label="Flagged / expired" />
-                </div>
-                <div className="mt-1 px-2 text-xs text-muted-foreground">
+                <div className="mt-2 text-xs text-muted-foreground">
                   Showing {filtered.length} of {ENTITIES.length} entities.
                 </div>
               </CardContent>
@@ -168,14 +162,6 @@ function MapPage() {
   );
 }
 
-function Legend({ dot, label }: { dot: string; label: string }) {
-  return (
-    <span className="inline-flex items-center gap-1.5">
-      <span className={`h-2 w-2 rounded-full ${dot}`} />
-      {label}
-    </span>
-  );
-}
 
 function Block({ label, items }: { label: string; items: string[] }) {
   if (items.length === 0) return null;
