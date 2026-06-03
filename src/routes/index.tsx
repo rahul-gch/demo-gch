@@ -69,6 +69,10 @@ function DashboardPage() {
           <Stat label="Matchmaking-ready" value={m.matchmakingReady} />
         </section>
 
+        <BenchmarkIntelligence />
+
+
+
         <section className="grid gap-6 lg:grid-cols-2">
           <Card className="shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
