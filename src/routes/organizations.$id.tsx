@@ -15,6 +15,7 @@ import {
 import { VerificationBadge, RiskBadge } from "@/components/StatusBadge";
 import { GoogleMap } from "@/components/GoogleMap";
 import { getEntity } from "@/seed/entities";
+import type { CertificationDetail, Contact } from "@/seed/types";
 import { ArrowLeft, MapPin, Mail, Phone, Info } from "lucide-react";
 
 export const Route = createFileRoute("/organizations/$id")({
@@ -204,7 +205,7 @@ function OrgProfilePage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {e.certificationDetails.map((c, i) => (
+                  {e.certificationDetails.map((c: CertificationDetail, i: number) => (
                     <TableRow key={i}>
                       <TableCell className="text-muted-foreground">{c.category}</TableCell>
                       <TableCell className="font-medium">{c.name}</TableCell>
@@ -239,7 +240,7 @@ function OrgProfilePage() {
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-3">
-                {e.contacts.map((c, i) => (
+                {e.contacts.map((c: Contact, i: number) => (
                   <div key={i} className="rounded-lg border p-4">
                     <div className="text-xs uppercase tracking-wide text-muted-foreground">
                       {c.role}
