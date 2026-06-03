@@ -11,7 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as OrganizationsRouteImport } from './routes/organizations'
+import { Route as MatchmakingRouteImport } from './routes/matchmaking'
 import { Route as MapRouteImport } from './routes/map'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OrganizationsIdRouteImport } from './routes/organizations.$id'
 
@@ -25,9 +27,19 @@ const OrganizationsRoute = OrganizationsRouteImport.update({
   path: '/organizations',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MatchmakingRoute = MatchmakingRouteImport.update({
+  id: '/matchmaking',
+  path: '/matchmaking',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MapRoute = MapRouteImport.update({
   id: '/map',
   path: '/map',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -43,14 +55,18 @@ const OrganizationsIdRoute = OrganizationsIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/map': typeof MapRoute
+  '/matchmaking': typeof MatchmakingRoute
   '/organizations': typeof OrganizationsRouteWithChildren
   '/settings': typeof SettingsRoute
   '/organizations/$id': typeof OrganizationsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/map': typeof MapRoute
+  '/matchmaking': typeof MatchmakingRoute
   '/organizations': typeof OrganizationsRouteWithChildren
   '/settings': typeof SettingsRoute
   '/organizations/$id': typeof OrganizationsIdRoute
@@ -58,7 +74,9 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/map': typeof MapRoute
+  '/matchmaking': typeof MatchmakingRoute
   '/organizations': typeof OrganizationsRouteWithChildren
   '/settings': typeof SettingsRoute
   '/organizations/$id': typeof OrganizationsIdRoute
@@ -67,16 +85,27 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/auth'
     | '/map'
+    | '/matchmaking'
     | '/organizations'
     | '/settings'
     | '/organizations/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/map' | '/organizations' | '/settings' | '/organizations/$id'
+  to:
+    | '/'
+    | '/auth'
+    | '/map'
+    | '/matchmaking'
+    | '/organizations'
+    | '/settings'
+    | '/organizations/$id'
   id:
     | '__root__'
     | '/'
+    | '/auth'
     | '/map'
+    | '/matchmaking'
     | '/organizations'
     | '/settings'
     | '/organizations/$id'
@@ -84,7 +113,9 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRoute
   MapRoute: typeof MapRoute
+  MatchmakingRoute: typeof MatchmakingRoute
   OrganizationsRoute: typeof OrganizationsRouteWithChildren
   SettingsRoute: typeof SettingsRoute
 }
@@ -105,11 +136,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrganizationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/matchmaking': {
+      id: '/matchmaking'
+      path: '/matchmaking'
+      fullPath: '/matchmaking'
+      preLoaderRoute: typeof MatchmakingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/map': {
       id: '/map'
       path: '/map'
       fullPath: '/map'
       preLoaderRoute: typeof MapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -143,7 +188,9 @@ const OrganizationsRouteWithChildren = OrganizationsRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRoute,
   MapRoute: MapRoute,
+  MatchmakingRoute: MatchmakingRoute,
   OrganizationsRoute: OrganizationsRouteWithChildren,
   SettingsRoute: SettingsRoute,
 }

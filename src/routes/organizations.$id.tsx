@@ -21,6 +21,10 @@ import { ActivityFeed } from "@/components/ActivityFeed";
 import { DocumentsList } from "@/components/DocumentsList";
 import { EcosystemConnections } from "@/components/EcosystemConnections";
 import { MatchmakingPanel } from "@/components/MatchmakingPanel";
+import { KpiSnapshot } from "@/components/KpiSnapshot";
+import { KpiTable } from "@/components/KpiTable";
+import { BenchmarkChart } from "@/components/BenchmarkChart";
+import { ReportUploader } from "@/components/ReportUploader";
 import {
   isShowcase,
   getEcosystemConnections,
@@ -150,6 +154,7 @@ function ShowcaseTabs({ e }: { e: Entity }) {
       <TabsList className="flex w-full flex-wrap justify-start">
         <TabsTrigger value="overview">Overview</TabsTrigger>
         <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+        <TabsTrigger value="kpis">KPIs</TabsTrigger>
         <TabsTrigger value="ecosystem">Ecosystem</TabsTrigger>
         <TabsTrigger value="matchmaking">Matchmaking</TabsTrigger>
         <TabsTrigger value="messages">Messages</TabsTrigger>
@@ -159,11 +164,17 @@ function ShowcaseTabs({ e }: { e: Entity }) {
       </TabsList>
 
       <TabsContent value="overview" className="space-y-6">
+        <KpiSnapshot entity={e} />
         <OverviewSection e={e} />
       </TabsContent>
 
-      <TabsContent value="dashboard">
+      <TabsContent value="dashboard" className="space-y-6">
         <MiniDashboard entity={e} />
+        <BenchmarkChart entity={e} />
+      </TabsContent>
+
+      <TabsContent value="kpis">
+        <KpiTable entity={e} />
       </TabsContent>
 
       <TabsContent value="ecosystem" className="space-y-6">

@@ -1,86 +1,90 @@
-
 ## Goal
 
-1. Replace the broken/mock map with a **real Google Maps** view (using the existing Google Maps connector) on both the **Map View** route and the **Dashboard**, styled like the dark reference screenshot.
-2. Build out **complete profile pages** for the first 20 seeded orgs (`gch-001`…`gch-020`) with Dashboard, Ecosystem, Matchmaking, Messages, Documents, Activity — all wired into a tabbed profile layout.
+Turn the first 20 seeded orgs (`gch-001`…`gch-020`) into complete real profiles wired to the uploaded **GCH Benchmark & KPI Intelligence Dataset v0.1** — real KPI library + confidence model, deterministic KPI values per entity, ecosystem view, matchmaking across all 189 entities, communication, documents, report upload.
+
+The 20 showcase entities stay as they are (not aliased to Inditex/H&M/etc.). The Excel `Company_Benchmark` rows are used **only as a separate "Sector benchmark" reference panel** for context; other companies will be filled in later.
 
 ---
 
-## 1. Google Maps integration
+## 1. Ingest the KPI dataset
 
-**Component:** new `src/components/EcosystemGoogleMap.tsx`
-- Loads Maps JS API via `VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY` with `loading=async&callback=initMap&channel=…` (per Google Maps connector rules).
-- Uses `google.maps.Map` (no `mapId`, no `AdvancedMarkerElement`) with a **dark style JSON** matching the screenshot (deep navy land, muted labels).
-- Renders one `google.maps.Marker` per entity, color-coded by `EcosystemGroup`:
-  - Brand → amber `#f59e0b`
-  - Supplier → cyan `#22d3ee`
-  - Verifier → green `#22c55e`
-  - Regulator → purple `#a855f7`
-- Hover/click → `InfoWindow` with name, type, country, and a "View profile" link.
-- Props: `entities`, `height`, `onSelect`, `selectedId`, `compact`, `showLegend`.
-- Legend overlay (bottom-left) and zoom controls preserved.
+New folder `src/seed/kpi/`:
 
-**Wiring:**
-- `src/routes/map.tsx` → replace `MockWorldMap` with `EcosystemGoogleMap`, keep filters & side panel.
-- `src/routes/index.tsx` → replace dashboard map preview with `EcosystemGoogleMap` (compact, 280px, no legend).
-- Delete `src/components/MockWorldMap.tsx`.
+- `kpi-library.ts` — all 18 KPIs from `KPI_Library` (id, name, category, definition, unit, MVP priority, confidence rule).
+- `confidence-rules.ts` — 5 bands (Verified / Documented / Declared / Estimated / Insufficient) + color tokens.
+- `normalization-map.ts` — company term → GCH KPI mapping.
+- `company-benchmark.ts` — the 21 real benchmark rows kept as reference data (used in the "Sector benchmark" panel, NOT applied to the 20 showcase orgs).
+- `index.ts` — helpers:
+  - `getKpisForEntity(e)` → deterministic per-entity KPI rows (value, normalized value, unit, confidence score+label, source = "Reported by org") seeded from entity id so the same org always shows the same numbers, biased by tier / certifications / materials so the values feel coherent.
+  - `getSectorBenchmark(kpiId)` → min / median / max derived from `company-benchmark.ts` for the peer reference panel.
+  - `getConfidenceBand(score)`.
 
-**Note on Leaflet plan:** the previously approved Leaflet plan is superseded by this request — we will use Google Maps instead and will NOT install leaflet/react-leaflet.
+## 2. Showcase profile (`/organizations/$id` for ids 001–020)
 
----
+Add to `ShowcaseTabs`:
 
-## 2. Complete profile for first 20 orgs
+- **Overview** — new "KPI snapshot" card: 4 headline KPIs (Scope 1&2, Scope 3, Recycled material share, Tier 1 visibility) with value, unit, confidence chip.
+- **Dashboard** — keep MiniDashboard, append **Benchmark vs Sector** row: entity value vs sector min/median/max from `getSectorBenchmark`.
+- **KPIs** (new tab) — full table of all 18 KPIs for this entity with confidence band coloring, MVP priority badge, and a link to the underlying confidence rule.
+- **Ecosystem** — existing Google Map + upstream/downstream/verifier list, plus a tiny stat: "X matchmaking candidates across 189 entities".
+- **Matchmaking** — upgrade to score against **all 189 entities** (see §4), top 8 with reason chips and score bar.
+- **Messages** — unchanged.
+- **Documents** — existing list + a **real report uploader** (Supabase Storage `org-docs`, row in `org_documents` with `category='report'`). Uploaded reports also appear as activity entries.
+- **Activity** — existing + "Report uploaded" entries.
+- **Missing data** — existing checklist + KPI-level rows (e.g. "Scope 3 not reported", "Tier 2 visibility missing").
 
-**Route:** rewrite `src/routes/organizations.$id.tsx` for showcase entities into a **tabbed profile** using shadcn `Tabs`:
+## 3. Dashboard (`/`) updates
+
+- Keep the EcosystemGoogleMap.
+- New "Benchmark intelligence" strip: 4 KPI tiles showing sector min / median / max from the Excel benchmark (clearly labeled "Sector reference — Inditex, H&M, Nike, Adidas, Puma, Patagonia, Primark, M&S, Zalando…").
+- "Top 20 showcase orgs" list with profile completeness + KPI confidence average.
+
+## 4. Matchmaking across all 189 entities
+
+`src/seed/matchmaking.ts`:
 
 ```text
-┌─ Header: logo block, name, GCH#, type chips, country, missing-data summary, action buttons
-├─ Tabs:
-│   • Overview     – company description, contacts, address, governance, traceability notes
-│   • Dashboard    – MiniDashboard (KPIs, sparkline, monthly volume, material mix)
-│   • Ecosystem    – upstream/downstream connections (derived from seed), mini Google Map
-│                    centered on this entity with nearby connected orgs
-│   • Matchmaking  – top suggested matches list (deterministic from seed), match score,
-│                    "Open match" action
-│   • Messages     – existing MessageChannel
-│   • Documents    – existing DocumentsList
-│   • Activity     – existing ActivityFeed
-│   • Missing data – checklist of missing fields with "Request from org" stub
+score(a, b) =
+  20 * materialOverlap
++ 15 * certOverlap
++ 20 * tierComplementarity   // brand↔garment↔mill↔spinner↔ginner↔farmer
++ 15 * regionProximity       // same country=1, same region=0.6, else 0.2
++ 15 * kpiCompatibility      // shared KPI categories where both have confidence ≥ 50
++ 15 * capacityFit           // MOQ vs capacity heuristic
 ```
 
-**New helpers in `src/seed/showcase.ts`:**
-- `getEcosystemConnections(e)` – deterministically pick 3–6 related orgs by tier/material overlap.
-- `getMatchSuggestions(e)` – deterministic top 5 with score 60–95%.
+- Used by each showcase profile's Matchmaking tab.
+- New top-level route **`/matchmaking`** — sortable table of suggested pairs across the whole 189-entity registry, filters: tier, country, material, min score.
 
-**New components:**
-- `src/components/EcosystemConnections.tsx` – grouped list (Upstream / Downstream / Verifiers).
-- `src/components/MatchmakingPanel.tsx` – ranked match cards with score bars.
+## 5. Report upload (real)
 
-**Non-showcase entities (21+):** keep the existing "Lite profile" banner — unchanged.
-
----
-
-## 3. Technical notes
-
-- Google Maps connector is already linked; only the browser key (`VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY`) is needed — no server calls.
-- Script loader uses a single global `window.initMap` guard so multiple map instances on one page (dashboard preview + side panels) share one API load.
-- Marker icons use inline SVG data URLs so colors stay in sync with design tokens.
-- No DB / server changes. Purely frontend.
+- `org-docs` bucket exists already.
+- New `src/lib/uploadOrgReport.ts` uses `supabase.storage.from('org-docs').upload(...)` and inserts into `org_documents` with the current user id.
+- Documents tab merges seeded mock docs (showcase only) with real rows queried from `org_documents`.
+- If user not signed in: show a "Sign in to upload" button. (Auth screen is out of scope unless you ask for it.)
 
 ---
 
 ## Files
 
 **Create**
-- `src/components/EcosystemGoogleMap.tsx`
-- `src/components/EcosystemConnections.tsx`
-- `src/components/MatchmakingPanel.tsx`
+- `src/seed/kpi/kpi-library.ts`
+- `src/seed/kpi/confidence-rules.ts`
+- `src/seed/kpi/normalization-map.ts`
+- `src/seed/kpi/company-benchmark.ts`
+- `src/seed/kpi/index.ts`
+- `src/seed/matchmaking.ts`
+- `src/components/KpiSnapshot.tsx`
+- `src/components/KpiTable.tsx`
+- `src/components/BenchmarkChart.tsx`
+- `src/components/ReportUploader.tsx`
+- `src/routes/matchmaking.tsx`
 
 **Update**
-- `src/routes/map.tsx` (swap map component)
-- `src/routes/index.tsx` (swap map component)
-- `src/routes/organizations.$id.tsx` (tabbed profile for showcase)
-- `src/seed/showcase.ts` (add connection + match helpers)
+- `src/routes/organizations.$id.tsx` (KPIs tab, snapshot, benchmark row, uploader)
+- `src/routes/index.tsx` (benchmark strip, showcase orgs list)
+- `src/components/MiniDashboard.tsx` (sector benchmark row)
+- `src/components/MatchmakingPanel.tsx` (uses new scoring, top 8)
+- `src/seed/showcase.ts` (`getMatchSuggestions` delegates to `src/seed/matchmaking.ts`)
 
-**Delete**
-- `src/components/MockWorldMap.tsx`
+No DB migrations — `org_documents` and `org-docs` bucket are already in place.
