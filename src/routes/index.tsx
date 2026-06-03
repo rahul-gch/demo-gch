@@ -45,7 +45,53 @@ function Stat({ label, value, hint }: { label: string; value: string | number; h
   );
 }
 
+function BenchmarkIntelligence() {
+  // Pick 4 headline rows with numeric normalized values across distinct brands.
+  const picks = [
+    COMPANY_BENCHMARK.find((r) => r.company === "H&M Group" && r.kpiId === "KPI004"),
+    COMPANY_BENCHMARK.find((r) => r.company === "H&M Group" && r.kpiId === "KPI010"),
+    COMPANY_BENCHMARK.find((r) => r.company === "H&M Group" && r.kpiId === "KPI002"),
+    COMPANY_BENCHMARK.find((r) => r.company === "Inditex" && r.kpiId === "KPI002"),
+  ].filter(Boolean) as typeof COMPANY_BENCHMARK;
+
+  return (
+    <Card className="shadow-sm">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0">
+        <div>
+          <CardTitle className="text-base font-semibold">Benchmark intelligence</CardTitle>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Sector reference from Inditex, H&amp;M, Nike, Adidas, Puma, Patagonia, Primark, M&amp;S, Zalando, Levi&apos;s.
+          </p>
+        </div>
+        <Badge variant="outline" className="gap-1">
+          <TrendingUp className="h-3 w-3" /> KPI dataset v0.1
+        </Badge>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {picks.map((r, i) => (
+            <div key={i} className="rounded-lg border bg-slate-50/50 p-4">
+              <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                {r.company} · {r.year}
+              </div>
+              <div className="mt-1 text-sm font-medium">{r.kpiName}</div>
+              <div className="mt-2 text-2xl font-semibold tabular-nums">
+                {r.normalizedValue}
+                <span className="ml-1 text-xs font-normal text-muted-foreground">{r.unit}</span>
+              </div>
+              <div className="mt-1 text-[10px] text-muted-foreground">
+                Confidence {r.confidence}% · {r.confidenceLabel}
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function DashboardPage() {
+
   const m = summaryMetrics;
   const preview = ENTITIES.slice(0, 5);
   const breakdown = ENTITY_TYPE_BREAKDOWN;
