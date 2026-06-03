@@ -13,10 +13,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { VerificationBadge, RiskBadge } from "@/components/StatusBadge";
-import { GoogleMap } from "@/components/GoogleMap";
+import { MockWorldMap } from "@/components/MockWorldMap";
+import { MiniDashboard } from "@/components/MiniDashboard";
+import { MessageChannel } from "@/components/MessageChannel";
+import { ActivityFeed } from "@/components/ActivityFeed";
+import { DocumentsList } from "@/components/DocumentsList";
+import { isShowcase } from "@/seed/showcase";
 import { getEntity } from "@/seed/entities";
 import type { CertificationDetail, Contact } from "@/seed/types";
-import { ArrowLeft, MapPin, Mail, Phone, Info } from "lucide-react";
+import { ArrowLeft, MapPin, Mail, Phone, Info, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/organizations/$id")({
   loader: ({ params }) => {
