@@ -37,6 +37,8 @@ export function getEcosystemConnections(e: Entity): EcosystemConnection[] {
   ];
 }
 
+import { getMatchesFor } from "./matchmaking";
+
 export interface MatchSuggestion {
   entity: Entity;
   score: number;
@@ -44,24 +46,9 @@ export interface MatchSuggestion {
 }
 
 export function getMatchSuggestions(e: Entity): MatchSuggestion[] {
-  const rand = seed(e.id + ":match");
-  const pool = ENTITIES.filter((x) => x.id !== e.id && x.entityType !== e.entityType);
-  const scored = pool.map((entity) => {
-    const sameCountry = entity.country === e.country;
-    const matOverlap = entity.materials.filter((m) => e.materials.includes(m)).length;
-    const certOverlap = entity.certifications.filter((c) => e.certifications.includes(c)).length;
-    const base = 55 + matOverlap * 6 + certOverlap * 4 + (sameCountry ? 8 : 0);
-    const jitter = Math.floor(rand() * 12);
-    const score = Math.min(95, base + jitter);
-    const reasons: string[] = [];
-    if (matOverlap) reasons.push(`${matOverlap} shared material${matOverlap > 1 ? "s" : ""}`);
-    if (certOverlap) reasons.push(`${certOverlap} shared certification${certOverlap > 1 ? "s" : ""}`);
-    if (sameCountry) reasons.push("Same country");
-    if (reasons.length === 0) reasons.push("Complementary tier");
-    return { entity, score, reasons };
-  });
-  return scored.sort((a, b) => b.score - a.score).slice(0, 5);
+  return getMatchesFor(e, 8, 0).map((m) => ({ entity: m.entity, score: m.score, reasons: m.reasons }));
 }
+
 
 
 export const SHOWCASE_IDS = Array.from({ length: 20 }, (_, i) =>
