@@ -156,7 +156,7 @@ function DashboardPage() {
               </Button>
             </CardHeader>
             <CardContent>
-              <GoogleMap entities={ENTITIES} height={240} />
+              <MockWorldMap entities={ENTITIES} height={240} compact showLegend={false} />
             </CardContent>
           </Card>
         </section>
