@@ -91,6 +91,7 @@ function TagBlock({ label, items }: { label: string; items: string[] }) {
 
 function OrgProfilePage() {
   const { entity: e } = Route.useLoaderData();
+  const showcase = isShowcase(e.id);
 
   return (
     <AppShell>
@@ -122,16 +123,32 @@ function OrgProfilePage() {
             <div className="text-right">
               <div className="text-xs uppercase tracking-wide text-muted-foreground">Confidence</div>
               <div className="text-3xl font-semibold tabular-nums">{e.confidenceScore}%</div>
+              {showcase && (
+                <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-slate-900 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white">
+                  <Sparkles className="h-3 w-3" /> Showcase profile
+                </div>
+              )}
             </div>
           </div>
         </header>
 
-        <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <Stat label="Profile completeness" value={`${e.profileCompleteness}%`} />
-          <Stat label="Verified certs" value={e.verifiedCertCount} hint={`${e.expiredCertCount} expired`} />
-          <Stat label="Evidence count" value={e.evidenceCount} />
-          <Stat label="Missing fields" value={e.missingDataCount} />
-        </section>
+        {showcase ? (
+          <MiniDashboard entity={e} />
+        ) : (
+          <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <Stat label="Profile completeness" value={`${e.profileCompleteness}%`} />
+            <Stat label="Verified certs" value={e.verifiedCertCount} hint={`${e.expiredCertCount} expired`} />
+            <Stat label="Evidence count" value={e.evidenceCount} />
+            <Stat label="Missing fields" value={e.missingDataCount} />
+          </section>
+        )}
+
+        {!showcase && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-900">
+            Lite profile — full dashboard, messaging and documents are only enabled for the first 20 showcase entities in this prototype.
+          </div>
+        )}
+
 
         <section className="grid gap-6 lg:grid-cols-3">
           <Card className="shadow-sm lg:col-span-2">
