@@ -211,9 +211,11 @@ function ShowcaseTabs({ e }: { e: Entity }) {
         <MessageChannel entity={e} />
       </TabsContent>
 
-      <TabsContent value="documents">
+      <TabsContent value="documents" className="space-y-6">
+        <ReportUploader entity={e} />
         <DocumentsList entity={e} />
       </TabsContent>
+
 
       <TabsContent value="activity">
         <ActivityFeed entity={e} />
