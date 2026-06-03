@@ -10724,3 +10724,22 @@ export const summaryMetrics = {
   avgCompleteness: Math.round(ENTITIES.reduce((s,e)=>s+e.profileCompleteness,0)/ENTITIES.length),
   countries: new Set(ENTITIES.map(e => e.country)).size,
 };
+
+const _missing = ENTITIES.reduce((s,e)=>s+e.missingDataCount,0);
+const _matchReady = ENTITIES.filter(e=>e.matchmakingReadiness>=60).length;
+Object.assign(summaryMetrics, {
+  totalRegistry: ENTITIES.length,
+  seededVisible: ENTITIES.length,
+  matchmakingReady: _matchReady,
+  missingTotal: _missing,
+});
+
+export const ENTITY_TYPE_BREAKDOWN: { type: string; count: number }[] = (() => {
+  const map = new Map<string, number>();
+  for (const e of ENTITIES) map.set(e.entityType, (map.get(e.entityType) || 0) + 1);
+  return Array.from(map.entries())
+    .map(([type, count]) => ({ type, count }))
+    .sort((a, b) => b.count - a.count);
+})();
+
+export function entityTypeBreakdown() { return ENTITY_TYPE_BREAKDOWN; }
