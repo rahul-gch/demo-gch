@@ -1,4 +1,68 @@
 import type { Entity } from "./types";
+import { ENTITIES } from "./entities";
+
+export interface EcosystemConnection {
+  entity: Entity;
+  role: "Upstream" | "Downstream" | "Verifier";
+  relationship: string;
+}
+
+const TIER_ORDER = ["Tier 4", "Tier 3", "Tier 2", "Tier 1", "Tier 0"] as const;
+
+export function getEcosystemConnections(e: Entity): EcosystemConnection[] {
+  const rand = seed(e.id + ":eco");
+  const idx = TIER_ORDER.indexOf(e.actorType);
+  const upstreamTier = TIER_ORDER[Math.max(0, idx - 1)];
+  const downstreamTier = TIER_ORDER[Math.min(TIER_ORDER.length - 1, idx + 1)];
+  const pool = ENTITIES.filter((x) => x.id !== e.id);
+
+  const pick = (n: number, filter: (x: Entity) => boolean): Entity[] => {
+    const matches = pool.filter(filter);
+    const out: Entity[] = [];
+    while (out.length < n && matches.length) {
+      const i = Math.floor(rand() * matches.length);
+      out.push(matches.splice(i, 1)[0]);
+    }
+    return out;
+  };
+
+  const upstream = pick(3, (x) => x.actorType === upstreamTier && x.entityType !== "Certification Body");
+  const downstream = pick(2, (x) => x.actorType === downstreamTier && x.entityType !== "Certification Body");
+  const verifiers = pick(2, (x) => x.entityType === "Certification Body" || x.entityType === "Sustainability Partner");
+
+  return [
+    ...upstream.map((entity) => ({ entity, role: "Upstream" as const, relationship: `Supplies ${e.name.split(" ")[0]}` })),
+    ...downstream.map((entity) => ({ entity, role: "Downstream" as const, relationship: `Buyer of ${e.name.split(" ")[0]} output` })),
+    ...verifiers.map((entity) => ({ entity, role: "Verifier" as const, relationship: "Audits and certification" })),
+  ];
+}
+
+export interface MatchSuggestion {
+  entity: Entity;
+  score: number;
+  reasons: string[];
+}
+
+export function getMatchSuggestions(e: Entity): MatchSuggestion[] {
+  const rand = seed(e.id + ":match");
+  const pool = ENTITIES.filter((x) => x.id !== e.id && x.entityType !== e.entityType);
+  const scored = pool.map((entity) => {
+    const sameCountry = entity.country === e.country;
+    const matOverlap = entity.materials.filter((m) => e.materials.includes(m)).length;
+    const certOverlap = entity.certifications.filter((c) => e.certifications.includes(c)).length;
+    const base = 55 + matOverlap * 6 + certOverlap * 4 + (sameCountry ? 8 : 0);
+    const jitter = Math.floor(rand() * 12);
+    const score = Math.min(95, base + jitter);
+    const reasons: string[] = [];
+    if (matOverlap) reasons.push(`${matOverlap} shared material${matOverlap > 1 ? "s" : ""}`);
+    if (certOverlap) reasons.push(`${certOverlap} shared certification${certOverlap > 1 ? "s" : ""}`);
+    if (sameCountry) reasons.push("Same country");
+    if (reasons.length === 0) reasons.push("Complementary tier");
+    return { entity, score, reasons };
+  });
+  return scored.sort((a, b) => b.score - a.score).slice(0, 5);
+}
+
 
 export const SHOWCASE_IDS = Array.from({ length: 20 }, (_, i) =>
   `gch-${String(i + 1).padStart(3, "0")}`,
