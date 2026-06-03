@@ -93,7 +93,7 @@ function OrganizationsPage() {
         <header>
           <h1 className="text-2xl font-semibold tracking-tight">Organization Registry</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            200 entities in registry. 20 seeded entities visible in this prototype.
+            {ENTITIES.length} entities in registry — {rows.length} matching current filters.
           </p>
         </header>
 
@@ -244,7 +244,7 @@ function FilterSelect({
   label: string;
   value: string;
   onChange: (v: string) => void;
-  options: Option[];
+  options: readonly Option[];
 }) {
   return (
     <div className="space-y-1">

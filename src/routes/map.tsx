@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { VerificationBadge, RiskBadge } from "@/components/StatusBadge";
-import { MockWorldMap } from "@/components/MockWorldMap";
+import { GoogleMap } from "@/components/GoogleMap";
 import { ENTITIES, ENTITY_TYPES } from "@/seed/entities";
 import type { Entity } from "@/seed/types";
 import { X } from "lucide-react";
@@ -96,7 +96,7 @@ function MapPage() {
           <div className="lg:col-span-2">
             <Card className="shadow-sm">
               <CardContent className="p-3">
-                <MockWorldMap
+                <GoogleMap
                   entities={filtered}
                   onSelect={setSelected}
                   selectedId={selected?.id}
@@ -106,7 +106,10 @@ function MapPage() {
                   <Legend dot="bg-slate-900" label="Verified" />
                   <Legend dot="bg-slate-500" label="Pending" />
                   <Legend dot="bg-slate-300" label="Incomplete" />
-                  <Legend dot="bg-red-600" label="High risk" />
+                  <Legend dot="bg-red-600" label="Flagged / expired" />
+                </div>
+                <div className="mt-1 px-2 text-xs text-muted-foreground">
+                  Showing {filtered.length} of {ENTITIES.length} entities.
                 </div>
               </CardContent>
             </Card>
@@ -201,7 +204,7 @@ function Filter({
   label: string;
   value: string;
   onChange: (v: string) => void;
-  options: Opt[];
+  options: readonly Opt[];
 }) {
   return (
     <div className="space-y-1">
