@@ -11,12 +11,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { VerificationBadge } from "@/components/StatusBadge";
-import { MockWorldMap } from "@/components/MockWorldMap";
-import {
-  ENTITIES,
-  entityTypeBreakdown,
-  summaryMetrics,
-} from "@/seed/entities";
+import { GoogleMap } from "@/components/GoogleMap";
+import { ENTITIES, ENTITY_TYPE_BREAKDOWN, summaryMetrics } from "@/seed/entities";
 import { ArrowUpRight } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -47,9 +43,9 @@ function Stat({ label, value, hint }: { label: string; value: string | number; h
 }
 
 function DashboardPage() {
-  const m = summaryMetrics();
+  const m = summaryMetrics;
   const preview = ENTITIES.slice(0, 5);
-  const breakdown = entityTypeBreakdown();
+  const breakdown = ENTITY_TYPE_BREAKDOWN;
 
   return (
     <AppShell>
@@ -122,7 +118,7 @@ function DashboardPage() {
             </CardHeader>
             <CardContent>
               <ul className="divide-y">
-                {breakdown.map((b) => (
+                {breakdown.map((b: { type: string; count: number }) => (
                   <li key={b.type} className="flex items-center justify-between py-2 text-sm">
                     <span>{b.type}</span>
                     <span className="tabular-nums text-muted-foreground">{b.count}</span>
@@ -160,7 +156,7 @@ function DashboardPage() {
               </Button>
             </CardHeader>
             <CardContent>
-              <MockWorldMap entities={ENTITIES} height={220} compact />
+              <GoogleMap entities={ENTITIES} height={240} />
             </CardContent>
           </Card>
         </section>
