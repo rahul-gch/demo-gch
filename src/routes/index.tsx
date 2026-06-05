@@ -118,6 +118,30 @@ function DashboardPage() {
 
         <BenchmarkIntelligence />
 
+        {(() => {
+          const nike = getEntity("gch-nike");
+          return nike ? (
+            <section className="space-y-3">
+              <div className="flex items-end justify-between">
+                <div>
+                  <h2 className="text-base font-semibold tracking-tight">Featured Network Passport</h2>
+                  <p className="text-xs text-muted-foreground">
+                    Live profile preview — sourced from FY24 NIKE Sustainability Data.
+                  </p>
+                </div>
+                <Button asChild variant="ghost" size="sm">
+                  <Link to="/organizations/$id" params={{ id: nike.id }}>
+                    Open full profile <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
+                  </Link>
+                </Button>
+              </div>
+              <NetworkPassport entity={nike} />
+            </section>
+          ) : null;
+        })()}
+
+
+
 
 
         <section className="grid gap-6 lg:grid-cols-2">
