@@ -2,9 +2,14 @@ import type { Entity } from "../types";
 import { KPI_LIBRARY, HEADLINE_KPI_IDS, type KpiDef } from "./kpi-library";
 import { COMPANY_BENCHMARK, type BenchmarkRow } from "./company-benchmark";
 import { getConfidenceBand, confidenceClasses, CONFIDENCE_BANDS, type ConfidenceBand } from "./confidence-rules";
+import { NIKE_KPI_OVERRIDES } from "../nike";
 
 export { KPI_LIBRARY, HEADLINE_KPI_IDS, COMPANY_BENCHMARK, CONFIDENCE_BANDS, getConfidenceBand, confidenceClasses };
 export type { KpiDef, BenchmarkRow, ConfidenceBand };
+
+const ENTITY_KPI_OVERRIDES: Record<string, typeof NIKE_KPI_OVERRIDES> = {
+  "gch-nike": NIKE_KPI_OVERRIDES,
+};
 
 export interface EntityKpi {
   kpi: KpiDef;
@@ -65,8 +70,22 @@ function fmt(v: number, unit: string): string {
 export function getKpisForEntity(e: Entity): EntityKpi[] {
   const rand = seedFn(e.id + ":kpi");
   const bias = entityBias(e);
+  const overrides = ENTITY_KPI_OVERRIDES[e.id];
 
   return KPI_LIBRARY.map((kpi) => {
+    const override = overrides?.[kpi.id];
+    if (override) {
+      const band = getConfidenceBand(override.confidence);
+      return {
+        kpi,
+        value: override.value,
+        displayValue: override.display,
+        confidence: override.confidence,
+        band,
+        source: override.source,
+        reported: true,
+      };
+    }
     // Each entity reports ~80% of KPIs; rest are missing.
     const reported = rand() > 0.18;
     const bucket = bias[categoryBucket(kpi.category)];

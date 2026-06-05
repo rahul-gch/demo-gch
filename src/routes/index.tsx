@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/table";
 import { VerificationBadge } from "@/components/StatusBadge";
 import { EcosystemGoogleMap } from "@/components/EcosystemGoogleMap";
-import { ENTITIES, ENTITY_TYPE_BREAKDOWN, summaryMetrics } from "@/seed/entities";
+import { ALL_ENTITIES as ENTITIES, ENTITY_TYPE_BREAKDOWN, summaryMetrics, getEntity } from "@/seed/all-entities";
+import { NetworkPassport } from "@/components/NetworkPassport";
 import { COMPANY_BENCHMARK } from "@/seed/kpi";
 import { Badge } from "@/components/ui/badge";
 import { ArrowUpRight, TrendingUp } from "lucide-react";
@@ -116,6 +117,30 @@ function DashboardPage() {
         </section>
 
         <BenchmarkIntelligence />
+
+        {(() => {
+          const nike = getEntity("gch-nike");
+          return nike ? (
+            <section className="space-y-3">
+              <div className="flex items-end justify-between">
+                <div>
+                  <h2 className="text-base font-semibold tracking-tight">Featured Network Passport</h2>
+                  <p className="text-xs text-muted-foreground">
+                    Live profile preview — sourced from FY24 NIKE Sustainability Data.
+                  </p>
+                </div>
+                <Button asChild variant="ghost" size="sm">
+                  <Link to="/organizations/$id" params={{ id: nike.id }}>
+                    Open full profile <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
+                  </Link>
+                </Button>
+              </div>
+              <NetworkPassport entity={nike} />
+            </section>
+          ) : null;
+        })()}
+
+
 
 
 

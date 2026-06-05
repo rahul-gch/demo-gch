@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { VerificationBadge, RiskBadge } from "@/components/StatusBadge";
 import { EcosystemGoogleMap } from "@/components/EcosystemGoogleMap";
-import { ENTITIES, ENTITY_TYPES } from "@/seed/entities";
+import { ALL_ENTITIES as ENTITIES, ENTITY_TYPES } from "@/seed/all-entities";
 import type { Entity } from "@/seed/types";
 import { X } from "lucide-react";
 
