@@ -1,90 +1,83 @@
-## Goal
+## Goals
 
-Turn the first 20 seeded orgs (`gch-001`…`gch-020`) into complete real profiles wired to the uploaded **GCH Benchmark & KPI Intelligence Dataset v0.1** — real KPI library + confidence model, deterministic KPI values per entity, ecosystem view, matchmaking across all 189 entities, communication, documents, report upload.
+1. Add Nike, Inc. as a real organization populated from the FY24 NIKE Sustainability Data PDF.
+2. Add a "Network Passport" hero panel (the dark layout in the screenshot) to every showcase org profile AND to the platform dashboard.
+3. Fix the issue where the individual org Dashboard / Profile content isn't visible.
 
-The 20 showcase entities stay as they are (not aliased to Inditex/H&M/etc.). The Excel `Company_Benchmark` rows are used **only as a separate "Sector benchmark" reference panel** for context; other companies will be filled in later.
+## 1. Add Nike as org `gch-nike`
 
----
+New file `src/seed/nike.ts` exporting a fully populated `Entity`:
 
-## 1. Ingest the KPI dataset
+- id `gch-nike`, gchNumber `GCH-NIKE`, name "NIKE, Inc.", entityType `Brand`, actorType `Tier 0`
+- HQ: Beaverton, Oregon, USA (lat 45.5106, lng -122.7795)
+- Materials: Polyester (recycled), Cotton (organic / BCI), Leather (LWG), Rubber
+- Capabilities: Footwear, Apparel, Equipment
+- Certifications: bluesign, LWG, Higg FEM, ZDHC, SAC member, Cotton 2025
+- Governance / traceability notes pulled from FY24 PDF
+- Contacts: Investor Relations + Sustainability (public)
+- `profileCompleteness: 96`, `verificationStatus: Verified`, `riskLevel: Low`, readiness all high
 
-New folder `src/seed/kpi/`:
+`src/seed/entities.ts` is auto-generated, so we won't edit it. Instead append Nike via a small wrapper:
 
-- `kpi-library.ts` — all 18 KPIs from `KPI_Library` (id, name, category, definition, unit, MVP priority, confidence rule).
-- `confidence-rules.ts` — 5 bands (Verified / Documented / Declared / Estimated / Insufficient) + color tokens.
-- `normalization-map.ts` — company term → GCH KPI mapping.
-- `company-benchmark.ts` — the 21 real benchmark rows kept as reference data (used in the "Sector benchmark" panel, NOT applied to the 20 showcase orgs).
-- `index.ts` — helpers:
-  - `getKpisForEntity(e)` → deterministic per-entity KPI rows (value, normalized value, unit, confidence score+label, source = "Reported by org") seeded from entity id so the same org always shows the same numbers, biased by tier / certifications / materials so the values feel coherent.
-  - `getSectorBenchmark(kpiId)` → min / median / max derived from `company-benchmark.ts` for the peer reference panel.
-  - `getConfidenceBand(score)`.
+- Add `src/seed/all-entities.ts` exporting `ALL_ENTITIES = [...ENTITIES, NIKE]` and `getEntity(id)`.
+- Update `src/seed/showcase.ts`, `src/routes/organizations.$id.tsx`, `src/routes/organizations.tsx`, `src/routes/map.tsx`, `src/routes/matchmaking.tsx`, `src/routes/index.tsx` to import from `all-entities.ts` instead of `entities.ts` directly.
+- Add `gch-nike` to `SHOWCASE_IDS` (now 21 showcase orgs).
 
-## 2. Showcase profile (`/organizations/$id` for ids 001–020)
+Hard-code Nike KPI values in `src/seed/kpi/index.ts` `getKpisForEntity` via an override map so KPIs reflect the real FY24 report:
 
-Add to `ShowcaseTabs`:
-
-- **Overview** — new "KPI snapshot" card: 4 headline KPIs (Scope 1&2, Scope 3, Recycled material share, Tier 1 visibility) with value, unit, confidence chip.
-- **Dashboard** — keep MiniDashboard, append **Benchmark vs Sector** row: entity value vs sector min/median/max from `getSectorBenchmark`.
-- **KPIs** (new tab) — full table of all 18 KPIs for this entity with confidence band coloring, MVP priority badge, and a link to the underlying confidence rule.
-- **Ecosystem** — existing Google Map + upstream/downstream/verifier list, plus a tiny stat: "X matchmaking candidates across 189 entities".
-- **Matchmaking** — upgrade to score against **all 189 entities** (see §4), top 8 with reason chips and score bar.
-- **Messages** — unchanged.
-- **Documents** — existing list + a **real report uploader** (Supabase Storage `org-docs`, row in `org_documents` with `category='report'`). Uploaded reports also appear as activity entries.
-- **Activity** — existing + "Report uploaded" entries.
-- **Missing data** — existing checklist + KPI-level rows (e.g. "Scope 3 not reported", "Tier 2 visibility missing").
-
-## 3. Dashboard (`/`) updates
-
-- Keep the EcosystemGoogleMap.
-- New "Benchmark intelligence" strip: 4 KPI tiles showing sector min / median / max from the Excel benchmark (clearly labeled "Sector reference — Inditex, H&M, Nike, Adidas, Puma, Patagonia, Primark, M&S, Zalando…").
-- "Top 20 showcase orgs" list with profile completeness + KPI confidence average.
-
-## 4. Matchmaking across all 189 entities
-
-`src/seed/matchmaking.ts`:
-
-```text
-score(a, b) =
-  20 * materialOverlap
-+ 15 * certOverlap
-+ 20 * tierComplementarity   // brand↔garment↔mill↔spinner↔ginner↔farmer
-+ 15 * regionProximity       // same country=1, same region=0.6, else 0.2
-+ 15 * kpiCompatibility      // shared KPI categories where both have confidence ≥ 50
-+ 15 * capacityFit           // MOQ vs capacity heuristic
+```
+KPI001 Scope 1&2 reduction: 69% vs FY20
+KPI002 Scope 3 (mfg + transport): 36% vs FY20
+KPI003 Recycled material share (polyester): high
+KPI010 Renewable electricity (owned/operated): 100%
+KPI011 Water reduction (material mfg): 40%
+KPI013 Waste diverted from landfill: 100%
 ```
 
-- Used by each showcase profile's Matchmaking tab.
-- New top-level route **`/matchmaking`** — sortable table of suggested pairs across the whole 189-entity registry, filters: tier, country, material, min score.
+All marked with confidence "Verified high" and source URL to about.nike.com.
 
-## 5. Report upload (real)
+## 2. Network Passport panel
 
-- `org-docs` bucket exists already.
-- New `src/lib/uploadOrgReport.ts` uses `supabase.storage.from('org-docs').upload(...)` and inserts into `org_documents` with the current user id.
-- Documents tab merges seeded mock docs (showcase only) with real rows queried from `org_documents`.
-- If user not signed in: show a "Sign in to upload" button. (Auth screen is out of scope unless you ask for it.)
+New component `src/components/NetworkPassport.tsx` rendering the dark layout from the screenshot:
 
----
+- Dark slate background (`bg-slate-950 text-slate-100`), amber accents matching the screenshot (`text-amber-400` headings, amber outlined chips).
+- Left/main column: NETWORK PASSPORT title, then a 2-column grid of fields (Organization, Material, Harvest, Fiber length / Entity Type, Origin, Batch size, Certifications chips).
+- SUPPLY CHAIN JOURNEY: horizontal stepper with 7 nodes (Farm → Ginning → Spinning → Textile Mill → Manufacturer → Brand → Retail) using lucide icons in amber circles, the current stage highlighted in cyan. Below it, a "current stage" detail card.
+- Right column: AI INTELLIGENCE & ESG — six circular score badges (Traceability, Environmental, Social, Governance, Compliance, Trust score) in a 3×2 grid, each showing a 2‑digit number inside an amber ring.
+- AI INSIGHTS list: 4 small cards (Supply Risk Alert, Certification Alert, Water Risk, ESG Trend) with lucide icons.
 
-## Files
+Inputs: an `Entity` plus a `journey` array (Nike gets a curated tier 4→tier 0 path; other showcase orgs get a generated journey using `getEcosystemConnections`).
 
-**Create**
-- `src/seed/kpi/kpi-library.ts`
-- `src/seed/kpi/confidence-rules.ts`
-- `src/seed/kpi/normalization-map.ts`
-- `src/seed/kpi/company-benchmark.ts`
-- `src/seed/kpi/index.ts`
-- `src/seed/matchmaking.ts`
-- `src/components/KpiSnapshot.tsx`
-- `src/components/KpiTable.tsx`
-- `src/components/BenchmarkChart.tsx`
-- `src/components/ReportUploader.tsx`
-- `src/routes/matchmaking.tsx`
+Wired in two places:
 
-**Update**
-- `src/routes/organizations.$id.tsx` (KPIs tab, snapshot, benchmark row, uploader)
-- `src/routes/index.tsx` (benchmark strip, showcase orgs list)
-- `src/components/MiniDashboard.tsx` (sector benchmark row)
-- `src/components/MatchmakingPanel.tsx` (uses new scoring, top 8)
-- `src/seed/showcase.ts` (`getMatchSuggestions` delegates to `src/seed/matchmaking.ts`)
+- `src/routes/organizations.$id.tsx` — render `<NetworkPassport e={e} />` at the top of `OrgProfilePage` (above the existing tabs). The existing light-theme tabs stay below for editorial detail.
+- `src/routes/index.tsx` — add a "Featured passport" section that rotates through Nike + a couple of other showcase orgs, plus a compact passport summary on the dashboard.
 
-No DB migrations — `org_documents` and `org-docs` bucket are already in place.
+The panel is self-contained dark; the rest of the app stays light. No theme switch.
+
+## 3. Fix "individual org dashboard / profile not visible"
+
+Two probable causes; both addressed:
+
+a. `ShowcaseTabs` only renders for ids in `SHOWCASE_IDS`. Once Nike (`gch-nike`) is added to that array, its tabs (Dashboard, KPIs, Ecosystem…) will appear. Same for any other org the user reports.
+
+b. The Dashboard tab renders `<MiniDashboard entity={e} />` + `<BenchmarkChart …>`. Verify after refactor that both render with entity prop and there are no console errors when switching tabs (will check console + view preview at `/organizations/gch-001` and `/organizations/gch-nike`).
+
+If the visibility bug turns out to be a routing crash (e.g. a missing import after the entities-source refactor), fix it before declaring done.
+
+## 4. Files
+
+- create `src/seed/nike.ts`
+- create `src/seed/all-entities.ts`
+- create `src/components/NetworkPassport.tsx`
+- edit `src/seed/showcase.ts` (use ALL_ENTITIES, add `gch-nike` to SHOWCASE_IDS)
+- edit `src/seed/kpi/index.ts` (Nike KPI overrides)
+- edit `src/routes/organizations.$id.tsx` (render NetworkPassport, use ALL_ENTITIES)
+- edit `src/routes/organizations.tsx`, `src/routes/map.tsx`, `src/routes/matchmaking.tsx`, `src/routes/index.tsx` (use ALL_ENTITIES, add featured passport on dashboard)
+
+## 5. Verification
+
+- Browser-check `/organizations/gch-nike`: passport renders, tabs render, KPI snapshot shows FY24 numbers.
+- Browser-check `/organizations/gch-001`: dashboard tab renders MiniDashboard + Benchmark.
+- Browser-check `/`: featured passport visible on platform dashboard.
+- Console clean.
