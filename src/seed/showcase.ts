@@ -51,9 +51,10 @@ export function getMatchSuggestions(e: Entity): MatchSuggestion[] {
 
 
 
-export const SHOWCASE_IDS = Array.from({ length: 20 }, (_, i) =>
-  `gch-${String(i + 1).padStart(3, "0")}`,
-);
+export const SHOWCASE_IDS = [
+  "gch-nike",
+  ...Array.from({ length: 20 }, (_, i) => `gch-${String(i + 1).padStart(3, "0")}`),
+];
 
 export function isShowcase(id: string) {
   return SHOWCASE_IDS.includes(id);
