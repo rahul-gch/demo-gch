@@ -1,5 +1,5 @@
 import type { Entity, ActorType } from "./types";
-import { ENTITIES } from "./entities";
+import { ALL_ENTITIES as ENTITIES } from "./all-entities";
 import { getKpisForEntity } from "./kpi";
 
 const TIER_ORDER: ActorType[] = ["Tier 4", "Tier 3", "Tier 2", "Tier 1", "Tier 0"];
