@@ -1,5 +1,5 @@
 import type { Entity } from "./types";
-import { ENTITIES } from "./entities";
+import { ALL_ENTITIES as ENTITIES } from "./all-entities";
 
 export interface EcosystemConnection {
   entity: Entity;
