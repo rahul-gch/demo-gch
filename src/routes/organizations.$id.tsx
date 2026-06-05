@@ -30,7 +30,8 @@ import {
   getEcosystemConnections,
   getMatchSuggestions,
 } from "@/seed/showcase";
-import { getEntity } from "@/seed/entities";
+import { getEntity } from "@/seed/all-entities";
+import { NetworkPassport } from "@/components/NetworkPassport";
 import type { CertificationDetail, Contact, Entity } from "@/seed/types";
 import { ArrowLeft, MapPin, Mail, Phone, Sparkles, CheckCircle2, AlertCircle } from "lucide-react";
 
