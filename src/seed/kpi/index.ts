@@ -70,8 +70,22 @@ function fmt(v: number, unit: string): string {
 export function getKpisForEntity(e: Entity): EntityKpi[] {
   const rand = seedFn(e.id + ":kpi");
   const bias = entityBias(e);
+  const overrides = ENTITY_KPI_OVERRIDES[e.id];
 
   return KPI_LIBRARY.map((kpi) => {
+    const override = overrides?.[kpi.id];
+    if (override) {
+      const band = getConfidenceBand(override.confidence);
+      return {
+        kpi,
+        value: override.value,
+        displayValue: override.display,
+        confidence: override.confidence,
+        band,
+        source: override.source,
+        reported: true,
+      };
+    }
     // Each entity reports ~80% of KPIs; rest are missing.
     const reported = rand() > 0.18;
     const bucket = bias[categoryBucket(kpi.category)];
