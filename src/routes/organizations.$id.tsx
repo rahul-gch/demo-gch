@@ -139,6 +139,8 @@ function OrgProfilePage() {
           </div>
         )}
 
+        {showcase && <NetworkPassport entity={e} />}
+
         {showcase ? <ShowcaseTabs e={e} /> : <LiteProfile e={e} />}
       </div>
     </AppShell>
