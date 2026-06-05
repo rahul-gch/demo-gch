@@ -15,6 +15,7 @@ import { Route as MatchmakingRouteImport } from './routes/matchmaking'
 import { Route as MapRouteImport } from './routes/map'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as OrganizationsIndexRouteImport } from './routes/organizations.index'
 import { Route as OrganizationsIdRouteImport } from './routes/organizations.$id'
 
 const SettingsRoute = SettingsRouteImport.update({
@@ -47,6 +48,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OrganizationsIndexRoute = OrganizationsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => OrganizationsRoute,
+} as any)
 const OrganizationsIdRoute = OrganizationsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -61,15 +67,16 @@ export interface FileRoutesByFullPath {
   '/organizations': typeof OrganizationsRouteWithChildren
   '/settings': typeof SettingsRoute
   '/organizations/$id': typeof OrganizationsIdRoute
+  '/organizations/': typeof OrganizationsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/map': typeof MapRoute
   '/matchmaking': typeof MatchmakingRoute
-  '/organizations': typeof OrganizationsRouteWithChildren
   '/settings': typeof SettingsRoute
   '/organizations/$id': typeof OrganizationsIdRoute
+  '/organizations': typeof OrganizationsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,6 +87,7 @@ export interface FileRoutesById {
   '/organizations': typeof OrganizationsRouteWithChildren
   '/settings': typeof SettingsRoute
   '/organizations/$id': typeof OrganizationsIdRoute
+  '/organizations/': typeof OrganizationsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,15 +99,16 @@ export interface FileRouteTypes {
     | '/organizations'
     | '/settings'
     | '/organizations/$id'
+    | '/organizations/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/map'
     | '/matchmaking'
-    | '/organizations'
     | '/settings'
     | '/organizations/$id'
+    | '/organizations'
   id:
     | '__root__'
     | '/'
@@ -109,6 +118,7 @@ export interface FileRouteTypes {
     | '/organizations'
     | '/settings'
     | '/organizations/$id'
+    | '/organizations/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -164,6 +174,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/organizations/': {
+      id: '/organizations/'
+      path: '/'
+      fullPath: '/organizations/'
+      preLoaderRoute: typeof OrganizationsIndexRouteImport
+      parentRoute: typeof OrganizationsRoute
+    }
     '/organizations/$id': {
       id: '/organizations/$id'
       path: '/$id'
@@ -176,10 +193,12 @@ declare module '@tanstack/react-router' {
 
 interface OrganizationsRouteChildren {
   OrganizationsIdRoute: typeof OrganizationsIdRoute
+  OrganizationsIndexRoute: typeof OrganizationsIndexRoute
 }
 
 const OrganizationsRouteChildren: OrganizationsRouteChildren = {
   OrganizationsIdRoute: OrganizationsIdRoute,
+  OrganizationsIndexRoute: OrganizationsIndexRoute,
 }
 
 const OrganizationsRouteWithChildren = OrganizationsRoute._addFileChildren(
@@ -197,3 +216,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
