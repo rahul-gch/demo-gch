@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { VerificationBadge, RiskBadge } from "@/components/StatusBadge";
-import { ENTITIES, ENTITY_TYPES } from "@/seed/entities";
+import { ALL_ENTITIES as ENTITIES, ENTITY_TYPES } from "@/seed/all-entities";
 
 export const Route = createFileRoute("/organizations")({
   head: () => ({
