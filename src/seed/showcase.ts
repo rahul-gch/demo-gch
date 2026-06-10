@@ -53,6 +53,11 @@ export function getMatchSuggestions(e: Entity): MatchSuggestion[] {
 
 export const SHOWCASE_IDS = [
   "gch-nike",
+  "gch-hm",
+  "gch-mands",
+  "gch-primark",
+  "gch-170",
+  "gch-123",
   ...Array.from({ length: 20 }, (_, i) => `gch-${String(i + 1).padStart(3, "0")}`),
 ];
 

@@ -1,83 +1,84 @@
-## Goals
+## Goal
 
-1. Add Nike, Inc. as a real organization populated from the FY24 NIKE Sustainability Data PDF.
-2. Add a "Network Passport" hero panel (the dark layout in the screenshot) to every showcase org profile AND to the platform dashboard.
-3. Fix the issue where the individual org Dashboard / Profile content isn't visible.
+Mirror the Nike treatment for 5 more brands using their uploaded sustainability reports. Existing orgs get their dashboards upgraded with real KPI overrides; missing ones get created from scratch.
 
-## 1. Add Nike as org `gch-nike`
+## Brand status
 
-New file `src/seed/nike.ts` exporting a fully populated `Entity`:
+| Brand | Status | Action |
+| --- | --- | --- |
+| H&M Group | Not in registry | Create `gch-hm` |
+| Marks & Spencer | Not in registry | Create `gch-mands` |
+| Primark | Not in registry | Create `gch-primark` |
+| PUMA | Exists (`gch-170`) | KPI overrides + showcase |
+| Zalando | Exists (`gch-123`) | KPI overrides + showcase |
 
-- id `gch-nike`, gchNumber `GCH-NIKE`, name "NIKE, Inc.", entityType `Brand`, actorType `Tier 0`
-- HQ: Beaverton, Oregon, USA (lat 45.5106, lng -122.7795)
-- Materials: Polyester (recycled), Cotton (organic / BCI), Leather (LWG), Rubber
-- Capabilities: Footwear, Apparel, Equipment
-- Certifications: bluesign, LWG, Higg FEM, ZDHC, SAC member, Cotton 2025
-- Governance / traceability notes pulled from FY24 PDF
-- Contacts: Investor Relations + Sustainability (public)
-- `profileCompleteness: 96`, `verificationStatus: Verified`, `riskLevel: Low`, readiness all high
+Nike pattern already in place (`src/seed/nike.ts` + `ENTITY_KPI_OVERRIDES` in `src/seed/kpi/index.ts`).
 
-`src/seed/entities.ts` is auto-generated, so we won't edit it. Instead append Nike via a small wrapper:
+## 1. Parse the 6 uploaded PDFs
 
-- Add `src/seed/all-entities.ts` exporting `ALL_ENTITIES = [...ENTITIES, NIKE]` and `getEntity(id)`.
-- Update `src/seed/showcase.ts`, `src/routes/organizations.$id.tsx`, `src/routes/organizations.tsx`, `src/routes/map.tsx`, `src/routes/matchmaking.tsx`, `src/routes/index.tsx` to import from `all-entities.ts` instead of `entities.ts` directly.
-- Add `gch-nike` to `SHOWCASE_IDS` (now 21 showcase orgs).
+Use `document--parse_document` on each report to extract verified FY/CY metrics: Scope 1&2 reduction, Scope 3, renewable electricity %, recycled / preferred materials %, water reduction, waste diverted, supply-chain traceability %, living-wage / social KPIs. Source URL + page noted on each override.
 
-Hard-code Nike KPI values in `src/seed/kpi/index.ts` `getKpisForEntity` via an override map so KPIs reflect the real FY24 report:
+## 2. New org files
 
+Create one file per new brand, modeled on `src/seed/nike.ts`:
+
+- `src/seed/hm.ts` → `HM` entity (Tier 0 Brand, Stockholm, SE) + `HM_KPI_OVERRIDES`
+- `src/seed/mands.ts` → `MANDS` (Tier 0 Brand, London, UK) + overrides
+- `src/seed/primark.ts` → `PRIMARK` (Tier 0 Brand, Dublin, IE) + overrides
+
+Each entity uses real HQ coords, materials, certifications (e.g. Better Cotton, OCS, GRS, RCS, ZDHC, SAC/Higg, SBTi, LWG where applicable), governance/traceability notes pulled from the report, public IR/sustainability contacts, `verificationStatus: Verified`, `riskLevel: Low`, `profileCompleteness: ~95`.
+
+## 3. KPI override files for existing brands
+
+Instead of mutating auto-generated `entities.ts`, add override-only modules that key off existing ids:
+
+- `src/seed/puma.ts` → `PUMA_KPI_OVERRIDES` (no entity, just KPIs sourced from PUMA Annual Report 2025)
+- `src/seed/zalando.ts` → `ZALANDO_KPI_OVERRIDES` (from Zalando 2023 Progress + 2024 CSRD Digest)
+
+## 4. Wire-up
+
+Edit `src/seed/all-entities.ts`:
+
+```ts
+import { NIKE } from "./nike";
+import { HM } from "./hm";
+import { MANDS } from "./mands";
+import { PRIMARK } from "./primark";
+export const ALL_ENTITIES = [NIKE, HM, MANDS, PRIMARK, ...BASE_ENTITIES];
 ```
-KPI001 Scope 1&2 reduction: 69% vs FY20
-KPI002 Scope 3 (mfg + transport): 36% vs FY20
-KPI003 Recycled material share (polyester): high
-KPI010 Renewable electricity (owned/operated): 100%
-KPI011 Water reduction (material mfg): 40%
-KPI013 Waste diverted from landfill: 100%
+
+Edit `src/seed/kpi/index.ts`:
+
+```ts
+import { NIKE_KPI_OVERRIDES } from "../nike";
+import { HM_KPI_OVERRIDES } from "../hm";
+import { MANDS_KPI_OVERRIDES } from "../mands";
+import { PRIMARK_KPI_OVERRIDES } from "../primark";
+import { PUMA_KPI_OVERRIDES } from "../puma";
+import { ZALANDO_KPI_OVERRIDES } from "../zalando";
+
+const ENTITY_KPI_OVERRIDES = {
+  "gch-nike": NIKE_KPI_OVERRIDES,
+  "gch-hm": HM_KPI_OVERRIDES,
+  "gch-mands": MANDS_KPI_OVERRIDES,
+  "gch-primark": PRIMARK_KPI_OVERRIDES,
+  "gch-170": PUMA_KPI_OVERRIDES,    // PUMA
+  "gch-123": ZALANDO_KPI_OVERRIDES, // Zalando
+};
 ```
 
-All marked with confidence "Verified high" and source URL to about.nike.com.
+Edit `src/seed/showcase.ts` `SHOWCASE_IDS` to include the 3 new ids + `gch-170` + `gch-123` so their Network Passport / tabs render.
 
-## 2. Network Passport panel
+## 5. Featured carousel
 
-New component `src/components/NetworkPassport.tsx` rendering the dark layout from the screenshot:
+Update the "Featured Network Passport" section in `src/routes/index.tsx` to rotate across all 6 brands (Nike, H&M, M&S, Primark, PUMA, Zalando) instead of Nike-only.
 
-- Dark slate background (`bg-slate-950 text-slate-100`), amber accents matching the screenshot (`text-amber-400` headings, amber outlined chips).
-- Left/main column: NETWORK PASSPORT title, then a 2-column grid of fields (Organization, Material, Harvest, Fiber length / Entity Type, Origin, Batch size, Certifications chips).
-- SUPPLY CHAIN JOURNEY: horizontal stepper with 7 nodes (Farm → Ginning → Spinning → Textile Mill → Manufacturer → Brand → Retail) using lucide icons in amber circles, the current stage highlighted in cyan. Below it, a "current stage" detail card.
-- Right column: AI INTELLIGENCE & ESG — six circular score badges (Traceability, Environmental, Social, Governance, Compliance, Trust score) in a 3×2 grid, each showing a 2‑digit number inside an amber ring.
-- AI INSIGHTS list: 4 small cards (Supply Risk Alert, Certification Alert, Water Risk, ESG Trend) with lucide icons.
+## 6. Verification
 
-Inputs: an `Entity` plus a `journey` array (Nike gets a curated tier 4→tier 0 path; other showcase orgs get a generated journey using `getEcosystemConnections`).
+- Browser-check `/organizations/gch-hm`, `/organizations/gch-mands`, `/organizations/gch-primark`, `/organizations/gch-170`, `/organizations/gch-123` — passport + tabs render, KPI snapshot shows real numbers with "Verified high" confidence + report source.
+- Console clean, no TS errors.
 
-Wired in two places:
+## Files
 
-- `src/routes/organizations.$id.tsx` — render `<NetworkPassport e={e} />` at the top of `OrgProfilePage` (above the existing tabs). The existing light-theme tabs stay below for editorial detail.
-- `src/routes/index.tsx` — add a "Featured passport" section that rotates through Nike + a couple of other showcase orgs, plus a compact passport summary on the dashboard.
-
-The panel is self-contained dark; the rest of the app stays light. No theme switch.
-
-## 3. Fix "individual org dashboard / profile not visible"
-
-Two probable causes; both addressed:
-
-a. `ShowcaseTabs` only renders for ids in `SHOWCASE_IDS`. Once Nike (`gch-nike`) is added to that array, its tabs (Dashboard, KPIs, Ecosystem…) will appear. Same for any other org the user reports.
-
-b. The Dashboard tab renders `<MiniDashboard entity={e} />` + `<BenchmarkChart …>`. Verify after refactor that both render with entity prop and there are no console errors when switching tabs (will check console + view preview at `/organizations/gch-001` and `/organizations/gch-nike`).
-
-If the visibility bug turns out to be a routing crash (e.g. a missing import after the entities-source refactor), fix it before declaring done.
-
-## 4. Files
-
-- create `src/seed/nike.ts`
-- create `src/seed/all-entities.ts`
-- create `src/components/NetworkPassport.tsx`
-- edit `src/seed/showcase.ts` (use ALL_ENTITIES, add `gch-nike` to SHOWCASE_IDS)
-- edit `src/seed/kpi/index.ts` (Nike KPI overrides)
-- edit `src/routes/organizations.$id.tsx` (render NetworkPassport, use ALL_ENTITIES)
-- edit `src/routes/organizations.tsx`, `src/routes/map.tsx`, `src/routes/matchmaking.tsx`, `src/routes/index.tsx` (use ALL_ENTITIES, add featured passport on dashboard)
-
-## 5. Verification
-
-- Browser-check `/organizations/gch-nike`: passport renders, tabs render, KPI snapshot shows FY24 numbers.
-- Browser-check `/organizations/gch-001`: dashboard tab renders MiniDashboard + Benchmark.
-- Browser-check `/`: featured passport visible on platform dashboard.
-- Console clean.
+Create: `src/seed/hm.ts`, `src/seed/mands.ts`, `src/seed/primark.ts`, `src/seed/puma.ts`, `src/seed/zalando.ts`
+Edit: `src/seed/all-entities.ts`, `src/seed/kpi/index.ts`, `src/seed/showcase.ts`, `src/routes/index.tsx`
