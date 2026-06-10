@@ -119,23 +119,52 @@ function DashboardPage() {
         <BenchmarkIntelligence />
 
         {(() => {
-          const nike = getEntity("gch-nike");
-          return nike ? (
+          const featured = [
+            { id: "gch-nike", note: "FY24 NIKE Sustainability Data" },
+            { id: "gch-hm", note: "H&M Group Annual & Sustainability Report 2024" },
+            { id: "gch-mands", note: "M&S Group ESG Report 2025" },
+            { id: "gch-primark", note: "Primark Sustainability & Ethics Progress Report 2023/24" },
+            { id: "gch-170", note: "PUMA Annual Report 2025" },
+            { id: "gch-123", note: "Zalando CSRD Digest 2024" },
+          ]
+            .map((f) => ({ ...f, entity: getEntity(f.id) }))
+            .filter((f) => f.entity);
+          const pick = featured[0];
+          return pick?.entity ? (
             <section className="space-y-3">
               <div className="flex items-end justify-between">
                 <div>
-                  <h2 className="text-base font-semibold tracking-tight">Featured Network Passport</h2>
+                  <h2 className="text-base font-semibold tracking-tight">Featured Network Passports</h2>
                   <p className="text-xs text-muted-foreground">
-                    Live profile preview — sourced from FY24 NIKE Sustainability Data.
+                    Live profile previews sourced from real published sustainability reports.
                   </p>
                 </div>
                 <Button asChild variant="ghost" size="sm">
-                  <Link to="/organizations/$id" params={{ id: nike.id }}>
+                  <Link to="/organizations/$id" params={{ id: pick.entity.id }}>
                     Open full profile <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
                   </Link>
                 </Button>
               </div>
-              <NetworkPassport entity={nike} />
+              <NetworkPassport entity={pick.entity} />
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {featured.slice(1).map((f) => (
+                  <Link
+                    key={f.id}
+                    to="/organizations/$id"
+                    params={{ id: f.entity!.id }}
+                    className="group rounded-lg border bg-slate-50/50 p-4 transition hover:border-slate-300 hover:bg-white"
+                  >
+                    <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                      Featured passport
+                    </div>
+                    <div className="mt-1 flex items-center justify-between">
+                      <div className="text-sm font-semibold">{f.entity!.name}</div>
+                      <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground" />
+                    </div>
+                    <div className="mt-1 text-xs text-muted-foreground">{f.note}</div>
+                  </Link>
+                ))}
+              </div>
             </section>
           ) : null;
         })()}

@@ -4,8 +4,11 @@
 import type { Entity } from "./types";
 import { ENTITIES as BASE_ENTITIES } from "./entities";
 import { NIKE } from "./nike";
+import { HM } from "./hm";
+import { MANDS } from "./mands";
+import { PRIMARK } from "./primark";
 
-export const ALL_ENTITIES: Entity[] = [NIKE, ...BASE_ENTITIES];
+export const ALL_ENTITIES: Entity[] = [NIKE, HM, MANDS, PRIMARK, ...BASE_ENTITIES];
 
 export function getEntity(id: string): Entity | undefined {
   return ALL_ENTITIES.find((e) => e.id === id);

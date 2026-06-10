@@ -3,12 +3,22 @@ import { KPI_LIBRARY, HEADLINE_KPI_IDS, type KpiDef } from "./kpi-library";
 import { COMPANY_BENCHMARK, type BenchmarkRow } from "./company-benchmark";
 import { getConfidenceBand, confidenceClasses, CONFIDENCE_BANDS, type ConfidenceBand } from "./confidence-rules";
 import { NIKE_KPI_OVERRIDES } from "../nike";
+import { HM_KPI_OVERRIDES } from "../hm";
+import { MANDS_KPI_OVERRIDES } from "../mands";
+import { PRIMARK_KPI_OVERRIDES } from "../primark";
+import { PUMA_KPI_OVERRIDES } from "../puma";
+import { ZALANDO_KPI_OVERRIDES } from "../zalando";
 
 export { KPI_LIBRARY, HEADLINE_KPI_IDS, COMPANY_BENCHMARK, CONFIDENCE_BANDS, getConfidenceBand, confidenceClasses };
 export type { KpiDef, BenchmarkRow, ConfidenceBand };
 
 const ENTITY_KPI_OVERRIDES: Record<string, typeof NIKE_KPI_OVERRIDES> = {
   "gch-nike": NIKE_KPI_OVERRIDES,
+  "gch-hm": HM_KPI_OVERRIDES,
+  "gch-mands": MANDS_KPI_OVERRIDES,
+  "gch-primark": PRIMARK_KPI_OVERRIDES,
+  "gch-170": PUMA_KPI_OVERRIDES,
+  "gch-123": ZALANDO_KPI_OVERRIDES,
 };
 
 export interface EntityKpi {
