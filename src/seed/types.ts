@@ -38,7 +38,7 @@ export interface Contact {
   role: string;
 }
 
-export interface Entity {
+export interface Entity extends ReliabilityFields {
   id: string;
   gchNumber: string;
   name: string;
