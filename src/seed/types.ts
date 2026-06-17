@@ -11,6 +11,15 @@ export type EntityType =
   | "Sustainability Partner";
 
 export type ActorType = "Tier 0" | "Tier 1" | "Tier 2" | "Tier 3" | "Tier 4";
+
+// Optional reliability fields for matchmaking — derived defaults are computed
+// from leadTimeDays when not explicitly provided.
+export interface ReliabilityFields {
+  onTimeRate?: number;
+  avgDelayDays?: number;
+  deliveryTimeframeDays?: number;
+}
+
 export type RiskLevel = "Low" | "Medium" | "High";
 export type VerificationStatus = "Verified" | "Pending" | "Incomplete" | "Flagged";
 
