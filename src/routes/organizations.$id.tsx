@@ -16,6 +16,8 @@ import {
 import { VerificationBadge, RiskBadge } from "@/components/StatusBadge";
 import { EcosystemGoogleMap } from "@/components/EcosystemGoogleMap";
 import { MiniDashboard } from "@/components/MiniDashboard";
+import { DashboardByType } from "@/components/DashboardByType";
+
 import { MessageChannel } from "@/components/MessageChannel";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { DocumentsList } from "@/components/DocumentsList";
@@ -172,9 +174,10 @@ function ShowcaseTabs({ e }: { e: Entity }) {
       </TabsContent>
 
       <TabsContent value="dashboard" className="space-y-6">
-        <MiniDashboard entity={e} />
+        <DashboardByType entity={e} />
         <BenchmarkChart entity={e} />
       </TabsContent>
+
 
       <TabsContent value="kpis">
         <KpiTable entity={e} />
@@ -204,6 +207,12 @@ function ShowcaseTabs({ e }: { e: Entity }) {
           <CardHeader>
             <CardTitle className="text-base font-semibold">Top suggested matches</CardTitle>
           </CardHeader>
+          <CardContent>
+            <MatchmakingPanel matches={matches} viewer={e} />
+          </CardContent>
+        </Card>
+      </TabsContent>
+
           <CardContent>
             <MatchmakingPanel matches={matches} />
           </CardContent>

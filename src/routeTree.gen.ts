@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as OrganizationsRouteImport } from './routes/organizations'
+import { Route as MessagesRouteImport } from './routes/messages'
+import { Route as MeetingsRouteImport } from './routes/meetings'
 import { Route as MatchmakingRouteImport } from './routes/matchmaking'
 import { Route as MapRouteImport } from './routes/map'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -26,6 +28,16 @@ const SettingsRoute = SettingsRouteImport.update({
 const OrganizationsRoute = OrganizationsRouteImport.update({
   id: '/organizations',
   path: '/organizations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MessagesRoute = MessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MeetingsRoute = MeetingsRouteImport.update({
+  id: '/meetings',
+  path: '/meetings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MatchmakingRoute = MatchmakingRouteImport.update({
@@ -64,6 +76,8 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/map': typeof MapRoute
   '/matchmaking': typeof MatchmakingRoute
+  '/meetings': typeof MeetingsRoute
+  '/messages': typeof MessagesRoute
   '/organizations': typeof OrganizationsRouteWithChildren
   '/settings': typeof SettingsRoute
   '/organizations/$id': typeof OrganizationsIdRoute
@@ -74,6 +88,8 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/map': typeof MapRoute
   '/matchmaking': typeof MatchmakingRoute
+  '/meetings': typeof MeetingsRoute
+  '/messages': typeof MessagesRoute
   '/settings': typeof SettingsRoute
   '/organizations/$id': typeof OrganizationsIdRoute
   '/organizations': typeof OrganizationsIndexRoute
@@ -84,6 +100,8 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/map': typeof MapRoute
   '/matchmaking': typeof MatchmakingRoute
+  '/meetings': typeof MeetingsRoute
+  '/messages': typeof MessagesRoute
   '/organizations': typeof OrganizationsRouteWithChildren
   '/settings': typeof SettingsRoute
   '/organizations/$id': typeof OrganizationsIdRoute
@@ -96,6 +114,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/map'
     | '/matchmaking'
+    | '/meetings'
+    | '/messages'
     | '/organizations'
     | '/settings'
     | '/organizations/$id'
@@ -106,6 +126,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/map'
     | '/matchmaking'
+    | '/meetings'
+    | '/messages'
     | '/settings'
     | '/organizations/$id'
     | '/organizations'
@@ -115,6 +137,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/map'
     | '/matchmaking'
+    | '/meetings'
+    | '/messages'
     | '/organizations'
     | '/settings'
     | '/organizations/$id'
@@ -126,6 +150,8 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   MapRoute: typeof MapRoute
   MatchmakingRoute: typeof MatchmakingRoute
+  MeetingsRoute: typeof MeetingsRoute
+  MessagesRoute: typeof MessagesRoute
   OrganizationsRoute: typeof OrganizationsRouteWithChildren
   SettingsRoute: typeof SettingsRoute
 }
@@ -144,6 +170,20 @@ declare module '@tanstack/react-router' {
       path: '/organizations'
       fullPath: '/organizations'
       preLoaderRoute: typeof OrganizationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/messages': {
+      id: '/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof MessagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/meetings': {
+      id: '/meetings'
+      path: '/meetings'
+      fullPath: '/meetings'
+      preLoaderRoute: typeof MeetingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/matchmaking': {
@@ -210,6 +250,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   MapRoute: MapRoute,
   MatchmakingRoute: MatchmakingRoute,
+  MeetingsRoute: MeetingsRoute,
+  MessagesRoute: MessagesRoute,
   OrganizationsRoute: OrganizationsRouteWithChildren,
   SettingsRoute: SettingsRoute,
 }
