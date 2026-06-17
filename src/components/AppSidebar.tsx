@@ -1,5 +1,14 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Building2, Map, Settings, Globe2 } from "lucide-react";
+import {
+  LayoutDashboard,
+  Building2,
+  Map,
+  Settings,
+  Globe2,
+  MessageSquare,
+  Calendar,
+  Sparkles,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -11,18 +20,26 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { Badge } from "@/components/ui/badge";
+import { unreadCount } from "@/seed/comms";
+import { useCommsVersion } from "@/lib/use-comms";
 
 const items = [
   { title: "Platform Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Organizations", url: "/organizations", icon: Building2 },
   { title: "Map View", url: "/map", icon: Map },
+  { title: "Matchmaking", url: "/matchmaking", icon: Sparkles },
+  { title: "Messages", url: "/messages", icon: MessageSquare, badgeKind: "unread" as const },
+  { title: "Meetings", url: "/meetings", icon: Calendar },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  useCommsVersion();
   const isActive = (url: string) =>
     url === "/" ? pathname === "/" : pathname.startsWith(url);
+  const unread = typeof window !== "undefined" ? unreadCount() : 0;
 
   return (
     <Sidebar collapsible="icon">
@@ -47,7 +64,10 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
                     <Link to={item.url} className="flex items-center gap-2">
                       <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                      <span className="flex-1">{item.title}</span>
+                      {item.badgeKind === "unread" && unread > 0 && (
+                        <Badge className="h-5 min-w-5 justify-center px-1 text-[10px]">{unread}</Badge>
+                      )}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
