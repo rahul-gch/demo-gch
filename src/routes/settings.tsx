@@ -46,6 +46,9 @@ const MATCHING_PARAMETERS = [
   "Capacity",
   "MOQ",
   "Lead time",
+  "Delivery timeframe",
+  "On-time rate",
+  "Delay history",
   "Certifications",
   "Confidence score",
   "Risk level",
@@ -56,15 +59,16 @@ const MATCHING_PARAMETERS = [
 ];
 
 const WEIGHTS = [
-  { name: "Actor type fit", weight: 20 },
-  { name: "Capability fit", weight: 20 },
-  { name: "Certification fit", weight: 15 },
-  { name: "Location fit", weight: 15 },
-  { name: "Capacity fit", weight: 10 },
-  { name: "Confidence score", weight: 10 },
-  { name: "Risk level", weight: 5 },
+  { name: "Actor type fit", weight: 18 },
+  { name: "Capability / material fit", weight: 18 },
+  { name: "Certification fit", weight: 12 },
+  { name: "Location fit", weight: 12 },
+  { name: "Capacity fit", weight: 13 },
+  { name: "Delivery & reliability", weight: 15 },
+  { name: "Confidence score", weight: 7 },
   { name: "Evidence strength", weight: 5 },
 ];
+
 
 function SettingsPage() {
   return (
@@ -87,6 +91,22 @@ function SettingsPage() {
             <Field id="low-warning" label="Low confidence warning below" defaultValue="60" suffix="%" />
           </CardContent>
         </Card>
+
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-base font-semibold">Delivery & reliability</CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Tune how delivery timeframes and historical delays influence match scoring.
+            </p>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Field id="target-delivery" label="Target delivery timeframe" defaultValue="30" suffix="days" />
+            <Field id="max-delay" label="Max acceptable delay" defaultValue="5" suffix="days" />
+            <Field id="min-ontime" label="Min on-time delivery rate" defaultValue="85" suffix="%" />
+            <Field id="delay-penalty" label="Delay penalty weight" defaultValue="10" suffix="%" />
+          </CardContent>
+        </Card>
+
 
         <Card className="shadow-sm">
           <CardHeader>

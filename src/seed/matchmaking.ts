@@ -44,10 +44,22 @@ function capacityFit(a: Entity, b: Entity): number {
   return ratio;
 }
 
+function deliveryFit(a: Entity, b: Entity): number {
+  const la = a.leadTimeDays || a.deliveryTimeframeDays || 30;
+  const lb = b.leadTimeDays || b.deliveryTimeframeDays || 30;
+  const otr = ((a.onTimeRate ?? 85) + (b.onTimeRate ?? 85)) / 2;
+  const delay = ((a.avgDelayDays ?? 2) + (b.avgDelayDays ?? 2)) / 2;
+  // Closer lead times = better fit. 0 diff → 1.0, 60d diff → 0.
+  const leadProx = Math.max(0, 1 - Math.abs(la - lb) / 60);
+  const reliability = Math.min(1, Math.max(0, otr / 100));
+  const delayPenalty = Math.min(0.5, delay / 20); // up to 0.5 penalty
+  return Math.max(0, leadProx * 0.5 + reliability * 0.5 - delayPenalty);
+}
+
 export interface MatchScore {
   entity: Entity;
   score: number;
-  breakdown: { material: number; cert: number; tier: number; region: number; kpi: number; capacity: number };
+  breakdown: { material: number; cert: number; tier: number; region: number; kpi: number; capacity: number; delivery: number };
   reasons: string[];
 }
 
@@ -58,21 +70,23 @@ export function scoreMatch(a: Entity, b: Entity): MatchScore {
   const region = regionProximity(a, b);
   const kpi = kpiCompatibility(a, b);
   const cap = capacityFit(a, b);
+  const delivery = deliveryFit(a, b);
 
   const matMax = Math.max(1, Math.min(a.materials.length, b.materials.length));
   const certMax = Math.max(1, Math.min(a.certifications.length, b.certifications.length));
 
   const breakdown = {
-    material: 20 * (matN / matMax),
-    cert: 15 * (certN / certMax),
-    tier: 20 * tier,
-    region: 15 * region,
-    kpi: 15 * kpi,
-    capacity: 15 * cap,
+    material: 18 * (matN / matMax),
+    cert: 12 * (certN / certMax),
+    tier: 18 * tier,
+    region: 12 * region,
+    kpi: 12 * kpi,
+    capacity: 13 * cap,
+    delivery: 15 * delivery,
   };
   const score = Math.round(
     breakdown.material + breakdown.cert + breakdown.tier +
-    breakdown.region + breakdown.kpi + breakdown.capacity,
+    breakdown.region + breakdown.kpi + breakdown.capacity + breakdown.delivery,
   );
 
   const reasons: string[] = [];
@@ -83,10 +97,13 @@ export function scoreMatch(a: Entity, b: Entity): MatchScore {
   if (region === 1) reasons.push(`Same country (${a.country})`);
   else if (region >= 0.6) reasons.push("Same region");
   if (kpi >= 0.5) reasons.push("Strong KPI category overlap");
+  if (delivery >= 0.7) reasons.push("Reliable delivery & matched lead time");
+  else if (delivery >= 0.45) reasons.push("Compatible lead times");
   if (!reasons.length) reasons.push("Complementary profile");
 
   return { entity: b, score: Math.min(100, score), breakdown, reasons };
 }
+
 
 export function getMatchesFor(entity: Entity, limit = 8, minScore = 0): MatchScore[] {
   return ENTITIES

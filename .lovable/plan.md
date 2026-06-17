@@ -1,84 +1,95 @@
-## Goal
+# Plan — Matchmaking depth + cross-profile messaging
 
-Mirror the Nike treatment for 5 more brands using their uploaded sustainability reports. Existing orgs get their dashboards upgraded with real KPI overrides; missing ones get created from scratch.
+Four connected pieces: (1) entity-type-aware dashboards, (2) a rich matchmaking profile view, (3) new matchmaking settings (delivery timeframe / delays), (4) messaging + meeting requests across matched profiles.
 
-## Brand status
+## 1. Entity-type aware dashboards
 
-| Brand | Status | Action |
-| --- | --- | --- |
-| H&M Group | Not in registry | Create `gch-hm` |
-| Marks & Spencer | Not in registry | Create `gch-mands` |
-| Primark | Not in registry | Create `gch-primark` |
-| PUMA | Exists (`gch-170`) | KPI overrides + showcase |
-| Zalando | Exists (`gch-123`) | KPI overrides + showcase |
+Today every org renders the same layout (`src/routes/organizations.$id.tsx`). Different actor types care about different things. Introduce a dashboard variant chosen from `entity.entityType` / `actorType`:
 
-Nike pattern already in place (`src/seed/nike.ts` + `ENTITY_KPI_OVERRIDES` in `src/seed/kpi/index.ts`).
+- **Brand (Tier 0)** — current "Network Passport" view (KPIs, scope emissions, supplier visibility, featured matches).
+- **Farmer / Ginner (Tier 4-3)** — crop/material output, harvest season, certifications (BCI / Organic), region & water KPIs, downstream buyer matches.
+- **Spinner / Fabric Mill / Dye House (Tier 2)** — capacity, MOQ, fiber blends handled, ZDHC / chemical KPIs, lead time, energy mix.
+- **Garment Factory (Tier 1)** — capacity, product categories, social KPIs (wages, audits), lead time, current buyer brands.
+- **Logistics / Certification / Sustainability Partner** — services, coverage regions, accreditations, active engagements.
 
-## 1. Parse the 6 uploaded PDFs
+Implementation: a `DashboardByType` switch component + small per-type panel components (`BrandDashboard`, `UpstreamSupplierDashboard`, `MillDashboard`, `FactoryDashboard`, `ServiceProviderDashboard`). Shared header/profile block stays.
 
-Use `document--parse_document` on each report to extract verified FY/CY metrics: Scope 1&2 reduction, Scope 3, renewable electricity %, recycled / preferred materials %, water reduction, waste diverted, supply-chain traceability %, living-wage / social KPIs. Source URL + page noted on each override.
+## 2. Matchmaking profile detail
 
-## 2. New org files
+Right now `MatchmakingPanel` and `/matchmaking` only show a name, score, and "Open match" link. Add an inline detail view so users don't have to leave the page:
 
-Create one file per new brand, modeled on `src/seed/nike.ts`:
+- Click any matched org → opens a side **Sheet** (`MatchProfileSheet`) with:
+  - Identity: name, tier, country, region, HQ
+  - Operations: lead time (days), MOQ, capacity, delivery timeframe, recent on-time %, delay history
+  - Materials & fabrics available, capabilities
+  - Certifications (with verified/expired status)
+  - Top KPI snapshot (3–4 most relevant for that entity type)
+  - Match reasons + score breakdown bars
+  - Actions: **Message**, **Request meeting**, **Open full profile**
+- Same sheet is reused from: `MatchmakingPanel` (org page), `/matchmaking` table rows, and the suggested-match cards on dashboards.
 
-- `src/seed/hm.ts` → `HM` entity (Tier 0 Brand, Stockholm, SE) + `HM_KPI_OVERRIDES`
-- `src/seed/mands.ts` → `MANDS` (Tier 0 Brand, London, UK) + overrides
-- `src/seed/primark.ts` → `PRIMARK` (Tier 0 Brand, Dublin, IE) + overrides
+## 3. Matchmaking settings additions
 
-Each entity uses real HQ coords, materials, certifications (e.g. Better Cotton, OCS, GRS, RCS, ZDHC, SAC/Higg, SBTi, LWG where applicable), governance/traceability notes pulled from the report, public IR/sustainability contacts, `verificationStatus: Verified`, `riskLevel: Low`, `profileCompleteness: ~95`.
+Extend `src/routes/settings.tsx`:
 
-## 3. KPI override files for existing brands
+- New **Delivery & reliability** card with editable fields:
+  - Target delivery timeframe (days)
+  - Max acceptable delay (days)
+  - Penalty weight for delays (% deduction from match score)
+  - Minimum on-time delivery rate
+- Add `Delivery timeframe`, `On-time rate`, `Delay history` to the `MATCHING_PARAMETERS` chip list.
+- Add a `Delivery & reliability` row to the `WEIGHTS` table (rebalance so total stays 100%).
+- Extend `scoreMatch` in `src/seed/matchmaking.ts` with a `deliveryFit` factor using `leadTimeDays` + new mock `onTimeRate` / `avgDelayDays` fields on `Entity`. Surface "Lead time fit" / "Reliable delivery" as new reasons.
 
-Instead of mutating auto-generated `entities.ts`, add override-only modules that key off existing ids:
+## 4. Messaging & meeting requests across matches
 
-- `src/seed/puma.ts` → `PUMA_KPI_OVERRIDES` (no entity, just KPIs sourced from PUMA Annual Report 2025)
-- `src/seed/zalando.ts` → `ZALANDO_KPI_OVERRIDES` (from Zalando 2023 Progress + 2024 CSRD Digest)
+New lightweight in-app comms layer (mock data, no backend writes — same pattern as existing seed):
 
-## 4. Wire-up
+- New route `src/routes/messages.tsx` — two-pane inbox:
+  - Left: thread list grouped by matched org (avatar, last message, unread dot)
+  - Right: selected thread with message bubbles + composer
+- New route `src/routes/meetings.tsx` — list of meeting requests (Pending / Confirmed / Past) with org, proposed times, agenda, accept/decline buttons.
+- Shared `MessageChannel` already exists — extend it for thread-style use, or add `ThreadView` + `MeetingRequestDialog` components.
+- From the `MatchProfileSheet`:
+  - **Message** → opens composer pre-addressed to that org, on send creates a thread in local seed store.
+  - **Request meeting** → opens dialog (date, time, agenda, attendees) → adds entry to meetings list.
+- Sidebar (`AppSidebar`) gets two new entries: **Messages** (with unread badge) and **Meetings**.
 
-Edit `src/seed/all-entities.ts`:
+## Technical notes
 
-```ts
-import { NIKE } from "./nike";
-import { HM } from "./hm";
-import { MANDS } from "./mands";
-import { PRIMARK } from "./primark";
-export const ALL_ENTITIES = [NIKE, HM, MANDS, PRIMARK, ...BASE_ENTITIES];
-```
-
-Edit `src/seed/kpi/index.ts`:
-
-```ts
-import { NIKE_KPI_OVERRIDES } from "../nike";
-import { HM_KPI_OVERRIDES } from "../hm";
-import { MANDS_KPI_OVERRIDES } from "../mands";
-import { PRIMARK_KPI_OVERRIDES } from "../primark";
-import { PUMA_KPI_OVERRIDES } from "../puma";
-import { ZALANDO_KPI_OVERRIDES } from "../zalando";
-
-const ENTITY_KPI_OVERRIDES = {
-  "gch-nike": NIKE_KPI_OVERRIDES,
-  "gch-hm": HM_KPI_OVERRIDES,
-  "gch-mands": MANDS_KPI_OVERRIDES,
-  "gch-primark": PRIMARK_KPI_OVERRIDES,
-  "gch-170": PUMA_KPI_OVERRIDES,    // PUMA
-  "gch-123": ZALANDO_KPI_OVERRIDES, // Zalando
-};
-```
-
-Edit `src/seed/showcase.ts` `SHOWCASE_IDS` to include the 3 new ids + `gch-170` + `gch-123` so their Network Passport / tabs render.
-
-## 5. Featured carousel
-
-Update the "Featured Network Passport" section in `src/routes/index.tsx` to rotate across all 6 brands (Nike, H&M, M&S, Primark, PUMA, Zalando) instead of Nike-only.
-
-## 6. Verification
-
-- Browser-check `/organizations/gch-hm`, `/organizations/gch-mands`, `/organizations/gch-primark`, `/organizations/gch-170`, `/organizations/gch-123` — passport + tabs render, KPI snapshot shows real numbers with "Verified high" confidence + report source.
-- Console clean, no TS errors.
+- Mock data only; no Supabase changes this round. New seed files: `src/seed/messaging.ts` (threads + messages) and `src/seed/meetings.ts` (requests), both keyed by entity id so they work for every matched org.
+- Extend `Entity` in `src/seed/types.ts` with optional `onTimeRate?: number`, `avgDelayDays?: number`, `deliveryTimeframeDays?: number`. Backfill defaults in `all-entities.ts`/per-entity overrides.
+- Reuse shadcn `Sheet`, `Dialog`, `Tabs`, `Avatar` — no new deps.
+- Update `src/seed/matchmaking.ts` weights + reasons; keep symmetric pair generation.
 
 ## Files
 
-Create: `src/seed/hm.ts`, `src/seed/mands.ts`, `src/seed/primark.ts`, `src/seed/puma.ts`, `src/seed/zalando.ts`
-Edit: `src/seed/all-entities.ts`, `src/seed/kpi/index.ts`, `src/seed/showcase.ts`, `src/routes/index.tsx`
+**Create**
+- `src/components/dashboards/BrandDashboard.tsx`
+- `src/components/dashboards/UpstreamSupplierDashboard.tsx`
+- `src/components/dashboards/MillDashboard.tsx`
+- `src/components/dashboards/FactoryDashboard.tsx`
+- `src/components/dashboards/ServiceProviderDashboard.tsx`
+- `src/components/dashboards/DashboardByType.tsx`
+- `src/components/MatchProfileSheet.tsx`
+- `src/components/MeetingRequestDialog.tsx`
+- `src/components/ThreadView.tsx`
+- `src/routes/messages.tsx`
+- `src/routes/meetings.tsx`
+- `src/seed/messaging.ts`
+- `src/seed/meetings.ts`
+
+**Edit**
+- `src/routes/organizations.$id.tsx` — render `DashboardByType`
+- `src/routes/matchmaking.tsx` — row click opens `MatchProfileSheet`
+- `src/components/MatchmakingPanel.tsx` — card click opens sheet, add Message / Meeting buttons
+- `src/routes/settings.tsx` — delivery & reliability card, new params + weight row
+- `src/seed/matchmaking.ts` — add `deliveryFit`, new reasons, rebalance weights
+- `src/seed/types.ts` — add delivery/reliability fields
+- `src/components/AppSidebar.tsx` — Messages + Meetings nav
+
+## Open questions
+
+1. Should the **Messages** inbox be limited to orgs that appear in your matches, or open to any registered org?
+2. For **Meeting requests**, do you want a simple list with accept/decline only, or a calendar-style view with available time slots?
+3. For per-type dashboards, are the five variants above the right grouping, or do you want each `EntityType` (10 types) to have its own distinct layout?
