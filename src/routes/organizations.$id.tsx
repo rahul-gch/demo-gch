@@ -213,11 +213,8 @@ function ShowcaseTabs({ e }: { e: Entity }) {
         </Card>
       </TabsContent>
 
-          <CardContent>
-            <MatchmakingPanel matches={matches} />
-          </CardContent>
-        </Card>
-      </TabsContent>
+
+
 
       <TabsContent value="messages">
         <MessageChannel entity={e} />
