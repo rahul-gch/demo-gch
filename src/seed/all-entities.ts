@@ -10,8 +10,11 @@ import { PRIMARK } from "./primark";
 
 export const ALL_ENTITIES: Entity[] = [NIKE, HM, MANDS, PRIMARK, ...BASE_ENTITIES];
 
+import { applyOverride } from "./org-overrides";
+
 export function getEntity(id: string): Entity | undefined {
-  return ALL_ENTITIES.find((e) => e.id === id);
+  const base = ALL_ENTITIES.find((e) => e.id === id);
+  return base ? applyOverride(base) : undefined;
 }
 
 export const summaryMetrics = {
