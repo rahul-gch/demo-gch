@@ -23,10 +23,14 @@ export interface MeetingRequest {
   agenda: string;
   status: "Pending" | "Confirmed" | "Declined" | "Past";
   createdAt: string;
+  viewerOrgId?: string; // if set, the org that initiated the request
 }
 
 const MSG_KEY = "gch.threads.v1";
 const MEET_KEY = "gch.meetings.v1";
+
+// Per-org-scoped helpers: a thread/meeting "belongs" to an org workspace
+// when that org is either the viewer (sender) or the counterparty.
 
 type ThreadMap = Record<string, ThreadMessage[]>;
 
