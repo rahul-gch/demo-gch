@@ -205,7 +205,7 @@ export function MatchProfileSheet({
           </div>
         </SheetContent>
       </Sheet>
-      <MeetingRequestDialog entity={e} open={meetOpen} onOpenChange={setMeetOpen} />
+      <MeetingRequestDialog entity={e} open={meetOpen} onOpenChange={setMeetOpen} viewerOrgId={viewer?.id} />
     </>
   );
 }
