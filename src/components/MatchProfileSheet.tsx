@@ -60,8 +60,8 @@ export function MatchProfileSheet({
     if (!draft.trim()) return;
     appendMessage(e.id, {
       from: "me",
-      authorName: "You",
-      authorRole: "Network Admin",
+      authorName: viewer?.name ?? "You",
+      authorRole: viewer ? "Org Admin" : "Network Admin",
       body: draft.trim(),
     });
     setDraft("");
