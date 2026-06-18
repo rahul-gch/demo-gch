@@ -19,10 +19,12 @@ export function MeetingRequestDialog({
   entity,
   open,
   onOpenChange,
+  viewerOrgId,
 }: {
   entity: Entity;
   open: boolean;
   onOpenChange: (o: boolean) => void;
+  viewerOrgId?: string;
 }) {
   const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
   const [date, setDate] = useState(tomorrow);
@@ -39,6 +41,7 @@ export function MeetingRequestDialog({
       proposedFor: new Date(`${date}T${time}:00`).toISOString(),
       durationMin: duration,
       agenda,
+      viewerOrgId,
     });
     toast.success(`Meeting requested with ${entity.name}`);
     onOpenChange(false);

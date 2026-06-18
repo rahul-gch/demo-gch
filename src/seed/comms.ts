@@ -23,10 +23,14 @@ export interface MeetingRequest {
   agenda: string;
   status: "Pending" | "Confirmed" | "Declined" | "Past";
   createdAt: string;
+  viewerOrgId?: string; // if set, the org that initiated the request
 }
 
 const MSG_KEY = "gch.threads.v1";
 const MEET_KEY = "gch.meetings.v1";
+
+// Per-org-scoped helpers: a thread/meeting "belongs" to an org workspace
+// when that org is either the viewer (sender) or the counterparty.
 
 type ThreadMap = Record<string, ThreadMessage[]>;
 
@@ -136,6 +140,36 @@ export function updateMeetingStatus(id: string, status: MeetingRequest["status"]
   const list = getMeetings().map((m) => (m.id === id ? { ...m, status } : m));
   save(MEET_KEY, list);
   notify();
+}
+
+// --------------- per-org helpers ---------------
+export function getThreadIdsForOrg(orgId: string): string[] {
+  // Threads where this org is the counterparty (existing model) OR seed a
+  // few peer threads from other showcase orgs so the inbox isn't empty.
+  const ids = new Set<string>([orgId]);
+  for (const e of ALL_ENTITIES.slice(0, 6)) if (e.id !== orgId) ids.add(e.id);
+  return Array.from(ids);
+}
+
+export function unreadCountForOrg(orgId: string): number {
+  const stored = load<ThreadMap>(MSG_KEY, {});
+  let n = 0;
+  for (const id of getThreadIdsForOrg(orgId)) {
+    const t = stored[id] ?? getThread(id);
+    n += t.filter((m) => m.from === "them" && !m.read).length;
+  }
+  return n;
+}
+
+export function getMeetingsForOrg(orgId: string): MeetingRequest[] {
+  return getMeetings().filter((m) => m.orgId === orgId || m.viewerOrgId === orgId);
+}
+
+export function pendingMeetingCountForOrg(orgId: string): number {
+  const now = Date.now();
+  return getMeetingsForOrg(orgId).filter(
+    (m) => m.status === "Pending" && new Date(m.proposedFor).getTime() >= now,
+  ).length;
 }
 
 // --------------- pub/sub ---------------
