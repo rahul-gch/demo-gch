@@ -54,8 +54,8 @@ function OrgSettingsPage() {
       deliveryTimeframeDays: Number(deliveryTimeframe) || 0,
       onTimeRate: Number(onTimeRate) || 0,
       avgDelayDays: Number(avgDelay) || 0,
-      materials: materials.split(",").map((s) => s.trim()).filter(Boolean),
-      certifications: certs.split(",").map((s) => s.trim()).filter(Boolean),
+      materials: materials.split(",").map((s: string) => s.trim()).filter(Boolean),
+      certifications: certs.split(",").map((s: string) => s.trim()).filter(Boolean),
     });
     toast.success("Organization profile saved");
   };
