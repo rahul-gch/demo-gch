@@ -20,7 +20,6 @@ import {
   Boxes,
   Award,
   GraduationCap,
-  Scissors,
 } from "lucide-react";
 
 function reliabilityOf(e: Entity) {
@@ -291,5 +290,3 @@ export function DashboardByType({ entity }: { entity: Entity }) {
       return <BrandDashboard e={entity} />;
   }
 }
-// keep import for Scissors reference avoidance
-void Scissors;
