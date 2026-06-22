@@ -21,6 +21,7 @@ import { Route as OrganizationsIndexRouteImport } from './routes/organizations.i
 import { Route as OrganizationsIdRouteImport } from './routes/organizations.$id'
 import { Route as OrganizationsIdIndexRouteImport } from './routes/organizations.$id.index'
 import { Route as OrganizationsIdSettingsRouteImport } from './routes/organizations.$id.settings'
+import { Route as OrganizationsIdResearchRouteImport } from './routes/organizations.$id.research'
 import { Route as OrganizationsIdMessagesRouteImport } from './routes/organizations.$id.messages'
 import { Route as OrganizationsIdMeetingsRouteImport } from './routes/organizations.$id.meetings'
 import { Route as OrganizationsIdMatchmakingRouteImport } from './routes/organizations.$id.matchmaking'
@@ -85,6 +86,11 @@ const OrganizationsIdSettingsRoute = OrganizationsIdSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => OrganizationsIdRoute,
 } as any)
+const OrganizationsIdResearchRoute = OrganizationsIdResearchRouteImport.update({
+  id: '/research',
+  path: '/research',
+  getParentRoute: () => OrganizationsIdRoute,
+} as any)
 const OrganizationsIdMessagesRoute = OrganizationsIdMessagesRouteImport.update({
   id: '/messages',
   path: '/messages',
@@ -116,6 +122,7 @@ export interface FileRoutesByFullPath {
   '/organizations/$id/matchmaking': typeof OrganizationsIdMatchmakingRoute
   '/organizations/$id/meetings': typeof OrganizationsIdMeetingsRoute
   '/organizations/$id/messages': typeof OrganizationsIdMessagesRoute
+  '/organizations/$id/research': typeof OrganizationsIdResearchRoute
   '/organizations/$id/settings': typeof OrganizationsIdSettingsRoute
   '/organizations/$id/': typeof OrganizationsIdIndexRoute
 }
@@ -131,6 +138,7 @@ export interface FileRoutesByTo {
   '/organizations/$id/matchmaking': typeof OrganizationsIdMatchmakingRoute
   '/organizations/$id/meetings': typeof OrganizationsIdMeetingsRoute
   '/organizations/$id/messages': typeof OrganizationsIdMessagesRoute
+  '/organizations/$id/research': typeof OrganizationsIdResearchRoute
   '/organizations/$id/settings': typeof OrganizationsIdSettingsRoute
   '/organizations/$id': typeof OrganizationsIdIndexRoute
 }
@@ -149,6 +157,7 @@ export interface FileRoutesById {
   '/organizations/$id/matchmaking': typeof OrganizationsIdMatchmakingRoute
   '/organizations/$id/meetings': typeof OrganizationsIdMeetingsRoute
   '/organizations/$id/messages': typeof OrganizationsIdMessagesRoute
+  '/organizations/$id/research': typeof OrganizationsIdResearchRoute
   '/organizations/$id/settings': typeof OrganizationsIdSettingsRoute
   '/organizations/$id/': typeof OrganizationsIdIndexRoute
 }
@@ -168,6 +177,7 @@ export interface FileRouteTypes {
     | '/organizations/$id/matchmaking'
     | '/organizations/$id/meetings'
     | '/organizations/$id/messages'
+    | '/organizations/$id/research'
     | '/organizations/$id/settings'
     | '/organizations/$id/'
   fileRoutesByTo: FileRoutesByTo
@@ -183,6 +193,7 @@ export interface FileRouteTypes {
     | '/organizations/$id/matchmaking'
     | '/organizations/$id/meetings'
     | '/organizations/$id/messages'
+    | '/organizations/$id/research'
     | '/organizations/$id/settings'
     | '/organizations/$id'
   id:
@@ -200,6 +211,7 @@ export interface FileRouteTypes {
     | '/organizations/$id/matchmaking'
     | '/organizations/$id/meetings'
     | '/organizations/$id/messages'
+    | '/organizations/$id/research'
     | '/organizations/$id/settings'
     | '/organizations/$id/'
   fileRoutesById: FileRoutesById
@@ -301,6 +313,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrganizationsIdSettingsRouteImport
       parentRoute: typeof OrganizationsIdRoute
     }
+    '/organizations/$id/research': {
+      id: '/organizations/$id/research'
+      path: '/research'
+      fullPath: '/organizations/$id/research'
+      preLoaderRoute: typeof OrganizationsIdResearchRouteImport
+      parentRoute: typeof OrganizationsIdRoute
+    }
     '/organizations/$id/messages': {
       id: '/organizations/$id/messages'
       path: '/messages'
@@ -329,6 +348,7 @@ interface OrganizationsIdRouteChildren {
   OrganizationsIdMatchmakingRoute: typeof OrganizationsIdMatchmakingRoute
   OrganizationsIdMeetingsRoute: typeof OrganizationsIdMeetingsRoute
   OrganizationsIdMessagesRoute: typeof OrganizationsIdMessagesRoute
+  OrganizationsIdResearchRoute: typeof OrganizationsIdResearchRoute
   OrganizationsIdSettingsRoute: typeof OrganizationsIdSettingsRoute
   OrganizationsIdIndexRoute: typeof OrganizationsIdIndexRoute
 }
@@ -337,6 +357,7 @@ const OrganizationsIdRouteChildren: OrganizationsIdRouteChildren = {
   OrganizationsIdMatchmakingRoute: OrganizationsIdMatchmakingRoute,
   OrganizationsIdMeetingsRoute: OrganizationsIdMeetingsRoute,
   OrganizationsIdMessagesRoute: OrganizationsIdMessagesRoute,
+  OrganizationsIdResearchRoute: OrganizationsIdResearchRoute,
   OrganizationsIdSettingsRoute: OrganizationsIdSettingsRoute,
   OrganizationsIdIndexRoute: OrganizationsIdIndexRoute,
 }
@@ -372,13 +393,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
