@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   Sparkles,
+  Search,
   MessageSquare,
   Calendar,
   Settings,
@@ -33,6 +34,7 @@ export function OrgSidebar({ entity }: { entity: Entity }) {
   const items = [
     { title: "Dashboard", url: base, icon: LayoutDashboard, exact: true },
     { title: "Matchmaking", url: `${base}/matchmaking`, icon: Sparkles },
+    { title: "Research", url: `${base}/research`, icon: Search },
     {
       title: "Messages",
       url: `${base}/messages`,
