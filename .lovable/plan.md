@@ -1,59 +1,55 @@
-# Per-Entity Dashboards + Per-Org AI Research
+# Plan
 
-Two things land together: (1) fill the missing per-entity-type dashboards so every org has a tailored view, and (2) add a Research workspace (AI search) on every org's sidebar, modeled after the screenshots.
+## 1. Generic fallback dashboard
 
-## 1. Per-Entity Dashboards
+Today `DashboardByType` falls back to `BrandDashboard` for any unknown entity type — a non-brand org with no specific dashboard ends up rendering brand KPIs. Replace the fallback with a real `GenericEntityDashboard` so every org renders consistently.
 
-`DashboardByType` already routes Brand / Farmer / Ginner / Spinner / Fabric Mill / Dye House / Garment Factory / Logistics / Cert Body / Sustainability Partner, but four types collapse onto generic shells. Replace with dedicated dashboards so each entity type shows what matters:
+`GenericEntityDashboard({ e })` will render:
+- 4 StatTiles: Entity type, Location (city, country / region), Capacity (`e.capacity || "—"`), Lead time
+- `ReliabilityCard` (existing)
+- `ChipsCard` for Materials, Capabilities, Certifications (only when non-empty)
+- A compact "Profile readiness" row: profile completeness %, verified certs, evidence count
 
-- **Brand** (keep, already custom) — KPI snapshot + reliability.
-- **Farmer** — crop, hectares, harvest season, fiber yield, certifications (BCI/Organic/Fairtrade), region/water risk.
-- **Ginner** — bale capacity, fiber sources, contamination control, throughput, lead time.
-- **Spinner** — yarn counts, spindle capacity, blend capability, MOQ, on-time rate.
-- **Fabric Mill** — fabric types (knit/woven), GSM range, monthly meters, dye/finishing, MOQ.
-- **Dye House** — process types (reactive/pigment), ZDHC/bluesign, water reuse %, capacity kg/day.
-- **Garment Factory** — product categories, sewing lines, monthly units, social audits (SA8000/WRAP/BSCI), MOQ.
-- **Logistics Provider** — modes (sea/air/road), lanes covered, transit time, on-time %, customs services.
-- **Certification Body** — schemes audited, accreditations, turnaround, region coverage, active audits.
-- **Sustainability Partner** — service areas (LCA/CFV/training), tools, engagements, frameworks (GRI/SBTi).
+Wire it as the `default:` case in `DashboardByType`. `BrandDashboard` stays only for `Brand`.
 
-Shared `ReliabilityCard` (lead time, delivery timeframe, on-time, avg delay) stays as a footer on every dashboard. Each dashboard reuses `StatTile` + `Badge` lists already in `DashboardByType.tsx` — just adds type-specific tile groupings. Pure presentational; no schema change.
+## 2. Research Workspace — replace screenshot-style placeholders with GCH-tailored content
 
-## 2. Per-Org AI Research Workspace
+The current `NewResearchDialog` uses generic copy ("knit fabric mills…Turkey", "Knitwear, denim", "Garment Factory, Mill…") copied from the screenshot. Make it context-aware to the viewing org and to the GCH network.
 
-New route: `src/routes/organizations.$id.research.tsx`, plus sidebar entry "Research" (with Sparkles icon) in `OrgSidebar`.
+Changes in `ResearchWorkspace.tsx` / `NewResearchDialog`:
 
-### UI (matches screenshots)
-- Header: "Research Workspace" + tagline scoped to the org ("Discover partners across the GCH network for {orgName}").
-- Left column: **Runs (n)** list — each run shows query, timestamp, status (running / done / failed), result count.
-- Right column: empty state with "Start your first research" CTA; once a run is selected, shows results table (Org name, type, country, MOQ, lead time, match score, "Add to matches" action).
-- "+ New research" button opens a Dialog with: Search Query (textarea, required), Countries (comma list), # Results (number, default 20), Industry, Entity Type. "Start research" submits.
+- **Dialog header**: keep "New research" but subtitle becomes:
+  "Search the GCH network for partners that match **{entity.name}** ({entity.entityType}, {entity.country}). Ask in plain language — e.g. _ginners in India with BCI certification_."
+- **Search query placeholder**: derived from the viewing org's role. Examples:
+  - Brand → "Tier 2 spinners in Türkiye with GOTS and MOQ under 500 kg"
+  - Garment Factory → "Trim suppliers in South Asia delivering within 21 days"
+  - Farmer → "Ginners within 300km accepting organic seed cotton"
+  - Spinner → "Fabric mills sourcing combed cotton Ne 30+"
+  - Mill / Dye House / Logistics / Cert / Sustainability → tailored equivalents
+  - Fallback → "Partners matching {entity.entityType} sourcing needs"
+- **Countries placeholder**: use the org's `country` as default suggestion (e.g. "India, Bangladesh") instead of "Turkey, Portugal".
+- **Industry → "Materials / focus"**: placeholder pulls from the org's first 2 materials (e.g. "Organic cotton, recycled polyester") with fallback "Cotton, polyester, trims".
+- **Entity type**: rendered as a `<Select>` populated from the actual `EntityType` union (Brand, Farmer, Ginner, Spinner, Fabric Mill, Dye House, Garment Factory, Logistics Provider, Certification Body, Sustainability Partner) instead of a free-text "Garment Factory, Mill…". Default = the natural counterpart for the viewer (Brand → Garment Factory, Garment Factory → Fabric Mill, etc.) via a small `suggestedCounterpart()` map.
+- **Footnote**: rewrite to "Searches {ALL_ENTITIES.length} organizations across the GCH network instantly. AI suggests additional candidates outside the network."
 
-### Search behavior (two-tier, no schema changes)
-1. **Internal search (always runs first, instant)** — filter `getAllEntities()` against the parsed criteria (country, entityType, materials match, moq/lead time thresholds extracted from query). Returns matches from the GCH network.
-2. **AI expansion (optional)** — when the user toggles "Expand with AI" (or always, behind a flag), call Lovable AI Gateway (`google/gemini-3-flash-preview`) via a `createServerFn` (`src/lib/research.functions.ts`) that:
-   - Takes `{ query, countries, entityType, industry, limit }`.
-   - Returns structured candidates `{ name, country, city, entityType, materials, moq, leadTimeDays, rationale, sourceUrl? }[]` via `Output.object` + Zod schema.
-   - Marks each candidate `source: "ai"` vs internal `source: "network"`.
+## 3. Per-org research search table
 
-Internal results render first; AI candidates render in a separate "Suggested from web" section with an "Invite / add to network" stub button (toast for now).
+Today results render only after a run is opened. Add a persistent **"Network directory"** card at the top of every org's Research page so the org can scan the GCH network without starting a run:
 
-### Run persistence
-Runs persist per-org in `localStorage` via a new `src/seed/research-runs.ts` helper (same pattern as `org-overrides.ts`): `{ id, orgId, query, params, createdAt, status, results }[]`. Survives reload without backend.
+- Live filter bar: search input + Entity type select + Country input + "Min on-time %" + "Max lead days".
+- Filters `ALL_ENTITIES` (excluding self), renders `<Table>` with: Org · Type · Country · Materials (first 3 chips) · MOQ · Lead · On-time · Action ("Open").
+- Defaults: prefilled with the org's suggested counterpart entity type and the org's country, so it shows something useful immediately.
+- Empty state: "No GCH organizations match these filters. Try a New Research run to expand with AI."
 
-### Files
-**Create**
-- `src/lib/research.functions.ts` — `runAiResearch` server function (Lovable AI Gateway, structured output).
-- `src/lib/ai-gateway.server.ts` — provider helper (if not already present).
-- `src/seed/research-runs.ts` — localStorage CRUD for runs.
-- `src/components/ResearchWorkspace.tsx` — runs list + results panel + new-run dialog.
-- `src/routes/organizations.$id.research.tsx` — wraps `ResearchWorkspace` with the active org.
+This is the same data table the screenshot implies, but populated from our real seed network and scoped to the viewing org.
 
-**Edit**
-- `src/components/DashboardByType.tsx` — add the 6 missing dedicated dashboards.
-- `src/components/OrgSidebar.tsx` — add "Research" nav item under the org workspace.
+## Out of scope
+- AI prompt logic / `runAiResearch` unchanged.
+- No new entity types or schema changes.
+- No changes to per-org sidebar, messaging, meetings, settings.
 
-## Out of scope (ask if wanted)
-- Persisting research runs to the database (currently localStorage).
-- Web scraping via Firecrawl (screenshots mention it; current plan uses AI-only expansion — add Firecrawl later if you want real web discovery).
-- "Approve into Organizations" flow that converts an AI candidate into a real `Entity` in seed data.
+## Files to edit
+- `src/components/DashboardByType.tsx` — add `GenericEntityDashboard`, switch `default` case.
+- `src/components/ResearchWorkspace.tsx` — context-aware dialog placeholders, entity type Select, new `NetworkDirectoryCard` rendered above the runs grid.
+
+No new files, no new routes, no new dependencies.
