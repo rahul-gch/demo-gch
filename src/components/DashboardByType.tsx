@@ -264,6 +264,34 @@ function BrandDashboard({ e }: { e: Entity }) {
   );
 }
 
+function GenericEntityDashboard({ e }: { e: Entity }) {
+  const location = [e.city, e.region || e.country].filter(Boolean).join(", ");
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatTile icon={<Factory className="h-3.5 w-3.5" />} label="Entity type" value={e.entityType} hint={e.actorType} />
+        <StatTile icon={<Globe2 className="h-3.5 w-3.5" />} label="Location" value={location || "—"} />
+        <StatTile icon={<Package className="h-3.5 w-3.5" />} label="Capacity" value={e.capacity || "—"} hint={e.moq ? `MOQ ${e.moq}` : undefined} />
+        <StatTile icon={<Clock className="h-3.5 w-3.5" />} label="Lead time" value={e.leadTimeDays ? `${e.leadTimeDays} d` : "—"} />
+      </div>
+      <ReliabilityCard e={e} />
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatTile
+          icon={<CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />}
+          label="Profile completeness"
+          value={`${e.profileCompleteness}%`}
+          hint={<Progress value={e.profileCompleteness} className="h-1.5" />}
+        />
+        <StatTile icon={<ShieldCheck className="h-3.5 w-3.5" />} label="Verified certs" value={e.verifiedCertCount} hint={e.expiredCertCount ? `${e.expiredCertCount} expired` : undefined} />
+        <StatTile icon={<Award className="h-3.5 w-3.5" />} label="Evidence on file" value={e.evidenceCount} />
+      </div>
+      <ChipsCard e={e} title="Materials" source="materials" />
+      <ChipsCard e={e} title="Capabilities" source="capabilities" />
+      <ChipsCard e={e} title="Certifications" source="certifications" />
+    </div>
+  );
+}
+
 export function DashboardByType({ entity }: { entity: Entity }) {
   switch (entity.entityType) {
     case "Brand":
@@ -287,6 +315,6 @@ export function DashboardByType({ entity }: { entity: Entity }) {
     case "Sustainability Partner":
       return <SustainabilityPartnerDashboard e={entity} />;
     default:
-      return <BrandDashboard e={entity} />;
+      return <GenericEntityDashboard e={entity} />;
   }
 }
