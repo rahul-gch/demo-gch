@@ -7,6 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -18,10 +25,10 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Sparkles, Plus, Globe2, Network, Loader2, ArrowUpRight } from "lucide-react";
+import { Sparkles, Plus, Globe2, Network, Loader2, ArrowUpRight, Search } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import type { Entity } from "@/seed/types";
+import type { Entity, EntityType } from "@/seed/types";
 import { ALL_ENTITIES } from "@/seed/all-entities";
 import { runAiResearch } from "@/lib/research.functions";
 import {
@@ -32,6 +39,45 @@ import {
   type ResearchCandidate,
   type ResearchRun,
 } from "@/seed/research-runs";
+
+const ENTITY_TYPES: EntityType[] = [
+  "Brand",
+  "Farmer",
+  "Ginner",
+  "Spinner",
+  "Fabric Mill",
+  "Dye House",
+  "Garment Factory",
+  "Logistics Provider",
+  "Certification Body",
+  "Sustainability Partner",
+];
+
+const COUNTERPART: Record<EntityType, EntityType> = {
+  "Brand": "Garment Factory",
+  "Garment Factory": "Fabric Mill",
+  "Fabric Mill": "Spinner",
+  "Spinner": "Ginner",
+  "Ginner": "Farmer",
+  "Farmer": "Ginner",
+  "Dye House": "Fabric Mill",
+  "Logistics Provider": "Garment Factory",
+  "Certification Body": "Garment Factory",
+  "Sustainability Partner": "Brand",
+};
+
+const QUERY_PROMPTS: Record<EntityType, string> = {
+  "Brand": "Tier 2 spinners in Türkiye with GOTS and MOQ under 500 kg",
+  "Garment Factory": "Trim and accessory suppliers in South Asia delivering within 21 days",
+  "Fabric Mill": "Spinners offering combed cotton Ne 30+ with OEKO-TEX",
+  "Spinner": "Ginners in India with BCI-certified seed cotton",
+  "Ginner": "Organic cotton farmers within 300 km of our gin",
+  "Farmer": "Ginners accepting organic seed cotton with fair pricing",
+  "Dye House": "Fabric mills sourcing low-impact reactive dyeing",
+  "Logistics Provider": "Garment factories shipping LCL to EU monthly",
+  "Certification Body": "Mills and factories due for GOTS recertification this quarter",
+  "Sustainability Partner": "Brands publishing Tier 2 traceability roadmaps",
+};
 
 function uid() {
   return Math.random().toString(36).slice(2, 10);
@@ -53,8 +99,6 @@ function searchInternal(params: {
   const industry = params.industry.trim().toLowerCase();
 
   const tokens = q.split(/[\s,]+/).filter((t) => t.length > 2);
-
-  // crude lead/moq parsing: "lead time 30", "moq 500"
   const leadMatch = q.match(/lead\s*(?:time)?\s*(?:<=?|under|less than)?\s*(\d+)/);
   const maxLead = leadMatch ? parseInt(leadMatch[1], 10) : 0;
 
@@ -62,18 +106,10 @@ function searchInternal(params: {
     .map((e) => {
       let score = 0;
       const hay = [
-        e.name,
-        e.entityType,
-        e.country,
-        e.region,
-        e.city,
-        ...(e.materials || []),
-        ...(e.capabilities || []),
-        ...(e.certifications || []),
+        e.name, e.entityType, e.country, e.region, e.city,
+        ...(e.materials || []), ...(e.capabilities || []), ...(e.certifications || []),
         e.description,
-      ]
-        .join(" ")
-        .toLowerCase();
+      ].join(" ").toLowerCase();
 
       if (countries.length && countries.some((c) => e.country.toLowerCase().includes(c))) score += 30;
       if (etype && e.entityType.toLowerCase().includes(etype)) score += 25;
@@ -123,6 +159,8 @@ export function ResearchWorkspace({ entity }: { entity: Entity }) {
     [runs, activeId],
   );
 
+  const counterpart = COUNTERPART[entity.entityType] ?? "Garment Factory";
+
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <header className="flex flex-wrap items-start justify-between gap-3">
@@ -132,15 +170,16 @@ export function ResearchWorkspace({ entity }: { entity: Entity }) {
             Research Workspace
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            Discover partners across the GCH network and beyond for{" "}
-            <span className="font-medium">{entity.name}</span>. Ask in natural language —
-            "manufacturers in Egypt with MOQ under 500 and lead time 30 days".
+            Search the GCH network for partners that match{" "}
+            <span className="font-medium">{entity.name}</span> ({entity.entityType}, {entity.country}).
+            Ask in plain language — e.g. <em>{QUERY_PROMPTS[entity.entityType]}</em>.
           </p>
         </div>
         <NewResearchDialog
           open={open}
           onOpenChange={setOpen}
           entity={entity}
+          counterpart={counterpart}
           onStart={async (params) => {
             const runId = uid();
             const networkResults = searchInternal({
@@ -165,17 +204,9 @@ export function ResearchWorkspace({ entity }: { entity: Entity }) {
 
             try {
               const { candidates } = await runAi({ data: params });
-              const ai: ResearchCandidate[] = candidates.map((c) => ({
-                source: "ai",
-                ...c,
-              }));
-              updateRun(runId, {
-                status: "done",
-                results: [...networkResults, ...ai],
-              });
-              toast.success(
-                `Found ${networkResults.length} in network + ${ai.length} AI suggestions`,
-              );
+              const ai: ResearchCandidate[] = candidates.map((c) => ({ source: "ai", ...c }));
+              updateRun(runId, { status: "done", results: [...networkResults, ...ai] });
+              toast.success(`Found ${networkResults.length} in network + ${ai.length} AI suggestions`);
             } catch (err) {
               const msg = err instanceof Error ? err.message : "Research failed";
               updateRun(runId, { status: "failed", error: msg });
@@ -184,6 +215,8 @@ export function ResearchWorkspace({ entity }: { entity: Entity }) {
           }}
         />
       </header>
+
+      <NetworkDirectoryCard entity={entity} defaultEntityType={counterpart} />
 
       <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
         <Card className="shadow-sm">
@@ -194,9 +227,7 @@ export function ResearchWorkspace({ entity }: { entity: Entity }) {
           </CardHeader>
           <CardContent className="space-y-1.5 p-2">
             {runs.length === 0 && (
-              <div className="px-2 py-6 text-center text-sm text-muted-foreground">
-                No runs yet.
-              </div>
+              <div className="px-2 py-6 text-center text-sm text-muted-foreground">No runs yet.</div>
             )}
             {runs.map((r) => (
               <button
@@ -221,12 +252,10 @@ export function ResearchWorkspace({ entity }: { entity: Entity }) {
 
         <div className="space-y-4">
           {!active && (
-            <Card className="flex h-[420px] items-center justify-center shadow-sm">
+            <Card className="flex h-[280px] items-center justify-center shadow-sm">
               <div className="text-center">
                 <Sparkles className="mx-auto h-8 w-8 text-muted-foreground" />
-                <div className="mt-2 text-sm text-muted-foreground">
-                  No research run selected.
-                </div>
+                <div className="mt-2 text-sm text-muted-foreground">No research run selected.</div>
                 <Button className="mt-4" onClick={() => setOpen(true)}>
                   <Plus className="mr-1 h-4 w-4" />
                   Start your first research
@@ -241,11 +270,143 @@ export function ResearchWorkspace({ entity }: { entity: Entity }) {
   );
 }
 
+function NetworkDirectoryCard({
+  entity,
+  defaultEntityType,
+}: {
+  entity: Entity;
+  defaultEntityType: EntityType;
+}) {
+  const [search, setSearch] = useState("");
+  const [etype, setEtype] = useState<string>(defaultEntityType);
+  const [country, setCountry] = useState<string>(entity.country);
+  const [minOtr, setMinOtr] = useState<string>("");
+  const [maxLead, setMaxLead] = useState<string>("");
+
+  const rows = useMemo(() => {
+    const s = search.trim().toLowerCase();
+    const c = country.trim().toLowerCase();
+    const otr = parseInt(minOtr, 10);
+    const lead = parseInt(maxLead, 10);
+    return ALL_ENTITIES.filter((e) => e.id !== entity.id)
+      .filter((e) => (etype === "all" ? true : e.entityType === etype))
+      .filter((e) => (c ? e.country.toLowerCase().includes(c) : true))
+      .filter((e) => (Number.isFinite(otr) ? (e.onTimeRate ?? 0) >= otr : true))
+      .filter((e) => (Number.isFinite(lead) ? (e.leadTimeDays ?? 999) <= lead : true))
+      .filter((e) => {
+        if (!s) return true;
+        const hay = [e.name, e.country, e.city, ...e.materials, ...e.capabilities, ...e.certifications]
+          .join(" ").toLowerCase();
+        return hay.includes(s);
+      })
+      .slice(0, 50);
+  }, [search, etype, country, minOtr, maxLead, entity.id]);
+
+  return (
+    <Card className="shadow-sm">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+          <Network className="h-4 w-4" />
+          GCH network directory
+          <Badge variant="secondary" className="ml-1">{rows.length}</Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid gap-2 md:grid-cols-[1fr_180px_160px_140px_140px]">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search name, material, certification…"
+              className="pl-8"
+            />
+          </div>
+          <Select value={etype} onValueChange={setEtype}>
+            <SelectTrigger><SelectValue placeholder="Entity type" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All entity types</SelectItem>
+              {ENTITY_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Input
+            value={country}
+            onChange={(e) => setCountry(e.target.value)}
+            placeholder="Country"
+          />
+          <Input
+            value={minOtr}
+            onChange={(e) => setMinOtr(e.target.value)}
+            placeholder="Min on-time %"
+            inputMode="numeric"
+          />
+          <Input
+            value={maxLead}
+            onChange={(e) => setMaxLead(e.target.value)}
+            placeholder="Max lead days"
+            inputMode="numeric"
+          />
+        </div>
+
+        {rows.length === 0 ? (
+          <div className="rounded-md border border-dashed py-10 text-center text-sm text-muted-foreground">
+            No GCH organizations match these filters. Try a New Research run to expand with AI.
+          </div>
+        ) : (
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Organization</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Country</TableHead>
+                  <TableHead>Materials</TableHead>
+                  <TableHead>MOQ</TableHead>
+                  <TableHead>Lead</TableHead>
+                  <TableHead>On-time</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((e) => (
+                  <TableRow key={e.id}>
+                    <TableCell>
+                      <div className="font-medium">{e.name}</div>
+                      <div className="text-[11px] text-muted-foreground">{e.gchNumber}</div>
+                    </TableCell>
+                    <TableCell className="text-xs">{e.entityType}</TableCell>
+                    <TableCell className="text-xs">{[e.city, e.country].filter(Boolean).join(", ")}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {(e.materials ?? []).slice(0, 3).map((m) => (
+                          <Badge key={m} variant="outline" className="text-[10px] font-normal">{m}</Badge>
+                        ))}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-xs">{e.moq || "—"}</TableCell>
+                    <TableCell className="text-xs">{e.leadTimeDays ? `${e.leadTimeDays}d` : "—"}</TableCell>
+                    <TableCell className="text-xs">{e.onTimeRate != null ? `${e.onTimeRate}%` : "—"}</TableCell>
+                    <TableCell className="text-right">
+                      <Button asChild size="sm" variant="ghost">
+                        <Link to="/organizations/$id" params={{ id: e.id }}>
+                          Open <ArrowUpRight className="ml-1 h-3 w-3" />
+                        </Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function StatusDot({ status }: { status: ResearchRun["status"] }) {
-  if (status === "running")
-    return <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />;
-  if (status === "failed")
-    return <span className="h-2 w-2 rounded-full bg-destructive" />;
+  if (status === "running") return <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />;
+  if (status === "failed") return <span className="h-2 w-2 rounded-full bg-destructive" />;
   return <span className="h-2 w-2 rounded-full bg-emerald-500" />;
 }
 
@@ -295,15 +456,9 @@ function RunResults({ run, onDelete }: { run: ResearchRun; onDelete: () => void 
 }
 
 function ResultsSection({
-  title,
-  icon,
-  rows,
-  emptyText,
+  title, icon, rows, emptyText,
 }: {
-  title: string;
-  icon: React.ReactNode;
-  rows: ResearchCandidate[];
-  emptyText: string;
+  title: string; icon: React.ReactNode; rows: ResearchCandidate[]; emptyText: string;
 }) {
   return (
     <Card className="shadow-sm">
@@ -345,9 +500,7 @@ function ResultsSection({
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
                       {(r.materials ?? []).slice(0, 3).map((m) => (
-                        <Badge key={m} variant="outline" className="text-[10px] font-normal">
-                          {m}
-                        </Badge>
+                        <Badge key={m} variant="outline" className="text-[10px] font-normal">{m}</Badge>
                       ))}
                     </div>
                   </TableCell>
@@ -361,11 +514,7 @@ function ResultsSection({
                         </Link>
                       </Button>
                     ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => toast.info(`Invite "${r.name}" — coming soon`)}
-                      >
+                      <Button size="sm" variant="outline" onClick={() => toast.info(`Invite "${r.name}" — coming soon`)}>
                         Invite
                       </Button>
                     )}
@@ -381,14 +530,12 @@ function ResultsSection({
 }
 
 function NewResearchDialog({
-  open,
-  onOpenChange,
-  entity,
-  onStart,
+  open, onOpenChange, entity, counterpart, onStart,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   entity: Entity;
+  counterpart: EntityType;
   onStart: (p: {
     query: string;
     countries: string;
@@ -400,8 +547,12 @@ function NewResearchDialog({
   const [query, setQuery] = useState("");
   const [countries, setCountries] = useState("");
   const [industry, setIndustry] = useState("");
-  const [entityType, setEntityType] = useState("");
+  const [entityType, setEntityType] = useState<string>(counterpart);
   const [limit, setLimit] = useState(20);
+
+  const queryPlaceholder = QUERY_PROMPTS[entity.entityType];
+  const materialsHint =
+    entity.materials.slice(0, 2).join(", ") || "Cotton, polyester, trims";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -415,8 +566,9 @@ function NewResearchDialog({
         <DialogHeader>
           <DialogTitle>New research</DialogTitle>
           <DialogDescription>
-            Search across the GCH network and let AI expand the candidate pool for{" "}
-            <span className="font-medium">{entity.name}</span>.
+            Search the GCH network for partners that match{" "}
+            <span className="font-medium">{entity.name}</span> ({entity.entityType},{" "}
+            {entity.country}). AI expands the pool beyond our network.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
@@ -426,7 +578,7 @@ function NewResearchDialog({
               required
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="e.g. knit fabric mills supplying premium activewear brands in Turkey"
+              placeholder={queryPlaceholder}
               className="mt-1 min-h-[80px]"
             />
           </div>
@@ -436,7 +588,7 @@ function NewResearchDialog({
               <Input
                 value={countries}
                 onChange={(e) => setCountries(e.target.value)}
-                placeholder="Turkey, Portugal"
+                placeholder={entity.country}
                 className="mt-1"
               />
             </div>
@@ -452,27 +604,27 @@ function NewResearchDialog({
               />
             </div>
             <div>
-              <Label>Industry</Label>
+              <Label>Materials / focus</Label>
               <Input
                 value={industry}
                 onChange={(e) => setIndustry(e.target.value)}
-                placeholder="Knitwear, denim, trims…"
+                placeholder={materialsHint}
                 className="mt-1"
               />
             </div>
             <div>
               <Label>Entity type</Label>
-              <Input
-                value={entityType}
-                onChange={(e) => setEntityType(e.target.value)}
-                placeholder="Garment Factory, Mill…"
-                className="mt-1"
-              />
+              <Select value={entityType} onValueChange={setEntityType}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {ENTITY_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-            Searches the GCH network instantly and uses Lovable AI to suggest additional
-            candidates. Larger # results = longer AI run.
+            Searches {ALL_ENTITIES.length} organizations across the GCH network instantly.
+            AI suggests additional candidates outside the network.
           </p>
         </div>
         <DialogFooter>
