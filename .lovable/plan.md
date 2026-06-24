@@ -1,55 +1,55 @@
-# Plan
+# Plan — Richer per-entity-type dashboards
 
-## 1. Generic fallback dashboard
+Today `DashboardByType.tsx` has a dashboard per type, but most are just 4 generic StatTiles + chip lists. Make each one reflect what actually matters for that role in the apparel supply chain. All numeric KPIs derive from existing `Entity` fields (`leadTimeDays`, `onTimeRate`, `avgDelayDays`, `capacity`, `moq`, `verifiedCertCount`, `expiredCertCount`, `evidenceCount`, `profileCompleteness`, `materials`, `capabilities`, `certifications`, `confidenceScore`, `riskLevel`, `traceabilityReadiness`, `kpiReadiness`, `matchmakingReadiness`). No schema changes.
 
-Today `DashboardByType` falls back to `BrandDashboard` for any unknown entity type — a non-brand org with no specific dashboard ends up rendering brand KPIs. Replace the fallback with a real `GenericEntityDashboard` so every org renders consistently.
+## Shared building blocks (added to `DashboardByType.tsx`)
 
-`GenericEntityDashboard({ e })` will render:
-- 4 StatTiles: Entity type, Location (city, country / region), Capacity (`e.capacity || "—"`), Lead time
-- `ReliabilityCard` (existing)
-- `ChipsCard` for Materials, Capabilities, Certifications (only when non-empty)
-- A compact "Profile readiness" row: profile completeness %, verified certs, evidence count
+- `KpiRow` — 4-up StatTile grid (existing pattern).
+- `ReadinessCard` — three progress bars: KPI readiness, Traceability readiness, Matchmaking readiness.
+- `RiskCard` — confidence score, risk level (color), verified vs expired certs, evidence count, missing-data count.
+- `RelationshipsCard` — typical upstream / downstream partners for that tier (derived from a static `TIER_MAP`), so a Spinner shows "Sources from: Ginners · Sells to: Fabric Mills".
+- `ReliabilityCard` — keep as-is (lead time, on-time, delay, timeframe).
+- `ChipsCard` — keep, used for materials / capabilities / certifications.
 
-Wire it as the `default:` case in `DashboardByType`. `BrandDashboard` stays only for `Brand`.
+Every dashboard composes: **role-specific KPI row → Reliability → Readiness → Risk → Relationships → Chips**. Generic fallback gets the same skeleton minus role KPIs.
 
-## 2. Research Workspace — replace screenshot-style placeholders with GCH-tailored content
+## Per-type KPI focus
 
-The current `NewResearchDialog` uses generic copy ("knit fabric mills…Turkey", "Knitwear, denim", "Garment Factory, Mill…") copied from the screenshot. Make it context-aware to the viewing org and to the GCH network.
+### Brand (Tier 0)
+KPI row: Active suppliers count (length of `materials` as proxy stand-in label "Sourcing tiers covered"), Tier-2+ visibility = `traceabilityReadiness`%, Annual order volume = `capacity` (label "Sourcing volume"), Lead time SLA. Keep `MiniDashboard`. Add Readiness + Risk.
 
-Changes in `ResearchWorkspace.tsx` / `NewResearchDialog`:
+### Farmer (Tier 4)
+KPI row: Primary crop, Hectares / annual capacity, Harvest season (derived: "Apr–Oct" if region in N. hemisphere — simple country→hemisphere map), Fiber yield certifications count. Add water-stress hint via country (static high-stress list). Chips: Crops & fibers, Practices, Certifications (BCI / Organic / Fairtrade / Regenagri).
 
-- **Dialog header**: keep "New research" but subtitle becomes:
-  "Search the GCH network for partners that match **{entity.name}** ({entity.entityType}, {entity.country}). Ask in plain language — e.g. _ginners in India with BCI certification_."
-- **Search query placeholder**: derived from the viewing org's role. Examples:
-  - Brand → "Tier 2 spinners in Türkiye with GOTS and MOQ under 500 kg"
-  - Garment Factory → "Trim suppliers in South Asia delivering within 21 days"
-  - Farmer → "Ginners within 300km accepting organic seed cotton"
-  - Spinner → "Fabric mills sourcing combed cotton Ne 30+"
-  - Mill / Dye House / Logistics / Cert / Sustainability → tailored equivalents
-  - Fallback → "Partners matching {entity.entityType} sourcing needs"
-- **Countries placeholder**: use the org's `country` as default suggestion (e.g. "India, Bangladesh") instead of "Turkey, Portugal".
-- **Industry → "Materials / focus"**: placeholder pulls from the org's first 2 materials (e.g. "Organic cotton, recycled polyester") with fallback "Cotton, polyester, trims".
-- **Entity type**: rendered as a `<Select>` populated from the actual `EntityType` union (Brand, Farmer, Ginner, Spinner, Fabric Mill, Dye House, Garment Factory, Logistics Provider, Certification Body, Sustainability Partner) instead of a free-text "Garment Factory, Mill…". Default = the natural counterpart for the viewer (Brand → Garment Factory, Garment Factory → Fabric Mill, etc.) via a small `suggestedCounterpart()` map.
-- **Footnote**: rewrite to "Searches {ALL_ENTITIES.length} organizations across the GCH network instantly. AI suggests additional candidates outside the network."
+### Ginner (Tier 3)
+KPI row: Bale capacity, MOQ, Throughput lead, Contamination-control cert count. Extra: Fiber sources received from (derived from `materials`), USTER/HVI testing badge (true if any cert matches /USTER|HVI|SCS/).
 
-## 3. Per-org research search table
+### Spinner (Tier 3)
+KPI row: Spindle capacity, Yarn count range (first capability or fallback "Ne 20–60"), MOQ, Lead time. Extra: Blend capability chips, Compact / ring / open-end indicator (from capabilities regex), Energy intensity hint = `kpiReadiness`%.
 
-Today results render only after a run is opened. Add a persistent **"Network directory"** card at the top of every org's Research page so the org can scan the GCH network without starting a run:
+### Fabric Mill (Tier 2)
+KPI row: Monthly meters capacity, MOQ, Lead time, GSM range (first capability matching /\d+\s*g/). Extra: Construction types (knit/woven badges from capabilities), Dye/finishing chip group, Cert count for GOTS / OEKO-TEX.
 
-- Live filter bar: search input + Entity type select + Country input + "Min on-time %" + "Max lead days".
-- Filters `ALL_ENTITIES` (excluding self), renders `<Table>` with: Org · Type · Country · Materials (first 3 chips) · MOQ · Lead · On-time · Action ("Open").
-- Defaults: prefilled with the org's suggested counterpart entity type and the org's country, so it shows something useful immediately.
-- Empty state: "No GCH organizations match these filters. Try a New Research run to expand with AI."
+### Dye House (Tier 2)
+KPI row: Daily kg capacity, Water reuse % (derived), Lead time, ZDHC/bluesign cert count. Extra: Process chips (reactive, pigment, digital), Discharge compliance badge.
 
-This is the same data table the screenshot implies, but populated from our real seed network and scoped to the viewing org.
+### Garment Factory (Tier 1)
+KPI row: Monthly units, MOQ, Lead time, Social audit count (SA8000/WRAP/BSCI/Sedex). Extra: Product categories (materials), Sewing lines (capabilities), Compliance summary card (expired certs warning).
+
+### Logistics Provider
+KPI row: Geographic coverage (region/country), Modes (Sea/Air/Road from capabilities), Avg transit days, On-time %. Extra: Service chips, Accreditations (AEO, C-TPAT, IATA, FIATA detection).
+
+### Certification Body
+KPI row: Schemes audited, Region coverage, Avg turnaround, Active audits (= `evidenceCount`). Extra: Scheme chip list with verification badge, Avg confidence score across audited orgs (use `confidenceScore`).
+
+### Sustainability Partner
+KPI row: Service areas count (LCA / CFV / Training), Frameworks count (GRI/SBTi/CDP), Avg engagement length, Profile completeness. Extra: Service chips, Frameworks chips, Recent engagements (text from `recommendedNextAction` if present).
+
+### Generic fallback
+Already added — keeps Entity type / Location / Capacity / Lead time + Reliability + Readiness + Chips.
+
+## File changes
+- `src/components/DashboardByType.tsx` — add `ReadinessCard`, `RiskCard`, `RelationshipsCard`, small helper maps (TIER_MAP, hemisphere map, audit/process regex helpers). Rewrite each per-type dashboard to use the new composition. No new files, no new deps, no route changes.
 
 ## Out of scope
-- AI prompt logic / `runAiResearch` unchanged.
-- No new entity types or schema changes.
-- No changes to per-org sidebar, messaging, meetings, settings.
-
-## Files to edit
-- `src/components/DashboardByType.tsx` — add `GenericEntityDashboard`, switch `default` case.
-- `src/components/ResearchWorkspace.tsx` — context-aware dialog placeholders, entity type Select, new `NetworkDirectoryCard` rendered above the runs grid.
-
-No new files, no new routes, no new dependencies.
+- New `Entity` fields, seed edits, charts library, real-time data, edit UI. Everything is read-only presentation derived from existing seed data.
