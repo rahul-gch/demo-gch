@@ -1,55 +1,68 @@
-# Plan — Richer per-entity-type dashboards
+# Org-aware Research workspace with type-specific search table
 
-Today `DashboardByType.tsx` has a dashboard per type, but most are just 4 generic StatTiles + chip lists. Make each one reflect what actually matters for that role in the apparel supply chain. All numeric KPIs derive from existing `Entity` fields (`leadTimeDays`, `onTimeRate`, `avgDelayDays`, `capacity`, `moq`, `verifiedCertCount`, `expiredCertCount`, `evidenceCount`, `profileCompleteness`, `materials`, `capabilities`, `certifications`, `confidenceScore`, `riskLevel`, `traceabilityReadiness`, `kpiReadiness`, `matchmakingReadiness`). No schema changes.
+Every organization already has a Dashboard tab and a Research tab in the sidebar (`OrgSidebar`). The Research tab currently shows the same generic network directory and result columns for every entity type. We'll make the Research workspace adapt to the viewing org's entity type so the filters, columns, default counterpart, and result presentation all match what that role actually sources.
 
-## Shared building blocks (added to `DashboardByType.tsx`)
+## Goals
 
-- `KpiRow` — 4-up StatTile grid (existing pattern).
-- `ReadinessCard` — three progress bars: KPI readiness, Traceability readiness, Matchmaking readiness.
-- `RiskCard` — confidence score, risk level (color), verified vs expired certs, evidence count, missing-data count.
-- `RelationshipsCard` — typical upstream / downstream partners for that tier (derived from a static `TIER_MAP`), so a Spinner shows "Sources from: Ginners · Sells to: Fabric Mills".
-- `ReliabilityCard` — keep as-is (lead time, on-time, delay, timeframe).
-- `ChipsCard` — keep, used for materials / capabilities / certifications.
+- Consistent layout across all orgs: same Research page shell shows for every entity (already true via `organizations.$id.research.tsx` and `OrgSidebar`); confirm no org is missing it.
+- The network search table and AI run result table inside Research are **driven by the viewing org's `entityType`** — different columns, filters, defaults, and quick-prompt chips per role.
+- Cross-org AI search remains in plain language (e.g. "manufacturers from Egypt with MOQ < 1000 and lead time < 30 days") but the structured table view above it is tuned per role.
 
-Every dashboard composes: **role-specific KPI row → Reliability → Readiness → Risk → Relationships → Chips**. Generic fallback gets the same skeleton minus role KPIs.
+## Scope of changes (frontend only)
 
-## Per-type KPI focus
+Single file: `src/components/ResearchWorkspace.tsx`. No new routes, no backend changes, no schema changes. `research.functions.ts` stays as-is (already accepts free-form query + filters).
 
-### Brand (Tier 0)
-KPI row: Active suppliers count (length of `materials` as proxy stand-in label "Sourcing tiers covered"), Tier-2+ visibility = `traceabilityReadiness`%, Annual order volume = `capacity` (label "Sourcing volume"), Lead time SLA. Keep `MiniDashboard`. Add Readiness + Risk.
+### 1. Per-entity-type search profile
 
-### Farmer (Tier 4)
-KPI row: Primary crop, Hectares / annual capacity, Harvest season (derived: "Apr–Oct" if region in N. hemisphere — simple country→hemisphere map), Fiber yield certifications count. Add water-stress hint via country (static high-stress list). Chips: Crops & fibers, Practices, Certifications (BCI / Organic / Fairtrade / Regenagri).
+Add a `SEARCH_PROFILES: Record<EntityType, SearchProfile>` map. Each profile defines:
 
-### Ginner (Tier 3)
-KPI row: Bale capacity, MOQ, Throughput lead, Contamination-control cert count. Extra: Fiber sources received from (derived from `materials`), USTER/HVI testing badge (true if any cert matches /USTER|HVI|SCS/).
+- `defaultCounterpart`: which entity type to pre-filter for (reuse existing `COUNTERPART`).
+- `quickFilters`: array of one-click chip filters relevant to that role
+  (e.g. Brand → "GOTS only", "Lead < 30d", "MOQ < 1000"; Farmer → "Organic", "Within 300 km"; Logistics → "Air freight", "EU export").
+- `columns`: ordered list of columns to render in both the network directory and the AI run results table. Each column is `{ key, label, render(entity|candidate) }`. Examples:
+  - Brand viewing factories: Name, Country, Product categories, Monthly units, MOQ, Lead, Social audits, On-time, Action.
+  - Spinner viewing ginners: Name, Country, Bale capacity, MOQ, Lead, HVI/USTER, Certifications, Action.
+  - Farmer viewing ginners: Name, Distance (km), Accepts organic, MOQ, Pricing notes, Action.
+  - Dye House viewing fabric mills: Name, Country, GSM range, Monthly meters, Chemistry compliance, Lead, Action.
+  - Logistics viewing factories: Name, Country, Monthly volume, Export modes, Incoterms, Lead, Action.
+  - Certification Body viewing mills/factories: Name, Scheme(s), Last verified, Expiry, Status, Action.
+  - Sustainability Partner viewing brands: Name, Country, Tier-2 visibility %, Frameworks, Engagements, Action.
+- `extraFilters`: which numeric/text filter inputs to show
+  (e.g. min on-time %, max lead days, min capacity, max distance, certification contains).
+- `promptSuggestions`: 3-4 example natural-language queries shown as clickable chips in the New Research dialog (reuse `QUERY_PROMPTS` as the first).
 
-### Spinner (Tier 3)
-KPI row: Spindle capacity, Yarn count range (first capability or fallback "Ne 20–60"), MOQ, Lead time. Extra: Blend capability chips, Compact / ring / open-end indicator (from capabilities regex), Energy intensity hint = `kpiReadiness`%.
+### 2. Refactor `NetworkDirectoryCard`
 
-### Fabric Mill (Tier 2)
-KPI row: Monthly meters capacity, MOQ, Lead time, GSM range (first capability matching /\d+\s*g/). Extra: Construction types (knit/woven badges from capabilities), Dye/finishing chip group, Cert count for GOTS / OEKO-TEX.
+- Accept `profile: SearchProfile` from parent.
+- Replace hardcoded filter inputs and `<TableHead>`/`<TableCell>` blocks with `profile.extraFilters` and `profile.columns.map(...)`.
+- Default `etype` to `profile.defaultCounterpart`; keep "All entity types" available.
+- Render `profile.quickFilters` as a row of toggle chips above the filters; clicking one mutates filter state.
+- Empty-state message references the viewing org's role
+  (e.g. "No ginners match these filters for {orgName}. Try a new AI research run.").
 
-### Dye House (Tier 2)
-KPI row: Daily kg capacity, Water reuse % (derived), Lead time, ZDHC/bluesign cert count. Extra: Process chips (reactive, pigment, digital), Discharge compliance badge.
+### 3. Refactor `RunResults` / `ResultsSection`
 
-### Garment Factory (Tier 1)
-KPI row: Monthly units, MOQ, Lead time, Social audit count (SA8000/WRAP/BSCI/Sedex). Extra: Product categories (materials), Sewing lines (capabilities), Compliance summary card (expired certs warning).
+- Pass `profile` down and render the AI + network result tables using the same `profile.columns` set so cross-org AI results show in the same shape (with graceful "—" fallbacks for fields the AI didn't return).
+- Keep the source split (From your network / Suggested by AI), keep the AI rationale column appended at the end of AI rows.
 
-### Logistics Provider
-KPI row: Geographic coverage (region/country), Modes (Sea/Air/Road from capabilities), Avg transit days, On-time %. Extra: Service chips, Accreditations (AEO, C-TPAT, IATA, FIATA detection).
+### 4. New Research dialog
 
-### Certification Body
-KPI row: Schemes audited, Region coverage, Avg turnaround, Active audits (= `evidenceCount`). Extra: Scheme chip list with verification badge, Avg confidence score across audited orgs (use `confidenceScore`).
+- Replace static placeholder with `profile.promptSuggestions` rendered as clickable chips that fill the textarea.
+- Pre-fill `entityType` filter with `profile.defaultCounterpart`, but allow override (so a Brand can also search ginners directly when needed).
+- Keep countries/industry inputs as-is.
 
-### Sustainability Partner
-KPI row: Service areas count (LCA / CFV / Training), Frameworks count (GRI/SBTi/CDP), Avg engagement length, Profile completeness. Extra: Service chips, Frameworks chips, Recent engagements (text from `recommendedNextAction` if present).
+### 5. Dashboard tab consistency check
 
-### Generic fallback
-Already added — keeps Entity type / Location / Capacity / Lead time + Reliability + Readiness + Chips.
+- No code changes expected — `DashboardByType` already has per-type dashboards plus `GenericEntityDashboard` fallback, and `organizations.$id.tsx` renders it for every org. We will simply verify by visiting one org of each `EntityType` listed in `ENTITY_TYPES` to confirm a dashboard renders. If any type falls through to placeholder text, we'll wire it to `GenericEntityDashboard` in the same edit.
 
-## File changes
-- `src/components/DashboardByType.tsx` — add `ReadinessCard`, `RiskCard`, `RelationshipsCard`, small helper maps (TIER_MAP, hemisphere map, audit/process regex helpers). Rewrite each per-type dashboard to use the new composition. No new files, no new deps, no route changes.
+## Non-goals
 
-## Out of scope
-- New `Entity` fields, seed edits, charts library, real-time data, edit UI. Everything is read-only presentation derived from existing seed data.
+- No persistence layer change — research runs stay in `localStorage` via `research-runs.ts`.
+- No changes to AI gateway, server functions, or seed entity shape.
+- No new sidebar items or routes.
+
+## Acceptance
+
+- Opening Research from any organization shows: role-specific intro line, role-specific quick-prompt chips, a network directory whose columns and filters match the org's role, and AI run results rendered in the same columns.
+- Switching between a Brand, a Farmer, a Spinner, a Dye House, and a Logistics Provider visibly changes columns, default counterpart, and quick filters.
+- Free-form AI query like "manufacturers from Egypt with MOQ < 1000 and lead time < 30 days" still works on every org and returns rows rendered in that org's column profile.
