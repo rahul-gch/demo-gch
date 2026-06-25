@@ -335,9 +335,6 @@ const SEARCH_PROFILES: Record<EntityType, SearchProfile> = {
     emptyHint: "No brands match. Run new AI research.",
   },
 };
-// remove placeholder key
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-delete (SEARCH_PROFILES as any)["Garment Factory_LOGI"];
 
 function getProfile(et: EntityType): SearchProfile {
   return SEARCH_PROFILES[et] ?? SEARCH_PROFILES["Brand"];
