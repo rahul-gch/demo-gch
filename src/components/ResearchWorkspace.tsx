@@ -66,18 +66,294 @@ const COUNTERPART: Record<EntityType, EntityType> = {
   "Sustainability Partner": "Brand",
 };
 
-const QUERY_PROMPTS: Record<EntityType, string> = {
-  "Brand": "Tier 2 spinners in Türkiye with GOTS and MOQ under 500 kg",
-  "Garment Factory": "Trim and accessory suppliers in South Asia delivering within 21 days",
-  "Fabric Mill": "Spinners offering combed cotton Ne 30+ with OEKO-TEX",
-  "Spinner": "Ginners in India with BCI-certified seed cotton",
-  "Ginner": "Organic cotton farmers within 300 km of our gin",
-  "Farmer": "Ginners accepting organic seed cotton with fair pricing",
-  "Dye House": "Fabric mills sourcing low-impact reactive dyeing",
-  "Logistics Provider": "Garment factories shipping LCL to EU monthly",
-  "Certification Body": "Mills and factories due for GOTS recertification this quarter",
-  "Sustainability Partner": "Brands publishing Tier 2 traceability roadmaps",
+// ---------------- Search profiles per entity type ----------------
+
+type RowData = {
+  name: string;
+  entityType: string;
+  country: string;
+  city?: string;
+  materials?: string[];
+  capabilities?: string[];
+  certifications?: string[];
+  moq?: string;
+  leadTimeDays?: number;
+  capacity?: string;
+  onTimeRate?: number;
+  description?: string;
+  rationale?: string;
+  matchScore?: number;
 };
+
+type ColumnDef = {
+  key: string;
+  label: string;
+  align?: "left" | "right";
+  render: (r: RowData) => React.ReactNode;
+};
+
+type QuickFilter = {
+  label: string;
+  apply: (f: FilterState) => FilterState;
+};
+
+type FilterState = {
+  search: string;
+  etype: string;
+  country: string;
+  minOtr: string;
+  maxLead: string;
+  certContains: string;
+  materialContains: string;
+};
+
+type SearchProfile = {
+  defaultCounterpart: EntityType;
+  introVerb: string;
+  columns: ColumnDef[];
+  quickFilters: QuickFilter[];
+  promptSuggestions: string[];
+  emptyHint: string;
+};
+
+const chips = (xs?: string[], n = 3) =>
+  !xs || xs.length === 0 ? (
+    <span className="text-xs text-muted-foreground">—</span>
+  ) : (
+    <div className="flex flex-wrap gap-1">
+      {xs.slice(0, n).map((x) => (
+        <Badge key={x} variant="outline" className="text-[10px] font-normal">{x}</Badge>
+      ))}
+    </div>
+  );
+
+const txt = (v?: string | number | null, suffix = "") =>
+  v === undefined || v === null || v === "" ? "—" : `${v}${suffix}`;
+
+const NAME_COL: ColumnDef = {
+  key: "name",
+  label: "Organization",
+  render: (r) => (
+    <div>
+      <div className="font-medium">{r.name}</div>
+      <div className="text-[11px] text-muted-foreground">
+        {r.entityType}
+        {r.matchScore ? ` · ${r.matchScore}% match` : ""}
+      </div>
+    </div>
+  ),
+};
+const LOC_COL: ColumnDef = {
+  key: "loc",
+  label: "Location",
+  render: (r) => (
+    <span className="text-xs text-muted-foreground">
+      {[r.city, r.country].filter(Boolean).join(", ") || "—"}
+    </span>
+  ),
+};
+const MOQ_COL: ColumnDef = { key: "moq", label: "MOQ", render: (r) => <span className="text-xs">{txt(r.moq)}</span> };
+const LEAD_COL: ColumnDef = {
+  key: "lead", label: "Lead",
+  render: (r) => <span className="text-xs">{r.leadTimeDays ? `${r.leadTimeDays}d` : "—"}</span>,
+};
+const OTR_COL: ColumnDef = {
+  key: "otr", label: "On-time",
+  render: (r) => <span className="text-xs">{r.onTimeRate != null ? `${r.onTimeRate}%` : "—"}</span>,
+};
+const CAP_COL: ColumnDef = { key: "cap", label: "Capacity", render: (r) => <span className="text-xs">{txt(r.capacity)}</span> };
+const MAT_COL: ColumnDef = { key: "mat", label: "Materials", render: (r) => chips(r.materials) };
+const CAPB_COL: ColumnDef = { key: "capb", label: "Capabilities", render: (r) => chips(r.capabilities) };
+const CERT_COL: ColumnDef = { key: "cert", label: "Certifications", render: (r) => chips(r.certifications) };
+
+const COMMON_FILTERS: QuickFilter[] = [
+  { label: "Lead < 30d", apply: (f) => ({ ...f, maxLead: "30" }) },
+  { label: "On-time ≥ 90%", apply: (f) => ({ ...f, minOtr: "90" }) },
+];
+
+const SEARCH_PROFILES: Record<EntityType, SearchProfile> = {
+  "Brand": {
+    defaultCounterpart: "Garment Factory",
+    introVerb: "Source compliant manufacturing partners",
+    columns: [NAME_COL, LOC_COL, CAPB_COL, CAP_COL, MOQ_COL, LEAD_COL, OTR_COL, CERT_COL],
+    quickFilters: [
+      ...COMMON_FILTERS,
+      { label: "GOTS certified", apply: (f) => ({ ...f, certContains: "GOTS" }) },
+      { label: "MOQ-friendly", apply: (f) => ({ ...f, search: "small batch" }) },
+    ],
+    promptSuggestions: [
+      "Tier 2 spinners in Türkiye with GOTS and MOQ under 500 kg",
+      "Cut & sew factories in Portugal under 30 day lead and SA8000",
+      "Knit fabric mills in India with OEKO-TEX and recycled cotton",
+      "Garment factories in Egypt with monthly capacity above 100k units",
+    ],
+    emptyHint: "No factories match. Try a New Research run to expand with AI.",
+  },
+  "Garment Factory": {
+    defaultCounterpart: "Fabric Mill",
+    introVerb: "Find upstream fabric, trims and dye partners",
+    columns: [NAME_COL, LOC_COL, MAT_COL, CAP_COL, MOQ_COL, LEAD_COL, CERT_COL],
+    quickFilters: [
+      ...COMMON_FILTERS,
+      { label: "OEKO-TEX", apply: (f) => ({ ...f, certContains: "OEKO" }) },
+      { label: "Knit fabric", apply: (f) => ({ ...f, materialContains: "knit" }) },
+    ],
+    promptSuggestions: [
+      "Knit fabric mills in Bangladesh shipping within 21 days",
+      "Trim and accessory suppliers in South Asia with low MOQ",
+      "Dye houses with ZDHC compliance in Vietnam",
+      "Woven fabric mills with GOTS in Türkiye",
+    ],
+    emptyHint: "No mills or trim partners match. Run a new AI research.",
+  },
+  "Fabric Mill": {
+    defaultCounterpart: "Spinner",
+    introVerb: "Source yarn and dye partners",
+    columns: [NAME_COL, LOC_COL, MAT_COL, CAP_COL, MOQ_COL, LEAD_COL, CERT_COL],
+    quickFilters: [
+      ...COMMON_FILTERS,
+      { label: "Combed cotton", apply: (f) => ({ ...f, materialContains: "combed" }) },
+      { label: "Organic", apply: (f) => ({ ...f, materialContains: "organic" }) },
+    ],
+    promptSuggestions: [
+      "Spinners offering combed cotton Ne 30+ with OEKO-TEX",
+      "Open-end spinners in India for recycled cotton blends",
+      "Dye houses with low water-use in Portugal",
+      "Yarn mills with GOTS supplying under 30 days",
+    ],
+    emptyHint: "No spinners match. Try New Research for AI suggestions.",
+  },
+  "Spinner": {
+    defaultCounterpart: "Ginner",
+    introVerb: "Source seed cotton bales from gins",
+    columns: [NAME_COL, LOC_COL, MAT_COL, CAP_COL, MOQ_COL, LEAD_COL, CERT_COL],
+    quickFilters: [
+      ...COMMON_FILTERS,
+      { label: "BCI cotton", apply: (f) => ({ ...f, certContains: "BCI" }) },
+      { label: "Organic", apply: (f) => ({ ...f, materialContains: "organic" }) },
+    ],
+    promptSuggestions: [
+      "Ginners in India with BCI-certified seed cotton",
+      "Organic gins in Türkiye with HVI testing",
+      "Gins in Egypt with monthly bale capacity above 5000",
+      "Ginners offering recycled cotton input streams",
+    ],
+    emptyHint: "No ginners match. Run new AI research.",
+  },
+  "Ginner": {
+    defaultCounterpart: "Farmer",
+    introVerb: "Source seed cotton from farms",
+    columns: [NAME_COL, LOC_COL, MAT_COL, CAP_COL, CERT_COL],
+    quickFilters: [
+      { label: "Organic", apply: (f) => ({ ...f, materialContains: "organic" }) },
+      { label: "Fairtrade", apply: (f) => ({ ...f, certContains: "Fairtrade" }) },
+      { label: "BCI", apply: (f) => ({ ...f, certContains: "BCI" }) },
+    ],
+    promptSuggestions: [
+      "Organic cotton farmers within 300 km of our gin",
+      "Smallholder farmer co-ops with Fairtrade certification",
+      "BCI farmers in Maharashtra with 100+ hectares",
+      "Regenerative cotton farms in West Africa",
+    ],
+    emptyHint: "No farmers match. Try a new AI research run.",
+  },
+  "Farmer": {
+    defaultCounterpart: "Ginner",
+    introVerb: "Find ginners that accept your harvest",
+    columns: [NAME_COL, LOC_COL, MAT_COL, CAP_COL, CERT_COL],
+    quickFilters: [
+      { label: "Accepts organic", apply: (f) => ({ ...f, materialContains: "organic" }) },
+      { label: "Fairtrade pricing", apply: (f) => ({ ...f, certContains: "Fairtrade" }) },
+    ],
+    promptSuggestions: [
+      "Ginners accepting organic seed cotton with fair pricing",
+      "Gins within 200 km offering premium for long-staple",
+      "Ginners with traceability programs in our region",
+    ],
+    emptyHint: "No nearby gins match. Try a new AI research run.",
+  },
+  "Dye House": {
+    defaultCounterpart: "Fabric Mill",
+    introVerb: "Find fabric mill partners for finishing contracts",
+    columns: [NAME_COL, LOC_COL, MAT_COL, CAP_COL, LEAD_COL, CERT_COL],
+    quickFilters: [
+      ...COMMON_FILTERS,
+      { label: "GOTS", apply: (f) => ({ ...f, certContains: "GOTS" }) },
+      { label: "Knit", apply: (f) => ({ ...f, materialContains: "knit" }) },
+    ],
+    promptSuggestions: [
+      "Fabric mills sourcing low-impact reactive dyeing",
+      "Knit mills in Vietnam needing finishing partners",
+      "Mills requiring ZDHC-compliant dye houses",
+    ],
+    emptyHint: "No mills match. Run new AI research.",
+  },
+  "Garment Factory_LOGI": {
+    defaultCounterpart: "Garment Factory",
+    introVerb: "",
+    columns: [],
+    quickFilters: [],
+    promptSuggestions: [],
+    emptyHint: "",
+  } as unknown as SearchProfile, // placeholder, overridden below
+  "Logistics Provider": {
+    defaultCounterpart: "Garment Factory",
+    introVerb: "Find factories needing freight & customs partners",
+    columns: [NAME_COL, LOC_COL, CAP_COL, CAPB_COL, LEAD_COL, CERT_COL],
+    quickFilters: [
+      { label: "EU bound", apply: (f) => ({ ...f, search: "EU export" }) },
+      { label: "High volume", apply: (f) => ({ ...f, search: "high volume" }) },
+    ],
+    promptSuggestions: [
+      "Garment factories shipping LCL to EU monthly",
+      "Brands needing air freight from South Asia",
+      "Factories with FCL volume to US west coast",
+    ],
+    emptyHint: "No matching shippers. Run new AI research.",
+  },
+  "Certification Body": {
+    defaultCounterpart: "Garment Factory",
+    introVerb: "Find facilities due for audit & recertification",
+    columns: [NAME_COL, LOC_COL, CERT_COL, MAT_COL, OTR_COL],
+    quickFilters: [
+      { label: "GOTS scope", apply: (f) => ({ ...f, certContains: "GOTS" }) },
+      { label: "OEKO-TEX scope", apply: (f) => ({ ...f, certContains: "OEKO" }) },
+      { label: "SA8000", apply: (f) => ({ ...f, certContains: "SA8000" }) },
+    ],
+    promptSuggestions: [
+      "Mills and factories due for GOTS recertification this quarter",
+      "Spinners without OEKO-TEX seeking certification",
+      "Facilities in Türkiye scheduled for social audits",
+    ],
+    emptyHint: "No facilities match. Run new AI research.",
+  },
+  "Sustainability Partner": {
+    defaultCounterpart: "Brand",
+    introVerb: "Find brands seeking traceability & ESG support",
+    columns: [NAME_COL, LOC_COL, CAPB_COL, CERT_COL],
+    quickFilters: [
+      { label: "Tier 2 visibility", apply: (f) => ({ ...f, search: "tier 2" }) },
+      { label: "GOTS", apply: (f) => ({ ...f, certContains: "GOTS" }) },
+    ],
+    promptSuggestions: [
+      "Brands publishing Tier 2 traceability roadmaps",
+      "Brands without LCA programs in EU market",
+      "Apparel companies committed to SBTi targets",
+    ],
+    emptyHint: "No brands match. Run new AI research.",
+  },
+};
+// remove placeholder key
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+delete (SEARCH_PROFILES as any)["Garment Factory_LOGI"];
+
+function getProfile(et: EntityType): SearchProfile {
+  return SEARCH_PROFILES[et] ?? SEARCH_PROFILES["Brand"];
+}
+
+const QUERY_PROMPTS: Record<EntityType, string> = Object.fromEntries(
+  ENTITY_TYPES.map((t) => [t, getProfile(t).promptSuggestions[0] ?? ""]),
+) as Record<EntityType, string>;
 
 function uid() {
   return Math.random().toString(36).slice(2, 10);
@@ -145,6 +421,8 @@ export function ResearchWorkspace({ entity }: { entity: Entity }) {
   const [open, setOpen] = useState(false);
   const runAi = useServerFn(runAiResearch);
 
+  const profile = getProfile(entity.entityType);
+
   const refresh = () => setRuns(getRunsForOrg(entity.id));
 
   useEffect(() => {
@@ -159,7 +437,7 @@ export function ResearchWorkspace({ entity }: { entity: Entity }) {
     [runs, activeId],
   );
 
-  const counterpart = COUNTERPART[entity.entityType] ?? "Garment Factory";
+  const counterpart = profile.defaultCounterpart;
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -170,9 +448,9 @@ export function ResearchWorkspace({ entity }: { entity: Entity }) {
             Research Workspace
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            Search the GCH network for partners that match{" "}
+            {profile.introVerb} for{" "}
             <span className="font-medium">{entity.name}</span> ({entity.entityType}, {entity.country}).
-            Ask in plain language — e.g. <em>{QUERY_PROMPTS[entity.entityType]}</em>.
+            Ask in plain language — e.g. <em>{profile.promptSuggestions[0]}</em>.
           </p>
         </div>
         <NewResearchDialog
@@ -180,6 +458,7 @@ export function ResearchWorkspace({ entity }: { entity: Entity }) {
           onOpenChange={setOpen}
           entity={entity}
           counterpart={counterpart}
+          suggestions={profile.promptSuggestions}
           onStart={async (params) => {
             const runId = uid();
             const networkResults = searchInternal({
@@ -216,7 +495,7 @@ export function ResearchWorkspace({ entity }: { entity: Entity }) {
         />
       </header>
 
-      <NetworkDirectoryCard entity={entity} defaultEntityType={counterpart} />
+      <NetworkDirectoryCard entity={entity} profile={profile} />
 
       <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
         <Card className="shadow-sm">
@@ -263,36 +542,88 @@ export function ResearchWorkspace({ entity }: { entity: Entity }) {
               </div>
             </Card>
           )}
-          {active && <RunResults run={active} onDelete={() => { deleteRun(active.id); setActiveId(null); }} />}
+          {active && (
+            <RunResults
+              run={active}
+              profile={profile}
+              onDelete={() => { deleteRun(active.id); setActiveId(null); }}
+            />
+          )}
         </div>
       </div>
     </div>
   );
 }
 
+function entityToRow(e: Entity): RowData {
+  return {
+    name: e.name,
+    entityType: e.entityType,
+    country: e.country,
+    city: e.city,
+    materials: e.materials,
+    capabilities: e.capabilities,
+    certifications: e.certifications,
+    moq: e.moq,
+    leadTimeDays: e.leadTimeDays,
+    capacity: e.capacity,
+    onTimeRate: e.onTimeRate,
+    description: e.description,
+  };
+}
+
+function candidateToRow(c: ResearchCandidate): RowData {
+  return {
+    name: c.name,
+    entityType: c.entityType,
+    country: c.country,
+    city: c.city,
+    materials: c.materials,
+    capabilities: c.capabilities,
+    certifications: c.certifications,
+    moq: c.moq,
+    leadTimeDays: c.leadTimeDays,
+    matchScore: c.matchScore,
+    rationale: c.rationale,
+  };
+}
+
 function NetworkDirectoryCard({
   entity,
-  defaultEntityType,
+  profile,
 }: {
   entity: Entity;
-  defaultEntityType: EntityType;
+  profile: SearchProfile;
 }) {
-  const [search, setSearch] = useState("");
-  const [etype, setEtype] = useState<string>(defaultEntityType);
-  const [country, setCountry] = useState<string>(entity.country);
-  const [minOtr, setMinOtr] = useState<string>("");
-  const [maxLead, setMaxLead] = useState<string>("");
+  const [filters, setFilters] = useState<FilterState>({
+    search: "",
+    etype: profile.defaultCounterpart,
+    country: "",
+    minOtr: "",
+    maxLead: "",
+    certContains: "",
+    materialContains: "",
+  });
+  const update = (patch: Partial<FilterState>) => setFilters((f) => ({ ...f, ...patch }));
 
   const rows = useMemo(() => {
-    const s = search.trim().toLowerCase();
-    const c = country.trim().toLowerCase();
-    const otr = parseInt(minOtr, 10);
-    const lead = parseInt(maxLead, 10);
+    const s = filters.search.trim().toLowerCase();
+    const c = filters.country.trim().toLowerCase();
+    const otr = parseInt(filters.minOtr, 10);
+    const lead = parseInt(filters.maxLead, 10);
+    const cert = filters.certContains.trim().toLowerCase();
+    const mat = filters.materialContains.trim().toLowerCase();
     return ALL_ENTITIES.filter((e) => e.id !== entity.id)
-      .filter((e) => (etype === "all" ? true : e.entityType === etype))
+      .filter((e) => (filters.etype === "all" ? true : e.entityType === filters.etype))
       .filter((e) => (c ? e.country.toLowerCase().includes(c) : true))
       .filter((e) => (Number.isFinite(otr) ? (e.onTimeRate ?? 0) >= otr : true))
       .filter((e) => (Number.isFinite(lead) ? (e.leadTimeDays ?? 999) <= lead : true))
+      .filter((e) =>
+        cert ? (e.certifications ?? []).some((x) => x.toLowerCase().includes(cert)) : true,
+      )
+      .filter((e) =>
+        mat ? (e.materials ?? []).some((x) => x.toLowerCase().includes(mat)) : true,
+      )
       .filter((e) => {
         if (!s) return true;
         const hay = [e.name, e.country, e.city, ...e.materials, ...e.capabilities, ...e.certifications]
@@ -300,101 +631,100 @@ function NetworkDirectoryCard({
         return hay.includes(s);
       })
       .slice(0, 50);
-  }, [search, etype, country, minOtr, maxLead, entity.id]);
+  }, [filters, entity.id]);
+
+  const columns = profile.columns;
 
   return (
     <Card className="shadow-sm">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-sm font-semibold">
           <Network className="h-4 w-4" />
-          GCH network directory
+          {entity.entityType} sourcing directory
           <Badge variant="secondary" className="ml-1">{rows.length}</Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid gap-2 md:grid-cols-[1fr_180px_160px_140px_140px]">
+      <CardContent className="space-y-3">
+        <div className="flex flex-wrap gap-1.5">
+          {profile.quickFilters.map((qf) => (
+            <button
+              key={qf.label}
+              onClick={() => setFilters((f) => qf.apply(f))}
+              className="rounded-full border border-border bg-background px-2.5 py-0.5 text-[11px] text-muted-foreground transition hover:border-primary hover:text-foreground"
+            >
+              + {qf.label}
+            </button>
+          ))}
+          <button
+            onClick={() =>
+              setFilters({
+                search: "", etype: profile.defaultCounterpart, country: "",
+                minOtr: "", maxLead: "", certContains: "", materialContains: "",
+              })
+            }
+            className="rounded-full px-2.5 py-0.5 text-[11px] text-muted-foreground hover:underline"
+          >
+            Reset
+          </button>
+        </div>
+        <div className="grid gap-2 md:grid-cols-[1fr_180px_140px_120px_120px_140px]">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
             <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={filters.search}
+              onChange={(e) => update({ search: e.target.value })}
               placeholder="Search name, material, certification…"
               className="pl-8"
             />
           </div>
-          <Select value={etype} onValueChange={setEtype}>
+          <Select value={filters.etype} onValueChange={(v) => update({ etype: v })}>
             <SelectTrigger><SelectValue placeholder="Entity type" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All entity types</SelectItem>
               {ENTITY_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Input
-            value={country}
-            onChange={(e) => setCountry(e.target.value)}
-            placeholder="Country"
-          />
-          <Input
-            value={minOtr}
-            onChange={(e) => setMinOtr(e.target.value)}
-            placeholder="Min on-time %"
-            inputMode="numeric"
-          />
-          <Input
-            value={maxLead}
-            onChange={(e) => setMaxLead(e.target.value)}
-            placeholder="Max lead days"
-            inputMode="numeric"
-          />
+          <Input value={filters.country} onChange={(e) => update({ country: e.target.value })} placeholder="Country" />
+          <Input value={filters.minOtr} onChange={(e) => update({ minOtr: e.target.value })} placeholder="Min OTR %" inputMode="numeric" />
+          <Input value={filters.maxLead} onChange={(e) => update({ maxLead: e.target.value })} placeholder="Max lead d" inputMode="numeric" />
+          <Input value={filters.certContains} onChange={(e) => update({ certContains: e.target.value })} placeholder="Cert contains" />
         </div>
 
         {rows.length === 0 ? (
           <div className="rounded-md border border-dashed py-10 text-center text-sm text-muted-foreground">
-            No GCH organizations match these filters. Try a New Research run to expand with AI.
+            {profile.emptyHint}
           </div>
         ) : (
           <div className="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Organization</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Country</TableHead>
-                  <TableHead>Materials</TableHead>
-                  <TableHead>MOQ</TableHead>
-                  <TableHead>Lead</TableHead>
-                  <TableHead>On-time</TableHead>
+                  {columns.map((c) => (
+                    <TableHead key={c.key} className={c.align === "right" ? "text-right" : ""}>{c.label}</TableHead>
+                  ))}
                   <TableHead className="text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map((e) => (
-                  <TableRow key={e.id}>
-                    <TableCell>
-                      <div className="font-medium">{e.name}</div>
-                      <div className="text-[11px] text-muted-foreground">{e.gchNumber}</div>
-                    </TableCell>
-                    <TableCell className="text-xs">{e.entityType}</TableCell>
-                    <TableCell className="text-xs">{[e.city, e.country].filter(Boolean).join(", ")}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {(e.materials ?? []).slice(0, 3).map((m) => (
-                          <Badge key={m} variant="outline" className="text-[10px] font-normal">{m}</Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs">{e.moq || "—"}</TableCell>
-                    <TableCell className="text-xs">{e.leadTimeDays ? `${e.leadTimeDays}d` : "—"}</TableCell>
-                    <TableCell className="text-xs">{e.onTimeRate != null ? `${e.onTimeRate}%` : "—"}</TableCell>
-                    <TableCell className="text-right">
-                      <Button asChild size="sm" variant="ghost">
-                        <Link to="/organizations/$id" params={{ id: e.id }}>
-                          Open <ArrowUpRight className="ml-1 h-3 w-3" />
-                        </Link>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {rows.map((e) => {
+                  const row = entityToRow(e);
+                  return (
+                    <TableRow key={e.id}>
+                      {columns.map((c) => (
+                        <TableCell key={c.key} className={c.align === "right" ? "text-right" : ""}>
+                          {c.render(row)}
+                        </TableCell>
+                      ))}
+                      <TableCell className="text-right">
+                        <Button asChild size="sm" variant="ghost">
+                          <Link to="/organizations/$id" params={{ id: e.id }}>
+                            Open <ArrowUpRight className="ml-1 h-3 w-3" />
+                          </Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
@@ -410,7 +740,13 @@ function StatusDot({ status }: { status: ResearchRun["status"] }) {
   return <span className="h-2 w-2 rounded-full bg-emerald-500" />;
 }
 
-function RunResults({ run, onDelete }: { run: ResearchRun; onDelete: () => void }) {
+function RunResults({
+  run, profile, onDelete,
+}: {
+  run: ResearchRun;
+  profile: SearchProfile;
+  onDelete: () => void;
+}) {
   const network = run.results.filter((r) => r.source === "network");
   const ai = run.results.filter((r) => r.source === "ai");
 
@@ -443,22 +779,31 @@ function RunResults({ run, onDelete }: { run: ResearchRun; onDelete: () => void 
         title="From your network"
         icon={<Network className="h-4 w-4" />}
         rows={network}
+        columns={profile.columns}
         emptyText="No matching organizations in the GCH network."
+        showRationale={false}
       />
       <ResultsSection
         title="Suggested by AI"
         icon={<Globe2 className="h-4 w-4" />}
         rows={ai}
+        columns={profile.columns}
         emptyText={run.status === "running" ? "AI is researching…" : "No additional AI suggestions."}
+        showRationale
       />
     </div>
   );
 }
 
 function ResultsSection({
-  title, icon, rows, emptyText,
+  title, icon, rows, columns, emptyText, showRationale,
 }: {
-  title: string; icon: React.ReactNode; rows: ResearchCandidate[]; emptyText: string;
+  title: string;
+  icon: React.ReactNode;
+  rows: ResearchCandidate[];
+  columns: ColumnDef[];
+  emptyText: string;
+  showRationale: boolean;
 }) {
   return (
     <Card className="shadow-sm">
@@ -475,52 +820,44 @@ function ResultsSection({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Organization</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Materials</TableHead>
-                <TableHead>MOQ</TableHead>
-                <TableHead>Lead</TableHead>
+                {columns.map((c) => (
+                  <TableHead key={c.key} className={c.align === "right" ? "text-right" : ""}>{c.label}</TableHead>
+                ))}
+                {showRationale && <TableHead>Why</TableHead>}
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((r, i) => (
-                <TableRow key={(r.id ?? r.name) + i}>
-                  <TableCell>
-                    <div className="font-medium">{r.name}</div>
-                    <div className="text-[11px] text-muted-foreground">
-                      {r.entityType}
-                      {r.matchScore ? ` · ${r.matchScore}% match` : ""}
-                      {r.rationale && r.source === "ai" ? ` · ${r.rationale}` : ""}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {[r.city, r.country].filter(Boolean).join(", ")}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {(r.materials ?? []).slice(0, 3).map((m) => (
-                        <Badge key={m} variant="outline" className="text-[10px] font-normal">{m}</Badge>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-xs">{r.moq || "—"}</TableCell>
-                  <TableCell className="text-xs">{r.leadTimeDays ? `${r.leadTimeDays}d` : "—"}</TableCell>
-                  <TableCell className="text-right">
-                    {r.id ? (
-                      <Button asChild size="sm" variant="ghost">
-                        <Link to="/organizations/$id" params={{ id: r.id }}>
-                          Open <ArrowUpRight className="ml-1 h-3 w-3" />
-                        </Link>
-                      </Button>
-                    ) : (
-                      <Button size="sm" variant="outline" onClick={() => toast.info(`Invite "${r.name}" — coming soon`)}>
-                        Invite
-                      </Button>
+              {rows.map((r, i) => {
+                const row = candidateToRow(r);
+                return (
+                  <TableRow key={(r.id ?? r.name) + i}>
+                    {columns.map((c) => (
+                      <TableCell key={c.key} className={c.align === "right" ? "text-right" : ""}>
+                        {c.render(row)}
+                      </TableCell>
+                    ))}
+                    {showRationale && (
+                      <TableCell className="max-w-[260px] text-xs text-muted-foreground">
+                        {r.rationale || "—"}
+                      </TableCell>
                     )}
-                  </TableCell>
-                </TableRow>
-              ))}
+                    <TableCell className="text-right">
+                      {r.id ? (
+                        <Button asChild size="sm" variant="ghost">
+                          <Link to="/organizations/$id" params={{ id: r.id }}>
+                            Open <ArrowUpRight className="ml-1 h-3 w-3" />
+                          </Link>
+                        </Button>
+                      ) : (
+                        <Button size="sm" variant="outline" onClick={() => toast.info(`Invite "${r.name}" — coming soon`)}>
+                          Invite
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         )}
@@ -530,12 +867,13 @@ function ResultsSection({
 }
 
 function NewResearchDialog({
-  open, onOpenChange, entity, counterpart, onStart,
+  open, onOpenChange, entity, counterpart, suggestions, onStart,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   entity: Entity;
   counterpart: EntityType;
+  suggestions: string[];
   onStart: (p: {
     query: string;
     countries: string;
@@ -564,11 +902,11 @@ function NewResearchDialog({
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>New research</DialogTitle>
+          <DialogTitle>New research for {entity.name}</DialogTitle>
           <DialogDescription>
             Search the GCH network for partners that match{" "}
-            <span className="font-medium">{entity.name}</span> ({entity.entityType},{" "}
-            {entity.country}). AI expands the pool beyond our network.
+            <span className="font-medium">{entity.entityType}</span> sourcing needs.
+            AI expands the pool beyond our network.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
@@ -581,6 +919,20 @@ function NewResearchDialog({
               placeholder={queryPlaceholder}
               className="mt-1 min-h-[80px]"
             />
+            {suggestions.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {suggestions.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setQuery(s)}
+                    className="rounded-full border bg-background px-2.5 py-0.5 text-[11px] text-muted-foreground transition hover:border-primary hover:text-foreground"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -649,3 +1001,6 @@ function NewResearchDialog({
     </Dialog>
   );
 }
+
+// Re-export COUNTERPART for potential external consumers
+export { COUNTERPART };
