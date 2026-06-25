@@ -288,14 +288,6 @@ const SEARCH_PROFILES: Record<EntityType, SearchProfile> = {
     ],
     emptyHint: "No mills match. Run new AI research.",
   },
-  "Garment Factory_LOGI": {
-    defaultCounterpart: "Garment Factory",
-    introVerb: "",
-    columns: [],
-    quickFilters: [],
-    promptSuggestions: [],
-    emptyHint: "",
-  } as unknown as SearchProfile, // placeholder, overridden below
   "Logistics Provider": {
     defaultCounterpart: "Garment Factory",
     introVerb: "Find factories needing freight & customs partners",
