@@ -113,16 +113,62 @@ function OrgDashboardPage() {
       </header>
 
       {!showcase && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-900">
-          Lite profile — dashboard, ecosystem and documents are only enabled for the first 20
-          showcase entities in this prototype.
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-700">
+          Lite profile — upload reports under Documents to enrich KPIs and benchmark data.
         </div>
       )}
 
       {showcase && <NetworkPassport entity={e} />}
 
-      {showcase ? <ShowcaseTabs e={e} /> : <LiteProfile e={e} />}
+      {showcase ? <ShowcaseTabs e={e} /> : <StandardTabs e={e} />}
     </div>
+  );
+}
+
+function StandardTabs({ e }: { e: Entity }) {
+  const connections = getEcosystemConnections(e);
+  const connectionEntities = [e, ...connections.map((c) => c.entity)];
+  return (
+    <Tabs defaultValue="dashboard" className="space-y-4">
+      <TabsList className="flex w-full flex-wrap justify-start">
+        <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+        <TabsTrigger value="overview">Overview</TabsTrigger>
+        <TabsTrigger value="ecosystem">Ecosystem</TabsTrigger>
+        <TabsTrigger value="documents">Documents</TabsTrigger>
+        <TabsTrigger value="missing">Missing data</TabsTrigger>
+      </TabsList>
+      <TabsContent value="dashboard" className="space-y-6">
+        <DashboardByType entity={e} />
+      </TabsContent>
+      <TabsContent value="overview" className="space-y-6">
+        <OverviewSection e={e} />
+      </TabsContent>
+      <TabsContent value="ecosystem" className="space-y-6">
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-base font-semibold">Connected organizations</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <EcosystemGoogleMap
+              entities={connectionEntities}
+              selectedId={e.id}
+              height={360}
+              center={{ lat: e.latitude, lng: e.longitude }}
+              zoom={4}
+              showLegend
+            />
+          </CardContent>
+        </Card>
+        <EcosystemConnections connections={connections} />
+      </TabsContent>
+      <TabsContent value="documents" className="space-y-6">
+        <ReportUploader entity={e} />
+        <DocumentsList entity={e} />
+      </TabsContent>
+      <TabsContent value="missing">
+        <MissingDataSection e={e} />
+      </TabsContent>
+    </Tabs>
   );
 }
 
