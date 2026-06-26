@@ -765,6 +765,14 @@ function RunResults({
         </Card>
       )}
 
+      {run.aiError && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="p-4 text-sm text-amber-900">
+            <strong className="font-semibold">AI suggestions unavailable.</strong> Showing matches from your GCH network only. <span className="text-amber-800">{run.aiError}</span>
+          </CardContent>
+        </Card>
+      )}
+
       <ResultsSection
         title="From your network"
         icon={<Network className="h-4 w-4" />}
