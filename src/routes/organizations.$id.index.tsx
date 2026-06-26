@@ -413,7 +413,3 @@ function MissingDataSection({ e }: { e: Entity }) {
     </Card>
   );
 }
-
-function LiteProfile({ e }: { e: Entity }) {
-  return <OverviewSection e={e} />;
-}
