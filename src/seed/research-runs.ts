@@ -28,6 +28,7 @@ export type ResearchRun = {
   createdAt: number;
   status: "running" | "done" | "failed";
   error?: string;
+  aiError?: string;
   results: ResearchCandidate[];
 };
 

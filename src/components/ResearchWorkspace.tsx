@@ -476,9 +476,10 @@ export function ResearchWorkspace({ entity }: { entity: Entity }) {
               updateRun(runId, { status: "done", results: [...networkResults, ...ai] });
               toast.success(`Found ${networkResults.length} in network + ${ai.length} AI suggestions`);
             } catch (err) {
-              const msg = err instanceof Error ? err.message : "Research failed";
-              updateRun(runId, { status: "failed", error: msg });
-              toast.error(msg);
+              const msg = err instanceof Error ? err.message : "AI suggestions unavailable";
+              // Keep network results visible; record AI error inline.
+              updateRun(runId, { status: "done", aiError: msg, results: networkResults });
+              toast.message("Showing network matches only", { description: msg });
             }
           }}
         />
@@ -760,6 +761,14 @@ function RunResults({
         <Card className="border-destructive/50 bg-destructive/5">
           <CardContent className="p-4 text-sm text-destructive">
             {run.error || "Research failed."}
+          </CardContent>
+        </Card>
+      )}
+
+      {run.aiError && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="p-4 text-sm text-amber-900">
+            <strong className="font-semibold">AI suggestions unavailable.</strong> Showing matches from your GCH network only. <span className="text-amber-800">{run.aiError}</span>
           </CardContent>
         </Card>
       )}
