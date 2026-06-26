@@ -442,47 +442,77 @@ export function ResearchWorkspace({ entity }: { entity: Entity }) {
             Ask in plain language — e.g. <em>{profile.promptSuggestions[0]}</em>.
           </p>
         </div>
-        <NewResearchDialog
-          open={open}
-          onOpenChange={setOpen}
-          entity={entity}
-          counterpart={counterpart}
-          suggestions={profile.promptSuggestions}
-          onStart={async (params) => {
-            const runId = uid();
-            const networkResults = searchInternal({
-              query: params.query,
-              countries: params.countries,
-              entityType: params.entityType,
-              industry: params.industry,
-              excludeId: entity.id,
-            });
-            const newRun: ResearchRun = {
-              id: runId,
-              orgId: entity.id,
-              query: params.query,
-              params,
-              createdAt: Date.now(),
-              status: "running",
-              results: networkResults,
-            };
-            createRun(newRun);
-            setActiveId(runId);
-            setOpen(false);
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              const runId = uid();
+              const params = {
+                query: `Network search · ${profile.defaultCounterpart}`,
+                countries: "",
+                industry: "",
+                entityType: profile.defaultCounterpart,
+                limit: 25,
+              };
+              const networkResults = searchInternal({ ...params, excludeId: entity.id });
+              createRun({
+                id: runId,
+                orgId: entity.id,
+                query: params.query,
+                params,
+                createdAt: Date.now(),
+                status: "done",
+                results: networkResults,
+              });
+              setActiveId(runId);
+              toast.success(`Found ${networkResults.length} in your GCH network`);
+            }}
+          >
+            <Network className="mr-1 h-4 w-4" />
+            Search network
+          </Button>
+          <NewResearchDialog
+            open={open}
+            onOpenChange={setOpen}
+            entity={entity}
+            counterpart={counterpart}
+            suggestions={profile.promptSuggestions}
+            onStart={async (params) => {
+              const runId = uid();
+              const networkResults = searchInternal({
+                query: params.query,
+                countries: params.countries,
+                entityType: params.entityType,
+                industry: params.industry,
+                excludeId: entity.id,
+              });
+              const newRun: ResearchRun = {
+                id: runId,
+                orgId: entity.id,
+                query: params.query,
+                params,
+                createdAt: Date.now(),
+                status: "running",
+                results: networkResults,
+              };
+              createRun(newRun);
+              setActiveId(runId);
+              setOpen(false);
 
-            try {
-              const { candidates } = await runAi({ data: params });
-              const ai: ResearchCandidate[] = candidates.map((c) => ({ source: "ai", ...c }));
-              updateRun(runId, { status: "done", results: [...networkResults, ...ai] });
-              toast.success(`Found ${networkResults.length} in network + ${ai.length} AI suggestions`);
-            } catch (err) {
-              const msg = err instanceof Error ? err.message : "AI suggestions unavailable";
-              // Keep network results visible; record AI error inline.
-              updateRun(runId, { status: "done", aiError: msg, results: networkResults });
-              toast.message("Showing network matches only", { description: msg });
-            }
-          }}
-        />
+              try {
+                const { candidates } = await runAi({ data: params });
+                const ai: ResearchCandidate[] = candidates.map((c) => ({ source: "ai", ...c }));
+                updateRun(runId, { status: "done", results: [...networkResults, ...ai] });
+                toast.success(`Found ${networkResults.length} in network + ${ai.length} AI suggestions`);
+              } catch (err) {
+                const msg = err instanceof Error ? err.message : "AI suggestions unavailable";
+                updateRun(runId, { status: "done", aiError: msg, results: networkResults });
+                toast.message("Showing network matches only", { description: msg });
+              }
+            }}
+          />
+        </div>
+
       </header>
 
       <NetworkDirectoryCard entity={entity} profile={profile} />
