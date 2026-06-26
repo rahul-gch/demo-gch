@@ -476,9 +476,10 @@ export function ResearchWorkspace({ entity }: { entity: Entity }) {
               updateRun(runId, { status: "done", results: [...networkResults, ...ai] });
               toast.success(`Found ${networkResults.length} in network + ${ai.length} AI suggestions`);
             } catch (err) {
-              const msg = err instanceof Error ? err.message : "Research failed";
-              updateRun(runId, { status: "failed", error: msg });
-              toast.error(msg);
+              const msg = err instanceof Error ? err.message : "AI suggestions unavailable";
+              // Keep network results visible; record AI error inline.
+              updateRun(runId, { status: "done", aiError: msg, results: networkResults });
+              toast.message("Showing network matches only", { description: msg });
             }
           }}
         />
