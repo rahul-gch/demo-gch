@@ -63,6 +63,16 @@ Return concise, structured candidates with a one-sentence rationale per candidat
       return { candidates: experimental_output.candidates };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      throw new Error(`AI research failed: ${message}`);
+      const lower = message.toLowerCase();
+      if (!process.env.LOVABLE_API_KEY || lower.includes("missing lovable_api_key")) {
+        throw new Error("AI suggestions disabled — Lovable AI is not configured for this workspace.");
+      }
+      if (lower.includes("402") || lower.includes("insufficient") || lower.includes("credits") || lower.includes("quota") || lower.includes("balance")) {
+        throw new Error("AI credits exhausted — top up Lovable AI to enable external suggestions.");
+      }
+      if (lower.includes("429") || lower.includes("rate")) {
+        throw new Error("AI rate limit reached — try again in a moment.");
+      }
+      throw new Error(`AI research unavailable: ${message}`);
     }
   });
