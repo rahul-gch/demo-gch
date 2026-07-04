@@ -12,6 +12,14 @@ export type FeedKind =
   | "video"
   | "document";
 
+export interface FeedMedia {
+  type: "photo" | "video" | "document";
+  label: string;
+  url?: string; // http(s) URL or data: URL
+  mime?: string;
+  sizeBytes?: number;
+}
+
 export interface FeedComment {
   id: string;
   author: string;
@@ -30,7 +38,7 @@ export interface FeedPost {
   title?: string;
   body: string;
   at: string; // ISO
-  media?: { type: "photo" | "video" | "document"; label: string }[];
+  media?: FeedMedia[];
   likes: number;
   likedByMe?: boolean;
   comments: FeedComment[];
