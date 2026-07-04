@@ -1251,7 +1251,7 @@ export function DiscussionsPanel({ entity, project }: { entity: Entity; project:
                   </button>
                 ))}
               </div>
-              <div className="space-y-2 border-l-2 pl-4 pl-12">
+              <div className="ml-12 space-y-2 border-l-2 pl-4">
                 {d.replies.map((r) => (
                   <div key={r.id} className="rounded-md bg-muted/40 p-2.5 text-sm">
                     <div className="mb-0.5 text-[11px] font-medium text-muted-foreground">
