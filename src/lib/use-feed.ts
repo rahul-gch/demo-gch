@@ -1,4 +1,4 @@
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 import type { Entity } from "@/seed/types";
 import { seedFeedForOrg, type FeedPost, type FeedComment } from "@/seed/feed";
 
@@ -8,7 +8,11 @@ type Store = Record<string, FeedPost[]>;
 
 const isBrowser = () => typeof window !== "undefined";
 
-function load(): Store {
+// Module-level cache: stable references per orgId so React can bail out of
+// rerenders. This is the source of truth in memory; localStorage is a mirror.
+let cache: Store | null = null;
+
+function loadFromStorage(): Store {
   if (!isBrowser()) return {};
   try {
     const raw = window.localStorage.getItem(KEY);
@@ -17,12 +21,19 @@ function load(): Store {
     return {};
   }
 }
-function save(s: Store) {
-  if (!isBrowser()) return;
+
+function getStore(): Store {
+  if (cache) return cache;
+  cache = loadFromStorage();
+  return cache;
+}
+
+function persist() {
+  if (!isBrowser() || !cache) return;
   try {
-    window.localStorage.setItem(KEY, JSON.stringify(s));
+    window.localStorage.setItem(KEY, JSON.stringify(cache));
   } catch {
-    /* ignore */
+    /* ignore quota */
   }
 }
 
@@ -31,31 +42,32 @@ function notify() {
   listeners.forEach((l) => l());
 }
 
-function subscribe(fn: () => void) {
-  listeners.add(fn);
-  return () => {
-    listeners.delete(fn);
-  };
-}
-
-export function getFeed(entity: Entity): FeedPost[] {
-  const store = load();
-  if (!store[entity.id]) return seedFeedForOrg(entity);
-  return store[entity.id];
-}
-
-function ensure(entity: Entity): FeedPost[] {
-  const store = load();
+function ensureLoaded(entity: Entity): FeedPost[] {
+  const store = getStore();
   if (!store[entity.id]) {
     store[entity.id] = seedFeedForOrg(entity);
-    save(store);
+    persist();
   }
   return store[entity.id];
 }
 
-export function addPost(entity: Entity, post: Omit<FeedPost, "id" | "at" | "likes" | "comments" | "orgId" | "authorName" | "authorRole" | "authorOrg"> & Partial<Pick<FeedPost, "authorName" | "authorRole" | "authorOrg">>) {
-  const store = load();
-  const list = store[entity.id] ?? seedFeedForOrg(entity);
+export function getFeed(entity: Entity): FeedPost[] {
+  return ensureLoaded(entity);
+}
+
+function replace(entity: Entity, next: FeedPost[]) {
+  const store = getStore();
+  store[entity.id] = next;
+  persist();
+  notify();
+}
+
+export function addPost(
+  entity: Entity,
+  post: Pick<FeedPost, "kind" | "title" | "body" | "media" | "eventAt"> &
+    Partial<Pick<FeedPost, "authorName" | "authorRole" | "authorOrg">>,
+) {
+  const list = ensureLoaded(entity);
   const next: FeedPost = {
     id: `${entity.id}-user-${Date.now()}`,
     orgId: entity.id,
@@ -74,22 +86,16 @@ export function addPost(entity: Entity, post: Omit<FeedPost, "id" | "at" | "like
     rsvpByMe: post.kind === "event" ? true : undefined,
     eventAt: post.eventAt,
   };
-  store[entity.id] = [next, ...list];
-  save(store);
-  notify();
+  replace(entity, [next, ...list]);
   return next;
 }
 
 function updatePost(entity: Entity, id: string, updater: (p: FeedPost) => FeedPost) {
-  const store = load();
-  const list = store[entity.id] ?? seedFeedForOrg(entity);
-  store[entity.id] = list.map((p) => (p.id === id ? updater(p) : p));
-  save(store);
-  notify();
+  const list = ensureLoaded(entity);
+  replace(entity, list.map((p) => (p.id === id ? updater(p) : p)));
 }
 
 export function toggleLike(entity: Entity, id: string) {
-  ensure(entity);
   updatePost(entity, id, (p) => ({
     ...p,
     likedByMe: !p.likedByMe,
@@ -98,7 +104,6 @@ export function toggleLike(entity: Entity, id: string) {
 }
 
 export function toggleRsvp(entity: Entity, id: string) {
-  ensure(entity);
   updatePost(entity, id, (p) => ({
     ...p,
     rsvpByMe: !p.rsvpByMe,
@@ -107,7 +112,6 @@ export function toggleRsvp(entity: Entity, id: string) {
 }
 
 export function addComment(entity: Entity, id: string, body: string) {
-  ensure(entity);
   const c: FeedComment = {
     id: `c-${Date.now()}`,
     author: "You",
@@ -119,12 +123,16 @@ export function addComment(entity: Entity, id: string, body: string) {
 }
 
 export function useFeed(entity: Entity): FeedPost[] {
+  const [posts, setPosts] = useState<FeedPost[]>(() => ensureLoaded(entity));
+
   useEffect(() => {
-    ensure(entity);
+    setPosts(ensureLoaded(entity));
+    const fn = () => setPosts(ensureLoaded(entity));
+    listeners.add(fn);
+    return () => {
+      listeners.delete(fn);
+    };
   }, [entity]);
-  return useSyncExternalStore(
-    subscribe,
-    () => getFeed(entity),
-    () => seedFeedForOrg(entity),
-  );
+
+  return posts;
 }
