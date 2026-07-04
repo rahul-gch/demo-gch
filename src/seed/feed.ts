@@ -12,6 +12,14 @@ export type FeedKind =
   | "video"
   | "document";
 
+export interface FeedMedia {
+  type: "photo" | "video" | "document";
+  label: string;
+  url?: string; // http(s) URL or data: URL
+  mime?: string;
+  sizeBytes?: number;
+}
+
 export interface FeedComment {
   id: string;
   author: string;
@@ -30,7 +38,7 @@ export interface FeedPost {
   title?: string;
   body: string;
   at: string; // ISO
-  media?: { type: "photo" | "video" | "document"; label: string }[];
+  media?: FeedMedia[];
   likes: number;
   likedByMe?: boolean;
   comments: FeedComment[];
@@ -87,19 +95,41 @@ const KIND_TEMPLATES: {
     kind: "photo",
     title: () => "Site walkthrough: retrofitted spinning line",
     body: () => "New drives cut kWh/kg by 18%. Photos from this morning's commissioning.",
-    media: [{ type: "photo", label: "spinning-line-01.jpg" }],
+    media: [
+      {
+        type: "photo",
+        label: "spinning-line-01.jpg",
+        mime: "image/jpeg",
+        url: "https://images.unsplash.com/photo-1581091012184-7c6b7e9b9e3f?auto=format&fit=crop&w=1200&q=70",
+      },
+    ],
   },
   {
     kind: "video",
     title: () => "3-minute tour of our closed-loop water system",
     body: () => "ZLD retrofit walkthrough with our plant manager.",
-    media: [{ type: "video", label: "zld-tour.mp4" }],
+    media: [
+      {
+        type: "video",
+        label: "zld-tour.mp4",
+        mime: "video/mp4",
+        url: "https://cdn.coverr.co/videos/coverr-water-flowing-4517/1080p.mp4",
+      },
+    ],
   },
   {
     kind: "document",
     title: () => "2026 Code of Conduct — v3",
     body: () => "Updated Tier-2 traceability and grievance clauses. Effective 1 Sep.",
-    media: [{ type: "document", label: "CoC-v3.pdf" }],
+    media: [
+      {
+        type: "document",
+        label: "CoC-v3.pdf",
+        mime: "application/pdf",
+        sizeBytes: 428_000,
+        url: "https://www.w3.org/WAI/WCAG21/Understanding/PDF/example.pdf",
+      },
+    ],
   },
   {
     kind: "update",

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   Heart,
@@ -16,9 +16,12 @@ import {
   Rss,
   FolderKanban,
   Send,
+  Download,
+  X,
+  Play,
 } from "lucide-react";
 import type { Entity } from "@/seed/types";
-import type { FeedKind, FeedPost } from "@/seed/feed";
+import type { FeedKind, FeedMedia, FeedPost } from "@/seed/feed";
 import { useFeed, addPost, toggleLike, toggleRsvp, addComment } from "@/lib/use-feed";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,6 +30,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+
+
 
 const KIND_META: Record<
   FeedKind,
@@ -104,25 +109,38 @@ export function FeedWorkspace({ entity }: { entity: Entity }) {
   );
 }
 
+const MAX_UPLOAD_BYTES = 3_500_000; // ~3.5MB — safe for localStorage
+
+function readAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(file);
+  });
+}
+
 function Composer({ entity }: { entity: Entity }) {
   const [mode, setMode] = useState<ComposerMode>("post");
   const [body, setBody] = useState("");
   const [title, setTitle] = useState("");
   const [eventAt, setEventAt] = useState("");
-  const [media, setMedia] = useState<{ type: "photo" | "video" | "document"; label: string }[]>([]);
+  const [media, setMedia] = useState<FeedMedia[]>([]);
+
+  const photoInput = useRef<HTMLInputElement | null>(null);
+  const videoInput = useRef<HTMLInputElement | null>(null);
+  const docInput = useRef<HTMLInputElement | null>(null);
 
   const submit = () => {
     const trimmed = body.trim();
-    if (!trimmed && !title.trim()) {
-      toast.error("Write something first.");
+    if (!trimmed && !title.trim() && media.length === 0) {
+      toast.error("Write something or attach a file.");
       return;
     }
     let kind: FeedKind = "update";
     if (mode === "project") kind = "partnership";
     if (mode === "event") kind = "event";
-    if (media[0]?.type === "photo") kind = "photo";
-    if (media[0]?.type === "video") kind = "video";
-    if (media[0]?.type === "document") kind = "document";
+    if (mode === "post" && media[0]) kind = media[0].type;
 
     addPost(entity, {
       kind,
@@ -135,13 +153,39 @@ function Composer({ entity }: { entity: Entity }) {
     setTitle("");
     setEventAt("");
     setMedia([]);
-    toast.success(mode === "event" ? "Event created" : mode === "project" ? "Project posted" : "Posted to feed");
+    toast.success(
+      mode === "event" ? "Event created" : mode === "project" ? "Project posted" : "Posted to feed",
+    );
   };
 
-  const attach = (type: "photo" | "video" | "document") => {
-    const label = type === "photo" ? "image.jpg" : type === "video" ? "clip.mp4" : "brief.pdf";
-    setMedia((m) => [...m, { type, label }]);
+  const handleFiles = async (
+    type: "photo" | "video" | "document",
+    fileList: FileList | null,
+  ) => {
+    if (!fileList || fileList.length === 0) return;
+    const additions: FeedMedia[] = [];
+    for (const file of Array.from(fileList)) {
+      if (file.size > MAX_UPLOAD_BYTES) {
+        toast.error(`${file.name} is over ${(MAX_UPLOAD_BYTES / 1_000_000).toFixed(1)}MB — skipped.`);
+        continue;
+      }
+      try {
+        const dataUrl = await readAsDataUrl(file);
+        additions.push({
+          type,
+          label: file.name,
+          url: dataUrl,
+          mime: file.type,
+          sizeBytes: file.size,
+        });
+      } catch {
+        toast.error(`Could not read ${file.name}.`);
+      }
+    }
+    if (additions.length) setMedia((m) => [...m, ...additions]);
   };
+
+  const removeMedia = (idx: number) => setMedia((m) => m.filter((_, i) => i !== idx));
 
   return (
     <Card className="shadow-sm">
@@ -177,25 +221,70 @@ function Composer({ entity }: { entity: Entity }) {
           value={body}
           onChange={(e) => setBody(e.target.value)}
         />
+
         {media.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <div className="grid gap-2 sm:grid-cols-2">
             {media.map((m, i) => (
-              <Badge key={i} variant="outline" className="gap-1">
-                {m.type === "photo" ? <ImageIcon className="h-3 w-3" /> : m.type === "video" ? <Video className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
-                {m.label}
-              </Badge>
+              <div
+                key={i}
+                className="group relative overflow-hidden rounded-md border bg-slate-50"
+              >
+                <MediaPreview media={m} compact />
+                <button
+                  type="button"
+                  onClick={() => removeMedia(i)}
+                  className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                  aria-label={`Remove ${m.label}`}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
             ))}
           </div>
         )}
+
+        <input
+          ref={photoInput}
+          type="file"
+          accept="image/*"
+          multiple
+          hidden
+          onChange={(e) => {
+            void handleFiles("photo", e.target.files);
+            e.target.value = "";
+          }}
+        />
+        <input
+          ref={videoInput}
+          type="file"
+          accept="video/*"
+          hidden
+          onChange={(e) => {
+            void handleFiles("video", e.target.files);
+            e.target.value = "";
+          }}
+        />
+        <input
+          ref={docInput}
+          type="file"
+          accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,application/pdf"
+          multiple
+          hidden
+          onChange={(e) => {
+            void handleFiles("document", e.target.files);
+            e.target.value = "";
+          }}
+        />
+
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap gap-1">
-            <Button type="button" variant="ghost" size="sm" onClick={() => attach("photo")}>
+            <Button type="button" variant="ghost" size="sm" onClick={() => photoInput.current?.click()}>
               <ImageIcon className="h-4 w-4" /> Photo
             </Button>
-            <Button type="button" variant="ghost" size="sm" onClick={() => attach("video")}>
+            <Button type="button" variant="ghost" size="sm" onClick={() => videoInput.current?.click()}>
               <Video className="h-4 w-4" /> Video
             </Button>
-            <Button type="button" variant="ghost" size="sm" onClick={() => attach("document")}>
+            <Button type="button" variant="ghost" size="sm" onClick={() => docInput.current?.click()}>
               <FileText className="h-4 w-4" /> Document
             </Button>
           </div>
@@ -208,6 +297,75 @@ function Composer({ entity }: { entity: Entity }) {
     </Card>
   );
 }
+
+function MediaPreview({ media, compact }: { media: FeedMedia; compact?: boolean }) {
+  if (media.type === "photo") {
+    return media.url ? (
+      <img
+        src={media.url}
+        alt={media.label}
+        className={`w-full ${compact ? "h-32 object-cover" : "max-h-[420px] rounded-md object-cover"}`}
+      />
+    ) : (
+      <MediaFallback media={media} />
+    );
+  }
+  if (media.type === "video") {
+    return media.url ? (
+      <video
+        src={media.url}
+        controls
+        preload="metadata"
+        className={`w-full bg-black ${compact ? "h-32 object-cover" : "max-h-[420px] rounded-md"}`}
+      />
+    ) : (
+      <MediaFallback media={media} icon={Play} />
+    );
+  }
+  // document
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-md border bg-white px-3 py-2 text-sm">
+      <div className="flex min-w-0 items-center gap-2">
+        <FileText className="h-4 w-4 shrink-0 text-slate-500" />
+        <div className="min-w-0">
+          <div className="truncate font-medium text-slate-800">{media.label}</div>
+          {media.sizeBytes ? (
+            <div className="text-xs text-muted-foreground">
+              {(media.sizeBytes / 1024).toFixed(0)} KB{media.mime ? ` · ${media.mime}` : ""}
+            </div>
+          ) : null}
+        </div>
+      </div>
+      {media.url ? (
+        <Button asChild variant="outline" size="sm">
+          <a href={media.url} download={media.label} target="_blank" rel="noreferrer">
+            <Download className="h-3.5 w-3.5" />
+            Download
+          </a>
+        </Button>
+      ) : (
+        <Badge variant="outline" className="text-xs">Preview only</Badge>
+      )}
+    </div>
+  );
+}
+
+function MediaFallback({
+  media,
+  icon: Icon = ImageIcon,
+}: {
+  media: FeedMedia;
+  icon?: typeof ImageIcon;
+}) {
+  return (
+    <div className="flex h-32 flex-col items-center justify-center gap-1 bg-slate-100 text-xs text-slate-500">
+      <Icon className="h-5 w-5" />
+      <span className="truncate px-2">{media.label}</span>
+    </div>
+  );
+}
+
+
 
 function PostCard({ entity, post }: { entity: Entity; post: FeedPost }) {
   const meta = KIND_META[post.kind];
@@ -256,24 +414,19 @@ function PostCard({ entity, post }: { entity: Entity; post: FeedPost }) {
         <p className="whitespace-pre-wrap text-sm text-slate-700">{post.body}</p>
 
         {post.media && post.media.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <div
+            className={
+              post.media.length === 1
+                ? "space-y-2"
+                : "grid gap-2 sm:grid-cols-2"
+            }
+          >
             {post.media.map((m, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-2 rounded-md border bg-slate-50 px-3 py-2 text-xs text-slate-700"
-              >
-                {m.type === "photo" ? (
-                  <ImageIcon className="h-3.5 w-3.5" />
-                ) : m.type === "video" ? (
-                  <Video className="h-3.5 w-3.5" />
-                ) : (
-                  <FileText className="h-3.5 w-3.5" />
-                )}
-                {m.label}
-              </div>
+              <MediaPreview key={i} media={m} />
             ))}
           </div>
         )}
+
 
         {post.kind === "event" && (
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-rose-50/50 px-3 py-2 text-xs text-rose-800">
