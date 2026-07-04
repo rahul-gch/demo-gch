@@ -20,11 +20,17 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as OrganizationsIndexRouteImport } from './routes/organizations.index'
 import { Route as OrganizationsIdRouteImport } from './routes/organizations.$id'
 import { Route as OrganizationsIdIndexRouteImport } from './routes/organizations.$id.index'
+import { Route as OrganizationsIdSupplyChainRouteImport } from './routes/organizations.$id.supply-chain'
 import { Route as OrganizationsIdSettingsRouteImport } from './routes/organizations.$id.settings'
 import { Route as OrganizationsIdResearchRouteImport } from './routes/organizations.$id.research'
+import { Route as OrganizationsIdRequestsRouteImport } from './routes/organizations.$id.requests'
+import { Route as OrganizationsIdProjectsRouteImport } from './routes/organizations.$id.projects'
 import { Route as OrganizationsIdMessagesRouteImport } from './routes/organizations.$id.messages'
 import { Route as OrganizationsIdMeetingsRouteImport } from './routes/organizations.$id.meetings'
 import { Route as OrganizationsIdMatchmakingRouteImport } from './routes/organizations.$id.matchmaking'
+import { Route as OrganizationsIdFeedRouteImport } from './routes/organizations.$id.feed'
+import { Route as OrganizationsIdComplianceRouteImport } from './routes/organizations.$id.compliance'
+import { Route as OrganizationsIdCircularityRouteImport } from './routes/organizations.$id.circularity'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -81,6 +87,12 @@ const OrganizationsIdIndexRoute = OrganizationsIdIndexRouteImport.update({
   path: '/',
   getParentRoute: () => OrganizationsIdRoute,
 } as any)
+const OrganizationsIdSupplyChainRoute =
+  OrganizationsIdSupplyChainRouteImport.update({
+    id: '/supply-chain',
+    path: '/supply-chain',
+    getParentRoute: () => OrganizationsIdRoute,
+  } as any)
 const OrganizationsIdSettingsRoute = OrganizationsIdSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -89,6 +101,16 @@ const OrganizationsIdSettingsRoute = OrganizationsIdSettingsRouteImport.update({
 const OrganizationsIdResearchRoute = OrganizationsIdResearchRouteImport.update({
   id: '/research',
   path: '/research',
+  getParentRoute: () => OrganizationsIdRoute,
+} as any)
+const OrganizationsIdRequestsRoute = OrganizationsIdRequestsRouteImport.update({
+  id: '/requests',
+  path: '/requests',
+  getParentRoute: () => OrganizationsIdRoute,
+} as any)
+const OrganizationsIdProjectsRoute = OrganizationsIdProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
   getParentRoute: () => OrganizationsIdRoute,
 } as any)
 const OrganizationsIdMessagesRoute = OrganizationsIdMessagesRouteImport.update({
@@ -107,6 +129,23 @@ const OrganizationsIdMatchmakingRoute =
     path: '/matchmaking',
     getParentRoute: () => OrganizationsIdRoute,
   } as any)
+const OrganizationsIdFeedRoute = OrganizationsIdFeedRouteImport.update({
+  id: '/feed',
+  path: '/feed',
+  getParentRoute: () => OrganizationsIdRoute,
+} as any)
+const OrganizationsIdComplianceRoute =
+  OrganizationsIdComplianceRouteImport.update({
+    id: '/compliance',
+    path: '/compliance',
+    getParentRoute: () => OrganizationsIdRoute,
+  } as any)
+const OrganizationsIdCircularityRoute =
+  OrganizationsIdCircularityRouteImport.update({
+    id: '/circularity',
+    path: '/circularity',
+    getParentRoute: () => OrganizationsIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -119,11 +158,17 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/organizations/$id': typeof OrganizationsIdRouteWithChildren
   '/organizations/': typeof OrganizationsIndexRoute
+  '/organizations/$id/circularity': typeof OrganizationsIdCircularityRoute
+  '/organizations/$id/compliance': typeof OrganizationsIdComplianceRoute
+  '/organizations/$id/feed': typeof OrganizationsIdFeedRoute
   '/organizations/$id/matchmaking': typeof OrganizationsIdMatchmakingRoute
   '/organizations/$id/meetings': typeof OrganizationsIdMeetingsRoute
   '/organizations/$id/messages': typeof OrganizationsIdMessagesRoute
+  '/organizations/$id/projects': typeof OrganizationsIdProjectsRoute
+  '/organizations/$id/requests': typeof OrganizationsIdRequestsRoute
   '/organizations/$id/research': typeof OrganizationsIdResearchRoute
   '/organizations/$id/settings': typeof OrganizationsIdSettingsRoute
+  '/organizations/$id/supply-chain': typeof OrganizationsIdSupplyChainRoute
   '/organizations/$id/': typeof OrganizationsIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -135,11 +180,17 @@ export interface FileRoutesByTo {
   '/messages': typeof MessagesRoute
   '/settings': typeof SettingsRoute
   '/organizations': typeof OrganizationsIndexRoute
+  '/organizations/$id/circularity': typeof OrganizationsIdCircularityRoute
+  '/organizations/$id/compliance': typeof OrganizationsIdComplianceRoute
+  '/organizations/$id/feed': typeof OrganizationsIdFeedRoute
   '/organizations/$id/matchmaking': typeof OrganizationsIdMatchmakingRoute
   '/organizations/$id/meetings': typeof OrganizationsIdMeetingsRoute
   '/organizations/$id/messages': typeof OrganizationsIdMessagesRoute
+  '/organizations/$id/projects': typeof OrganizationsIdProjectsRoute
+  '/organizations/$id/requests': typeof OrganizationsIdRequestsRoute
   '/organizations/$id/research': typeof OrganizationsIdResearchRoute
   '/organizations/$id/settings': typeof OrganizationsIdSettingsRoute
+  '/organizations/$id/supply-chain': typeof OrganizationsIdSupplyChainRoute
   '/organizations/$id': typeof OrganizationsIdIndexRoute
 }
 export interface FileRoutesById {
@@ -154,11 +205,17 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/organizations/$id': typeof OrganizationsIdRouteWithChildren
   '/organizations/': typeof OrganizationsIndexRoute
+  '/organizations/$id/circularity': typeof OrganizationsIdCircularityRoute
+  '/organizations/$id/compliance': typeof OrganizationsIdComplianceRoute
+  '/organizations/$id/feed': typeof OrganizationsIdFeedRoute
   '/organizations/$id/matchmaking': typeof OrganizationsIdMatchmakingRoute
   '/organizations/$id/meetings': typeof OrganizationsIdMeetingsRoute
   '/organizations/$id/messages': typeof OrganizationsIdMessagesRoute
+  '/organizations/$id/projects': typeof OrganizationsIdProjectsRoute
+  '/organizations/$id/requests': typeof OrganizationsIdRequestsRoute
   '/organizations/$id/research': typeof OrganizationsIdResearchRoute
   '/organizations/$id/settings': typeof OrganizationsIdSettingsRoute
+  '/organizations/$id/supply-chain': typeof OrganizationsIdSupplyChainRoute
   '/organizations/$id/': typeof OrganizationsIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -174,11 +231,17 @@ export interface FileRouteTypes {
     | '/settings'
     | '/organizations/$id'
     | '/organizations/'
+    | '/organizations/$id/circularity'
+    | '/organizations/$id/compliance'
+    | '/organizations/$id/feed'
     | '/organizations/$id/matchmaking'
     | '/organizations/$id/meetings'
     | '/organizations/$id/messages'
+    | '/organizations/$id/projects'
+    | '/organizations/$id/requests'
     | '/organizations/$id/research'
     | '/organizations/$id/settings'
+    | '/organizations/$id/supply-chain'
     | '/organizations/$id/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -190,11 +253,17 @@ export interface FileRouteTypes {
     | '/messages'
     | '/settings'
     | '/organizations'
+    | '/organizations/$id/circularity'
+    | '/organizations/$id/compliance'
+    | '/organizations/$id/feed'
     | '/organizations/$id/matchmaking'
     | '/organizations/$id/meetings'
     | '/organizations/$id/messages'
+    | '/organizations/$id/projects'
+    | '/organizations/$id/requests'
     | '/organizations/$id/research'
     | '/organizations/$id/settings'
+    | '/organizations/$id/supply-chain'
     | '/organizations/$id'
   id:
     | '__root__'
@@ -208,11 +277,17 @@ export interface FileRouteTypes {
     | '/settings'
     | '/organizations/$id'
     | '/organizations/'
+    | '/organizations/$id/circularity'
+    | '/organizations/$id/compliance'
+    | '/organizations/$id/feed'
     | '/organizations/$id/matchmaking'
     | '/organizations/$id/meetings'
     | '/organizations/$id/messages'
+    | '/organizations/$id/projects'
+    | '/organizations/$id/requests'
     | '/organizations/$id/research'
     | '/organizations/$id/settings'
+    | '/organizations/$id/supply-chain'
     | '/organizations/$id/'
   fileRoutesById: FileRoutesById
 }
@@ -306,6 +381,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrganizationsIdIndexRouteImport
       parentRoute: typeof OrganizationsIdRoute
     }
+    '/organizations/$id/supply-chain': {
+      id: '/organizations/$id/supply-chain'
+      path: '/supply-chain'
+      fullPath: '/organizations/$id/supply-chain'
+      preLoaderRoute: typeof OrganizationsIdSupplyChainRouteImport
+      parentRoute: typeof OrganizationsIdRoute
+    }
     '/organizations/$id/settings': {
       id: '/organizations/$id/settings'
       path: '/settings'
@@ -318,6 +400,20 @@ declare module '@tanstack/react-router' {
       path: '/research'
       fullPath: '/organizations/$id/research'
       preLoaderRoute: typeof OrganizationsIdResearchRouteImport
+      parentRoute: typeof OrganizationsIdRoute
+    }
+    '/organizations/$id/requests': {
+      id: '/organizations/$id/requests'
+      path: '/requests'
+      fullPath: '/organizations/$id/requests'
+      preLoaderRoute: typeof OrganizationsIdRequestsRouteImport
+      parentRoute: typeof OrganizationsIdRoute
+    }
+    '/organizations/$id/projects': {
+      id: '/organizations/$id/projects'
+      path: '/projects'
+      fullPath: '/organizations/$id/projects'
+      preLoaderRoute: typeof OrganizationsIdProjectsRouteImport
       parentRoute: typeof OrganizationsIdRoute
     }
     '/organizations/$id/messages': {
@@ -341,24 +437,57 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrganizationsIdMatchmakingRouteImport
       parentRoute: typeof OrganizationsIdRoute
     }
+    '/organizations/$id/feed': {
+      id: '/organizations/$id/feed'
+      path: '/feed'
+      fullPath: '/organizations/$id/feed'
+      preLoaderRoute: typeof OrganizationsIdFeedRouteImport
+      parentRoute: typeof OrganizationsIdRoute
+    }
+    '/organizations/$id/compliance': {
+      id: '/organizations/$id/compliance'
+      path: '/compliance'
+      fullPath: '/organizations/$id/compliance'
+      preLoaderRoute: typeof OrganizationsIdComplianceRouteImport
+      parentRoute: typeof OrganizationsIdRoute
+    }
+    '/organizations/$id/circularity': {
+      id: '/organizations/$id/circularity'
+      path: '/circularity'
+      fullPath: '/organizations/$id/circularity'
+      preLoaderRoute: typeof OrganizationsIdCircularityRouteImport
+      parentRoute: typeof OrganizationsIdRoute
+    }
   }
 }
 
 interface OrganizationsIdRouteChildren {
+  OrganizationsIdCircularityRoute: typeof OrganizationsIdCircularityRoute
+  OrganizationsIdComplianceRoute: typeof OrganizationsIdComplianceRoute
+  OrganizationsIdFeedRoute: typeof OrganizationsIdFeedRoute
   OrganizationsIdMatchmakingRoute: typeof OrganizationsIdMatchmakingRoute
   OrganizationsIdMeetingsRoute: typeof OrganizationsIdMeetingsRoute
   OrganizationsIdMessagesRoute: typeof OrganizationsIdMessagesRoute
+  OrganizationsIdProjectsRoute: typeof OrganizationsIdProjectsRoute
+  OrganizationsIdRequestsRoute: typeof OrganizationsIdRequestsRoute
   OrganizationsIdResearchRoute: typeof OrganizationsIdResearchRoute
   OrganizationsIdSettingsRoute: typeof OrganizationsIdSettingsRoute
+  OrganizationsIdSupplyChainRoute: typeof OrganizationsIdSupplyChainRoute
   OrganizationsIdIndexRoute: typeof OrganizationsIdIndexRoute
 }
 
 const OrganizationsIdRouteChildren: OrganizationsIdRouteChildren = {
+  OrganizationsIdCircularityRoute: OrganizationsIdCircularityRoute,
+  OrganizationsIdComplianceRoute: OrganizationsIdComplianceRoute,
+  OrganizationsIdFeedRoute: OrganizationsIdFeedRoute,
   OrganizationsIdMatchmakingRoute: OrganizationsIdMatchmakingRoute,
   OrganizationsIdMeetingsRoute: OrganizationsIdMeetingsRoute,
   OrganizationsIdMessagesRoute: OrganizationsIdMessagesRoute,
+  OrganizationsIdProjectsRoute: OrganizationsIdProjectsRoute,
+  OrganizationsIdRequestsRoute: OrganizationsIdRequestsRoute,
   OrganizationsIdResearchRoute: OrganizationsIdResearchRoute,
   OrganizationsIdSettingsRoute: OrganizationsIdSettingsRoute,
+  OrganizationsIdSupplyChainRoute: OrganizationsIdSupplyChainRoute,
   OrganizationsIdIndexRoute: OrganizationsIdIndexRoute,
 }
 
