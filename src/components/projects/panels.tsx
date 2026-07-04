@@ -10,7 +10,7 @@ import {
   MessageCircle,
   CalendarDays,
   Activity,
-  MapPin,
+  
   Building2,
   Mail,
   ExternalLink,
