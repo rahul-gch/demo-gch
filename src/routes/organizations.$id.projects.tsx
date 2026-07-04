@@ -1,6 +1,5 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute, notFound, Outlet } from "@tanstack/react-router";
 import { getEntity } from "@/seed/all-entities";
-import { ProjectsIndex } from "@/components/projects/ProjectsIndex";
 
 export const Route = createFileRoute("/organizations/$id/projects")({
   loader: ({ params }) => {
@@ -17,10 +16,5 @@ export const Route = createFileRoute("/organizations/$id/projects")({
       },
     ],
   }),
-  component: ProjectsPage,
+  component: () => <Outlet />,
 });
-
-function ProjectsPage() {
-  const { entity } = Route.useLoaderData();
-  return <ProjectsIndex entity={entity} />;
-}
