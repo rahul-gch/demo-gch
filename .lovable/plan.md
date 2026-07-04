@@ -1,62 +1,74 @@
-## Goal
-Restructure each organization's sidebar to match the requested 11-item navigation, and build the **Feed (Community)** page as the first section. All other new sections get placeholder routes so navigation works end-to-end; we'll flesh them out one-by-one in follow-ups.
+# Partner Collaboration Workspace — Projects Section
 
-## Sidebar changes (`src/components/OrgSidebar.tsx`)
+Build a modern, enterprise-grade multi-org collaboration workspace inside each organization's Projects area. All state is local (localStorage-backed seed store) matching the existing Feed/Comms pattern — no backend changes.
 
-Replace current items with, in order:
+## Routes (file-based, TanStack)
 
-1. Home / Feed → `/organizations/$id/feed` (new)
-2. Dashboard → `/organizations/$id` (existing)
-3. Projects → `/organizations/$id/projects` (new, placeholder)
-4. Supply Chain Mapping → `/organizations/$id/supply-chain` (new, placeholder)
-5. Matchmaking & Partnerships → `/organizations/$id/matchmaking` (existing, renamed label)
-6. Research Database → `/organizations/$id/research` (existing, renamed label)
-7. Messages & Meetings → `/organizations/$id/messages` (existing entry, merged label; keep meetings route reachable via a tab inside — no route removal)
-8. Compliance → `/organizations/$id/compliance` (new, placeholder)
-9. Circularity & DPP → `/organizations/$id/circularity` (new, placeholder)
-10. Requests → `/organizations/$id/requests` (new, placeholder)
-11. Settings → `/organizations/$id/settings` (existing)
+Replace the current `ComingSoon` placeholder at `organizations.$id.projects` with a real projects index + project detail with nested tabs.
 
-Keep existing icons where they map; use Lucide `Rss`, `FolderKanban`, `Network`, `ShieldCheck`, `Recycle`, `Inbox` for new items. Merge Messages+Meetings badges (unread + pending) on the combined item.
+```
+src/routes/
+  organizations.$id.projects.tsx              -> Projects list (replaces placeholder)
+  organizations.$id.projects.$projectId.tsx   -> Project layout w/ inner sidebar + <Outlet/>
+  organizations.$id.projects.$projectId.index.tsx     -> Overview
+  organizations.$id.projects.$projectId.partners.tsx
+  organizations.$id.projects.$projectId.requests.tsx
+  organizations.$id.projects.$projectId.documents.tsx
+  organizations.$id.projects.$projectId.discussions.tsx
+  organizations.$id.projects.$projectId.meetings.tsx
+  organizations.$id.projects.$projectId.activity.tsx
+  organizations.$id.projects.$projectId.permissions.tsx
+```
 
-Note: the existing `/organizations/$id/meetings` route file stays intact so nothing internal breaks; it just isn't linked directly in the sidebar anymore. (User said don't change anything internally.)
+## Data layer (local, no DB)
 
-## Feed page (new, full build)
+New `src/seed/projects.ts` + `src/lib/use-projects.ts` (mirrors `use-feed.ts` pattern with `useSyncExternalStore` + module cache to avoid render loops).
 
-New route: `src/routes/organizations.$id.feed.tsx` rendered inside `OrgShell`.
+Types:
+- `Project`: id, orgId (owner), name, description, objectives[], status (Planning/Active/On Hold/Completed), startDate, endDate, progress, image, tags[], industry, country, partners[], updatedAt
+- `Partner`: orgId, name, logo, orgType (Brand/Manufacturer/Supplier/NGO/Auditor/Certifier/Recycler/Tech/Investor/Consultant/Logistics/Government/Research), country, role, status (Invited/Active/Left), permissions
+- `Request`: id, title, description, assignedOrgId, requestedByOrgId, priority, dueDate, status, attachments[], comments[]
+- `ProjectDoc`: id, folder, name, uploadedByOrgId, uploadedAt, version, visibility (All/Owner/Custom), dataUrl or url, size, mime
+- `Discussion`: threaded messages with mentions (@OrgName), reactions, attachments
+- `Meeting`: title, date, time, participants[], link, agenda, notes, attachments, actionItems[]
+- `ActivityEvent`: type, actorOrgId, message, at
+- `Permission` matrix per partner: view/upload/edit/approve/invite/create-requests/comment/download
 
-New component: `src/components/feed/FeedWorkspace.tsx` with:
+Seed 2–3 sample projects per org with realistic partners (pulled from `ALL_ENTITIES`), a mix of requests, documents, meetings, and activity entries.
 
-- **Composer card** at top: tabs for Post / Project / Event, textarea, attachment chips (Photo, Video, Document), Post button.
-- **Filter bar**: All · Updates · Regulations · Investments · Partnerships · Events · AI News.
-- **Post types rendered as cards** (icon + colored tag per type):
-  - Company update, New regulation, Investment opportunity, Partnership announcement, Event (with RSVP button + attendee count), AI-generated news (with sparkle badge), Photo, Video, Document.
-- **Interactions per card**: Like (toggle + count), Comment (expands inline thread), Share (copy link toast).
-- **Quick actions rail** (right column on desktop): Create Project · Create Event · Upload Media buttons that open the composer in the matching mode.
+## UI Components
 
-State: local `useState` + `localStorage` persistence keyed by org id (matches existing seed/comms pattern). No backend calls.
+New under `src/components/projects/`:
+- `ProjectsIndex.tsx` — grid of project cards (image, status pill, progress bar, partner count, tags, last updated), "Create Project" dialog
+- `ProjectShell.tsx` — inner left sidebar (Overview, Partners, Requests, Shared Documents, Discussions, Meetings, Activity Timeline, Permissions) + header with project name, status, progress, quick actions
+- `ProjectOverview.tsx` — stats tiles, timeline, recent activity, important docs, upcoming meetings, quick action buttons (Create Request, Invite Partner, Upload Document, Schedule Meeting)
+- `PartnersPanel.tsx` — partner cards (logo, name, type, country, role, status; View Profile / Message / Contact); Invite Partner dialog (pick from `ALL_ENTITIES`)
+- `RequestsPanel.tsx` — list + filters by status/priority; request detail drawer with comments thread and attachments; Create Request dialog
+- `DocumentsPanel.tsx` — folder sidebar (Certificates, Contracts, Design Files, Audit Reports, Images, Videos, Invoices, Reports); table of docs with search, upload (FileReader dataURL, ≤3.5MB like feed), preview (images inline, video controls, doc download), version bump, comments
+- `DiscussionsPanel.tsx` — threaded conversations, @org mentions autocomplete, reactions, attachments, search
+- `MeetingsPanel.tsx` — upcoming/past tabs, meeting cards, create/edit dialog, action items checklist
+- `ActivityTimeline.tsx` — chronological event feed grouped by day
+- `PermissionsPanel.tsx` — matrix table (partners × permissions) with toggles; only owner org can edit
+- `GlobalProjectSearch.tsx` — command-palette-style search across partners/requests/docs/comments/meetings inside a project
 
-New seed file `src/seed/feed.ts` with ~12 mixed sample posts per org (deterministic by org id) so the feed looks alive for every entity type.
+## Design
 
-## Placeholder routes (new files)
+- Match existing shadcn tokens (rounded-xl cards, muted borders, subtle shadows) — Linear/Notion/Slack-inspired
+- Whitespace-forward, single accent color, no gradients
+- Status pills, priority chips, progress bars use semantic tokens from `styles.css`
+- Responsive: inner sidebar collapses to icon rail on small screens
 
-Each renders inside `OrgShell` with a titled empty-state card ("Coming soon — <section name>") so the sidebar link resolves and the layout stays consistent:
+## Out of scope
 
-- `src/routes/organizations.$id.projects.tsx`
-- `src/routes/organizations.$id.supply-chain.tsx`
-- `src/routes/organizations.$id.compliance.tsx`
-- `src/routes/organizations.$id.circularity.tsx`
-- `src/routes/organizations.$id.requests.tsx`
-
-Each sets a route-specific `head()` with title + description.
-
-## Out of scope (do later, per user)
-
-Building out Projects, Supply Chain Mapping, Compliance, Circularity & DPP, Requests, and any Messages+Meetings unification. No changes to existing dashboard, research, matchmaking, messages, meetings, or settings internals.
+- No backend/Supabase changes, no realtime, no notifications delivery system (activity entries only)
+- No Kanban/Gantt/sprint constructs
+- Existing org sidebar and other sections unchanged
+- Cross-project search stays inside a project (as spec says)
 
 ## Technical notes
 
-- All new routes follow existing dot-file naming (`organizations.$id.<section>.tsx`) and use `createFileRoute` matching the generated ID.
-- Feed uses `<Link>` from `@tanstack/react-router` for any internal nav; no `<a href>`.
-- Persist feed state via a small helper (`src/lib/use-feed.ts`) mirroring `use-comms.ts` so badges/interactions survive reloads.
-- Sidebar badge for "Messages & Meetings" = `unreadCountForOrg(id) + pendingMeetingCountForOrg(id)`.
+- Persist under `gch.projects.v1` in localStorage; per-org scoping via `orgId` filter
+- Owner-only actions gated in UI by comparing viewer `orgId` to `project.orgId`
+- File uploads: dataURL with size cap; show warning above cap
+- All navigation via TanStack `<Link>` with typed params; new route strings match filenames exactly
+- No changes to `research.functions.ts`, feed, messages, meetings routes
