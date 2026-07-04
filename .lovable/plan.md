@@ -1,40 +1,62 @@
-## What to change
+## Goal
+Restructure each organization's sidebar to match the requested 11-item navigation, and build the **Feed (Community)** page as the first section. All other new sections get placeholder routes so navigation works end-to-end; we'll flesh them out one-by-one in follow-ups.
 
-### 1. Every org gets its entity-type dashboard
-Currently `DashboardByType` only renders inside the "Showcase" tabs (first 20 orgs). Non-showcase orgs like ABOALAINAIN (`gch-081`, Ginner) only see a lite overview.
+## Sidebar changes (`src/components/OrgSidebar.tsx`)
 
-- In `src/routes/organizations.$id.index.tsx`, render `DashboardByType` for **every** entity (not gated by `isShowcase`).
-- Layout: header → `DashboardByType` → tabs (Overview, KPIs, Ecosystem, Documents, Activity, Missing data).
-- Keep `NetworkPassport` + `BenchmarkChart` as showcase-only extras.
-- Drop the "Lite profile" amber notice; instead show a small hint inside Documents/KPIs tabs that report uploads enrich the dashboard.
+Replace current items with, in order:
 
-This automatically gives ABOALAINAIN the `GinnerDashboard` (bale throughput, lint quality, moisture, etc.) and every other org the dashboard already built for its `entityType`.
+1. Home / Feed → `/organizations/$id/feed` (new)
+2. Dashboard → `/organizations/$id` (existing)
+3. Projects → `/organizations/$id/projects` (new, placeholder)
+4. Supply Chain Mapping → `/organizations/$id/supply-chain` (new, placeholder)
+5. Matchmaking & Partnerships → `/organizations/$id/matchmaking` (existing, renamed label)
+6. Research Database → `/organizations/$id/research` (existing, renamed label)
+7. Messages & Meetings → `/organizations/$id/messages` (existing entry, merged label; keep meetings route reachable via a tab inside — no route removal)
+8. Compliance → `/organizations/$id/compliance` (new, placeholder)
+9. Circularity & DPP → `/organizations/$id/circularity` (new, placeholder)
+10. Requests → `/organizations/$id/requests` (new, placeholder)
+11. Settings → `/organizations/$id/settings` (existing)
 
-### 2. Research — "no AI balance" + internal-only search
-Two fixes in `src/components/ResearchWorkspace.tsx` and `src/lib/research.functions.ts`:
+Keep existing icons where they map; use Lucide `Rss`, `FolderKanban`, `Network`, `ShieldCheck`, `Recycle`, `Inbox` for new items. Merge Messages+Meetings badges (unread + pending) on the combined item.
 
-**a. Don't break internal results when AI fails.**
-Today, if `runAiResearch` throws (no LOVABLE_API_KEY, no credits, rate-limit), the run is marked `failed` and the user sees an error toast even though internal-network results were already found. Change to:
-- Always mark the run `done` once internal search returns.
-- If AI succeeds, append AI candidates and toast both counts.
-- If AI fails, keep internal results visible, store `aiError` on the run, and show an inline amber notice in the results panel: "AI suggestions unavailable — showing matches from your GCH network only" with the underlying reason (e.g. "AI Gateway: insufficient credits").
+Note: the existing `/organizations/$id/meetings` route file stays intact so nothing internal breaks; it just isn't linked directly in the sidebar anymore. (User said don't change anything internally.)
 
-**b. Detect the "no balance" case explicitly.**
-In `runAiResearch` handler, catch the gateway error, inspect for 402 / "insufficient_quota" / "credits" strings, and rethrow a clean `Error("AI credits exhausted — top up Lovable AI to enable external suggestions")`. Other errors keep their original message.
+## Feed page (new, full build)
 
-**c. Internal-only "Search network" action.**
-Add a second button next to "New AI research" labeled **Search network** that runs `searchInternal` only (no AI call). Useful when the user just wants to query the 189 orgs.
+New route: `src/routes/organizations.$id.feed.tsx` rendered inside `OrgShell`.
 
-### 3. Quick polish
-- In `NetworkDirectoryCard`, ensure the type filter defaults to the counterpart for the current org (already done) and add a visible result count.
-- Toast wording: when AI is disabled, say "Showing network matches only" instead of a red error.
+New component: `src/components/feed/FeedWorkspace.tsx` with:
 
-## Files touched
-- `src/routes/organizations.$id.index.tsx` — render `DashboardByType` for all orgs, restructure tabs, drop lite notice.
-- `src/components/ResearchWorkspace.tsx` — graceful AI-failure handling, inline AI-status banner, "Search network" button.
-- `src/lib/research.functions.ts` — classify gateway errors (missing key / no credits) into friendlier messages.
-- `src/seed/research-runs.ts` — add optional `aiError?: string` field to `ResearchRun` (non-breaking).
+- **Composer card** at top: tabs for Post / Project / Event, textarea, attachment chips (Photo, Video, Document), Post button.
+- **Filter bar**: All · Updates · Regulations · Investments · Partnerships · Events · AI News.
+- **Post types rendered as cards** (icon + colored tag per type):
+  - Company update, New regulation, Investment opportunity, Partnership announcement, Event (with RSVP button + attendee count), AI-generated news (with sparkle badge), Photo, Video, Document.
+- **Interactions per card**: Like (toggle + count), Comment (expands inline thread), Share (copy link toast).
+- **Quick actions rail** (right column on desktop): Create Project · Create Event · Upload Media buttons that open the composer in the matching mode.
 
-## Out of scope
-- No new entity-type dashboards (all 10 types already have one — switch in `DashboardByType` covers Brand, Farmer, Ginner, Spinner, Fabric Mill, Dye House, Garment Factory, Logistics, Cert Body, Sustainability Partner; default falls back to `GenericEntityDashboard`).
-- No backend/schema changes; research runs stay in localStorage.
+State: local `useState` + `localStorage` persistence keyed by org id (matches existing seed/comms pattern). No backend calls.
+
+New seed file `src/seed/feed.ts` with ~12 mixed sample posts per org (deterministic by org id) so the feed looks alive for every entity type.
+
+## Placeholder routes (new files)
+
+Each renders inside `OrgShell` with a titled empty-state card ("Coming soon — <section name>") so the sidebar link resolves and the layout stays consistent:
+
+- `src/routes/organizations.$id.projects.tsx`
+- `src/routes/organizations.$id.supply-chain.tsx`
+- `src/routes/organizations.$id.compliance.tsx`
+- `src/routes/organizations.$id.circularity.tsx`
+- `src/routes/organizations.$id.requests.tsx`
+
+Each sets a route-specific `head()` with title + description.
+
+## Out of scope (do later, per user)
+
+Building out Projects, Supply Chain Mapping, Compliance, Circularity & DPP, Requests, and any Messages+Meetings unification. No changes to existing dashboard, research, matchmaking, messages, meetings, or settings internals.
+
+## Technical notes
+
+- All new routes follow existing dot-file naming (`organizations.$id.<section>.tsx`) and use `createFileRoute` matching the generated ID.
+- Feed uses `<Link>` from `@tanstack/react-router` for any internal nav; no `<a href>`.
+- Persist feed state via a small helper (`src/lib/use-feed.ts`) mirroring `use-comms.ts` so badges/interactions survive reloads.
+- Sidebar badge for "Messages & Meetings" = `unreadCountForOrg(id) + pendingMeetingCountForOrg(id)`.

@@ -4,10 +4,15 @@ import {
   Sparkles,
   Search,
   MessageSquare,
-  Calendar,
   Settings,
   ArrowLeft,
   Building2,
+  Rss,
+  FolderKanban,
+  Network,
+  ShieldCheck,
+  Recycle,
+  Inbox,
 } from "lucide-react";
 import {
   Sidebar,
@@ -31,22 +36,27 @@ export function OrgSidebar({ entity }: { entity: Entity }) {
   useCommsVersion();
 
   const base = `/organizations/${entity.id}`;
+  const inbox =
+    typeof window !== "undefined"
+      ? unreadCountForOrg(entity.id) + pendingMeetingCountForOrg(entity.id)
+      : 0;
+
   const items = [
+    { title: "Home / Feed", url: `${base}/feed`, icon: Rss },
     { title: "Dashboard", url: base, icon: LayoutDashboard, exact: true },
-    { title: "Matchmaking", url: `${base}/matchmaking`, icon: Sparkles },
-    { title: "Research", url: `${base}/research`, icon: Search },
+    { title: "Projects", url: `${base}/projects`, icon: FolderKanban },
+    { title: "Supply Chain Mapping", url: `${base}/supply-chain`, icon: Network },
+    { title: "Matchmaking & Partnerships", url: `${base}/matchmaking`, icon: Sparkles },
+    { title: "Research Database", url: `${base}/research`, icon: Search },
     {
-      title: "Messages",
+      title: "Messages & Meetings",
       url: `${base}/messages`,
       icon: MessageSquare,
-      badge: typeof window !== "undefined" ? unreadCountForOrg(entity.id) : 0,
+      badge: inbox,
     },
-    {
-      title: "Meetings",
-      url: `${base}/meetings`,
-      icon: Calendar,
-      badge: typeof window !== "undefined" ? pendingMeetingCountForOrg(entity.id) : 0,
-    },
+    { title: "Compliance", url: `${base}/compliance`, icon: ShieldCheck },
+    { title: "Circularity & DPP", url: `${base}/circularity`, icon: Recycle },
+    { title: "Requests", url: `${base}/requests`, icon: Inbox },
     { title: "Settings", url: `${base}/settings`, icon: Settings },
   ];
 
