@@ -414,24 +414,19 @@ function PostCard({ entity, post }: { entity: Entity; post: FeedPost }) {
         <p className="whitespace-pre-wrap text-sm text-slate-700">{post.body}</p>
 
         {post.media && post.media.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <div
+            className={
+              post.media.length === 1
+                ? "space-y-2"
+                : "grid gap-2 sm:grid-cols-2"
+            }
+          >
             {post.media.map((m, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-2 rounded-md border bg-slate-50 px-3 py-2 text-xs text-slate-700"
-              >
-                {m.type === "photo" ? (
-                  <ImageIcon className="h-3.5 w-3.5" />
-                ) : m.type === "video" ? (
-                  <Video className="h-3.5 w-3.5" />
-                ) : (
-                  <FileText className="h-3.5 w-3.5" />
-                )}
-                {m.label}
-              </div>
+              <MediaPreview key={i} media={m} />
             ))}
           </div>
         )}
+
 
         {post.kind === "event" && (
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-rose-50/50 px-3 py-2 text-xs text-rose-800">
