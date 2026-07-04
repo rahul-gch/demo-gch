@@ -1,7 +1,6 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { FolderKanban } from "lucide-react";
 import { getEntity } from "@/seed/all-entities";
-import { ComingSoon } from "@/components/ComingSoon";
+import { ProjectsIndex } from "@/components/projects/ProjectsIndex";
 
 export const Route = createFileRoute("/organizations/$id/projects")({
   loader: ({ params }) => {
@@ -12,14 +11,16 @@ export const Route = createFileRoute("/organizations/$id/projects")({
   head: ({ loaderData }) => ({
     meta: [
       { title: `Projects — ${loaderData?.entity.name ?? "Organization"} | GCH` },
-      { name: "description", content: "Projects for this organization." },
+      {
+        name: "description",
+        content: "Partner collaboration workspaces for shared sustainability projects.",
+      },
     ],
   }),
-  component: () => (
-    <ComingSoon
-      title="Projects"
-      description="Live sustainability projects, partners and milestones for this organization."
-      icon={FolderKanban}
-    />
-  ),
+  component: ProjectsPage,
 });
+
+function ProjectsPage() {
+  const { entity } = Route.useLoaderData();
+  return <ProjectsIndex entity={entity} />;
+}
