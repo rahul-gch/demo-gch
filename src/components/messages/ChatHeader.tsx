@@ -21,16 +21,18 @@ export function ChatHeader({
   infoOpen: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 border-b bg-background px-6 py-4">
-      <div className="flex min-w-0 items-center gap-3">
+    <div className="flex items-center justify-between gap-3 border-b bg-background px-4 py-3 sm:px-6 sm:py-4">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
         <OrgAvatar entity={entity} size={44} />
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 items-center gap-2">
             <h2 className="truncate text-base font-semibold tracking-tight">{entity.name}</h2>
-            <VerificationBadge status={entity.verificationStatus} />
+            <span className="shrink-0">
+              <VerificationBadge status={entity.verificationStatus} />
+            </span>
           </div>
-          <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-            <span>
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+            <span className="truncate">
               {entity.entityType} · {entity.country}
             </span>
             <span className="text-muted-foreground/40">•</span>
@@ -38,21 +40,24 @@ export function ChatHeader({
           </div>
         </div>
       </div>
-      <div className="flex items-center gap-1">
-        <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex">
+      <div className="flex shrink-0 items-center gap-1">
+        <Button asChild variant="ghost" size="sm" className="hidden xl:inline-flex">
           <Link to="/organizations/$id" params={{ id: entity.id }}>
-            <User className="mr-1.5 h-3.5 w-3.5" /> View Profile
+            <User className="mr-1.5 h-3.5 w-3.5" /> Profile
           </Link>
         </Button>
-        <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex">
+        <Button asChild variant="ghost" size="sm" className="hidden xl:inline-flex">
           <Link to="/organizations/$id/meetings" params={{ id: entity.id }}>
             <CalendarPlus className="mr-1.5 h-3.5 w-3.5" /> Schedule
           </Link>
         </Button>
-        <Button variant="ghost" size="sm" className="hidden md:inline-flex">
-          <FileText className="mr-1.5 h-3.5 w-3.5" /> Documents
-        </Button>
-        <Button variant="ghost" size="icon" onClick={onToggleInfo} aria-label="Toggle info">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onToggleInfo}
+          aria-label="Toggle info"
+          title="Organization details"
+        >
           {infoOpen ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
         </Button>
         <DropdownMenu>
@@ -62,6 +67,19 @@ export function ChatHeader({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <Link to="/organizations/$id" params={{ id: entity.id }}>
+                <User className="mr-2 h-3.5 w-3.5" /> View profile
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/organizations/$id/meetings" params={{ id: entity.id }}>
+                <CalendarPlus className="mr-2 h-3.5 w-3.5" /> Schedule meeting
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <FileText className="mr-2 h-3.5 w-3.5" /> Shared documents
+            </DropdownMenuItem>
             <DropdownMenuItem>Mute conversation</DropdownMenuItem>
             <DropdownMenuItem>Mark as unread</DropdownMenuItem>
             <DropdownMenuItem>Archive</DropdownMenuItem>
