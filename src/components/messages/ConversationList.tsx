@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search } from "lucide-react";
 import type { Entity } from "@/seed/types";
 import { getThread } from "@/seed/comms";
@@ -53,7 +52,7 @@ export function ConversationList({
   }, [ids, filter]);
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full min-w-0 flex-col overflow-hidden">
       <div className="border-b p-3">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -65,8 +64,8 @@ export function ConversationList({
           />
         </div>
       </div>
-      <ScrollArea className="flex-1">
-        <ul className="p-2">
+      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
+        <ul className="w-full space-y-1 p-2">
           {threads.map((t) => {
             const active = activeId === t.id;
             const hasUnread = t.unread > 0;
@@ -75,7 +74,7 @@ export function ConversationList({
                 <button
                   onClick={() => onSelect(t.id)}
                   className={cn(
-                    "group flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left transition-all",
+                    "group flex w-full min-w-0 items-start gap-3 overflow-hidden rounded-xl px-3 py-3 text-left transition-all",
                     active
                       ? "bg-muted/70 shadow-sm"
                       : "hover:bg-muted/40",
@@ -83,7 +82,7 @@ export function ConversationList({
                 >
                   <OrgAvatar entity={t.entity} size={40} />
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-baseline justify-between gap-2">
+                    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-baseline gap-2">
                       <span
                         className={cn(
                           "truncate text-sm",
@@ -96,15 +95,15 @@ export function ConversationList({
                         {relTime(t.last?.at)}
                       </span>
                     </div>
-                    <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                    <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[11px] text-muted-foreground">
                       <span className="truncate">
                         {t.entity.entityType} · {t.entity.country}
                       </span>
                     </div>
-                    <div className="mt-1 flex items-center gap-2">
+                    <div className="mt-1 grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
                       <p
                         className={cn(
-                          "flex-1 truncate text-xs",
+                          "min-w-0 truncate text-xs",
                           hasUnread ? "text-foreground/80" : "text-muted-foreground",
                         )}
                       >
@@ -128,7 +127,7 @@ export function ConversationList({
             </li>
           )}
         </ul>
-      </ScrollArea>
+      </div>
     </div>
   );
 }

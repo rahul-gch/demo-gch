@@ -21,21 +21,21 @@ export function ChatHeader({
   infoOpen: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 border-b bg-background px-4 py-3 sm:px-6 sm:py-4">
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b bg-background px-4 py-3 sm:px-5">
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        <OrgAvatar entity={entity} size={44} />
+        <OrgAvatar entity={entity} size={40} className="sm:h-11 sm:w-11" />
         <div className="min-w-0 flex-1">
-          <div className="flex min-w-0 items-center gap-2">
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center justify-start gap-2 sm:flex">
             <h2 className="truncate text-base font-semibold tracking-tight">{entity.name}</h2>
             <span className="shrink-0">
               <VerificationBadge status={entity.verificationStatus} />
             </span>
           </div>
-          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
-            <span className="truncate">
+          <div className="mt-0.5 grid min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-2 text-xs text-muted-foreground sm:inline-flex sm:max-w-full">
+            <span className="min-w-0 truncate">
               {entity.entityType} · {entity.country}
             </span>
-            <span className="text-muted-foreground/40">•</span>
+            <span className="shrink-0 text-muted-foreground/40">•</span>
             <StatusText id={entity.id} />
           </div>
         </div>

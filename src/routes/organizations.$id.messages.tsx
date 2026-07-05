@@ -15,7 +15,7 @@ import { MessageComposer } from "@/components/messages/MessageComposer";
 import { OrgInfoSidebar } from "@/components/messages/OrgInfoSidebar";
 import { MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/organizations/$id/messages")({
   loader: ({ params }) => {
@@ -57,7 +57,7 @@ function OrgMessagesPage() {
   };
 
   return (
-    <div className="mx-auto h-[calc(100vh-6rem)] w-full max-w-[1500px]">
+    <div className="mx-auto h-[calc(100vh-6rem)] w-full min-w-0 max-w-[1500px] overflow-hidden">
       <header className="mb-4">
         <h1 className="text-2xl font-semibold tracking-tight">Messages</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -68,8 +68,8 @@ function OrgMessagesPage() {
       <div
         className={cn(
           "grid h-[calc(100%-4.5rem)] min-w-0 overflow-hidden rounded-2xl border bg-card shadow-sm",
-          "grid-cols-1 md:grid-cols-[288px_minmax(0,1fr)]",
-          infoOpen && activeEntity && "xl:grid-cols-[288px_minmax(0,1fr)_300px]",
+          "grid-cols-1 md:grid-cols-[320px_minmax(0,1fr)]",
+          infoOpen && activeEntity && "xl:grid-cols-[320px_minmax(0,1fr)_300px]",
         )}
       >
         <div className="min-h-0 min-w-0 border-r">
@@ -118,6 +118,10 @@ function OrgMessagesPage() {
       {activeEntity && (
         <Sheet open={infoOpen} onOpenChange={setInfoOpen} modal={false}>
           <SheetContent side="right" className="w-[320px] p-0 xl:hidden">
+            <SheetTitle className="sr-only">Organization details</SheetTitle>
+            <SheetDescription className="sr-only">
+              Profile, shared documents, and actions for the selected organization.
+            </SheetDescription>
             <OrgInfoSidebar entity={activeEntity} />
           </SheetContent>
         </Sheet>
