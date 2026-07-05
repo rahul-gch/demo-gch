@@ -15,6 +15,7 @@ import { MessageComposer } from "@/components/messages/MessageComposer";
 import { OrgInfoSidebar } from "@/components/messages/OrgInfoSidebar";
 import { MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/organizations/$id/messages")({
   loader: ({ params }) => {
@@ -35,7 +36,7 @@ function OrgMessagesPage() {
   const [activeId, setActiveId] = useState<string | null>(ids[0] ?? null);
   const [filter, setFilter] = useState("");
   const [draft, setDraft] = useState("");
-  const [infoOpen, setInfoOpen] = useState(true);
+  const [infoOpen, setInfoOpen] = useState(false);
 
   useEffect(() => {
     if (activeId) markThreadRead(activeId);
@@ -56,7 +57,7 @@ function OrgMessagesPage() {
   };
 
   return (
-    <div className="mx-auto h-[calc(100vh-6rem)] max-w-[1500px]">
+    <div className="mx-auto h-[calc(100vh-6rem)] w-full max-w-[1500px]">
       <header className="mb-4">
         <h1 className="text-2xl font-semibold tracking-tight">Messages</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -66,13 +67,12 @@ function OrgMessagesPage() {
       </header>
       <div
         className={cn(
-          "grid h-[calc(100%-4.5rem)] gap-0 overflow-hidden rounded-2xl border bg-card shadow-sm grid-cols-1",
-          infoOpen && activeEntity
-            ? "md:grid-cols-[320px_1fr_320px]"
-            : "md:grid-cols-[320px_1fr]",
+          "grid h-[calc(100%-4.5rem)] min-w-0 overflow-hidden rounded-2xl border bg-card shadow-sm",
+          "grid-cols-1 md:grid-cols-[288px_minmax(0,1fr)]",
+          infoOpen && activeEntity && "xl:grid-cols-[288px_minmax(0,1fr)_300px]",
         )}
       >
-        <div className="min-h-0 border-r">
+        <div className="min-h-0 min-w-0 border-r">
           <ConversationList
             ids={ids}
             activeId={activeId}
@@ -109,11 +109,19 @@ function OrgMessagesPage() {
         </div>
 
         {infoOpen && activeEntity && (
-          <div className="hidden min-h-0 md:block">
+          <div className="hidden min-h-0 min-w-0 xl:block">
             <OrgInfoSidebar entity={activeEntity} />
           </div>
         )}
       </div>
+
+      {activeEntity && (
+        <Sheet open={infoOpen} onOpenChange={setInfoOpen} modal={false}>
+          <SheetContent side="right" className="w-[320px] p-0 xl:hidden">
+            <OrgInfoSidebar entity={activeEntity} />
+          </SheetContent>
+        </Sheet>
+      )}
     </div>
   );
 }
