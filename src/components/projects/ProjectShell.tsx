@@ -81,8 +81,12 @@ export function ProjectShell({
     { label: "Permissions", to: `${base}/permissions`, icon: ShieldCheck },
   ];
 
-  const isActive = (to: string, exact?: boolean) =>
-    exact ? pathname === to : pathname === to || pathname.startsWith(to + "/");
+  const isActive = (to: string, exact?: boolean) => {
+    if (exact) return pathname === to;
+    if (pathname === to) return true;
+    // Ensure we only match child paths, not partial string overlaps
+    return pathname.startsWith(to + "/");
+  };
 
   return (
     <div className="-mx-6 -my-8 flex min-h-[calc(100vh-3.5rem)]">
@@ -120,8 +124,8 @@ export function ProjectShell({
                 className={cn(
                   "flex items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors",
                   active
-                    ? "bg-background font-medium text-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-background hover:text-foreground",
+                    ? "border-l-2 border-primary bg-primary/5 font-medium text-foreground"
+                    : "border-l-2 border-transparent text-muted-foreground hover:bg-background hover:text-foreground",
                 )}
               >
                 <item.icon className="h-4 w-4" />
