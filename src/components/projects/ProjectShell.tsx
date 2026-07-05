@@ -81,8 +81,12 @@ export function ProjectShell({
     { label: "Permissions", to: `${base}/permissions`, icon: ShieldCheck },
   ];
 
-  const isActive = (to: string, exact?: boolean) =>
-    exact ? pathname === to : pathname === to || pathname.startsWith(to + "/");
+  const isActive = (to: string, exact?: boolean) => {
+    if (exact) return pathname === to;
+    if (pathname === to) return true;
+    // Ensure we only match child paths, not partial string overlaps
+    return pathname.startsWith(to + "/");
+  };
 
   return (
     <div className="-mx-6 -my-8 flex min-h-[calc(100vh-3.5rem)]">
