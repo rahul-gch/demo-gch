@@ -67,9 +67,9 @@ function OrgMessagesPage() {
       </header>
       <div
         className={cn(
-          "grid h-[calc(100%-4.5rem)] min-w-0 overflow-hidden rounded-2xl border bg-card shadow-sm",
-          "grid-cols-1 md:grid-cols-[320px_minmax(0,1fr)]",
-          infoOpen && activeEntity && "xl:grid-cols-[320px_minmax(0,1fr)_300px]",
+          "grid h-[calc(100%-4.5rem)] w-full min-w-0 max-w-full overflow-hidden rounded-2xl border bg-card shadow-sm",
+          "grid-cols-1 md:[grid-template-columns:308px_minmax(0,1fr)]",
+          infoOpen && activeEntity && "xl:[grid-template-columns:308px_minmax(0,1fr)_320px]",
         )}
       >
         <div className="min-h-0 min-w-0 border-r">
