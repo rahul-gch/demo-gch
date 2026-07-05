@@ -24,8 +24,8 @@ export function MessageComposer({
   };
 
   return (
-    <div className="border-t bg-background px-6 py-4">
-      <div className="rounded-2xl border bg-card px-3 py-2 shadow-sm transition-shadow focus-within:shadow-md focus-within:ring-1 focus-within:ring-ring">
+    <div className="border-t bg-background px-4 py-3 sm:px-5">
+      <div className="min-w-0 rounded-2xl border bg-card px-3 py-2 shadow-sm transition-shadow focus-within:shadow-md focus-within:ring-1 focus-within:ring-ring">
         <Textarea
           ref={ref}
           value={value}
@@ -34,7 +34,7 @@ export function MessageComposer({
           placeholder={placeholder ?? "Write a message…"}
           className="min-h-[44px] max-h-40 resize-none border-0 bg-transparent px-1 shadow-none focus-visible:ring-0"
         />
-        <div className="flex items-center justify-between pt-1">
+        <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2 pt-1">
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Attach">
               <Paperclip className="h-4 w-4" />
@@ -43,7 +43,7 @@ export function MessageComposer({
               <Smile className="h-4 w-4" />
             </Button>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center justify-end gap-3">
             <span className="hidden text-[11px] text-muted-foreground sm:inline">
               Press <kbd className="rounded border bg-muted px-1 py-0.5 text-[10px]">Enter</kbd> to send
             </span>
