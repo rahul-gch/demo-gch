@@ -41,12 +41,12 @@ export function ChatHeader({
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-1">
-        <Button asChild variant="ghost" size="sm" className="hidden xl:inline-flex">
+        <Button asChild variant="ghost" size="sm" className="hidden 2xl:inline-flex">
           <Link to="/organizations/$id" params={{ id: entity.id }}>
             <User className="mr-1.5 h-3.5 w-3.5" /> Profile
           </Link>
         </Button>
-        <Button asChild variant="ghost" size="sm" className="hidden xl:inline-flex">
+        <Button asChild variant="ghost" size="sm" className="hidden 2xl:inline-flex">
           <Link to="/organizations/$id/meetings" params={{ id: entity.id }}>
             <CalendarPlus className="mr-1.5 h-3.5 w-3.5" /> Schedule
           </Link>

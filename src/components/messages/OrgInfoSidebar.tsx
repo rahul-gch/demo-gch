@@ -38,8 +38,8 @@ export function OrgInfoSidebar({
   };
 
   return (
-    <aside className="flex h-full w-full flex-col border-l bg-background">
-      <ScrollArea className="flex-1">
+    <aside className="flex h-full w-full min-w-0 flex-col border-l bg-background">
+      <ScrollArea className="min-h-0 flex-1">
         <div className="space-y-6 p-6">
           <div className="flex flex-col items-center text-center">
             <OrgAvatar entity={entity} size={72} showStatus={false} />
