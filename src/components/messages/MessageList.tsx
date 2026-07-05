@@ -36,18 +36,18 @@ function MessageRow({
   });
 
   return (
-    <div
-      className={cn(
-        "group flex gap-2.5",
-        isMe ? "flex-row-reverse" : "flex-row",
-      )}
-    >
+    <div className={cn("group flex min-w-0 gap-2.5", isMe ? "justify-end" : "justify-start")}>
       <div className="w-9 shrink-0">
         {!isMe && showAvatar ? (
           <OrgAvatar entity={entity} size={32} showStatus={false} />
         ) : null}
       </div>
-      <div className={cn("relative flex max-w-[68%] flex-col", isMe ? "items-end" : "items-start")}>
+      <div
+        className={cn(
+          "relative flex min-w-0 max-w-[min(78%,42rem)] flex-col",
+          isMe ? "items-end" : "items-start",
+        )}
+      >
         {!isMe && showAuthor && (
           <span className="mb-1 pl-1 text-[11px] font-medium text-muted-foreground">
             {m.authorName}
@@ -56,13 +56,13 @@ function MessageRow({
         )}
         <div
           className={cn(
-            "rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm transition-shadow",
+            "max-w-full rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm transition-shadow",
             isMe
               ? "bg-primary text-primary-foreground rounded-br-md"
               : "bg-muted text-foreground rounded-bl-md",
           )}
         >
-          <p className="whitespace-pre-wrap break-words">{m.body}</p>
+          <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{m.body}</p>
         </div>
         <span className="mt-1 px-1 text-[10px] text-muted-foreground">{time}</span>
 
@@ -118,11 +118,11 @@ export function MessageList({
   }
 
   return (
-    <div className="flex-1 overflow-y-auto px-6 py-4">
+    <div className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden px-4 py-4 sm:px-5">
       {grouped.map((g) => (
         <Fragment key={g.day}>
           <DateSeparator label={formatDayLabel(g.items[0].at)} />
-          <div className="space-y-1.5">
+          <div className="min-w-0 space-y-1.5">
             {g.items.map((m, idx) => {
               const prev = g.items[idx - 1];
               const grouped = prev && prev.from === m.from;
