@@ -1,74 +1,60 @@
-# Partner Collaboration Workspace — Projects Section
+# Messages + Meetings: Enterprise UI Elevation
 
-Build a modern, enterprise-grade multi-org collaboration workspace inside each organization's Projects area. All state is local (localStorage-backed seed store) matching the existing Feed/Comms pattern — no backend changes.
+Scope: Visual + UX polish only. Keep existing routes, data, and page structure (list ↔ detail). No new backend, no nav changes.
 
-## Routes (file-based, TanStack)
+Applies to:
+- `src/routes/messages.tsx` (global)
+- `src/routes/organizations.$id.messages.tsx` (per-org)
+- `src/routes/meetings.tsx` + `src/routes/organizations.$id.meetings.tsx` (parallel polish pass)
 
-Replace the current `ComingSoon` placeholder at `organizations.$id.projects` with a real projects index + project detail with nested tabs.
+## 1. Shared primitives (new)
+Create small presentational components under `src/components/messages/`:
+- `OrgAvatar.tsx` — initials/logo circle with verification dot and online/offline indicator.
+- `ConversationCard.tsx` — org name, type · country, last message preview, timestamp, unread pill, verified check, online dot, hover elevation, selected state.
+- `ChatHeader.tsx` — avatar + name + type/country + verified + status; right-side action buttons: View Profile, Schedule Meeting, Shared Documents, More (dropdown).
+- `MessageBubble.tsx` — refined bubbles, sender name + small avatar for incoming, right-aligned for outgoing, hover row actions (Reply, Copy, React, More) via floating toolbar.
+- `DateSeparator.tsx` — Today / Yesterday / formatted date dividers computed from message timestamps.
+- `MessageComposer.tsx` — rounded textarea, Attach + Emoji + Send buttons, "Enter to send" hint, sticky bottom.
+- `OrgInfoSidebar.tsx` — collapsible right panel: org summary, quick actions (View Profile, Schedule Meeting, Request Documents, Create Shared Project), shared counts (projects, documents, pending requests). Toggle stored in component state.
 
+All components use existing shadcn primitives + tokens from `src/styles.css`. No hardcoded colors.
+
+## 2. Messages page layout
+Update both `messages.tsx` routes to a 3-pane grid:
+```text
+[ Conversation list 320px ] [ Chat area 1fr ] [ Info sidebar 320px, collapsible ]
 ```
-src/routes/
-  organizations.$id.projects.tsx              -> Projects list (replaces placeholder)
-  organizations.$id.projects.$projectId.tsx   -> Project layout w/ inner sidebar + <Outlet/>
-  organizations.$id.projects.$projectId.index.tsx     -> Overview
-  organizations.$id.projects.$projectId.partners.tsx
-  organizations.$id.projects.$projectId.requests.tsx
-  organizations.$id.projects.$projectId.documents.tsx
-  organizations.$id.projects.$projectId.discussions.tsx
-  organizations.$id.projects.$projectId.meetings.tsx
-  organizations.$id.projects.$projectId.activity.tsx
-  organizations.$id.projects.$projectId.permissions.tsx
-```
+- Increase page padding to 24–32px; card radius 12–16px; soft shadow.
+- Search bar: rounded, leading search icon, subtle border.
+- Selected conversation: soft `bg-muted/60` + left accent border.
+- Empty state: elevated card with icon + copy.
+- Scroll areas use `ScrollArea` component with styled thumb.
 
-## Data layer (local, no DB)
+Wiring:
+- Group messages by day → insert `DateSeparator` between groups.
+- Compute `unread`, `online` (deterministic mock from entity id), `verified` from existing entity data (`entity.verificationStatus`).
+- Info sidebar pulls counts from existing `projects`, `documents`, `requests` seed helpers already used elsewhere; if a helper is missing, derive from `getEntity` + project seed.
+- Hover message actions: absolutely positioned toolbar; buttons are non-functional placeholders except Copy (writes body to clipboard).
 
-New `src/seed/projects.ts` + `src/lib/use-projects.ts` (mirrors `use-feed.ts` pattern with `useSyncExternalStore` + module cache to avoid render loops).
+## 3. Meetings parallel pass
+Apply the same visual language (card radius, spacing, header treatment, right info sidebar with org summary + quick actions) to `meetings.tsx` and `organizations.$id.meetings.tsx`. No schema/logic changes — just:
+- Header row with org avatar + type/country + verified.
+- Cleaner list rows with status pill, time, attendees.
+- Right-side collapsible org info panel reusing `OrgInfoSidebar`.
 
-Types:
-- `Project`: id, orgId (owner), name, description, objectives[], status (Planning/Active/On Hold/Completed), startDate, endDate, progress, image, tags[], industry, country, partners[], updatedAt
-- `Partner`: orgId, name, logo, orgType (Brand/Manufacturer/Supplier/NGO/Auditor/Certifier/Recycler/Tech/Investor/Consultant/Logistics/Government/Research), country, role, status (Invited/Active/Left), permissions
-- `Request`: id, title, description, assignedOrgId, requestedByOrgId, priority, dueDate, status, attachments[], comments[]
-- `ProjectDoc`: id, folder, name, uploadedByOrgId, uploadedAt, version, visibility (All/Owner/Custom), dataUrl or url, size, mime
-- `Discussion`: threaded messages with mentions (@OrgName), reactions, attachments
-- `Meeting`: title, date, time, participants[], link, agenda, notes, attachments, actionItems[]
-- `ActivityEvent`: type, actorOrgId, message, at
-- `Permission` matrix per partner: view/upload/edit/approve/invite/create-requests/comment/download
+## 4. Interaction polish
+- Hover elevations via `transition-shadow` + `hover:shadow-md`.
+- Smooth open/close of right sidebar (`data-[state]` + transitions).
+- Keep composer sticky; textarea auto-grows up to a max height.
+- Cmd/Ctrl+Enter and Enter (no shift) both send.
 
-Seed 2–3 sample projects per org with realistic partners (pulled from `ALL_ENTITIES`), a mix of requests, documents, meetings, and activity entries.
-
-## UI Components
-
-New under `src/components/projects/`:
-- `ProjectsIndex.tsx` — grid of project cards (image, status pill, progress bar, partner count, tags, last updated), "Create Project" dialog
-- `ProjectShell.tsx` — inner left sidebar (Overview, Partners, Requests, Shared Documents, Discussions, Meetings, Activity Timeline, Permissions) + header with project name, status, progress, quick actions
-- `ProjectOverview.tsx` — stats tiles, timeline, recent activity, important docs, upcoming meetings, quick action buttons (Create Request, Invite Partner, Upload Document, Schedule Meeting)
-- `PartnersPanel.tsx` — partner cards (logo, name, type, country, role, status; View Profile / Message / Contact); Invite Partner dialog (pick from `ALL_ENTITIES`)
-- `RequestsPanel.tsx` — list + filters by status/priority; request detail drawer with comments thread and attachments; Create Request dialog
-- `DocumentsPanel.tsx` — folder sidebar (Certificates, Contracts, Design Files, Audit Reports, Images, Videos, Invoices, Reports); table of docs with search, upload (FileReader dataURL, ≤3.5MB like feed), preview (images inline, video controls, doc download), version bump, comments
-- `DiscussionsPanel.tsx` — threaded conversations, @org mentions autocomplete, reactions, attachments, search
-- `MeetingsPanel.tsx` — upcoming/past tabs, meeting cards, create/edit dialog, action items checklist
-- `ActivityTimeline.tsx` — chronological event feed grouped by day
-- `PermissionsPanel.tsx` — matrix table (partners × permissions) with toggles; only owner org can edit
-- `GlobalProjectSearch.tsx` — command-palette-style search across partners/requests/docs/comments/meetings inside a project
-
-## Design
-
-- Match existing shadcn tokens (rounded-xl cards, muted borders, subtle shadows) — Linear/Notion/Slack-inspired
-- Whitespace-forward, single accent color, no gradients
-- Status pills, priority chips, progress bars use semantic tokens from `styles.css`
-- Responsive: inner sidebar collapses to icon rail on small screens
-
-## Out of scope
-
-- No backend/Supabase changes, no realtime, no notifications delivery system (activity entries only)
-- No Kanban/Gantt/sprint constructs
-- Existing org sidebar and other sections unchanged
-- Cross-project search stays inside a project (as spec says)
+## 5. Out of scope
+- No route/nav changes.
+- No changes to `src/seed/comms.ts` data shape (only read helpers may be added if needed).
+- No new persistence, no backend, no auth.
 
 ## Technical notes
-
-- Persist under `gch.projects.v1` in localStorage; per-org scoping via `orgId` filter
-- Owner-only actions gated in UI by comparing viewer `orgId` to `project.orgId`
-- File uploads: dataURL with size cap; show warning above cap
-- All navigation via TanStack `<Link>` with typed params; new route strings match filenames exactly
-- No changes to `research.functions.ts`, feed, messages, meetings routes
+- All new components typed with existing `Entity` and `Message` types from `src/seed/types.ts` / `src/seed/comms.ts`.
+- Use semantic tokens (`bg-card`, `bg-muted`, `text-muted-foreground`, `border-border`, `primary`) — no `bg-slate-*` in new components; existing slate usages replaced in the touched files.
+- Verification uses existing `VerificationBadge` from `src/components/StatusBadge.tsx`.
+- Online/offline is a deterministic pseudo-status derived from `entity.id` hash to avoid flicker.
