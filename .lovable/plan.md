@@ -1,30 +1,30 @@
-# Messages alignment fix
+## Plan: make the Messages section align cleanly
 
-## Problem
-At ~1189px viewport with the app sidebar mounted, the 3-column messages layout (`320px + 1fr + 320px`) plus an inner chat header with 4 action buttons overflows the container. The chat pane and info sidebar get visually clipped and the middle column can't shrink because of `min-w-0` gaps and the header's non-shrinking action row.
+### What I’ll fix
+1. **Prevent the left conversation column from clipping text**
+   - Widen the conversation list at this viewport.
+   - Add stronger `min-w-0`, `truncate`, and overflow rules so organization names, subtitles, timestamps, and previews stay inside the column.
+   - Make active rows align consistently with the search field and list padding.
 
-## Fix (visual/layout only, no logic changes)
+2. **Clean up the chat window alignment**
+   - Reduce uneven horizontal padding in the header, message list, and composer so all chat content starts on a consistent vertical line.
+   - Keep the header avatar/name/actions from squeezing or breaking when the selected organization name is long.
 
-1. **Responsive 3-column breakpoint** — in `src/routes/messages.tsx` and `src/routes/organizations.$id.messages.tsx`:
-   - Show the info sidebar only at `xl:` (≥1280px). Below that, keep 2-column `md:grid-cols-[300px_1fr]` and hide the info panel.
-   - Default `infoOpen` state to `false`; toggle button still opens an overlay drawer on smaller widths.
-   - Narrow the conversation list to `300px` and the info sidebar to `300px` to leave more room for chat.
-   - Add `min-w-0` on every grid child so the middle column actually shrinks.
+3. **Fix broken-looking message text**
+   - Set message bubbles to use responsive widths and safe word wrapping so messages wrap naturally instead of looking cut or awkward.
+   - Avoid overly narrow bubbles when the chat panel is squeezed.
 
-2. **Chat header compression** — in `src/components/messages/ChatHeader.tsx`:
-   - Move "View Profile / Schedule / Documents" behind the More dropdown at `<lg`, keep only the info-toggle + more button visible on small widths.
-   - Ensure the left identity block uses `min-w-0` with `truncate` so long org names don't push the actions offscreen.
-   - Reduce header horizontal padding from `px-6` to `px-4 sm:px-6`.
+4. **Improve composer alignment**
+   - Align the reply box with the message stream.
+   - Keep the send button and helper text from crowding or stretching the composer at smaller widths.
 
-3. **Info sidebar as drawer on <xl** — when toggled open below `xl`, render it as a right-side `Sheet` overlay instead of a grid column, so it never squeezes the chat pane.
-
-4. **Container width** — keep `max-w-[1600px]`, add `min-w-0` on the middle column and remove any horizontal overflow on the outer card so message bubbles wrap correctly instead of extending past the pane.
-
-## Files touched
-- `src/routes/messages.tsx`
-- `src/routes/organizations.$id.messages.tsx`
-- `src/components/messages/ChatHeader.tsx`
-- `src/components/messages/OrgInfoSidebar.tsx` (only if needed to work inside a Sheet)
-
-## Out of scope
-No changes to data, seed helpers, meeting pages, or navigation.
+### Technical details
+- Update only the Messages UI files:
+  - `src/routes/messages.tsx`
+  - `src/routes/organizations.$id.messages.tsx`
+  - `src/components/messages/ConversationList.tsx`
+  - `src/components/messages/ChatHeader.tsx`
+  - `src/components/messages/MessageList.tsx`
+  - `src/components/messages/MessageComposer.tsx`
+- No navigation, data, meetings, or backend changes.
+- After implementation, verify the `/organizations/gch-nike/messages` view at the current 1189px-wide layout.
