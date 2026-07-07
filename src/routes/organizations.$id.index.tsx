@@ -14,7 +14,7 @@ import { ActivityTimeline } from "@/components/dashboard/ActivityTimeline";
 import { OpportunitiesPanel } from "@/components/dashboard/OpportunitiesPanel";
 import { QuickActionsDock } from "@/components/dashboard/QuickActionsDock";
 import { PassportCards } from "@/components/dashboard/PassportCards";
-import { KpiTable } from "@/components/kpi/KpiTable";
+import { KpiTable } from "@/components/KpiTable";
 import { BenchmarkChart } from "@/components/BenchmarkChart";
 import { DocumentsList } from "@/components/DocumentsList";
 import { ReportUploader } from "@/components/ReportUploader";
