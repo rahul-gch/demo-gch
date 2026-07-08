@@ -337,7 +337,6 @@ function ActivityStream() {
             )}
           </CardContent>
         </Card>
-      </div>
-    </AppShell>
+    </div>
   );
 }
