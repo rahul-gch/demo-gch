@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Upload,
   ShieldCheck,
@@ -17,6 +18,7 @@ import {
   AlertTriangle,
   Activity,
   Search,
+  Rss,
 } from "lucide-react";
 import {
   getAdminFeedEvents,
@@ -26,6 +28,7 @@ import {
   type FeedSeverity,
   type AdminFeedEvent,
 } from "@/lib/admin-feed";
+import { CommunityFeed } from "@/components/feed/CommunityFeed";
 
 export const Route = createFileRoute("/feed")({
   head: () => ({
