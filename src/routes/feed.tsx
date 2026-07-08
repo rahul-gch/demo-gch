@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Upload,
   ShieldCheck,
@@ -17,6 +18,7 @@ import {
   AlertTriangle,
   Activity,
   Search,
+  Rss,
 } from "lucide-react";
 import {
   getAdminFeedEvents,
@@ -26,6 +28,7 @@ import {
   type FeedSeverity,
   type AdminFeedEvent,
 } from "@/lib/admin-feed";
+import { CommunityFeed } from "@/components/feed/CommunityFeed";
 
 export const Route = createFileRoute("/feed")({
   head: () => ({
@@ -104,6 +107,44 @@ function groupByDay(events: AdminFeedEvent[]): { label: string; items: AdminFeed
 }
 
 function FeedPage() {
+  const [tab, setTab] = useState<"activity" | "community">("activity");
+  return (
+    <AppShell>
+      <div className="mx-auto max-w-6xl space-y-6">
+        <header className="space-y-1">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            Platform Operations Center
+          </div>
+          <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
+            <Activity className="h-5 w-5 text-slate-600" /> Feed
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            System events across every organization, plus the community stream of posts, events and announcements.
+          </p>
+        </header>
+
+        <Tabs value={tab} onValueChange={(v) => setTab(v as "activity" | "community")}>
+          <TabsList>
+            <TabsTrigger value="activity">
+              <Activity className="mr-1.5 h-3.5 w-3.5" /> Activity
+            </TabsTrigger>
+            <TabsTrigger value="community">
+              <Rss className="mr-1.5 h-3.5 w-3.5" /> Community
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="activity" className="mt-4">
+            <ActivityStream />
+          </TabsContent>
+          <TabsContent value="community" className="mt-4">
+            <CommunityFeed />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </AppShell>
+  );
+}
+
+function ActivityStream() {
   const all = useMemo(() => getAdminFeedEvents(), []);
   const [kinds, setKinds] = useState<Set<FeedEventKind>>(new Set());
   const [severities, setSeverities] = useState<Set<FeedSeverity>>(new Set());
@@ -139,20 +180,7 @@ function FeedPage() {
   }
 
   return (
-    <AppShell>
-      <div className="mx-auto max-w-6xl space-y-6">
-        <header className="space-y-1">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            Platform Operations Center
-          </div>
-          <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
-            <Activity className="h-5 w-5 text-slate-600" /> Activity feed
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Everything happening across Global Chain Hub, newest first. Filter by type, severity, or search.
-          </p>
-        </header>
-
+    <div className="space-y-6">
         {/* summary + search */}
         <Card className="shadow-sm">
           <CardContent className="p-4">
@@ -312,7 +340,6 @@ function FeedPage() {
             )}
           </CardContent>
         </Card>
-      </div>
-    </AppShell>
+    </div>
   );
 }
