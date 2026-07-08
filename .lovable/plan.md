@@ -1,113 +1,85 @@
-# Mission Control Redesign
+# Platform Operations Console — Home Dashboard Upgrade
 
-Turn the org workspace and platform home from "collection of cards" into an operating system anchored by a **Network Health & Readiness Index (NHRI)** — a 0–100 live score that becomes the platform's signature metric. Frontend + seed only; no backend changes.
+Scope: only `src/routes/index.tsx` (platform home) and new presentation components under `src/components/ops/`. Organization pages, navigation, sidebar, colors, typography, and card styles stay as they are. All data is derived from existing seed (`ALL_ENTITIES`, `showcase.ts`, `nhri.ts`, `dashboard-derive.ts`) — no backend, no new deps.
 
-## 1. New signature: Network Health & Readiness Index
+## What changes
 
-New module `src/lib/nhri.ts` computes a deterministic 0–100 score per entity from existing seed fields.
+### 1. Hero → "Platform Operations Center"
+Rework the existing dark hero card in place (same shell, same spacing):
+- Left: title "Platform Operations Center", subtitle line with live counts — Organizations, Countries, Active Projects, Verification Requests, Platform Health (avg NHRI).
+- Right: "Today's Priorities" list (4 rows, colored dots, clickable) — waiting verification, expiring certs today, new matchmaking requests, delayed projects. Each links to the relevant route (`/organizations`, `/matchmaking`, etc.).
 
-Weights (documented in code):
-- Profile completeness — 20
-- Compliance (verified vs expired certs) — 18
-- Supply chain transparency (traceability + tier depth) — 15
-- Ecosystem connectivity (partners/projects count) — 12
-- Certifications breadth — 10
-- Project activity — 10
-- AI confidence score — 10
-- Data freshness — 5
+### 2. Quick Actions strip (new)
+Horizontal row of 7 icon cards directly under the hero: Add Organization, Verify Organization, Create Project, Approve Partnership, Invite User, Send Broadcast, Upload Dataset. Static handlers (toast) for demo; wire targets to existing routes where they exist.
 
-Returns `{ score, band, breakdown[{key,label,value,weight,contribution}], topDrags[], topLifts[], deltaVsPeers }`. Band thresholds: 85+ Excellent, 70+ Strong, 55+ Developing, <55 At Risk.
+### 3. Platform Alerts panel (replaces AI Summary block)
+6 alert rows with severity color chip (red/orange/blue/green): incomplete profiles, expiring certs, delayed projects, pending partner approvals, duplicate suppliers (AI), missing ESG data. Each row clickable → route.
 
-## 2. Org workspace: new information architecture
+### 4. Pending Approvals panel (new)
+Table-style card with tabs: Verification, Projects, Partnerships, Org Updates, Invitations, Certificates. Each row: org, type, waiting time, priority chip, Approve / Review / Reject buttons.
 
-Replace current stacked cards on `/organizations/$id` with a Mission Control layout, and restructure tabs.
+### 5. Live Activity Feed (new, replaces current activity block)
+Timeline grouped by time-of-day, org logo/initial + icon + text + timestamp. Filter chips (All / Uploads / Approvals / AI / Projects).
 
-**New tabs** (rename in `OrgSidebar.tsx` + add route redirects, keep old routes as content sources):
-`Overview · Insights · Network · Performance · Compliance · Supply Chain · AI · Documents · Activity`
+### 6. AI Operations Center (new)
+Card listing 5 AI findings (duplicates, missing certs, partnership opportunities, suspicious ESG, incomplete supply chains) each with a Review button.
 
-Mapping to existing routes (no route deletion — just relabel + new Overview):
-- Overview → new redesigned `organizations.$id.index.tsx`
-- Insights → new subview (AI Command Center + Opportunities)
-- Network → existing ecosystem/matchmaking content
-- Performance → existing KPI content
-- Compliance → existing compliance route
-- Supply Chain → existing supply-chain route
-- AI → new subview surfacing AI recommendations + readiness
-- Documents / Activity → existing
+### 7. Platform Growth Analytics (upgrade existing KPI row)
+Keep the row, but each KPI card gets a delta label (+N this month / +N%) and an inline sparkline (tiny SVG polyline, deterministic from seed).
 
-## 3. Redesigned Overview (org)
+### 8. Country Overview (new)
+Ranked country list card (top 8 by org count derived from `ALL_ENTITIES`). Row click filters `/organizations?country=`.
 
-Rebuild `src/routes/organizations.$id.index.tsx` composed of new components under `src/components/dashboard/`:
+### 9. System Status (new)
+Small panel: API, Database, Storage (87%), Email, Matching Engine, AI Models — green/yellow dots. Static demo values.
 
-1. **HeroPassport** — big org identity block. Left: name, verified pill, country, tier, org type. Right stat row: NHRI score, Profile %, Global Rank (derived from NHRI ordering across ALL_ENTITIES), Members, Active Projects, Partners.
-2. **AICommandCenter** — greeting ("Good morning, {user}"), one-paragraph AI summary generated deterministically from seed (missing docs count, matches, project alerts, updated certs), and 3 CTA buttons (Complete Missing Data / Review Supplier Risk / Invite Partner).
-3. **HealthScoreCard** — huge NHRI number + band, horizontal segmented bar showing 6 pillars (Profile, Compliance, Supply Chain, Circularity, Visibility, Trust) each with mini value.
-4. **CriticalActionsStrip** — 3 cards: expiring cert, new partner matches, supply chain risk delta.
-5. **KpiInteractiveGrid** — replaces `KpiSnapshot`. Each tile shows: current, trend arrow + delta, target, confidence %, status pill.
-6. **EcosystemSummary** — Network counts (orgs, countries, research, suppliers, NGOs, auditors, certifiers) + compact map preview linking to full map.
-7. **MissingDataGamified** — progress bar + list of missing fields with estimated time and upload/edit CTA.
-8. **SupplyChainSnapshot** — suppliers, countries, risks, delays, certified counts + tier bar viz.
-9. **ReadinessBreakdown** — top-level Readiness score + sub-bars: Matchmaking, Supply Chain, Compliance, Digital Passport, Blockchain Ready.
-10. **ActivityTimeline** — replaces `ActivityFeed`, grouped by Today / Yesterday / This week.
-11. **OpportunitiesPanel** — AI Opportunities: qualifying grant, top potential partner (from matchmaking seed), suggested research institute.
-12. **QuickActionsDock** — sticky bottom-right floating cluster: Create Project, Find Partner, Upload Certificate, Map Supply Chain, Invite Member, Generate Report.
+### 10. User Overview (new)
+Card with counts by role/type (Admins, Moderators, Brands, Suppliers, Research, NGOs, Auditors, Certification Bodies). Derived from entity types + fixed admin counts. Rows clickable.
 
-All numbers derive from existing seed (`all-entities`, `matchmaking`, `projects`, `kpi`, `showcase`) plus new helpers in `src/lib/nhri.ts` and `src/lib/dashboard-derive.ts`.
+### 11. Recent Requests (new)
+Compact list of newest incoming requests with type, status chip, and age.
 
-## 4. Redesigned Network Passport
+### 12. Scheduled Jobs (new)
+"Tonight" list with job name and time (Supply Chain Refresh 23:00, AI ESG Scoring 01:00, etc.).
 
-Rewrite `NetworkPassport.tsx` as 4 passport-style cards (Identity · Supply Chain · Compliance · AI Health), each with a header stripe, key metric, and 2–3 sub-stats. Used on the platform home Featured section and on org Overview.
+### 13. Footer status bar (new)
+Thin footer row: Platform Version, Last AI Update, Last DB Sync, Last Backup, Uptime.
 
-## 5. Platform home (/) as Mission Control
+## Layout
 
-Rebuild `src/routes/index.tsx` sections in this order:
-1. Greeting + platform-wide NHRI aggregate (avg + top movers)
-2. AI Summary (registry-wide: new orgs, expiring certs, matches created)
-3. Health distribution bar (Excellent/Strong/Developing/At Risk counts)
-4. Featured Network Passports (redesigned cards)
-5. Supply Chain heatmap summary
-6. Compliance snapshot
-7. Performance (benchmark intelligence, kept + restyled)
-8. Network (map preview + counts)
-9. Projects highlights
-10. Latest Activity timeline
+```text
+┌─────────────────── HERO (unchanged shell) ───────────────────┐
+│  Ops Center + counts        │  Today's Priorities            │
+└──────────────────────────────────────────────────────────────┘
+┌─── Quick Actions (7 icon cards, horizontal scroll on sm) ────┐
+┌── Platform Alerts ──┐┌── Pending Approvals ─────────────────┐
+│                     ││                                       │
+└─────────────────────┘└───────────────────────────────────────┘
+┌── AI Operations ────┐┌── Live Activity Feed ────────────────┐
+└─────────────────────┘└───────────────────────────────────────┘
+┌── Growth KPIs (row of cards with sparklines) ────────────────┐
+┌── Countries ────────┐┌── System Status ─┐┌── Users ─────────┐
+└─────────────────────┘└──────────────────┘└──────────────────┘
+┌── Recent Requests ──┐┌── Scheduled Jobs ────────────────────┐
+└─────────────────────┘└───────────────────────────────────────┘
+┌── Footer status bar ─────────────────────────────────────────┐
+```
 
-Sections separated by full-width horizontal rules to evoke the "mission control" divider feel.
+Existing "Featured Network Passports" block stays where it currently is (kept as-is). Organization registry table stays at bottom above the footer.
 
-## 6. Files
+## Files
 
-**New**
-- `src/lib/nhri.ts` — scoring
-- `src/lib/dashboard-derive.ts` — derived counts (rank, opportunities, greeting, AI summary text)
-- `src/components/dashboard/HeroPassport.tsx`
-- `src/components/dashboard/AICommandCenter.tsx`
-- `src/components/dashboard/HealthScoreCard.tsx`
-- `src/components/dashboard/CriticalActionsStrip.tsx`
-- `src/components/dashboard/KpiInteractiveGrid.tsx`
-- `src/components/dashboard/EcosystemSummary.tsx`
-- `src/components/dashboard/MissingDataGamified.tsx`
-- `src/components/dashboard/SupplyChainSnapshot.tsx`
-- `src/components/dashboard/ReadinessBreakdown.tsx`
-- `src/components/dashboard/ActivityTimeline.tsx`
-- `src/components/dashboard/OpportunitiesPanel.tsx`
-- `src/components/dashboard/QuickActionsDock.tsx`
-- `src/components/dashboard/PassportCards.tsx`
+**New components (`src/components/ops/`)**
+- `PriorityList.tsx`, `QuickActions.tsx`, `PlatformAlerts.tsx`, `PendingApprovals.tsx`, `LiveActivity.tsx`, `AIOperations.tsx`, `GrowthKpis.tsx` (with inline `Sparkline`), `CountryOverview.tsx`, `SystemStatus.tsx`, `UserOverview.tsx`, `RecentRequests.tsx`, `ScheduledJobs.tsx`, `OpsFooter.tsx`.
+
+**New derivation helper**
+- `src/lib/ops-derive.ts` — pure functions computing priorities, alerts, approvals queue, activity, AI findings, country ranks, user counts, requests, jobs. All from `ALL_ENTITIES` + deterministic mock seeds.
 
 **Edited**
-- `src/routes/organizations.$id.index.tsx` — compose new Overview
-- `src/routes/index.tsx` — Mission Control home
-- `src/components/OrgSidebar.tsx` — renamed tab labels + new Insights/AI entries
-- `src/components/NetworkPassport.tsx` — passport card redesign
-- `src/seed/showcase.ts` — extend mock activity/kpi where needed (additive only)
+- `src/routes/index.tsx` — rewire hero content, insert new sections in the order shown above, remove the old AI summary block and old activity block that these replace.
 
-**Untouched**
-- Messages, Meetings, Projects internals, Matchmaking logic, all backend, all seed sources of truth (all-entities, kpi library, matchmaking).
-
-## Technical Notes
-
-- Design tokens only (semantic Tailwind classes); no hardcoded colors. Health bands mapped to existing `confidenceClasses` tones + one new `--nhri-*` token set in `src/styles.css`.
-- All new components are pure presentation, take `Entity` (or nothing) as props, read via lib helpers.
-- Global Rank = index of entity when `ALL_ENTITIES` sorted by NHRI desc.
-- AI Summary text is templated from seed counters — no Lovable AI call this pass (per your choice), but `AICommandCenter` accepts an optional `summary` prop so a server function can plug in later without refactor.
-- Quick Actions Dock uses existing routes (`/matchmaking`, org `/projects`, `/messages`, etc.).
-- Keep bundle lean: no new deps.
+## Guardrails
+- No changes to navigation, sidebar, org routes, backend, or seed sources of truth.
+- Reuse existing shadcn primitives (Card, Button, Badge, Tabs) and current color tokens; no hardcoded hex.
+- All new panels are pure presentation with typed props; helpers in `ops-derive.ts` are unit-friendly.
+- Every clickable row uses TanStack `Link` to an existing route (no dead links).
