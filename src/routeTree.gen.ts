@@ -15,6 +15,7 @@ import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as MeetingsRouteImport } from './routes/meetings'
 import { Route as MatchmakingRouteImport } from './routes/matchmaking'
 import { Route as MapRouteImport } from './routes/map'
+import { Route as FeedRouteImport } from './routes/feed'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OrganizationsIndexRouteImport } from './routes/organizations.index'
@@ -70,6 +71,11 @@ const MatchmakingRoute = MatchmakingRouteImport.update({
 const MapRoute = MapRouteImport.update({
   id: '/map',
   path: '/map',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FeedRoute = FeedRouteImport.update({
+  id: '/feed',
+  path: '/feed',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -220,6 +226,7 @@ const OrganizationsIdProjectsProjectIdActivityRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/feed': typeof FeedRoute
   '/map': typeof MapRoute
   '/matchmaking': typeof MatchmakingRoute
   '/meetings': typeof MeetingsRoute
@@ -254,6 +261,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/feed': typeof FeedRoute
   '/map': typeof MapRoute
   '/matchmaking': typeof MatchmakingRoute
   '/meetings': typeof MeetingsRoute
@@ -285,6 +293,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/feed': typeof FeedRoute
   '/map': typeof MapRoute
   '/matchmaking': typeof MatchmakingRoute
   '/meetings': typeof MeetingsRoute
@@ -321,6 +330,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/feed'
     | '/map'
     | '/matchmaking'
     | '/meetings'
@@ -355,6 +365,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/feed'
     | '/map'
     | '/matchmaking'
     | '/meetings'
@@ -385,6 +396,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/auth'
+    | '/feed'
     | '/map'
     | '/matchmaking'
     | '/meetings'
@@ -420,6 +432,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  FeedRoute: typeof FeedRoute
   MapRoute: typeof MapRoute
   MatchmakingRoute: typeof MatchmakingRoute
   MeetingsRoute: typeof MeetingsRoute
@@ -470,6 +483,13 @@ declare module '@tanstack/react-router' {
       path: '/map'
       fullPath: '/map'
       preLoaderRoute: typeof MapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/feed': {
+      id: '/feed'
+      path: '/feed'
+      fullPath: '/feed'
+      preLoaderRoute: typeof FeedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -761,6 +781,7 @@ const OrganizationsRouteWithChildren = OrganizationsRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  FeedRoute: FeedRoute,
   MapRoute: MapRoute,
   MatchmakingRoute: MatchmakingRoute,
   MeetingsRoute: MeetingsRoute,

@@ -8,6 +8,7 @@ import {
   MessageSquare,
   Calendar,
   Sparkles,
+  Activity,
 } from "lucide-react";
 import {
   Sidebar,
@@ -26,6 +27,7 @@ import { useCommsVersion } from "@/lib/use-comms";
 
 const items = [
   { title: "Platform Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Activity Feed", url: "/feed", icon: Activity },
   { title: "Organizations", url: "/organizations", icon: Building2 },
   { title: "Map View", url: "/map", icon: Map },
   { title: "Matchmaking", url: "/matchmaking", icon: Sparkles },
