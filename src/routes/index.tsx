@@ -22,36 +22,35 @@ import {
 import { PassportCards } from "@/components/dashboard/PassportCards";
 import { COMPANY_BENCHMARK } from "@/seed/kpi";
 import { platformNhriAggregate, bandBadgeClasses, computeNhri } from "@/lib/nhri";
-import { greetingForNow } from "@/lib/dashboard-derive";
-import { ArrowUpRight, TrendingUp, Sparkles, Radar, ShieldCheck, Globe2 } from "lucide-react";
+import { ArrowUpRight, TrendingUp } from "lucide-react";
+import { PriorityList } from "@/components/ops/PriorityList";
+import { QuickActions } from "@/components/ops/QuickActions";
+import { PlatformAlerts } from "@/components/ops/PlatformAlerts";
+import { PendingApprovals } from "@/components/ops/PendingApprovals";
+import { AIOperations } from "@/components/ops/AIOperations";
+import { LiveActivity } from "@/components/ops/LiveActivity";
+import { GrowthKpis } from "@/components/ops/GrowthKpis";
+import { CountryOverview } from "@/components/ops/CountryOverview";
+import { SystemStatus } from "@/components/ops/SystemStatus";
+import { UserOverview } from "@/components/ops/UserOverview";
+import { RecentRequests } from "@/components/ops/RecentRequests";
+import { ScheduledJobs } from "@/components/ops/ScheduledJobs";
+import { OpsFooter } from "@/components/ops/OpsFooter";
+import { platformCounts, todaysPriorities, platformAlerts } from "@/lib/ops-derive";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Mission Control — Global Chain Hub" },
+      { title: "Operations Console — Global Chain Hub" },
       {
         name: "description",
         content:
-          "Live operating system for apparel and textile supply chains: Network Health & Readiness Index, ecosystem intelligence, and AI-driven actions.",
+          "Platform operations console for the Global Chain Hub team: alerts, approvals, activity, AI operations, and system health.",
       },
     ],
   }),
   component: DashboardPage,
 });
-
-function Stat({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
-  return (
-    <Card className="shadow-sm">
-      <CardContent className="p-5">
-        <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          {label}
-        </div>
-        <div className="mt-2 text-2xl font-semibold tracking-tight">{value}</div>
-        {hint && <div className="mt-1 text-xs text-muted-foreground">{hint}</div>}
-      </CardContent>
-    </Card>
-  );
-}
 
 function SectionDivider({ label }: { label: string }) {
   return (
@@ -65,100 +64,45 @@ function SectionDivider({ label }: { label: string }) {
   );
 }
 
-function GreetingHero() {
-  const g = greetingForNow();
+function OpsHero() {
   const p = platformNhriAggregate();
-  const distribution = [
-    { label: "Excellent", value: p.buckets.Excellent, tone: "bg-emerald-500" },
-    { label: "Strong", value: p.buckets.Strong, tone: "bg-sky-500" },
-    { label: "Developing", value: p.buckets.Developing, tone: "bg-amber-500" },
-    { label: "At Risk", value: p.buckets["At Risk"], tone: "bg-red-500" },
+  const counts = platformCounts(p.avg);
+  const priorities = todaysPriorities();
+  const stats = [
+    { label: "Organizations", value: counts.organizations },
+    { label: "Countries", value: counts.countries },
+    { label: "Active projects", value: counts.activeProjects },
+    { label: "Verification requests", value: counts.verificationRequests },
+    { label: "Platform health", value: `${counts.healthPct}%` },
   ];
-  const total = distribution.reduce((s, d) => s + d.value, 0) || 1;
   return (
     <section className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-6 text-slate-100 shadow-lg">
       <div className="pointer-events-none absolute -right-16 -top-16 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl" />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-300">
-            Mission Control
+            Platform Operations Center
           </div>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-            {g.greet}, Rahul.
+            Global Chain Hub · Admin
           </h1>
           <p className="mt-2 max-w-xl text-sm text-slate-300">
-            Platform-wide Network Health & Readiness Index sits at <span className="font-semibold text-white">{p.avg}</span>.
-            {" "}{summaryMetrics.totalRegistry} organizations tracked across {summaryMetrics.countries} countries.
+            Monitor platform health, review pending approvals, and act on AI-surfaced signals across the network.
           </p>
-          <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <div className="rounded-lg border border-white/10 bg-white/5 p-3">
-              <div className="text-[10px] uppercase tracking-wider text-slate-300">Verified</div>
-              <div className="mt-1 text-xl font-semibold">{summaryMetrics.verified}</div>
-            </div>
-            <div className="rounded-lg border border-white/10 bg-white/5 p-3">
-              <div className="text-[10px] uppercase tracking-wider text-slate-300">Matchmaking-ready</div>
-              <div className="mt-1 text-xl font-semibold">{summaryMetrics.matchmakingReady}</div>
-            </div>
-            <div className="rounded-lg border border-white/10 bg-white/5 p-3">
-              <div className="text-[10px] uppercase tracking-wider text-slate-300">Avg confidence</div>
-              <div className="mt-1 text-xl font-semibold">{summaryMetrics.avgConfidence}%</div>
-            </div>
-            <div className="rounded-lg border border-white/10 bg-white/5 p-3">
-              <div className="text-[10px] uppercase tracking-wider text-slate-300">High risk</div>
-              <div className="mt-1 text-xl font-semibold">{summaryMetrics.highRisk}</div>
-            </div>
+          <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-5">
+            {stats.map((s) => (
+              <div key={s.label} className="rounded-lg border border-white/10 bg-white/5 p-3">
+                <div className="text-[10px] uppercase tracking-wider text-slate-300">
+                  {s.label}
+                </div>
+                <div className="mt-1 text-xl font-semibold tabular-nums">{s.value}</div>
+              </div>
+            ))}
           </div>
         </div>
-        <aside className="rounded-xl border border-white/10 bg-white/5 p-4">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-sky-300">
-            Health distribution
-          </div>
-          <div className="mt-3 flex h-3 w-full overflow-hidden rounded-full bg-white/10">
-            {distribution.map((d) => (
-              <div key={d.label} className={d.tone} style={{ width: `${(d.value / total) * 100}%` }} />
-            ))}
-          </div>
-          <ul className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
-            {distribution.map((d) => (
-              <li key={d.label} className="flex items-center justify-between">
-                <span className="inline-flex items-center gap-1.5">
-                  <span className={`h-2 w-2 rounded-full ${d.tone}`} />
-                  <span className="text-slate-200">{d.label}</span>
-                </span>
-                <span className="tabular-nums text-slate-400">{d.value}</span>
-              </li>
-            ))}
-          </ul>
-        </aside>
+        <PriorityList items={priorities} />
       </div>
     </section>
-  );
-}
-
-function AiSummaryStrip() {
-  const p = platformNhriAggregate();
-  const items = [
-    { icon: Sparkles, text: `${p.buckets.Excellent} organizations reached Excellent this week.` },
-    { icon: ShieldCheck, text: `${summaryMetrics.verified} verified · ${summaryMetrics.missingTotal} open data points.` },
-    { icon: Radar, text: `${summaryMetrics.matchmakingReady} organizations matchmaking-ready.` },
-    { icon: Globe2, text: `${summaryMetrics.countries} countries active in the registry.` },
-  ];
-  return (
-    <Card className="border-sky-100 bg-gradient-to-br from-sky-50 via-white to-white shadow-sm">
-      <CardContent className="p-5">
-        <div className="mb-2 inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-sky-700">
-          <Sparkles className="h-3.5 w-3.5" /> AI daily summary
-        </div>
-        <ul className="grid gap-2 sm:grid-cols-2">
-          {items.map((it, i) => (
-            <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
-              <it.icon className="mt-0.5 h-3.5 w-3.5 text-sky-600" />
-              {it.text}
-            </li>
-          ))}
-        </ul>
-      </CardContent>
-    </Card>
   );
 }
 
@@ -252,6 +196,7 @@ function TopMovers() {
 function DashboardPage() {
   const preview = ENTITIES.slice(0, 5);
   const breakdown = ENTITY_TYPE_BREAKDOWN;
+  const alerts = platformAlerts();
 
   const featured = [
     { id: "gch-nike" },
@@ -267,8 +212,32 @@ function DashboardPage() {
   return (
     <AppShell>
       <div className="mx-auto max-w-7xl space-y-8">
-        <GreetingHero />
-        <AiSummaryStrip />
+        <OpsHero />
+        <QuickActions />
+
+        <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
+          <PlatformAlerts items={alerts} />
+          <PendingApprovals />
+        </section>
+
+        <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
+          <AIOperations />
+          <LiveActivity />
+        </section>
+
+        <SectionDivider label="Growth" />
+        <GrowthKpis />
+
+        <section className="grid gap-4 lg:grid-cols-3">
+          <CountryOverview />
+          <SystemStatus />
+          <UserOverview />
+        </section>
+
+        <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
+          <RecentRequests />
+          <ScheduledJobs />
+        </section>
 
         <SectionDivider label="Passports" />
         <section className="space-y-3">
@@ -309,16 +278,6 @@ function DashboardPage() {
               </Link>
             ))}
           </div>
-        </section>
-
-        <SectionDivider label="Registry" />
-        <section className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-          <Stat label="Total entities" value={summaryMetrics.totalRegistry} hint="In registry" />
-          <Stat label="Seeded visible" value={summaryMetrics.seededVisible} hint="In this prototype" />
-          <Stat label="Verified" value={summaryMetrics.verified} />
-          <Stat label="Incomplete profiles" value={summaryMetrics.incomplete} />
-          <Stat label="Avg confidence" value={`${summaryMetrics.avgConfidence}%`} />
-          <Stat label="Matchmaking-ready" value={summaryMetrics.matchmakingReady} />
         </section>
 
         <SectionDivider label="Performance" />
@@ -403,6 +362,10 @@ function DashboardPage() {
             </CardContent>
           </Card>
         </section>
+
+        <OpsFooter />
+        {/* Prevent unused import warnings for summaryMetrics used indirectly via ops-derive */}
+        <span className="hidden">{summaryMetrics.total}</span>
       </div>
     </AppShell>
   );
