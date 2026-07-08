@@ -177,20 +177,7 @@ function ActivityStream() {
   }
 
   return (
-    <AppShell>
-      <div className="mx-auto max-w-6xl space-y-6">
-        <header className="space-y-1">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            Platform Operations Center
-          </div>
-          <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
-            <Activity className="h-5 w-5 text-slate-600" /> Activity feed
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Everything happening across Global Chain Hub, newest first. Filter by type, severity, or search.
-          </p>
-        </header>
-
+    <div className="space-y-6">
         {/* summary + search */}
         <Card className="shadow-sm">
           <CardContent className="p-4">
