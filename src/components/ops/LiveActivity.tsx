@@ -25,12 +25,10 @@ export function LiveActivity() {
   const rows = liveActivity().filter((r: ActivityRow) => filter === "all" || r.kind === filter);
   return (
     <Card className="shadow-sm">
-      <CardHeader className="flex-row items-start justify-between space-y-0">
-        <div>
-          <CardTitle className="flex items-center gap-2 text-base font-semibold">
-            <Activity className="h-4 w-4 text-slate-600" /> Live activity
-          </CardTitle>
-        </div>
+      <CardHeader className="flex flex-col gap-3 space-y-0 sm:flex-row sm:items-start sm:justify-between">
+        <CardTitle className="flex items-center gap-2 text-base font-semibold">
+          <Activity className="h-4 w-4 shrink-0 text-slate-600" /> Live activity
+        </CardTitle>
         <div className="flex flex-wrap gap-1">
           {FILTERS.map((f) => (
             <button
@@ -54,18 +52,20 @@ export function LiveActivity() {
             const Icon = ICONS[r.kind];
             return (
               <li key={i} className="relative">
-                <div className="absolute -left-[21px] top-1 grid h-3 w-3 place-items-center rounded-full border border-slate-300 bg-white">
+                <div className="absolute -left-[21px] top-1.5 grid h-3 w-3 place-items-center rounded-full border border-slate-300 bg-white">
                   <Icon className="h-2 w-2 text-slate-500" />
                 </div>
-                <div className="flex items-baseline justify-between gap-3">
-                  <div className="min-w-0 text-sm text-slate-700">
-                    <span className="grid h-5 w-5 shrink-0 place-items-center rounded bg-slate-900 text-[10px] font-semibold text-white inline-grid mr-2 align-middle">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-start gap-2 text-sm text-slate-700">
+                    <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded bg-slate-900 text-[10px] font-semibold text-white">
                       {r.org.charAt(0)}
                     </span>
-                    <span className="font-medium">{r.org}</span>{" "}
-                    <span className="text-slate-600">{r.text}</span>
+                    <span className="min-w-0">
+                      <span className="font-medium">{r.org}</span>{" "}
+                      <span className="text-slate-600">{r.text}</span>
+                    </span>
                   </div>
-                  <Badge variant="outline" className="shrink-0 text-[10px] tabular-nums">
+                  <Badge variant="outline" className="shrink-0 whitespace-nowrap text-[10px] tabular-nums">
                     {r.time}
                   </Badge>
                 </div>

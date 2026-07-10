@@ -79,20 +79,20 @@ function OpsHero() {
     <section className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-6 text-slate-100 shadow-lg">
       <div className="pointer-events-none absolute -right-16 -top-16 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl" />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-        <div>
+        <div className="min-w-0">
           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-300">
             Platform Operations Center
           </div>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
             Global Chain Hub · Admin
           </h1>
           <p className="mt-2 max-w-xl text-sm text-slate-300">
             Monitor platform health, review pending approvals, and act on AI-surfaced signals across the network.
           </p>
-          <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-5">
+          <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
             {stats.map((s) => (
-              <div key={s.label} className="rounded-lg border border-white/10 bg-white/5 p-3">
-                <div className="text-[10px] uppercase tracking-wider text-slate-300">
+              <div key={s.label} className="min-w-0 rounded-lg border border-white/10 bg-white/5 p-3">
+                <div className="truncate text-[10px] uppercase tracking-wider text-slate-300">
                   {s.label}
                 </div>
                 <div className="mt-1 text-xl font-semibold tabular-nums">{s.value}</div>
@@ -241,15 +241,15 @@ function DashboardPage() {
 
         <SectionDivider label="Passports" />
         <section className="space-y-3">
-          <div className="flex items-end justify-between">
-            <div>
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div className="min-w-0">
               <h2 className="text-base font-semibold tracking-tight">Featured Network Passports</h2>
               <p className="text-xs text-muted-foreground">
                 Live profile previews sourced from real published sustainability reports.
               </p>
             </div>
             {featured[0] && (
-              <Button asChild variant="ghost" size="sm">
+              <Button asChild variant="ghost" size="sm" className="shrink-0">
                 <Link to="/organizations/$id" params={{ id: featured[0]!.id }}>
                   Open profile <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
                 </Link>
@@ -287,9 +287,9 @@ function DashboardPage() {
         <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <TopMovers />
           <Card className="shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base font-semibold">Global network map</CardTitle>
-              <Button asChild variant="outline" size="sm">
+            <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
+              <CardTitle className="min-w-0 truncate text-base font-semibold">Global network map</CardTitle>
+              <Button asChild variant="outline" size="sm" className="shrink-0">
                 <Link to="/map">Open map</Link>
               </Button>
             </CardHeader>
@@ -302,15 +302,15 @@ function DashboardPage() {
         <SectionDivider label="Registry preview" />
         <section className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           <Card className="shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base font-semibold">Organization registry preview</CardTitle>
-              <Button asChild variant="ghost" size="sm">
+            <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
+              <CardTitle className="min-w-0 truncate text-base font-semibold">Organization registry preview</CardTitle>
+              <Button asChild variant="ghost" size="sm" className="shrink-0">
                 <Link to="/organizations">
                   View all <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
                 </Link>
               </Button>
             </CardHeader>
-            <CardContent className="p-0">
+            <CardContent className="p-0 overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
