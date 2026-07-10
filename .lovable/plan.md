@@ -1,85 +1,73 @@
-# Platform Operations Console — Home Dashboard Upgrade
 
-Scope: only `src/routes/index.tsx` (platform home) and new presentation components under `src/components/ops/`. Organization pages, navigation, sidebar, colors, typography, and card styles stay as they are. All data is derived from existing seed (`ALL_ENTITIES`, `showcase.ts`, `nhri.ts`, `dashboard-derive.ts`) — no backend, no new deps.
+## Goal
 
-## What changes
+Sweep the entire admin app for responsive layout bugs and text/line alignment issues so every page holds together from ~360px mobile up to wide desktop. No feature or visual-language changes — same colors, spacing scale, typography, cards.
 
-### 1. Hero → "Platform Operations Center"
-Rework the existing dark hero card in place (same shell, same spacing):
-- Left: title "Platform Operations Center", subtitle line with live counts — Organizations, Countries, Active Projects, Verification Requests, Platform Health (avg NHRI).
-- Right: "Today's Priorities" list (4 rows, colored dots, clickable) — waiting verification, expiring certs today, new matchmaking requests, delayed projects. Each links to the relevant route (`/organizations`, `/matchmaking`, etc.).
+The screenshot you shared shows the two classes of bugs I'll target everywhere:
+- Text overflowing its container (org names like "KUMARAN TEXTILES (Units 2, 3, Kumaran Sizing Mills…" bleeding into the priority pill and action buttons).
+- Rows that don't reflow: pill + Approve/Review/Reject buttons stay on one line and push into the title instead of wrapping.
 
-### 2. Quick Actions strip (new)
-Horizontal row of 7 icon cards directly under the hero: Add Organization, Verify Organization, Create Project, Approve Partnership, Invite User, Send Broadcast, Upload Dataset. Static handlers (toast) for demo; wire targets to existing routes where they exist.
+## Scope (every route + shared shell)
 
-### 3. Platform Alerts panel (replaces AI Summary block)
-6 alert rows with severity color chip (red/orange/blue/green): incomplete profiles, expiring certs, delayed projects, pending partner approvals, duplicate suppliers (AI), missing ESG data. Each row clickable → route.
+Admin shell: `AppShell`, `AppSidebar`, sticky header.
 
-### 4. Pending Approvals panel (new)
-Table-style card with tabs: Verification, Projects, Partnerships, Org Updates, Invitations, Certificates. Each row: org, type, waiting time, priority chip, Approve / Review / Reject buttons.
+Admin pages: `/` (ops console), `/feed` (Activity + Community tabs), `/organizations`, `/organizations/$id` and all its sub-routes (index, projects, projects/$projectId/*, matchmaking, messages, meetings, requests, research, settings, supply-chain, compliance, circularity, feed), `/matchmaking`, `/messages`, `/meetings`, `/map`, `/settings`, `/auth`.
 
-### 5. Live Activity Feed (new, replaces current activity block)
-Timeline grouped by time-of-day, org logo/initial + icon + text + timestamp. Filter chips (All / Uploads / Approvals / AI / Projects).
+Shared components: everything under `src/components/ops/*`, `src/components/dashboard/*`, `src/components/feed/*`, `src/components/messages/*`, `src/components/projects/*`, plus the top-level cards (`KpiTable`, `KpiSnapshot`, `BenchmarkChart`, `ActivityFeed`, `MatchmakingPanel`, `NetworkPassport`, `OrgShell`, `OrgSidebar`, `ReportUploader`, `ResearchWorkspace`, `EcosystemGoogleMap`, `EcosystemConnections`, `DashboardByType`, `MiniDashboard`, `DocumentsList`, `MeetingRequestDialog`, `MatchProfileSheet`, `MessageChannel`).
 
-### 6. AI Operations Center (new)
-Card listing 5 AI findings (duplicates, missing certs, partnership opportunities, suspicious ESG, incomplete supply chains) each with a Review button.
+## Fix patterns to apply consistently
 
-### 7. Platform Growth Analytics (upgrade existing KPI row)
-Keep the row, but each KPI card gets a delta label (+N this month / +N%) and an inline sparkline (tiny SVG polyline, deterministic from seed).
+Applied per the project's `responsive-layout-patterns` rule.
 
-### 8. Country Overview (new)
-Ranked country list card (top 8 by org count derived from `ALL_ENTITIES`). Row click filters `/organizations?country=`.
+1. Row layouts with title + widgets (approvals, alerts, feed items, project rows, message list items, org cards):
+   - Wrap outer row in `grid grid-cols-[minmax(0,1fr)_auto] sm:flex sm:flex-wrap items-center gap-3`.
+   - Text column gets `min-w-0`; titles get `truncate` (single line) or `line-clamp-2` (multi-line).
+   - Icons/avatars/badges get `shrink-0`.
+   - Action button clusters wrap to the next line on mobile via `flex flex-wrap gap-1 sm:justify-end`.
 
-### 9. System Status (new)
-Small panel: API, Database, Storage (87%), Email, Matching Engine, AI Models — green/yellow dots. Static demo values.
+2. Pending Approvals card (visible bug in screenshot):
+   - Two-line stacked layout on mobile: title row on top, priority + actions row below.
+   - Truncate long org names with a `title` attribute for full text on hover.
+   - Tabs list already uses `flex-wrap` — verify chip spacing at 360px.
 
-### 10. User Overview (new)
-Card with counts by role/type (Admins, Moderators, Brands, Suppliers, Research, NGOs, Auditors, Certification Bodies). Derived from entity types + fixed admin counts. Rows clickable.
+3. Grids:
+   - KPI/stat grids: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5` instead of jumping straight to 5.
+   - Dashboard two-column areas: `grid-cols-1 lg:grid-cols-2` with `min-w-0` on each cell so charts and long names don't force horizontal scroll.
 
-### 11. Recent Requests (new)
-Compact list of newest incoming requests with type, status chip, and age.
+4. Headers and page titles:
+   - `flex flex-wrap items-center justify-between gap-3` with `min-w-0` on the title block and `truncate` on H1s.
+   - Sticky admin header: `min-w-0` on the label, hide the "Global Chain Hub · Admin" secondary text below `sm:`.
 
-### 12. Scheduled Jobs (new)
-"Tonight" list with job name and time (Supply Chain Refresh 23:00, AI ESG Scoring 01:00, etc.).
+5. Sidebar:
+   - Ensure `SidebarProvider` collapses to icon-only under `md:`; verify no nav label overflows.
 
-### 13. Footer status bar (new)
-Thin footer row: Platform Version, Last AI Update, Last DB Sync, Last Backup, Uptime.
+6. Tables / long lists (`KpiTable`, requests, documents, priority list):
+   - Wrap in `overflow-x-auto` with `min-w-full` inner table so mobile scrolls horizontally instead of squishing cells.
+   - Or convert to stacked card view under `sm:` where a table isn't essential (priority list, recent requests).
 
-## Layout
+7. Feed pages:
+   - Filter chip rows: already `flex-wrap` — audit gap and tap targets.
+   - Event rows: apply row-layout pattern above so badges + meta wrap under the title on narrow screens.
 
-```text
-┌─────────────────── HERO (unchanged shell) ───────────────────┐
-│  Ops Center + counts        │  Today's Priorities            │
-└──────────────────────────────────────────────────────────────┘
-┌─── Quick Actions (7 icon cards, horizontal scroll on sm) ────┐
-┌── Platform Alerts ──┐┌── Pending Approvals ─────────────────┐
-│                     ││                                       │
-└─────────────────────┘└───────────────────────────────────────┘
-┌── AI Operations ────┐┌── Live Activity Feed ────────────────┐
-└─────────────────────┘└───────────────────────────────────────┘
-┌── Growth KPIs (row of cards with sparklines) ────────────────┐
-┌── Countries ────────┐┌── System Status ─┐┌── Users ─────────┐
-└─────────────────────┘└──────────────────┘└──────────────────┘
-┌── Recent Requests ──┐┌── Scheduled Jobs ────────────────────┐
-└─────────────────────┘└───────────────────────────────────────┘
-┌── Footer status bar ─────────────────────────────────────────┐
-```
+8. Chat / messages:
+   - Conversation list: `min-w-0` + `truncate` on names and previews.
+   - On mobile: single-column with a back button instead of side-by-side list + thread.
 
-Existing "Featured Network Passports" block stays where it currently is (kept as-is). Organization registry table stays at bottom above the footer.
+9. Charts (`BenchmarkChart`, sparklines):
+   - Wrap in `w-full` container with a min-height; ensure SVGs use `viewBox` + `preserveAspectRatio` (sparklines already do).
 
-## Files
+10. Alignment nits:
+    - Numbers → `tabular-nums`.
+    - Icon + text rows → `inline-flex items-center gap-1.5` (baseline-safe).
+    - Card headers with trailing meta → `flex items-center justify-between gap-2`, title `truncate`, meta `shrink-0`.
 
-**New components (`src/components/ops/`)**
-- `PriorityList.tsx`, `QuickActions.tsx`, `PlatformAlerts.tsx`, `PendingApprovals.tsx`, `LiveActivity.tsx`, `AIOperations.tsx`, `GrowthKpis.tsx` (with inline `Sparkline`), `CountryOverview.tsx`, `SystemStatus.tsx`, `UserOverview.tsx`, `RecentRequests.tsx`, `ScheduledJobs.tsx`, `OpsFooter.tsx`.
+## Verification
 
-**New derivation helper**
-- `src/lib/ops-derive.ts` — pure functions computing priorities, alerts, approvals queue, activity, AI findings, country ranks, user counts, requests, jobs. All from `ALL_ENTITIES` + deterministic mock seeds.
+- Playwright screenshots at 360, 768, 1024, 1440 for: `/`, `/feed` (both tabs), `/organizations`, one org detail, `/messages`, `/matchmaking`.
+- Visual check each screenshot for overflow, clipped text, buttons on top of text, horizontal scroll on `<body>`.
+- `bunx tsgo` to confirm no type regressions.
 
-**Edited**
-- `src/routes/index.tsx` — rewire hero content, insert new sections in the order shown above, remove the old AI summary block and old activity block that these replace.
+## Out of scope
 
-## Guardrails
-- No changes to navigation, sidebar, org routes, backend, or seed sources of truth.
-- Reuse existing shadcn primitives (Card, Button, Badge, Tabs) and current color tokens; no hardcoded hex.
-- All new panels are pure presentation with typed props; helpers in `ops-derive.ts` are unit-friendly.
-- Every clickable row uses TanStack `Link` to an existing route (no dead links).
+- No new features, no color/typography changes, no copy rewrites.
+- No refactors beyond the class-list changes needed for the patterns above.

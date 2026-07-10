@@ -34,10 +34,10 @@ export function PendingApprovals() {
     <Card className="shadow-sm">
       <CardHeader className="space-y-3">
         <CardTitle className="flex items-center gap-2 text-base font-semibold">
-          <Inbox className="h-4 w-4 text-slate-600" /> Pending approvals
+          <Inbox className="h-4 w-4 shrink-0 text-slate-600" /> Pending approvals
         </CardTitle>
         <Tabs value={kind} onValueChange={(v) => setKind(v as ApprovalKind)}>
-          <TabsList className="flex w-full flex-wrap gap-1 bg-slate-100">
+          <TabsList className="flex h-auto w-full flex-wrap gap-1 bg-slate-100 p-1">
             {KINDS.map((k) => (
               <TabsTrigger key={k} value={k} className="text-xs">
                 {k}
@@ -48,28 +48,28 @@ export function PendingApprovals() {
       </CardHeader>
       <CardContent className="space-y-2">
         {rows.map((r) => (
-          <div
-            key={r.id}
-            className="flex items-center justify-between gap-3 rounded-md border p-3 text-sm"
-          >
-            <div className="min-w-0 flex-1">
-              <Link
-                to="/organizations/$id"
-                params={{ id: r.orgId }}
-                className="truncate font-medium hover:underline"
-              >
-                {r.orgName}
-              </Link>
-              <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                <span>{r.type}</span>
-                <span>·</span>
-                <span>{fmtAge(r.waitingHours)} waiting</span>
+          <div key={r.id} className="rounded-md border p-3 text-sm">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <Link
+                  to="/organizations/$id"
+                  params={{ id: r.orgId }}
+                  title={r.orgName}
+                  className="block truncate font-medium hover:underline"
+                >
+                  {r.orgName}
+                </Link>
+                <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+                  <span>{r.type}</span>
+                  <span aria-hidden>·</span>
+                  <span>{fmtAge(r.waitingHours)} waiting</span>
+                </div>
               </div>
+              <Badge variant="outline" className={`shrink-0 ${prioTone[r.priority]}`}>
+                {r.priority}
+              </Badge>
             </div>
-            <Badge variant="outline" className={prioTone[r.priority]}>
-              {r.priority}
-            </Badge>
-            <div className="flex gap-1">
+            <div className="mt-2 flex flex-wrap justify-end gap-1">
               <Button size="sm" className="h-7 px-2 text-xs">
                 Approve
               </Button>

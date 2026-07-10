@@ -7,12 +7,15 @@ export function AppShell({ children }: { children: ReactNode }) {
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar />
-        <div className="flex flex-1 flex-col">
+        <div className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur">
             <SidebarTrigger />
-            <div className="text-sm text-muted-foreground">Global Chain Hub · Admin</div>
+            <div className="min-w-0 truncate text-sm text-muted-foreground">
+              <span className="hidden sm:inline">Global Chain Hub · Admin</span>
+              <span className="sm:hidden">GCH · Admin</span>
+            </div>
           </header>
-          <main className="flex-1 px-6 py-8">{children}</main>
+          <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 sm:py-8">{children}</main>
         </div>
       </div>
     </SidebarProvider>

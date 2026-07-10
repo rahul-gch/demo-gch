@@ -179,12 +179,12 @@ function PostRow({ post, onChange }: { post: Row; onChange: () => void }) {
     <Card className="shadow-sm">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-3">
-            <Avatar className="h-9 w-9">
+          <div className="flex min-w-0 flex-1 items-start gap-3">
+            <Avatar className="h-9 w-9 shrink-0">
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
-            <div className="min-w-0">
-              <div className="text-sm font-medium">
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-sm font-medium">
                 <Link
                   to="/organizations/$id"
                   params={{ id: post.orgId }}
@@ -193,12 +193,12 @@ function PostRow({ post, onChange }: { post: Row; onChange: () => void }) {
                   {post.authorOrg}
                 </Link>
               </div>
-              <div className="text-xs text-muted-foreground">
+              <div className="truncate text-xs text-muted-foreground">
                 {post.authorName} · {post.orgType} · {post.orgCountry} · {formatRelative(post.at)}
               </div>
             </div>
           </div>
-          <Badge variant="outline" className={meta.className}>
+          <Badge variant="outline" className={`shrink-0 whitespace-nowrap ${meta.className}`}>
             <Icon className="mr-1 h-3 w-3" />
             {meta.label}
           </Badge>

@@ -22,12 +22,12 @@ export function RecentRequests() {
         <ul className="divide-y">
           {rows.map((r) => (
             <li key={r.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="truncate font-medium">{r.type}</div>
-                <div className="text-xs text-muted-foreground">{r.org}</div>
+                <div className="truncate text-xs text-muted-foreground">{r.org}</div>
               </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className={tone[r.status]}>
+              <div className="flex shrink-0 items-center gap-2">
+                <Badge variant="outline" className={`whitespace-nowrap ${tone[r.status]}`}>
                   {r.status}
                 </Badge>
                 <span className="w-8 text-right text-xs tabular-nums text-muted-foreground">
