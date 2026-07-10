@@ -296,13 +296,14 @@ function ActivityStream() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <Badge variant="outline" className={SEV_TONE[e.severity]}>
+                            <Badge variant="outline" className={`shrink-0 ${SEV_TONE[e.severity]}`}>
                               {e.severity}
                             </Badge>
                             <Link
                               to="/organizations/$id"
                               params={{ id: e.orgId }}
-                              className="truncate text-sm font-medium hover:underline"
+                              title={e.title}
+                              className="min-w-0 flex-1 truncate text-sm font-medium hover:underline"
                             >
                               {e.title}
                             </Link>
@@ -311,12 +312,12 @@ function ActivityStream() {
                             {e.detail}
                           </div>
                           <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
-                            <span>{e.orgName}</span>
-                            <span>·</span>
+                            <span className="truncate">{e.orgName}</span>
+                            <span aria-hidden>·</span>
                             <span>{e.entityType}</span>
-                            <span>·</span>
+                            <span aria-hidden>·</span>
                             <span>{e.country}</span>
-                            <span>·</span>
+                            <span aria-hidden>·</span>
                             <span>{formatRelative(e.at)}</span>
                           </div>
                         </div>
