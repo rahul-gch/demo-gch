@@ -31,7 +31,6 @@ import { Route as OrganizationsIdMeetingsRouteImport } from './routes/organizati
 import { Route as OrganizationsIdMatchmakingRouteImport } from './routes/organizations.$id.matchmaking'
 import { Route as OrganizationsIdFeedRouteImport } from './routes/organizations.$id.feed'
 import { Route as OrganizationsIdComplianceRouteImport } from './routes/organizations.$id.compliance'
-import { Route as OrganizationsIdCircularityRouteImport } from './routes/organizations.$id.circularity'
 import { Route as OrganizationsIdProjectsIndexRouteImport } from './routes/organizations.$id.projects.index'
 import { Route as OrganizationsIdProjectsProjectIdRouteImport } from './routes/organizations.$id.projects.$projectId'
 import { Route as OrganizationsIdProjectsProjectIdIndexRouteImport } from './routes/organizations.$id.projects.$projectId.index'
@@ -156,12 +155,6 @@ const OrganizationsIdComplianceRoute =
     path: '/compliance',
     getParentRoute: () => OrganizationsIdRoute,
   } as any)
-const OrganizationsIdCircularityRoute =
-  OrganizationsIdCircularityRouteImport.update({
-    id: '/circularity',
-    path: '/circularity',
-    getParentRoute: () => OrganizationsIdRoute,
-  } as any)
 const OrganizationsIdProjectsIndexRoute =
   OrganizationsIdProjectsIndexRouteImport.update({
     id: '/',
@@ -235,7 +228,6 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/organizations/$id': typeof OrganizationsIdRouteWithChildren
   '/organizations/': typeof OrganizationsIndexRoute
-  '/organizations/$id/circularity': typeof OrganizationsIdCircularityRoute
   '/organizations/$id/compliance': typeof OrganizationsIdComplianceRoute
   '/organizations/$id/feed': typeof OrganizationsIdFeedRoute
   '/organizations/$id/matchmaking': typeof OrganizationsIdMatchmakingRoute
@@ -268,7 +260,6 @@ export interface FileRoutesByTo {
   '/messages': typeof MessagesRoute
   '/settings': typeof SettingsRoute
   '/organizations': typeof OrganizationsIndexRoute
-  '/organizations/$id/circularity': typeof OrganizationsIdCircularityRoute
   '/organizations/$id/compliance': typeof OrganizationsIdComplianceRoute
   '/organizations/$id/feed': typeof OrganizationsIdFeedRoute
   '/organizations/$id/matchmaking': typeof OrganizationsIdMatchmakingRoute
@@ -302,7 +293,6 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/organizations/$id': typeof OrganizationsIdRouteWithChildren
   '/organizations/': typeof OrganizationsIndexRoute
-  '/organizations/$id/circularity': typeof OrganizationsIdCircularityRoute
   '/organizations/$id/compliance': typeof OrganizationsIdComplianceRoute
   '/organizations/$id/feed': typeof OrganizationsIdFeedRoute
   '/organizations/$id/matchmaking': typeof OrganizationsIdMatchmakingRoute
@@ -339,7 +329,6 @@ export interface FileRouteTypes {
     | '/settings'
     | '/organizations/$id'
     | '/organizations/'
-    | '/organizations/$id/circularity'
     | '/organizations/$id/compliance'
     | '/organizations/$id/feed'
     | '/organizations/$id/matchmaking'
@@ -372,7 +361,6 @@ export interface FileRouteTypes {
     | '/messages'
     | '/settings'
     | '/organizations'
-    | '/organizations/$id/circularity'
     | '/organizations/$id/compliance'
     | '/organizations/$id/feed'
     | '/organizations/$id/matchmaking'
@@ -405,7 +393,6 @@ export interface FileRouteTypes {
     | '/settings'
     | '/organizations/$id'
     | '/organizations/'
-    | '/organizations/$id/circularity'
     | '/organizations/$id/compliance'
     | '/organizations/$id/feed'
     | '/organizations/$id/matchmaking'
@@ -597,13 +584,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrganizationsIdComplianceRouteImport
       parentRoute: typeof OrganizationsIdRoute
     }
-    '/organizations/$id/circularity': {
-      id: '/organizations/$id/circularity'
-      path: '/circularity'
-      fullPath: '/organizations/$id/circularity'
-      preLoaderRoute: typeof OrganizationsIdCircularityRouteImport
-      parentRoute: typeof OrganizationsIdRoute
-    }
     '/organizations/$id/projects/': {
       id: '/organizations/$id/projects/'
       path: '/'
@@ -731,7 +711,6 @@ const OrganizationsIdProjectsRouteWithChildren =
   )
 
 interface OrganizationsIdRouteChildren {
-  OrganizationsIdCircularityRoute: typeof OrganizationsIdCircularityRoute
   OrganizationsIdComplianceRoute: typeof OrganizationsIdComplianceRoute
   OrganizationsIdFeedRoute: typeof OrganizationsIdFeedRoute
   OrganizationsIdMatchmakingRoute: typeof OrganizationsIdMatchmakingRoute
@@ -746,7 +725,6 @@ interface OrganizationsIdRouteChildren {
 }
 
 const OrganizationsIdRouteChildren: OrganizationsIdRouteChildren = {
-  OrganizationsIdCircularityRoute: OrganizationsIdCircularityRoute,
   OrganizationsIdComplianceRoute: OrganizationsIdComplianceRoute,
   OrganizationsIdFeedRoute: OrganizationsIdFeedRoute,
   OrganizationsIdMatchmakingRoute: OrganizationsIdMatchmakingRoute,
@@ -792,13 +770,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

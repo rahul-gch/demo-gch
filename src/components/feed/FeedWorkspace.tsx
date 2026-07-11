@@ -74,9 +74,6 @@ export function FeedWorkspace({ entity }: { entity: Entity }) {
       <div className="space-y-6">
         <header>
           <h1 className="text-2xl font-semibold tracking-tight">Community feed</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Sustainability-only network for {entity.name}. Share updates, run events, follow regulations.
-          </p>
         </header>
 
         <Composer entity={entity} />
