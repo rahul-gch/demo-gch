@@ -11,7 +11,7 @@ import {
   FolderKanban,
   Network,
   ShieldCheck,
-  Recycle,
+  
   Inbox,
 } from "lucide-react";
 import {
@@ -55,7 +55,7 @@ export function OrgSidebar({ entity }: { entity: Entity }) {
       badge: inbox,
     },
     { title: "Compliance", url: `${base}/compliance`, icon: ShieldCheck },
-    { title: "Circularity & DPP", url: `${base}/circularity`, icon: Recycle },
+    
     { title: "Requests", url: `${base}/requests`, icon: Inbox },
     { title: "Settings", url: `${base}/settings`, icon: Settings },
   ];
