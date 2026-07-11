@@ -118,9 +118,6 @@ function FeedPage() {
           <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
             <Activity className="h-5 w-5 text-slate-600" /> Feed
           </h1>
-          <p className="text-sm text-muted-foreground">
-            System events across every organization, plus the community stream of posts, events and announcements.
-          </p>
         </header>
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as "activity" | "community")}>

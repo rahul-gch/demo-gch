@@ -530,15 +530,6 @@ function QuickActions({ entity }: { entity: Entity }) {
           </Button>
         </CardContent>
       </Card>
-      <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-sm font-semibold">About this feed</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-xs text-muted-foreground">
-          <p>Only sustainability posts from your GCH network. No noise.</p>
-          <p className="inline-flex items-center gap-1"><Rss className="h-3 w-3" /> Curated for {entity.name}</p>
-        </CardContent>
-      </Card>
     </aside>
   );
 }
