@@ -1,7 +1,6 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { Network } from "lucide-react";
 import { getEntity } from "@/seed/all-entities";
-import { ComingSoon } from "@/components/ComingSoon";
+import { SupplyChainPage } from "@/components/supply-chain/SupplyChainPage";
 
 export const Route = createFileRoute("/organizations/$id/supply-chain")({
   loader: ({ params }) => {
@@ -12,14 +11,13 @@ export const Route = createFileRoute("/organizations/$id/supply-chain")({
   head: ({ loaderData }) => ({
     meta: [
       { title: `Supply Chain Mapping — ${loaderData?.entity.name ?? "Organization"} | GCH` },
-      { name: "description", content: "Tier-by-tier supply chain map." },
+      { name: "description", content: "Upload, visualize and extend the supplier network." },
     ],
   }),
-  component: () => (
-    <ComingSoon
-      title="Supply Chain Mapping"
-      description="Visualize tiers, flows and hotspots across this organization's supply chain."
-      icon={Network}
-    />
-  ),
+  component: Page,
 });
+
+function Page() {
+  const { entity } = Route.useLoaderData();
+  return <SupplyChainPage entity={entity} />;
+}

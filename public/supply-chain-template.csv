@@ -1,0 +1,3 @@
+tier,company_name,country,city,role,materials,certifications,contact_email
+Tier 1,Acme Cut & Sew,Portugal,Porto,Garment manufacturing,"Cotton, Polyester","GOTS, OEKO-TEX",contact@acme-cs.example
+Tier 2,Blue Yarn Mills,Turkey,Izmir,Yarn spinning,"Organic cotton yarn","GOTS",hello@blueyarn.example
