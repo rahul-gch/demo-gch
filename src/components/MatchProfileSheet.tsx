@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import type { Entity } from "@/seed/types";
 import {
@@ -42,14 +42,26 @@ export function MatchProfileSheet({
   viewer,
   open,
   onOpenChange,
+  initialAction,
 }: {
   match: { entity: Entity; score: number; reasons: string[] } | null;
   viewer?: Entity | null;
   open: boolean;
   onOpenChange: (o: boolean) => void;
+  initialAction?: "message" | "meeting" | null;
 }) {
   const [draft, setDraft] = useState("");
   const [meetOpen, setMeetOpen] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    if (initialAction === "meeting") {
+      setMeetOpen(true);
+    } else if (initialAction === "message") {
+      setTimeout(() => textareaRef.current?.focus(), 50);
+    }
+  }, [open, initialAction, match?.entity.id]);
 
   if (!match) return null;
   const e = match.entity;
@@ -73,7 +85,19 @@ export function MatchProfileSheet({
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
           <SheetHeader>
-            <SheetTitle className="text-xl">{e.name}</SheetTitle>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <SheetTitle className="text-xl">{e.name}</SheetTitle>
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" onClick={() => textareaRef.current?.focus()}>
+                  <Send className="mr-1 h-3.5 w-3.5" />
+                  Send message
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setMeetOpen(true)}>
+                  <CalendarPlus className="mr-1 h-3.5 w-3.5" />
+                  Request meeting
+                </Button>
+              </div>
+            </div>
             <SheetDescription className="flex flex-wrap items-center gap-2 pt-1">
               <Badge variant="secondary">{e.entityType}</Badge>
               <Badge variant="outline">{e.actorType}</Badge>
@@ -179,22 +203,17 @@ export function MatchProfileSheet({
                 Send a message
               </div>
               <Textarea
+                ref={textareaRef}
                 value={draft}
                 onChange={(ev) => setDraft(ev.target.value)}
                 placeholder={`Write to ${e.name}…`}
                 className="mt-2 min-h-[80px]"
               />
               <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={send} disabled={!draft.trim()}>
-                    <Send className="mr-1 h-3.5 w-3.5" />
-                    Send message
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => setMeetOpen(true)}>
-                    <CalendarPlus className="mr-1 h-3.5 w-3.5" />
-                    Request meeting
-                  </Button>
-                </div>
+                <Button size="sm" onClick={send} disabled={!draft.trim()}>
+                  <Send className="mr-1 h-3.5 w-3.5" />
+                  Send message
+                </Button>
                 <Button asChild size="sm" variant="ghost">
                   <Link to="/organizations/$id" params={{ id: e.id }} onClick={() => onOpenChange(false)}>
                     Open full profile <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
