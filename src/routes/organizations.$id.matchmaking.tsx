@@ -77,27 +77,44 @@ function OrgMatchmakingPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Organization</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
                 <TableHead>Tier</TableHead>
                 <TableHead>Lead time</TableHead>
                 <TableHead className="w-[200px]">Score</TableHead>
                 <TableHead>Why</TableHead>
-                <TableHead />
               </TableRow>
+
             </TableHeader>
             <TableBody>
               {matches.map((m) => (
                 <TableRow
                   key={m.entity.id}
                   className="cursor-pointer"
-                  onClick={() => {
-                    setActive(m);
-                    setOpen(true);
-                  }}
+                  onClick={() => openWith(m)}
                 >
                   <TableCell>
                     <div className="font-medium hover:underline">{m.entity.name}</div>
                     <div className="text-xs text-muted-foreground">
                       {m.entity.entityType} · {m.entity.country}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <Button
+                        size="sm"
+                        onClick={(e) => { e.stopPropagation(); openWith(m, "message"); }}
+                      >
+                        <Send className="mr-1 h-3.5 w-3.5" />
+                        Message
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => { e.stopPropagation(); openWith(m, "meeting"); }}
+                      >
+                        <CalendarPlus className="mr-1 h-3.5 w-3.5" />
+                        Meeting
+                      </Button>
                     </div>
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">{m.entity.actorType}</TableCell>
@@ -119,19 +136,6 @@ function OrgMatchmakingPage() {
                       ))}
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setActive(m);
-                        setOpen(true);
-                      }}
-                    >
-                      View
-                    </Button>
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -139,7 +143,14 @@ function OrgMatchmakingPage() {
         </CardContent>
       </Card>
 
-      <MatchProfileSheet match={active} viewer={entity} open={open} onOpenChange={setOpen} />
+      <MatchProfileSheet
+        match={active}
+        viewer={entity}
+        open={open}
+        onOpenChange={setOpen}
+        initialAction={initialAction}
+      />
+
     </div>
   );
 }
