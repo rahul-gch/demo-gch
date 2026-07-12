@@ -1,7 +1,6 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { ShieldCheck } from "lucide-react";
 import { getEntity } from "@/seed/all-entities";
-import { ComingSoon } from "@/components/ComingSoon";
+import { CompliancePage } from "@/components/compliance/CompliancePage";
 
 export const Route = createFileRoute("/organizations/$id/compliance")({
   loader: ({ params }) => {
@@ -12,14 +11,13 @@ export const Route = createFileRoute("/organizations/$id/compliance")({
   head: ({ loaderData }) => ({
     meta: [
       { title: `Compliance — ${loaderData?.entity.name ?? "Organization"} | GCH` },
-      { name: "description", content: "Compliance and audit posture." },
+      { name: "description", content: "Social audits, product certifications, and transaction certificates." },
     ],
   }),
-  component: () => (
-    <ComingSoon
-      title="Compliance"
-      description="Certifications, audits, and regulatory readiness (CSRD, CBAM, UFLPA, etc.)."
-      icon={ShieldCheck}
-    />
-  ),
+  component: Page,
 });
+
+function Page() {
+  const { entity } = Route.useLoaderData();
+  return <CompliancePage entity={entity} />;
+}
