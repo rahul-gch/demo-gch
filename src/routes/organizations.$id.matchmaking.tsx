@@ -32,6 +32,17 @@ function OrgMatchmakingPage() {
     null,
   );
   const [open, setOpen] = useState(false);
+  const [initialAction, setInitialAction] = useState<"message" | "meeting" | null>(null);
+
+  const openWith = (
+    m: { entity: Entity; score: number; reasons: string[] },
+    action: "message" | "meeting" | null = null,
+  ) => {
+    setActive(m);
+    setInitialAction(action);
+    setOpen(true);
+  };
+
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
