@@ -130,7 +130,7 @@ export function OrgBanner({ entity }: { entity: Entity }) {
         <div
           key={src}
           aria-hidden={i !== index}
-          className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+          className={`absolute inset-0 overflow-hidden rounded-2xl transition-opacity duration-1000 ease-in-out ${
             i === index ? "opacity-100" : "opacity-0"
           }`}
         >
