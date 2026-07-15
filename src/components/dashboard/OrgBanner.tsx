@@ -144,7 +144,7 @@ export function OrgBanner({ entity }: { entity: Entity }) {
       ))}
 
       {/* Overlay for legibility */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/40 to-black/60" />
+      <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-b from-black/25 via-black/40 to-black/60" />
 
       {/* Prev / next */}
       <button
