@@ -7,12 +7,12 @@ import { MapPin, Users2, FolderKanban, Network as NetworkIcon, ShieldCheck, Star
 
 function Stat({ label, value, icon: Icon }: { label: string; value: string | number; icon?: React.ComponentType<{ className?: string }> }) {
   return (
-    <div className="flex flex-col gap-1 rounded-lg border bg-card/60 p-3 backdrop-blur">
-      <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+    <div className="flex flex-col gap-1 rounded-lg border border-white/15 bg-white/10 p-3 backdrop-blur">
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-white/70">
         {label}
       </div>
-      <div className="flex items-center gap-1.5 text-lg font-semibold tabular-nums">
-        {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
+      <div className="flex items-center gap-1.5 text-xl font-semibold tabular-nums text-white">
+        {Icon && <Icon className="h-4 w-4 text-sky-300" />}
         {value}
       </div>
     </div>
