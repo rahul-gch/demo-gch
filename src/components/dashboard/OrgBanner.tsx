@@ -119,7 +119,7 @@ export function OrgBanner({ entity }: { entity: Entity }) {
     <section
       aria-roledescription="carousel"
       aria-label={`${entity.name} banner`}
-      className="group relative h-56 w-full overflow-hidden rounded-2xl border bg-slate-900 md:h-72"
+      className="group relative mb-16 h-56 w-full overflow-visible rounded-2xl border bg-slate-900 md:h-72"
       onMouseEnter={() => (pausedRef.current = true)}
       onMouseLeave={() => (pausedRef.current = false)}
       onFocus={() => (pausedRef.current = true)}
@@ -130,7 +130,7 @@ export function OrgBanner({ entity }: { entity: Entity }) {
         <div
           key={src}
           aria-hidden={i !== index}
-          className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+          className={`absolute inset-0 overflow-hidden rounded-2xl transition-opacity duration-1000 ease-in-out ${
             i === index ? "opacity-100" : "opacity-0"
           }`}
         >
@@ -144,7 +144,7 @@ export function OrgBanner({ entity }: { entity: Entity }) {
       ))}
 
       {/* Overlay for legibility */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/40 to-black/60" />
+      <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-b from-black/25 via-black/40 to-black/60" />
 
       {/* Prev / next */}
       <button
@@ -164,18 +164,18 @@ export function OrgBanner({ entity }: { entity: Entity }) {
         <ChevronRight className="h-4 w-4" />
       </button>
 
-      {/* Centered logo medallion */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="flex h-28 w-28 items-center justify-center rounded-full bg-white/95 shadow-xl ring-4 ring-white/30 backdrop-blur md:h-32 md:w-32">
+      {/* Bottom-center logo medallion, overlapping the banner edge */}
+      <div className="absolute left-1/2 -bottom-12 z-20 -translate-x-1/2">
+        <div className="flex h-24 w-24 items-center justify-center rounded-full bg-white/95 shadow-xl ring-4 ring-white/40 backdrop-blur md:h-28 md:w-28">
           {logoUrl && !logoFailed ? (
             <img
               src={logoUrl}
               alt={`${entity.name} logo`}
               onError={() => setLogoFailed(true)}
-              className="h-20 w-20 rounded-full object-contain md:h-24 md:w-24"
+              className="h-16 w-16 rounded-full object-contain md:h-20 md:w-20"
             />
           ) : (
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-slate-900 text-2xl font-semibold text-white md:h-24 md:w-24 md:text-3xl">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-900 text-xl font-semibold text-white md:h-20 md:w-20 md:text-2xl">
               {initials(entity.name)}
             </div>
           )}
