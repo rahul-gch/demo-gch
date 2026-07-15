@@ -41,7 +41,6 @@ function Divider() {
 function OverviewMissionControl({ e }: { e: Entity }) {
   return (
     <div className="space-y-6">
-      <OrgBanner entity={e} />
       <HeroPassport entity={e} />
       <AICommandCenter entity={e} />
       <HealthScoreCard entity={e} />

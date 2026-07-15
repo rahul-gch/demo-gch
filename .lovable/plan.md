@@ -1,23 +1,31 @@
-## Fixes for Org Dashboard Banner + Hero Stats
+## Merge banner carousel with hero + fix stat readability
 
-### 1. Reposition logo medallion (OrgBanner)
-In `src/components/dashboard/OrgBanner.tsx`:
-- Change centered-flex wrapper to an absolute-positioned medallion anchored to the bottom-center, overlapping the banner edge (`absolute left-1/2 -translate-x-1/2 -bottom-12`), so it sits half over the banner and half over the hero card below (as marked in the screenshot).
-- Add bottom padding/margin on the banner section (`mb-14`) so the overhanging logo doesn't collide with the HeroPassport card.
-- Keep white ring + shadow. Slightly reduce medallion size for balance (`h-24 w-24 md:h-28 md:w-28`).
+### 1. Merge carousel into the hero (no white gap)
+Currently `OrgBanner` renders as a separate card above `HeroPassport` with a gap and a floating medallion between them. Replace this with a single unified hero:
 
-### 2. Make stat tiles readable (HeroPassport)
-The tiles (NHRI SCORE, PROFILE, GLOBAL RANK, MEMBERS, PROJECTS, PARTNERS) currently use `bg-card/60` with muted foreground on the dark hero → labels and numbers appear washed out grey.
+- Delete the standalone `<OrgBanner />` render in `src/routes/organizations.$id.index.tsx`.
+- Refactor `HeroPassport.tsx` so the image carousel becomes the **background** of the hero card itself (absolutely positioned, `inset-0`, behind content with a dark gradient overlay for legibility).
+- Move the rotating slides + prev/next + dots logic into `HeroPassport` (or a small `HeroBackground` subcomponent it renders internally). The gradient `from-slate-950 via-slate-900 to-slate-800` becomes a semi-transparent overlay on top of the carousel instead of a solid fill.
+- Result: org name, badges, and stats sit directly on top of the moving carousel — no white space, no separate banner.
 
-In `src/components/dashboard/HeroPassport.tsx` `Stat` component:
-- Change container to `bg-white/10 border-white/15` (proper dark-surface tile).
-- Label: `text-white/70` instead of `text-muted-foreground`.
-- Value: `text-white text-xl` for stronger contrast and larger read.
-- Icon: `text-sky-300` for accent instead of muted grey.
+### 2. Logo medallion inside the hero
+- Place the circular logo medallion inside the hero, aligned with the title row (left of the name on `md+`, above name on mobile) instead of floating between two cards.
+- Size `h-16 w-16 md:h-20 md:w-20`, white ring, subtle shadow.
 
-### 3. No other changes
-No changes to routing, seed data, or other tabs. Purely presentational.
+### 3. Fix stat tile alignment + readability
+In `HeroPassport`'s `Stat`:
+- Left-align label and value consistently (`items-start`, no icon-induced shifting).
+- Icon sits inline before the value with fixed width so numbers align across tiles.
+- Use `bg-white/10 border-white/20`, `text-white` value at `text-lg md:text-xl`, `text-white/75` label, `text-sky-300` icon.
+- Ensure grid is `grid-cols-2 sm:grid-cols-3 lg:grid-cols-6` with even `gap-3` so tiles don't feel cramped.
+- Truncate long values (`#globalRank`) with `tabular-nums` + `truncate` on the value span.
+
+### 4. Right-side "AI says" panel
+Keep as-is but bump contrast: `bg-black/30`, `border-white/15`, ensuring it reads against the carousel background.
 
 ### Files
-- `src/components/dashboard/OrgBanner.tsx` — reposition medallion, add bottom offset.
-- `src/components/dashboard/HeroPassport.tsx` — restyle `Stat` for dark background readability.
+- `src/components/dashboard/HeroPassport.tsx` — absorb carousel as background; restyle Stat; place logo medallion inline with title.
+- `src/components/dashboard/OrgBanner.tsx` — reduce to internal `HeroBackground` (carousel only, no medallion, no outer card), OR delete and inline into HeroPassport.
+- `src/routes/organizations.$id.index.tsx` — remove separate `<OrgBanner />` render; hero is now a single unit.
+
+No routing, seed, or other tab changes.

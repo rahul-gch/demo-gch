@@ -68,33 +68,10 @@ const POOLS: Record<EntityType, string[]> = {
   ],
 };
 
-const BRAND_DOMAINS: Record<string, string> = {
-  NIKE: "nike.com",
-  HM: "hm.com",
-  MANDS: "marksandspencer.com",
-  PRIMARK: "primark.com",
-};
-
-function deriveDomain(e: Entity): string {
-  if (BRAND_DOMAINS[e.id]) return BRAND_DOMAINS[e.id];
-  const slug = e.name.toLowerCase().replace(/[^a-z0-9]/g, "");
-  return `${slug || "example"}.com`;
-}
-
-function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? "")
-    .join("");
-}
-
-export function OrgBanner({ entity }: { entity: Entity }) {
+export function HeroBackground({ entity }: { entity: Entity }) {
   const pool = POOLS[entity.entityType] ?? POOLS.Brand;
   const slides = pool.map(IMG);
   const [index, setIndex] = useState(0);
-  const [logoFailed, setLogoFailed] = useState(false);
   const pausedRef = useRef(false);
 
   useEffect(() => {
@@ -104,33 +81,22 @@ export function OrgBanner({ entity }: { entity: Entity }) {
     return () => clearInterval(t);
   }, [slides.length]);
 
-  const token = import.meta.env.VITE_LOVABLE_CONNECTOR_LOGO_DEV_API_KEY as
-    | string
-    | undefined;
-  const domain = deriveDomain(entity);
-  const logoUrl = token
-    ? `https://img.logo.dev/${domain}?token=${token}&size=200&format=png`
-    : null;
-
   const go = (delta: number) =>
     setIndex((i) => (i + delta + slides.length) % slides.length);
 
   return (
-    <section
+    <div
       aria-roledescription="carousel"
       aria-label={`${entity.name} banner`}
-      className="group relative mb-16 h-56 w-full overflow-visible rounded-2xl border bg-slate-900 md:h-72"
+      className="pointer-events-none absolute inset-0"
       onMouseEnter={() => (pausedRef.current = true)}
       onMouseLeave={() => (pausedRef.current = false)}
-      onFocus={() => (pausedRef.current = true)}
-      onBlur={() => (pausedRef.current = false)}
     >
-      {/* Slides */}
       {slides.map((src, i) => (
         <div
           key={src}
           aria-hidden={i !== index}
-          className={`absolute inset-0 overflow-hidden rounded-2xl transition-opacity duration-1000 ease-in-out ${
+          className={`absolute inset-0 overflow-hidden transition-opacity duration-1000 ease-in-out ${
             i === index ? "opacity-100" : "opacity-0"
           }`}
         >
@@ -143,15 +109,15 @@ export function OrgBanner({ entity }: { entity: Entity }) {
         </div>
       ))}
 
-      {/* Overlay for legibility */}
-      <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-b from-black/25 via-black/40 to-black/60" />
+      {/* Dark overlay for legibility */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-950/85 via-slate-900/75 to-slate-800/65" />
 
       {/* Prev / next */}
       <button
         type="button"
         aria-label="Previous slide"
         onClick={() => go(-1)}
-        className="absolute left-3 top-1/2 hidden -translate-y-1/2 rounded-full bg-black/40 p-2 text-white opacity-0 backdrop-blur transition hover:bg-black/60 group-hover:opacity-100 md:block"
+        className="pointer-events-auto absolute left-3 top-1/2 hidden -translate-y-1/2 rounded-full bg-black/40 p-2 text-white backdrop-blur transition hover:bg-black/60 md:block"
       >
         <ChevronLeft className="h-4 w-4" />
       </button>
@@ -159,31 +125,13 @@ export function OrgBanner({ entity }: { entity: Entity }) {
         type="button"
         aria-label="Next slide"
         onClick={() => go(1)}
-        className="absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-full bg-black/40 p-2 text-white opacity-0 backdrop-blur transition hover:bg-black/60 group-hover:opacity-100 md:block"
+        className="pointer-events-auto absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-full bg-black/40 p-2 text-white backdrop-blur transition hover:bg-black/60 md:block"
       >
         <ChevronRight className="h-4 w-4" />
       </button>
 
-      {/* Bottom-center logo medallion, overlapping the banner edge */}
-      <div className="absolute left-1/2 -bottom-12 z-20 -translate-x-1/2">
-        <div className="flex h-24 w-24 items-center justify-center rounded-full bg-white/95 shadow-xl ring-4 ring-white/40 backdrop-blur md:h-28 md:w-28">
-          {logoUrl && !logoFailed ? (
-            <img
-              src={logoUrl}
-              alt={`${entity.name} logo`}
-              onError={() => setLogoFailed(true)}
-              className="h-16 w-16 rounded-full object-contain md:h-20 md:w-20"
-            />
-          ) : (
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-900 text-xl font-semibold text-white md:h-20 md:w-20 md:text-2xl">
-              {initials(entity.name)}
-            </div>
-          )}
-        </div>
-      </div>
-
       {/* Dots */}
-      <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
+      <div className="pointer-events-auto absolute bottom-3 right-3 flex items-center gap-1.5">
         {slides.map((_, i) => (
           <button
             key={i}
@@ -197,6 +145,33 @@ export function OrgBanner({ entity }: { entity: Entity }) {
           />
         ))}
       </div>
-    </section>
+    </div>
   );
+}
+
+const BRAND_DOMAINS: Record<string, string> = {
+  NIKE: "nike.com",
+  HM: "hm.com",
+  MANDS: "marksandspencer.com",
+  PRIMARK: "primark.com",
+};
+
+export function deriveDomain(e: Entity): string {
+  if (BRAND_DOMAINS[e.id]) return BRAND_DOMAINS[e.id];
+  const slug = e.name.toLowerCase().replace(/[^a-z0-9]/g, "");
+  return `${slug || "example"}.com`;
+}
+
+export function entityInitials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
+// Backwards compat: keep OrgBanner export as a no-op so any stale import doesn't break.
+export function OrgBanner(_: { entity: Entity }) {
+  return null;
 }
