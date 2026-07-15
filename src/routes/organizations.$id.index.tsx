@@ -2,6 +2,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getEntity } from "@/seed/all-entities";
 import { HeroPassport } from "@/components/dashboard/HeroPassport";
+import { OrgBanner } from "@/components/dashboard/OrgBanner";
 import { AICommandCenter } from "@/components/dashboard/AICommandCenter";
 import { HealthScoreCard } from "@/components/dashboard/HealthScoreCard";
 import { CriticalActionsStrip } from "@/components/dashboard/CriticalActionsStrip";
