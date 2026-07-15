@@ -119,7 +119,7 @@ export function OrgBanner({ entity }: { entity: Entity }) {
     <section
       aria-roledescription="carousel"
       aria-label={`${entity.name} banner`}
-      className="group relative h-56 w-full overflow-hidden rounded-2xl border bg-slate-900 md:h-72"
+      className="group relative mb-16 h-56 w-full overflow-visible rounded-2xl border bg-slate-900 md:h-72"
       onMouseEnter={() => (pausedRef.current = true)}
       onMouseLeave={() => (pausedRef.current = false)}
       onFocus={() => (pausedRef.current = true)}
