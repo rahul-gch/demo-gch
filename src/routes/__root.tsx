@@ -7,6 +7,8 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
+
 
 import appCss from "../styles.css?url";
 
@@ -110,6 +112,25 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
+  const subRef = useRef<{ unsubscribe: () => void } | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    void import("@/integrations/supabase/client").then(({ supabase }) => {
+      if (!mounted) return;
+      const { data } = supabase.auth.onAuthStateChange((event) => {
+        if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+        router.invalidate();
+        if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
+      });
+      subRef.current = data.subscription;
+    });
+    return () => {
+      mounted = false;
+      subRef.current?.unsubscribe();
+    };
+  }, [queryClient, router]);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -118,3 +139,5 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
+
+
