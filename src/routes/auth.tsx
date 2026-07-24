@@ -91,8 +91,7 @@ function AuthPage() {
             <span className="ml-2">{loading ? "Signing in…" : "Continue with Google"}</span>
           </Button>
           <p className="text-center text-xs text-muted-foreground">
-            New here? Sign in with Google to create your account. To join an
-            existing organization, ask an admin for an invitation link.
+            New here? <a href="/signup" className="text-primary hover:underline">Create an organization</a>, or ask an admin for an invite link.
           </p>
         </CardContent>
       </Card>
