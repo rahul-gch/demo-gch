@@ -2,7 +2,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { getEntity } from "@/seed/all-entities";
 import { FeedWorkspace } from "@/components/feed/FeedWorkspace";
 
-export const Route = createFileRoute("/_authenticated/_authenticated/organizations/$id/feed")({
+export const Route = createFileRoute("/_authenticated/organizations/$id/feed")({
   loader: ({ params }) => {
     const entity = getEntity(params.id);
     if (!entity) throw notFound();

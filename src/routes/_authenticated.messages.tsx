@@ -18,7 +18,7 @@ import { MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 
-export const Route = createFileRoute("/_authenticated/_authenticated/messages")({
+export const Route = createFileRoute("/_authenticated/messages")({
   head: () => ({ meta: [{ title: "Messages — Global Chain Hub" }] }),
   component: MessagesPage,
 });

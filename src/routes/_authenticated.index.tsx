@@ -38,7 +38,7 @@ import { ScheduledJobs } from "@/components/ops/ScheduledJobs";
 import { OpsFooter } from "@/components/ops/OpsFooter";
 import { platformCounts, todaysPriorities, platformAlerts } from "@/lib/ops-derive";
 
-export const Route = createFileRoute("/_authenticated/_authenticated/")({
+export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [
       { title: "Operations Console — Global Chain Hub" },

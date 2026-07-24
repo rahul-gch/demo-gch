@@ -4,7 +4,7 @@ import { ProjectShell } from "@/components/projects/ProjectShell";
 import { useProject } from "@/lib/use-projects";
 import { Card, CardContent } from "@/components/ui/card";
 
-export const Route = createFileRoute("/_authenticated/_authenticated/organizations/$id/projects/$projectId")({
+export const Route = createFileRoute("/_authenticated/organizations/$id/projects/$projectId")({
   loader: ({ params }) => {
     const entity = getEntity(params.id);
     if (!entity) throw notFound();

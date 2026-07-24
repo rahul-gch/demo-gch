@@ -14,7 +14,7 @@ import { MatchProfileSheet } from "@/components/MatchProfileSheet";
 import type { Entity } from "@/seed/types";
 
 
-export const Route = createFileRoute("/_authenticated/_authenticated/organizations/$id/matchmaking")({
+export const Route = createFileRoute("/_authenticated/organizations/$id/matchmaking")({
   loader: ({ params }) => {
     const entity = getEntity(params.id);
     if (!entity) throw notFound();

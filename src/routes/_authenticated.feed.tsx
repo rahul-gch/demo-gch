@@ -30,7 +30,7 @@ import {
 } from "@/lib/admin-feed";
 import { CommunityFeed } from "@/components/feed/CommunityFeed";
 
-export const Route = createFileRoute("/_authenticated/_authenticated/feed")({
+export const Route = createFileRoute("/_authenticated/feed")({
   head: () => ({
     meta: [
       { title: "Activity Feed — Global Chain Hub Admin" },
