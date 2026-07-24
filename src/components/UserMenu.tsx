@@ -59,6 +59,12 @@ export function UserMenu() {
           {email}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild className="cursor-pointer">
+          <Link to="/signup">
+            <Plus className="mr-2 h-4 w-4" />
+            Create new organization
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={signOut} className="cursor-pointer">
           <LogOut className="mr-2 h-4 w-4" />
           Sign out
