@@ -76,7 +76,7 @@ function OrgSettingsPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Organization settings</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Editable profile for {e.name}. Changes feed dashboards and matchmaking.
+            Manage {e.name} profile and team members.
           </p>
         </div>
         {hasOverride && (
@@ -85,6 +85,19 @@ function OrgSettingsPage() {
           </Badge>
         )}
       </header>
+
+      <Tabs defaultValue="profile" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="profile">Profile</TabsTrigger>
+          <TabsTrigger value="members">Members & invites</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="members" className="space-y-6">
+          <MembersPanel orgId={e.id} />
+        </TabsContent>
+
+        <TabsContent value="profile" className="space-y-6">
+
 
       <Card className="shadow-sm">
         <CardHeader>
