@@ -9,6 +9,7 @@ import {
   Calendar,
   Sparkles,
   Activity,
+  Plus,
 } from "lucide-react";
 import {
   Sidebar,
