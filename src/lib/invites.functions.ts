@@ -37,7 +37,7 @@ export const acceptInvite = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: orgId, error } = await context.supabase.rpc("accept_invite", {
       _token: data.token,
-      _display_name: data.displayName ?? null,
+      _display_name: data.displayName,
     });
     if (error) throw new Error(error.message);
     return { orgId };

@@ -10,7 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated.index'
+import { Route as InviteTokenRouteImport } from './routes/invite.$token'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated.settings'
 import { Route as AuthenticatedOrganizationsRouteImport } from './routes/_authenticated.organizations'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated.messages'
@@ -47,47 +50,61 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
-  id: '/_authenticated/',
-  path: '/',
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
-  id: '/_authenticated/settings',
-  path: '/settings',
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/callback',
+  path: '/callback',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedOrganizationsRoute =
   AuthenticatedOrganizationsRouteImport.update({
-    id: '/_authenticated/organizations',
+    id: '/organizations',
     path: '/organizations',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedMessagesRoute = AuthenticatedMessagesRouteImport.update({
-  id: '/_authenticated/messages',
+  id: '/messages',
   path: '/messages',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedMeetingsRoute = AuthenticatedMeetingsRouteImport.update({
-  id: '/_authenticated/meetings',
+  id: '/meetings',
   path: '/meetings',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedMatchmakingRoute =
   AuthenticatedMatchmakingRouteImport.update({
-    id: '/_authenticated/matchmaking',
+    id: '/matchmaking',
     path: '/matchmaking',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedMapRoute = AuthenticatedMapRouteImport.update({
-  id: '/_authenticated/map',
+  id: '/map',
   path: '/map',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedFeedRoute = AuthenticatedFeedRouteImport.update({
-  id: '/_authenticated/feed',
+  id: '/feed',
   path: '/feed',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedOrganizationsIndexRoute =
   AuthenticatedOrganizationsIndexRouteImport.update({
@@ -229,7 +246,8 @@ const AuthenticatedOrganizationsIdProjectsProjectIdActivityRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/auth': typeof AuthRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/auth': typeof AuthRouteWithChildren
   '/feed': typeof AuthenticatedFeedRoute
   '/map': typeof AuthenticatedMapRoute
   '/matchmaking': typeof AuthenticatedMatchmakingRoute
@@ -237,7 +255,8 @@ export interface FileRoutesByFullPath {
   '/messages': typeof AuthenticatedMessagesRoute
   '/organizations': typeof AuthenticatedOrganizationsRouteWithChildren
   '/settings': typeof AuthenticatedSettingsRoute
-  '/': typeof AuthenticatedIndexRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/organizations/$id': typeof AuthenticatedOrganizationsIdRouteWithChildren
   '/organizations/': typeof AuthenticatedOrganizationsIndexRoute
   '/organizations/$id/compliance': typeof AuthenticatedOrganizationsIdComplianceRoute
@@ -263,13 +282,15 @@ export interface FileRoutesByFullPath {
   '/organizations/$id/projects/$projectId/': typeof AuthenticatedOrganizationsIdProjectsProjectIdIndexRoute
 }
 export interface FileRoutesByTo {
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/feed': typeof AuthenticatedFeedRoute
   '/map': typeof AuthenticatedMapRoute
   '/matchmaking': typeof AuthenticatedMatchmakingRoute
   '/meetings': typeof AuthenticatedMeetingsRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/': typeof AuthenticatedIndexRoute
   '/organizations': typeof AuthenticatedOrganizationsIndexRoute
   '/organizations/$id/compliance': typeof AuthenticatedOrganizationsIdComplianceRoute
@@ -294,7 +315,8 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/auth': typeof AuthRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/auth': typeof AuthRouteWithChildren
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
   '/_authenticated/map': typeof AuthenticatedMapRoute
   '/_authenticated/matchmaking': typeof AuthenticatedMatchmakingRoute
@@ -302,6 +324,8 @@ export interface FileRoutesById {
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/organizations': typeof AuthenticatedOrganizationsRouteWithChildren
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/organizations/$id': typeof AuthenticatedOrganizationsIdRouteWithChildren
   '/_authenticated/organizations/': typeof AuthenticatedOrganizationsIndexRoute
@@ -330,6 +354,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/'
     | '/auth'
     | '/feed'
     | '/map'
@@ -338,7 +363,8 @@ export interface FileRouteTypes {
     | '/messages'
     | '/organizations'
     | '/settings'
-    | '/'
+    | '/auth/callback'
+    | '/invite/$token'
     | '/organizations/$id'
     | '/organizations/'
     | '/organizations/$id/compliance'
@@ -371,6 +397,8 @@ export interface FileRouteTypes {
     | '/meetings'
     | '/messages'
     | '/settings'
+    | '/auth/callback'
+    | '/invite/$token'
     | '/'
     | '/organizations'
     | '/organizations/$id/compliance'
@@ -394,6 +422,7 @@ export interface FileRouteTypes {
     | '/organizations/$id/projects/$projectId'
   id:
     | '__root__'
+    | '/_authenticated'
     | '/auth'
     | '/_authenticated/feed'
     | '/_authenticated/map'
@@ -402,6 +431,8 @@ export interface FileRouteTypes {
     | '/_authenticated/messages'
     | '/_authenticated/organizations'
     | '/_authenticated/settings'
+    | '/auth/callback'
+    | '/invite/$token'
     | '/_authenticated/'
     | '/_authenticated/organizations/$id'
     | '/_authenticated/organizations/'
@@ -429,15 +460,9 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  AuthRoute: typeof AuthRoute
-  AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
-  AuthenticatedMapRoute: typeof AuthenticatedMapRoute
-  AuthenticatedMatchmakingRoute: typeof AuthenticatedMatchmakingRoute
-  AuthenticatedMeetingsRoute: typeof AuthenticatedMeetingsRoute
-  AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
-  AuthenticatedOrganizationsRoute: typeof AuthenticatedOrganizationsRouteWithChildren
-  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
-  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  AuthRoute: typeof AuthRouteWithChildren
+  InviteTokenRoute: typeof InviteTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -449,61 +474,82 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/': {
       id: '/_authenticated/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof AuthRoute
     }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/organizations': {
       id: '/_authenticated/organizations'
       path: '/organizations'
       fullPath: '/organizations'
       preLoaderRoute: typeof AuthenticatedOrganizationsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/messages': {
       id: '/_authenticated/messages'
       path: '/messages'
       fullPath: '/messages'
       preLoaderRoute: typeof AuthenticatedMessagesRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/meetings': {
       id: '/_authenticated/meetings'
       path: '/meetings'
       fullPath: '/meetings'
       preLoaderRoute: typeof AuthenticatedMeetingsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/matchmaking': {
       id: '/_authenticated/matchmaking'
       path: '/matchmaking'
       fullPath: '/matchmaking'
       preLoaderRoute: typeof AuthenticatedMatchmakingRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/map': {
       id: '/_authenticated/map'
       path: '/map'
       fullPath: '/map'
       preLoaderRoute: typeof AuthenticatedMapRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/feed': {
       id: '/_authenticated/feed'
       path: '/feed'
       fullPath: '/feed'
       preLoaderRoute: typeof AuthenticatedFeedRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/organizations/': {
       id: '/_authenticated/organizations/'
@@ -785,8 +831,18 @@ const AuthenticatedOrganizationsRouteWithChildren =
     AuthenticatedOrganizationsRouteChildren,
   )
 
-const rootRouteChildren: RootRouteChildren = {
-  AuthRoute: AuthRoute,
+interface AuthenticatedRouteChildren {
+  AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
+  AuthenticatedMapRoute: typeof AuthenticatedMapRoute
+  AuthenticatedMatchmakingRoute: typeof AuthenticatedMatchmakingRoute
+  AuthenticatedMeetingsRoute: typeof AuthenticatedMeetingsRoute
+  AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
+  AuthenticatedOrganizationsRoute: typeof AuthenticatedOrganizationsRouteWithChildren
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
   AuthenticatedMapRoute: AuthenticatedMapRoute,
   AuthenticatedMatchmakingRoute: AuthenticatedMatchmakingRoute,
@@ -795,6 +851,26 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedOrganizationsRoute: AuthenticatedOrganizationsRouteWithChildren,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+}
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
+
+interface AuthRouteChildren {
+  AuthCallbackRoute: typeof AuthCallbackRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthCallbackRoute: AuthCallbackRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
+const rootRouteChildren: RootRouteChildren = {
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  AuthRoute: AuthRouteWithChildren,
+  InviteTokenRoute: InviteTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
