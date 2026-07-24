@@ -1,68 +1,97 @@
-## Real authentication + invites
+## Organization signup
 
-Replace the placeholder `/auth` page with a working Google-based login, gate the whole app behind it, and add an invite system (email + shareable link) so managers can bring team members into their organizations with a role.
+Add a public `/signup` route that lets a newly signed-in user either create a brand-new organization (becoming its owner) or join an existing one via an invite. Existing users without any org membership are nudged to this route.
 
-### 1. Auth setup
-- Enable Google OAuth via `supabase--configure_social_auth` (`providers: ["google"]`).
-- Sign in uses `lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/auth/callback" })`.
-- New public routes:
-  - `/auth` — Google sign-in button + shows current sign-in state.
-  - `/auth/callback` — waits for Supabase session, then redirects to the stored `next` path (defaults to `/`).
-  - `/invite/$token` — public invite acceptance page (see §3).
-- Add a lightweight auth context in `__root.tsx`: subscribes once to `supabase.auth.onAuthStateChange` (filtered to `SIGNED_IN`/`SIGNED_OUT`/`USER_UPDATED`), calls `router.invalidate()`, and exposes `{ user, loading }` via route context.
+### 1. New public route: `/signup`
 
-### 2. Route gating
-- Introduce a pathless `_authenticated` layout (`ssr: false`, `beforeLoad` calls `supabase.auth.getUser()`, redirects to `/auth?next=…` when missing).
-- Move every existing app route under it:
-  - `index.tsx`, `feed.tsx`, `map.tsx`, `matchmaking.tsx`, `meetings.tsx`, `messages.tsx`, `settings.tsx`, and the entire `organizations.*` tree.
-- Public routes remaining outside the gate: `/auth`, `/auth/callback`, `/invite/$token`.
-- Update `AppSidebar` / `AppShell` to show the signed-in user (email + avatar) with a "Sign out" action that follows the sign-out hygiene (cancel queries → clear cache → `signOut()` → replace-navigate to `/auth`).
+File: `src/routes/signup.tsx` (public — outside `_authenticated`).
 
-### 3. Invite system
-Two ways to invite, both landing on `/invite/$token`:
+Three tabs:
+- **Create new organization** (default)
+- **Join with invite** — form with a token field or "Paste invite link"; on submit, navigate to `/invite/$token`.
+- **Have an account?** — link back to `/auth`.
 
-**A. Email invite with role** (manager fills email + role in Org → Settings → Members)
-- Creates an `org_invites` row with a unique token, target email, org, role, `expires_at` (14 days), `invited_by`.
-- Sends the invite email via an existing Resend/Lovable Emails path (fallback: show the copyable link in the UI if email isn't configured).
+Behavior:
+- If the visitor is not signed in, show a "Sign in with Google to continue" CTA that runs `lovable.auth.signInWithOAuth("google", { redirect_uri: `${origin}/auth/callback?next=/signup` })`. Same CTA is reused for both tabs.
+- Once signed in, the Create form is unlocked. On successful create, redirect to `/organizations/{id}`.
 
-**B. Shareable invite link** (manager generates a link with a chosen role)
-- Same table, but `email` is null and `max_uses` / `uses` track usage; role is fixed on the link.
+### 2. Create-org form
 
-Accept flow (`/invite/$token`):
-1. Public loader fetches invite metadata (org name, role, whether it's email-locked, expiry) via a public server fn — does not require auth.
-2. If not signed in → "Sign in with Google to join {Org}" (preserves `next=/invite/<token>`).
-3. If signed in → shows org + role, "Accept invitation" button.
-4. Accept calls a `requireSupabaseAuth` server fn that validates the token, checks email match (for email invites), enforces expiry/uses, then inserts into `org_members` (upsert on `(org_id, user_id)`), increments `uses`, and marks single-use invites `accepted_at`. Redirects to `/organizations/{id}`.
+Fields (matches `orgs` schema + user answers):
 
-### 4. Members management UI
-In `organizations.$id.settings.tsx` (managers/owners only, checked via existing `user_can_manage`):
-- **Members list**: existing `org_members` rows with role dropdown + remove button.
-- **Pending invites list**: outstanding rows from `org_invites` with copy-link, resend, revoke.
-- **Invite form**: email + role → sends email invite; "Create shareable link" → generates link-invite.
-- Non-managers see a read-only members list.
+Core (required):
+- Organization name
+- Slug (auto-generated from name, editable, uniqueness checked)
+- Type (dropdown from existing entity types: Brand, Farmer, Ginner, Spinner, Fabric Mill, Dye House, Garment Factory, Logistics Provider, Certification Body, Sustainability Partner)
+- Country
+- Website (optional URL)
 
-### 5. Data model
-New migration adds:
-- `org_invites` (`id`, `org_id` FK, `email nullable`, `role org_role`, `token text unique`, `invited_by`, `expires_at`, `max_uses int default 1`, `uses int default 0`, `accepted_at`, `revoked_at`, `created_at`).
-- Grants + RLS:
-  - `SELECT/INSERT/UPDATE/DELETE` to `authenticated`, `ALL` to `service_role`.
-  - Managers can select/insert/update/delete invites for their orgs (via `user_can_manage`).
-  - Public accept: a `SECURITY DEFINER` RPC `get_invite_by_token(text)` returns non-sensitive fields (org name, role, expiry, is_email_locked) without needing table SELECT for anon.
-- Existing `org_members` policies already allow managers to insert/update/delete — accept flow uses the authenticated user's own client so the manager-created invite is consumed via a `SECURITY DEFINER` function `accept_invite(token text)` that performs the insert on behalf of the user (validating token + email match server-side).
+Profile detail (optional, collapsible "More details"):
+- Description (textarea)
+- Size (dropdown: 1-10, 11-50, 51-200, 201-1000, 1000+)
+- Region
+- Tier (1-4)
+- Certifications (multi-select from a preset list; free-add allowed)
 
-### 6. First-run: bootstrapping org ownership
-Because signup is open with no auto-assigned org, we need at least one path in:
-- Keep the existing seeded orgs viewable (public SELECT on `orgs` already exists).
-- Users get into an org only via invite. Document this on `/auth` ("Ask your org admin for an invite").
-- Existing seed data has no `org_members` rows for real users — add a small "Claim demo org" affordance only if you want it; **not included by default** to keep behavior predictable. Confirm on approval if you want a seeded owner claim.
+Logo upload (optional):
+- Drag/drop or file picker, image only, max 2 MB.
+- Uploaded to a new **public** `org-logos` storage bucket at path `{org_id}/logo.{ext}`.
+- Stored URL saved to `orgs.logo_url` (new column).
 
-### Technical details
+Validation with Zod, inline errors, disabled submit while pending, toast on success/failure.
 
-- **Files created**: `src/routes/_authenticated/route.tsx`, `src/routes/auth.tsx` (rewrite), `src/routes/auth.callback.tsx`, `src/routes/invite.$token.tsx`, `src/lib/invites.functions.ts`, `src/lib/auth-context.ts`, `src/components/UserMenu.tsx`, `src/components/settings/MembersPanel.tsx`, `src/components/settings/InviteForm.tsx`.
-- **Files moved under `_authenticated/`**: all current top-level app routes and the `organizations.*` tree (rename only; content unchanged).
-- **Migration**: creates `org_invites` with grants + RLS, plus `public.get_invite_by_token(text)` and `public.accept_invite(text)` `SECURITY DEFINER` functions with `search_path = public`. Grant `EXECUTE` on `get_invite_by_token` to `anon, authenticated` and on `accept_invite` to `authenticated`.
-- **Middleware**: `src/start.ts` already registers `attachSupabaseAuth` — no change.
-- **Root**: add a single `onAuthStateChange` subscriber in `__root.tsx` that filters events and calls `router.invalidate()`; teardown on unmount.
-- **Sign-out**: uses `queryClient.cancelQueries()` → `queryClient.clear()` → `supabase.auth.signOut()` → `navigate({ to: "/auth", replace: true })`.
-- **Email sending**: use Lovable Emails if a domain is already verified; otherwise show the invite link in-UI with a "Copy link" fallback and a note that email dispatch needs a verified domain. I'll check `email_domain--list_email_domains` at build time and pick the working path automatically.
-- **No auto-confirm signup, no anonymous users.**
+### 3. Server function: `createOrg`
+
+New file: `src/lib/orgs.functions.ts` — `createServerFn` with `requireSupabaseAuth`.
+
+Steps in one transaction-ish flow:
+1. Validate input (Zod).
+2. Ensure `slug` is unique (retry with `-2`, `-3` suffix, up to a small cap).
+3. Insert into `orgs` with all provided fields.
+4. Insert an `org_members` row with `user_id = context.userId`, `role = 'owner'`, `display_name` from the Google identity (`user_metadata.full_name` or email prefix), `avatar_url` from Google avatar if present.
+5. If a logo was uploaded (client uploads first, passes the storage path), set `orgs.logo_url`.
+6. Return `{ id, slug }`.
+
+### 4. Route gating tweak
+
+- `/signup` stays public.
+- The existing `_authenticated` layout is unchanged.
+- Add a small check on `/` and on `_authenticated.organizations.index.tsx`: if the signed-in user has zero `org_members` rows, show a banner "You're not part of any organization yet" with a "Create or join one" button → `/signup`. No forced redirect (avoids trapping demo browsing).
+
+### 5. UI entry points
+
+- `/auth` page: add a "New here? Create an organization" secondary link → `/signup`.
+- `UserMenu`: add "Create new organization" item that links to `/signup`.
+- Sidebar orgs list: append a "+ New organization" item at the bottom.
+
+### 6. Database migration
+
+- `ALTER TABLE public.orgs ADD COLUMN logo_url text;`
+- No new RLS work needed for `orgs` insert: add an `INSERT` policy allowing any `authenticated` user to insert a row (WITH CHECK `true`), plus `UPDATE` policy for owners (uses existing `user_is_owner`). Existing `org_members` insert policy already covers the owner-membership insert when performed by the same user; if not, add a policy: authenticated users may insert an `org_members` row where `user_id = auth.uid()` AND they're inserting themselves as owner of an org that has no existing members (bootstrap-only).
+- Grants already exist for `orgs` and `org_members`; no change.
+
+### 7. Storage
+
+- New bucket `org-logos`, public read. Created via `supabase--storage_create_bucket`.
+- RLS on `storage.objects`:
+  - Public SELECT for bucket `org-logos`.
+  - INSERT/UPDATE/DELETE restricted to authenticated users where the top-level folder equals an `org_id` they can manage (`user_can_manage`).
+
+### 8. Files touched
+
+Created:
+- `src/routes/signup.tsx`
+- `src/lib/orgs.functions.ts`
+- `src/components/signup/CreateOrgForm.tsx`
+- `src/components/signup/JoinWithInviteForm.tsx`
+
+Edited:
+- `src/routes/auth.tsx` — add signup link
+- `src/components/UserMenu.tsx` — add "Create new organization"
+- `src/components/AppSidebar.tsx` — add "+ New organization" entry
+- `src/routes/_authenticated.organizations.index.tsx` — empty-state banner
+- Migration + storage bucket creation
+
+### Out of scope
+
+- Domain-based auto-join, request-to-join, org discovery/search, and org deletion. Join is strictly invite-only per your choice.
