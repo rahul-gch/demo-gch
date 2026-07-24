@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { getEntity } from "@/seed/all-entities";
 import {
@@ -13,6 +14,7 @@ import {
   clearOverride,
   getOverride,
 } from "@/seed/org-overrides";
+import { MembersPanel } from "@/components/settings/MembersPanel";
 
 export const Route = createFileRoute("/_authenticated/organizations/$id/settings")({
   loader: ({ params }) => {
