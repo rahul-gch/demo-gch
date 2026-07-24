@@ -21,7 +21,7 @@ import { DocumentsList } from "@/components/DocumentsList";
 import { ReportUploader } from "@/components/ReportUploader";
 import type { Entity } from "@/seed/types";
 
-export const Route = createFileRoute("/organizations/$id/")({
+export const Route = createFileRoute("/_authenticated/_authenticated/organizations/$id/")({
   loader: ({ params }) => {
     const entity = getEntity(params.id);
     if (!entity) throw notFound();

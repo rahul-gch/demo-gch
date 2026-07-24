@@ -14,7 +14,7 @@ import {
   getOverride,
 } from "@/seed/org-overrides";
 
-export const Route = createFileRoute("/organizations/$id/settings")({
+export const Route = createFileRoute("/_authenticated/_authenticated/organizations/$id/settings")({
   loader: ({ params }) => {
     const entity = getEntity(params.id);
     if (!entity) throw notFound();

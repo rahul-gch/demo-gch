@@ -14,7 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-export const Route = createFileRoute("/settings")({
+export const Route = createFileRoute("/_authenticated/_authenticated/settings")({
   head: () => ({
     meta: [
       { title: "Settings — Global Chain Hub" },

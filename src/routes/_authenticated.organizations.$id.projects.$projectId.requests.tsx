@@ -3,7 +3,7 @@ import { getEntity } from "@/seed/all-entities";
 import { useProject } from "@/lib/use-projects";
 import { RequestsPanel } from "@/components/projects/panels";
 
-export const Route = createFileRoute("/organizations/$id/projects/$projectId/requests")({
+export const Route = createFileRoute("/_authenticated/_authenticated/organizations/$id/projects/$projectId/requests")({
   loader: ({ params }) => {
     const entity = getEntity(params.id);
     if (!entity) throw notFound();

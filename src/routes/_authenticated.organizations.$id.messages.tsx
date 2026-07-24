@@ -17,7 +17,7 @@ import { MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 
-export const Route = createFileRoute("/organizations/$id/messages")({
+export const Route = createFileRoute("/_authenticated/_authenticated/organizations/$id/messages")({
   loader: ({ params }) => {
     const entity = getEntity(params.id);
     if (!entity) throw notFound();

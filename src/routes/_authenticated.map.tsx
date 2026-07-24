@@ -17,7 +17,7 @@ import { ALL_ENTITIES as ENTITIES, ENTITY_TYPES } from "@/seed/all-entities";
 import type { Entity } from "@/seed/types";
 import { X } from "lucide-react";
 
-export const Route = createFileRoute("/map")({
+export const Route = createFileRoute("/_authenticated/_authenticated/map")({
   head: () => ({
     meta: [
       { title: "Map View — Global Chain Hub" },

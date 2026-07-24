@@ -22,7 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { VerificationBadge, RiskBadge } from "@/components/StatusBadge";
 import { ALL_ENTITIES as ENTITIES, ENTITY_TYPES } from "@/seed/all-entities";
 
-export const Route = createFileRoute("/organizations/")({
+export const Route = createFileRoute("/_authenticated/_authenticated/organizations/")({
   head: () => ({
     meta: [
       { title: "Organizations — Global Chain Hub" },

@@ -14,7 +14,7 @@ import { useCommsVersion } from "@/lib/use-comms";
 import { OrgAvatar } from "@/components/messages/shared";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/organizations/$id/meetings")({
+export const Route = createFileRoute("/_authenticated/_authenticated/organizations/$id/meetings")({
   loader: ({ params }) => {
     const entity = getEntity(params.id);
     if (!entity) throw notFound();

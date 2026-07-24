@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, notFound } from "@tanstack/react-router";
 import { OrgShell } from "@/components/OrgShell";
 import { getEntity } from "@/seed/all-entities";
 
-export const Route = createFileRoute("/organizations/$id")({
+export const Route = createFileRoute("/_authenticated/_authenticated/organizations/$id")({
   loader: ({ params }) => {
     const entity = getEntity(params.id);
     if (!entity) throw notFound();

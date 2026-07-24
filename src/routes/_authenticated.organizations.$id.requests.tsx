@@ -3,7 +3,7 @@ import { Inbox } from "lucide-react";
 import { getEntity } from "@/seed/all-entities";
 import { ComingSoon } from "@/components/ComingSoon";
 
-export const Route = createFileRoute("/organizations/$id/requests")({
+export const Route = createFileRoute("/_authenticated/_authenticated/organizations/$id/requests")({
   loader: ({ params }) => {
     const entity = getEntity(params.id);
     if (!entity) throw notFound();

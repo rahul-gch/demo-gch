@@ -13,7 +13,7 @@ import { getTopPairs } from "@/seed/matchmaking";
 import { MatchProfileSheet } from "@/components/MatchProfileSheet";
 import type { Entity } from "@/seed/types";
 
-export const Route = createFileRoute("/matchmaking")({
+export const Route = createFileRoute("/_authenticated/_authenticated/matchmaking")({
   head: () => ({
     meta: [
       { title: "Matchmaking — Global Chain Hub" },

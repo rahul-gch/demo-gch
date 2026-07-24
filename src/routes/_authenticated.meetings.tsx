@@ -11,7 +11,7 @@ import { useCommsVersion } from "@/lib/use-comms";
 import { OrgAvatar } from "@/components/messages/shared";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/meetings")({
+export const Route = createFileRoute("/_authenticated/_authenticated/meetings")({
   head: () => ({ meta: [{ title: "Meetings — Global Chain Hub" }] }),
   component: MeetingsPage,
 });

@@ -2,7 +2,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { getEntity } from "@/seed/all-entities";
 import { SupplyChainPage } from "@/components/supply-chain/SupplyChainPage";
 
-export const Route = createFileRoute("/organizations/$id/supply-chain")({
+export const Route = createFileRoute("/_authenticated/_authenticated/organizations/$id/supply-chain")({
   loader: ({ params }) => {
     const entity = getEntity(params.id);
     if (!entity) throw notFound();
