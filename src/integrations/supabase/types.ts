@@ -61,6 +61,62 @@ export type Database = {
           },
         ]
       }
+      org_invites: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string | null
+          expires_at: string
+          id: string
+          invited_by: string | null
+          max_uses: number
+          org_id: string
+          revoked_at: string | null
+          role: Database["public"]["Enums"]["org_role"]
+          token: string
+          updated_at: string
+          uses: number
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string | null
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          max_uses?: number
+          org_id: string
+          revoked_at?: string | null
+          role?: Database["public"]["Enums"]["org_role"]
+          token?: string
+          updated_at?: string
+          uses?: number
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string | null
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          max_uses?: number
+          org_id?: string
+          revoked_at?: string | null
+          role?: Database["public"]["Enums"]["org_role"]
+          token?: string
+          updated_at?: string
+          uses?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_invites_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       org_members: {
         Row: {
           avatar_url: string | null
@@ -158,6 +214,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_invite: {
+        Args: { _display_name?: string; _token: string }
+        Returns: string
+      }
+      get_invite_by_token: {
+        Args: { _token: string }
+        Returns: {
+          expires_at: string
+          invited_email: string
+          is_email_locked: boolean
+          org_id: string
+          org_name: string
+          role: Database["public"]["Enums"]["org_role"]
+          status: string
+        }[]
+      }
       is_org_member: { Args: { _org: string; _user: string }; Returns: boolean }
       user_can_edit: { Args: { _org: string; _user: string }; Returns: boolean }
       user_can_manage: {
