@@ -190,9 +190,12 @@ function OrgSettingsPage() {
         )}
         <Button onClick={save}>Save changes</Button>
       </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
+
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
