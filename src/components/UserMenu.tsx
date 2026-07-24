@@ -12,7 +12,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut } from "lucide-react";
+import { LogOut, Plus } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 
 export function UserMenu() {
   const [email, setEmail] = useState<string | null>(null);
@@ -58,6 +59,12 @@ export function UserMenu() {
           {email}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild className="cursor-pointer">
+          <Link to="/signup">
+            <Plus className="mr-2 h-4 w-4" />
+            Create new organization
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={signOut} className="cursor-pointer">
           <LogOut className="mr-2 h-4 w-4" />
           Sign out
