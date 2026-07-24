@@ -7,6 +7,8 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
+
 
 import appCss from "../styles.css?url";
 
@@ -111,10 +113,10 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+  const subRef = useRef<{ unsubscribe: () => void } | null>(null);
 
   useEffect(() => {
     let mounted = true;
-    // Dynamic import so this only runs client-side after hydration
     void import("@/integrations/supabase/client").then(({ supabase }) => {
       if (!mounted) return;
       const { data } = supabase.auth.onAuthStateChange((event) => {
@@ -124,7 +126,6 @@ function RootComponent() {
       });
       subRef.current = data.subscription;
     });
-    const subRef: { current: { unsubscribe: () => void } | null } = { current: null };
     return () => {
       mounted = false;
       subRef.current?.unsubscribe();
@@ -138,4 +139,5 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
+
 
