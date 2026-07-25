@@ -4919,65 +4919,7 @@ export const ENTITIES: Entity[] = [
     "recommendedNextAction": "Upload missing certifications"
   },
   {
-    "id": "gch-087",
-    "gchNumber": "GCH-087",
-    "name": "Al Roubaia FOURTEX Textiles Co. S.A.E / Sharabati denim",
-    "entityType": "Fabric Mill",
-    "rawEntityType": "Fabric Mill / Weaver",
-    "organizationType": "Fabric Mill / Weaver",
-    "actorType": "Tier 2",
-    "country": "Egypt",
-    "region": "",
-    "city": "",
-    "address": "3rd Industrial Zone Extension El Sadat",
-    "zipCode": "",
-    "latitude": 24.585,
-    "longitude": 31.26,
-    "description": "Fabric Mill / Weaver based in Egypt.",
-    "comments": "",
-    "materials": [],
-    "capabilities": [],
-    "capacity": "",
-    "moq": "",
-    "leadTimeDays": 0,
-    "certifications": [],
-    "certificationDetails": [],
-    "governance": "",
-    "traceabilityNotes": "",
-    "contacts": [
-      {
-        "name": "",
-        "email": "Ghayth.m@sharabati-denim.com",
-        "phone": "002 010 12241009",
-        "role": "Man. Director"
-      },
-      {
-        "name": "Eng. Ghayth Miro",
-        "email": "",
-        "phone": "",
-        "role": "Commercial Contact"
-      }
-    ],
-    "confidenceScore": 58,
-    "riskLevel": "Medium",
-    "evidenceCount": 0,
-    "verifiedCertCount": 0,
-    "expiredCertCount": 0,
-    "missingDataCount": 3,
-    "profileCompleteness": 75,
-    "verificationStatus": "Incomplete",
-    "preferredCommunicationChannel": "Email",
-    "kpiReadiness": 85,
-    "traceabilityReadiness": 0,
-    "matchmakingReadiness": 45,
-    "missingFields": [
-      "city",
-      "certifications",
-      "capabilities"
-    ],
-    "recommendedNextAction": "Upload missing certifications"
-  },
-  {
+
     "id": "gch-088",
     "gchNumber": "GCH-088",
     "name": "Al Wafaa for Import and Export",
