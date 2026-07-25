@@ -576,59 +576,7 @@ export const ENTITIES: Entity[] = [
     "recommendedNextAction": "Upload missing certifications"
   },
   {
-    "id": "gch-011",
-    "gchNumber": "GCH-011",
-    "name": "Alroubaia Textile Co. Fourtex / Sharabati Denim",
-    "entityType": "Fabric Mill",
-    "rawEntityType": "Fabric Mill / Weaver",
-    "organizationType": "Fabric Mill / Weaver",
-    "actorType": "Tier 2",
-    "country": "Egypt",
-    "region": "",
-    "city": "",
-    "address": "3rd Industrial Extension zone Sadat City",
-    "zipCode": "",
-    "latitude": 26.315,
-    "longitude": 33.25,
-    "description": "Fabric Mill / Weaver based in Egypt.",
-    "comments": "",
-    "materials": [],
-    "capabilities": [],
-    "capacity": "",
-    "moq": "",
-    "leadTimeDays": 0,
-    "certifications": [],
-    "certificationDetails": [],
-    "governance": "",
-    "traceabilityNotes": "",
-    "contacts": [
-      {
-        "name": "Eng. Ghayth Miro",
-        "email": "Ghayth.m@sharabati-denim.com",
-        "phone": "002 010 12241009",
-        "role": "Man. Director"
-      }
-    ],
-    "confidenceScore": 58,
-    "riskLevel": "Medium",
-    "evidenceCount": 0,
-    "verifiedCertCount": 0,
-    "expiredCertCount": 0,
-    "missingDataCount": 3,
-    "profileCompleteness": 75,
-    "verificationStatus": "Incomplete",
-    "preferredCommunicationChannel": "Email",
-    "kpiReadiness": 85,
-    "traceabilityReadiness": 0,
-    "matchmakingReadiness": 45,
-    "missingFields": [
-      "city",
-      "certifications",
-      "capabilities"
-    ],
-    "recommendedNextAction": "Upload missing certifications"
-  },
-  {
+
     "id": "gch-012",
     "gchNumber": "GCH-012",
     "name": "AMKO EXPORTS",
