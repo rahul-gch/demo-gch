@@ -119,7 +119,6 @@ export interface PairMatch extends MatchScore {
 }
 
 export function getTopPairs(limit = 50, minScore = 60): PairMatch[] {
-  // Symmetric pair generation — only consider i < j to avoid duplicates.
   const all: PairMatch[] = [];
   for (let i = 0; i < ENTITIES.length; i++) {
     for (let j = i + 1; j < ENTITIES.length; j++) {
@@ -129,3 +128,14 @@ export function getTopPairs(limit = 50, minScore = 60): PairMatch[] {
   }
   return all.sort((a, b) => b.score - a.score).slice(0, limit);
 }
+
+export const MATCH_WEIGHTS: { key: string; label: string; weight: number; description: string }[] = [
+  { key: "material", label: "Material overlap", weight: 18, description: "How many raw materials the two organizations share (cotton, denim, wool…)." },
+  { key: "tier", label: "Tier complementarity", weight: 18, description: "Whether the tiers fit as a natural supply step (brand ↔ garment factory ↔ mill ↔ farm)." },
+  { key: "delivery", label: "Delivery reliability", weight: 15, description: "Blend of on-time rate, average delay and how closely their lead times match." },
+  { key: "capacity", label: "Capacity fit", weight: 13, description: "Ratio between their production capacities — closer is better." },
+  { key: "cert", label: "Certification overlap", weight: 12, description: "Shared standards like GOTS, GRS, OEKO-TEX or SA8000." },
+  { key: "region", label: "Region proximity", weight: 12, description: "Same country scores highest, same region next, otherwise reduced." },
+  { key: "kpi", label: "KPI category overlap", weight: 12, description: "How many reported sustainability KPI categories align." },
+];
+
