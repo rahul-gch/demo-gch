@@ -31,20 +31,28 @@ const ORG_TYPES = [
   "Sustainability Partner",
 ];
 
+const MANUFACTURER_TYPES = new Set([
+  "Farmer", "Ginner", "Spinner", "Fabric Mill", "Dye House", "Garment Factory",
+]);
+
 const SIZE_OPTIONS = ["1-10", "11-50", "51-200", "201-1000", "1000+"];
 
 const COMMON_CERTS = [
-  "GOTS",
-  "OEKO-TEX",
-  "Fair Trade",
-  "GRS",
-  "OCS",
-  "BSCI",
-  "SA8000",
-  "ISO 14001",
-  "ISO 9001",
-  "SEDEX",
+  "GOTS", "OEKO-TEX", "Fair Trade", "GRS", "OCS", "BSCI", "SA8000", "ISO 14001", "ISO 9001", "SEDEX",
 ];
+
+const COMMON_MATERIALS = [
+  "Cotton", "Organic Cotton", "Recycled Cotton", "Denim", "Wool", "Viscose",
+  "Polyester", "Recycled Polyester", "Linen", "Silk", "Hemp", "Nylon",
+];
+
+const COMMON_CAPABILITIES = [
+  "Spinning", "Weaving", "Knitting", "Dyeing", "Printing", "Finishing",
+  "Cut & Sew", "Embroidery", "Washing", "Packaging",
+];
+
+const PRODUCT_CATEGORIES = ["Women", "Men", "Kids", "Baby", "Unisex", "Accessories"];
+const PRODUCT_TYPES = ["T-shirts", "Denim", "Outerwear", "Loungewear", "Activewear", "Formalwear", "Underwear", "Knitwear"];
 
 function slugify(s: string): string {
   return s
@@ -53,6 +61,74 @@ function slugify(s: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 64);
+}
+
+function ChipMultiSelect({
+  label,
+  options,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  options: string[];
+  value: string[];
+  onChange: (next: string[]) => void;
+  placeholder?: string;
+}) {
+  const [input, setInput] = useState("");
+  const add = (v: string) => {
+    const t = v.trim();
+    if (!t || value.includes(t)) return;
+    onChange([...value, t]);
+    setInput("");
+  };
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <div className="flex flex-wrap gap-1.5">
+        {value.map((v) => (
+          <Badge key={v} variant="secondary" className="gap-1">
+            {v}
+            <button
+              type="button"
+              onClick={() => onChange(value.filter((x) => x !== v))}
+              className="ml-1 opacity-60 hover:opacity-100"
+              aria-label={`Remove ${v}`}
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </Badge>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <Input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              add(input);
+            }
+          }}
+          placeholder={placeholder || `Add ${label.toLowerCase()} and press Enter`}
+        />
+        <Button type="button" variant="outline" onClick={() => add(input)}>Add</Button>
+      </div>
+      <div className="flex flex-wrap gap-1.5 pt-1">
+        {options.filter((o) => !value.includes(o)).map((o) => (
+          <button
+            key={o}
+            type="button"
+            onClick={() => add(o)}
+            className="rounded-full border px-2.5 py-0.5 text-xs text-muted-foreground hover:bg-muted"
+          >
+            + {o}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
@@ -71,7 +147,14 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
   const [region, setRegion] = useState("");
   const [tier, setTier] = useState<string>("");
   const [certs, setCerts] = useState<string[]>([]);
-  const [certInput, setCertInput] = useState("");
+  const [materials, setMaterials] = useState<string[]>([]);
+  const [capabilities, setCapabilities] = useState<string[]>([]);
+  const [productCategories, setProductCategories] = useState<string[]>([]);
+  const [productTypes, setProductTypes] = useState<string[]>([]);
+  const [moq, setMoq] = useState("");
+  const [leadTimeDays, setLeadTimeDays] = useState("");
+  const [capacity, setCapacity] = useState("");
+  const [onTimeRate, setOnTimeRate] = useState("");
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
@@ -96,13 +179,8 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
     [signedIn, name, slug, type, country, submitting],
   );
 
-  const addCert = (c: string) => {
-    const v = c.trim();
-    if (!v) return;
-    if (certs.includes(v)) return;
-    setCerts([...certs, v]);
-    setCertInput("");
-  };
+  const isManufacturer = MANUFACTURER_TYPES.has(type);
+  const isBrand = type === "Brand";
 
   const onFile = (f: File | null) => {
     if (!f) return;
@@ -121,11 +199,6 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
     if (!canSubmit) return;
     setSubmitting(true);
     try {
-      // 1. Upload logo first if present, to a temp path (we don't know org id yet).
-      //    We upload to a random path under "pending/{uid}/...". Because RLS
-      //    requires org_id in path, we instead upload AFTER org creation.
-      //    Approach: create org first without logo, then upload + update.
-
       const payload = {
         name: name.trim(),
         slug: slug || slugify(name),
@@ -136,8 +209,16 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
         size: size || null,
         region: region.trim() || null,
         tier: tier ? Number(tier) : null,
-        certifications: certs.length ? certs : null,
+        certifications: certs,
         logoPath: null,
+        moq: moq.trim() || null,
+        leadTimeDays: leadTimeDays ? Number(leadTimeDays) : null,
+        capacity: capacity.trim() || null,
+        onTimeRate: onTimeRate ? Number(onTimeRate) : null,
+        materials: isManufacturer ? materials : [],
+        capabilities: isManufacturer ? capabilities : [],
+        productCategories: isBrand ? productCategories : [],
+        productTypes: isBrand ? productTypes : [],
       };
       const res = await createOrgFn({ data: payload });
 
@@ -274,50 +355,66 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
                 </Select>
               </div>
             </div>
-            <div className="space-y-2">
-              <Label>Certifications</Label>
-              <div className="flex flex-wrap gap-1.5">
-                {certs.map((c) => (
-                  <Badge key={c} variant="secondary" className="gap-1">
-                    {c}
-                    <button
-                      type="button"
-                      onClick={() => setCerts(certs.filter((x) => x !== c))}
-                      className="ml-1 opacity-60 hover:opacity-100"
-                      aria-label={`Remove ${c}`}
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
+
+            <div className="grid gap-4 sm:grid-cols-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="moq">MOQ</Label>
+                <Input id="moq" value={moq} onChange={(e) => setMoq(e.target.value)} placeholder="500 pcs" />
               </div>
-              <div className="flex gap-2">
-                <Input
-                  value={certInput}
-                  onChange={(e) => setCertInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      addCert(certInput);
-                    }
-                  }}
-                  placeholder="Add certification and press Enter"
-                />
-                <Button type="button" variant="outline" onClick={() => addCert(certInput)}>Add</Button>
+              <div className="space-y-1.5">
+                <Label htmlFor="leadTimeDays">Lead time (days)</Label>
+                <Input id="leadTimeDays" type="number" min={0} value={leadTimeDays} onChange={(e) => setLeadTimeDays(e.target.value)} placeholder="45" />
               </div>
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {COMMON_CERTS.filter((c) => !certs.includes(c)).map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => addCert(c)}
-                    className="rounded-full border px-2.5 py-0.5 text-xs text-muted-foreground hover:bg-muted"
-                  >
-                    + {c}
-                  </button>
-                ))}
+              <div className="space-y-1.5">
+                <Label htmlFor="capacity">Capacity</Label>
+                <Input id="capacity" value={capacity} onChange={(e) => setCapacity(e.target.value)} placeholder="1M units/yr" />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="onTimeRate">On-time rate (%)</Label>
+                <Input id="onTimeRate" type="number" min={0} max={100} value={onTimeRate} onChange={(e) => setOnTimeRate(e.target.value)} placeholder="92" />
               </div>
             </div>
+
+            <ChipMultiSelect
+              label="Certifications"
+              options={COMMON_CERTS}
+              value={certs}
+              onChange={setCerts}
+            />
+
+            {isManufacturer && (
+              <>
+                <ChipMultiSelect
+                  label="Materials"
+                  options={COMMON_MATERIALS}
+                  value={materials}
+                  onChange={setMaterials}
+                />
+                <ChipMultiSelect
+                  label="Capabilities"
+                  options={COMMON_CAPABILITIES}
+                  value={capabilities}
+                  onChange={setCapabilities}
+                />
+              </>
+            )}
+
+            {isBrand && (
+              <>
+                <ChipMultiSelect
+                  label="Product categories"
+                  options={PRODUCT_CATEGORIES}
+                  value={productCategories}
+                  onChange={setProductCategories}
+                />
+                <ChipMultiSelect
+                  label="Product types"
+                  options={PRODUCT_TYPES}
+                  value={productTypes}
+                  onChange={setProductTypes}
+                />
+              </>
+            )}
           </div>
         )}
       </fieldset>
