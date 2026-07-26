@@ -163,13 +163,22 @@ export type Database = {
       }
       orgs: {
         Row: {
+          capabilities: string[]
+          capacity: string | null
           certifications: string[]
           country: string | null
           created_at: string
           description: string | null
           id: string
+          lead_time_days: number | null
           logo_url: string | null
+          materials: string[]
+          moq: string | null
           name: string
+          on_time_rate: number | null
+          product_categories: string[]
+          product_types: string[]
+          rating: number | null
           region: string | null
           size: string | null
           slug: string
@@ -179,13 +188,22 @@ export type Database = {
           website: string | null
         }
         Insert: {
+          capabilities?: string[]
+          capacity?: string | null
           certifications?: string[]
           country?: string | null
           created_at?: string
           description?: string | null
           id?: string
+          lead_time_days?: number | null
           logo_url?: string | null
+          materials?: string[]
+          moq?: string | null
           name: string
+          on_time_rate?: number | null
+          product_categories?: string[]
+          product_types?: string[]
+          rating?: number | null
           region?: string | null
           size?: string | null
           slug: string
@@ -195,13 +213,22 @@ export type Database = {
           website?: string | null
         }
         Update: {
+          capabilities?: string[]
+          capacity?: string | null
           certifications?: string[]
           country?: string | null
           created_at?: string
           description?: string | null
           id?: string
+          lead_time_days?: number | null
           logo_url?: string | null
+          materials?: string[]
+          moq?: string | null
           name?: string
+          on_time_rate?: number | null
+          product_categories?: string[]
+          product_types?: string[]
+          rating?: number | null
           region?: string | null
           size?: string | null
           slug?: string
