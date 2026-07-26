@@ -21,6 +21,14 @@ const createOrgSchema = z.object({
   tier: z.number().int().min(0).max(4).optional().nullable(),
   certifications: z.array(z.string().trim().max(80)).max(30).optional().nullable(),
   logoPath: z.string().trim().max(300).optional().nullable(),
+  moq: z.string().trim().max(60).optional().nullable(),
+  leadTimeDays: z.number().int().min(0).max(1000).optional().nullable(),
+  capacity: z.string().trim().max(120).optional().nullable(),
+  onTimeRate: z.number().int().min(0).max(100).optional().nullable(),
+  materials: z.array(z.string().trim().max(80)).max(40).optional().nullable(),
+  capabilities: z.array(z.string().trim().max(80)).max(40).optional().nullable(),
+  productCategories: z.array(z.string().trim().max(80)).max(20).optional().nullable(),
+  productTypes: z.array(z.string().trim().max(80)).max(40).optional().nullable(),
 });
 
 function slugify(input: string): string {
@@ -38,7 +46,6 @@ export const createOrg = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId, claims } = context;
 
-    // Ensure unique slug
     let slug = slugify(data.slug);
     for (let i = 0; i < 10; i++) {
       const candidate = i === 0 ? slug : `${slug}-${i + 1}`;
@@ -54,33 +61,41 @@ export const createOrg = createServerFn({ method: "POST" })
       if (i === 9) throw new Error("Could not find an available slug — please try another.");
     }
 
-    // Build logo public URL if uploaded
     let logoUrl: string | null = null;
     if (data.logoPath) {
       const { data: pub } = supabase.storage.from("org-logos").getPublicUrl(data.logoPath);
       logoUrl = pub?.publicUrl ?? null;
     }
 
+    const insertRow: Record<string, unknown> = {
+      name: data.name,
+      slug,
+      type: data.type,
+      country: data.country || null,
+      website: data.website || null,
+      description: data.description || null,
+      size: data.size || null,
+      region: data.region || null,
+      tier: data.tier ?? null,
+      certifications: data.certifications ?? [],
+      logo_url: logoUrl,
+      moq: data.moq || null,
+      lead_time_days: data.leadTimeDays ?? null,
+      capacity: data.capacity || null,
+      on_time_rate: data.onTimeRate ?? null,
+      materials: data.materials ?? [],
+      capabilities: data.capabilities ?? [],
+      product_categories: data.productCategories ?? [],
+      product_types: data.productTypes ?? [],
+    };
+
     const { data: org, error: insErr } = await supabase
       .from("orgs")
-      .insert({
-        name: data.name,
-        slug,
-        type: data.type,
-        country: data.country || null,
-        website: data.website || null,
-        description: data.description || null,
-        size: data.size || null,
-        region: data.region || null,
-        tier: data.tier ?? null,
-        certifications: data.certifications ?? [],
-        logo_url: logoUrl,
-      })
+      .insert(insertRow)
       .select("id, slug")
       .single();
     if (insErr) throw new Error(insErr.message);
 
-    // Insert creator as owner (bootstrap policy allows this)
     const meta = (claims as { user_metadata?: Record<string, unknown>; email?: string } | undefined) ?? {};
     const userMeta = (meta.user_metadata as Record<string, unknown> | undefined) ?? {};
     const displayName =
@@ -97,7 +112,6 @@ export const createOrg = createServerFn({ method: "POST" })
       avatar_url: avatarUrl,
     });
     if (memErr) {
-      // Best-effort cleanup of orphan org
       await supabase.from("orgs").delete().eq("id", org.id);
       throw new Error(memErr.message);
     }

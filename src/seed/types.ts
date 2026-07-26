@@ -81,4 +81,7 @@ export interface Entity extends ReliabilityFields {
   matchmakingReadiness: number;
   missingFields: string[];
   recommendedNextAction: string;
+  rating?: number;
+  productCategories?: string[];
+  productTypes?: string[];
 }
