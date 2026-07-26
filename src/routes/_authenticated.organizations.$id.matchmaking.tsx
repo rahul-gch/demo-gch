@@ -68,23 +68,37 @@ function OrgMatchmakingPage() {
         </p>
       </header>
 
+      <AiPartnerSearch onFilters={setAiFilters} />
+
+      <div className="flex flex-wrap gap-1.5">
+        <button
+          type="button"
+          onClick={() => { setMaterial(null); setCategory(null); }}
+          className={`rounded-full border px-2.5 py-0.5 text-xs ${!material && !category ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
+        >
+          All
+        </button>
+        {chipOptions.map((c) => {
+          const active = isBrand ? category === c : material === c;
+          return (
+            <button
+              key={c}
+              type="button"
+              onClick={() => isBrand ? setCategory(active ? null : c) : setMaterial(active ? null : c)}
+              className={`rounded-full border px-2.5 py-0.5 text-xs ${active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
+            >
+              {c}
+            </button>
+          );
+        })}
+      </div>
+
       <Card className="shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base font-semibold">
-            {matches.length} matches above {minScore}%
+          <CardTitle className="flex items-center gap-2 text-base font-semibold">
+            {matches.length} suggested partners
+            <MatchScoreInfo />
           </CardTitle>
-          <div className="flex w-60 items-center gap-2 text-xs text-muted-foreground">
-            Min score
-            <input
-              type="range"
-              min={20}
-              max={95}
-              value={minScore}
-              onChange={(e) => setMinScore(parseInt(e.target.value))}
-              className="flex-1"
-            />
-            <span className="w-8 text-right tabular-nums">{minScore}</span>
-          </div>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
@@ -94,18 +108,12 @@ function OrgMatchmakingPage() {
                 <TableHead className="text-right">Actions</TableHead>
                 <TableHead>Tier</TableHead>
                 <TableHead>Lead time</TableHead>
-                <TableHead className="w-[200px]">Score</TableHead>
                 <TableHead>Why</TableHead>
               </TableRow>
-
             </TableHeader>
             <TableBody>
               {matches.map((m) => (
-                <TableRow
-                  key={m.entity.id}
-                  className="cursor-pointer"
-                  onClick={() => openWith(m)}
-                >
+                <TableRow key={m.entity.id} className="cursor-pointer" onClick={() => openWith(m)}>
                   <TableCell>
                     <div className="font-medium hover:underline">{m.entity.name}</div>
                     <div className="text-xs text-muted-foreground">
@@ -114,39 +122,20 @@ function OrgMatchmakingPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap justify-end gap-2">
-                      <Button
-                        size="sm"
-                        onClick={(e) => { e.stopPropagation(); openWith(m, "message"); }}
-                      >
-                        <Send className="mr-1 h-3.5 w-3.5" />
-                        Message
+                      <Button size="sm" onClick={(e) => { e.stopPropagation(); openWith(m, "message"); }}>
+                        <Send className="mr-1 h-3.5 w-3.5" /> Message
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={(e) => { e.stopPropagation(); openWith(m, "meeting"); }}
-                      >
-                        <CalendarPlus className="mr-1 h-3.5 w-3.5" />
-                        Meeting
+                      <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); openWith(m, "meeting"); }}>
+                        <CalendarPlus className="mr-1 h-3.5 w-3.5" /> Meeting
                       </Button>
                     </div>
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">{m.entity.actorType}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {m.entity.leadTimeDays || "—"} d
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <span className="w-8 text-sm font-semibold tabular-nums">{m.score}</span>
-                      <Progress value={m.score} className="h-1.5 flex-1" />
-                    </div>
-                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{m.entity.leadTimeDays || "—"} d</TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
                       {m.reasons.slice(0, 3).map((r) => (
-                        <Badge key={r} variant="secondary" className="text-[10px] font-normal">
-                          {r}
-                        </Badge>
+                        <Badge key={r} variant="secondary" className="text-[10px] font-normal">{r}</Badge>
                       ))}
                     </div>
                   </TableCell>
@@ -156,6 +145,7 @@ function OrgMatchmakingPage() {
           </Table>
         </CardContent>
       </Card>
+
 
       <MatchProfileSheet
         match={active}
