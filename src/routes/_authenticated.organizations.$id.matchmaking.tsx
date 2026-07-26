@@ -3,7 +3,6 @@ import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Send, CalendarPlus } from "lucide-react";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -11,6 +10,9 @@ import {
 import { getMatchesFor } from "@/seed/matchmaking";
 import { getEntity } from "@/seed/all-entities";
 import { MatchProfileSheet } from "@/components/MatchProfileSheet";
+import { MatchScoreInfo } from "@/components/MatchScoreInfo";
+import { AiPartnerSearch, applyPartnerFilters } from "@/components/AiPartnerSearch";
+import type { PartnerSearchFilters } from "@/lib/matchmaking-ai.functions";
 import type { Entity } from "@/seed/types";
 
 
@@ -25,12 +27,23 @@ export const Route = createFileRoute("/_authenticated/organizations/$id/matchmak
 
 function OrgMatchmakingPage() {
   const { entity } = Route.useLoaderData();
-  const [minScore, setMinScore] = useState(50);
-  const matches = useMemo(() => getMatchesFor(entity, 100, minScore), [entity, minScore]);
+  const [aiFilters, setAiFilters] = useState<PartnerSearchFilters | null>(null);
+  const [material, setMaterial] = useState<string | null>(null);
+  const [category, setCategory] = useState<string | null>(null);
+  const rawMatches = useMemo(() => getMatchesFor(entity, 200, 40), [entity]);
+  const matches = useMemo(() => {
+    let m = rawMatches;
+    if (material) m = m.filter((x) => x.entity.materials.some((mm) => mm.toLowerCase() === material.toLowerCase()));
+    if (category) m = m.filter((x) => x.entity.productCategories?.some((c) => c.toLowerCase() === category.toLowerCase()));
+    return applyPartnerFilters(m.map((x) => ({ ...x, ...x.entity })), aiFilters).map((x) => rawMatches.find((r) => r.entity.id === x.entity.id)!).filter(Boolean);
+  }, [rawMatches, aiFilters, material, category]);
 
-  const [active, setActive] = useState<{ entity: Entity; score: number; reasons: string[] } | null>(
-    null,
-  );
+  const isBrand = entity.entityType === "Brand";
+  const chipOptions = isBrand
+    ? ["Women", "Men", "Kids", "Baby", "Unisex"]
+    : ["Cotton", "Denim", "Wool", "Viscose", "Polyester", "Linen", "Silk"];
+
+  const [active, setActive] = useState<{ entity: Entity; score: number; reasons: string[] } | null>(null);
   const [open, setOpen] = useState(false);
   const [initialAction, setInitialAction] = useState<"message" | "meeting" | null>(null);
 
@@ -42,6 +55,7 @@ function OrgMatchmakingPage() {
     setInitialAction(action);
     setOpen(true);
   };
+
 
 
   return (
