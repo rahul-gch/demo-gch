@@ -67,31 +67,29 @@ export const createOrg = createServerFn({ method: "POST" })
       logoUrl = pub?.publicUrl ?? null;
     }
 
-    const insertRow: Record<string, unknown> = {
-      name: data.name,
-      slug,
-      type: data.type,
-      country: data.country || null,
-      website: data.website || null,
-      description: data.description || null,
-      size: data.size || null,
-      region: data.region || null,
-      tier: data.tier ?? null,
-      certifications: data.certifications ?? [],
-      logo_url: logoUrl,
-      moq: data.moq || null,
-      lead_time_days: data.leadTimeDays ?? null,
-      capacity: data.capacity || null,
-      on_time_rate: data.onTimeRate ?? null,
-      materials: data.materials ?? [],
-      capabilities: data.capabilities ?? [],
-      product_categories: data.productCategories ?? [],
-      product_types: data.productTypes ?? [],
-    };
-
     const { data: org, error: insErr } = await supabase
       .from("orgs")
-      .insert(insertRow)
+      .insert({
+        name: data.name,
+        slug,
+        type: data.type,
+        country: data.country || null,
+        website: data.website || null,
+        description: data.description || null,
+        size: data.size || null,
+        region: data.region || null,
+        tier: data.tier ?? null,
+        certifications: data.certifications ?? [],
+        logo_url: logoUrl,
+        moq: data.moq || null,
+        lead_time_days: data.leadTimeDays ?? null,
+        capacity: data.capacity || null,
+        on_time_rate: data.onTimeRate ?? null,
+        materials: data.materials ?? [],
+        capabilities: data.capabilities ?? [],
+        product_categories: data.productCategories ?? [],
+        product_types: data.productTypes ?? [],
+      })
       .select("id, slug")
       .single();
     if (insErr) throw new Error(insErr.message);
