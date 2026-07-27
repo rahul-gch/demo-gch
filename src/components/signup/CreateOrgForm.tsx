@@ -54,6 +54,19 @@ const COMMON_CAPABILITIES = [
 const PRODUCT_CATEGORIES = ["Women", "Men", "Kids", "Baby", "Unisex", "Accessories"];
 const PRODUCT_TYPES = ["T-shirts", "Denim", "Outerwear", "Loungewear", "Activewear", "Formalwear", "Underwear", "Knitwear"];
 
+const SPECIALIZATION_SUGGESTIONS: Record<string, string[]> = {
+  Brand: ["Sportswear", "Womenswear", "Menswear", "Kidswear", "Denim", "Luxury", "Fast fashion", "Outdoor", "Loungewear", "Footwear"],
+  "Garment Factory": ["Knitwear", "Denim", "Activewear", "Outerwear", "T-shirts", "Formalwear", "Underwear"],
+  "Fabric Mill": ["Denim", "Jersey Knits", "Woven", "Performance Fabrics", "Selvedge"],
+  "Dye House": ["Reactive Dyeing", "Indigo", "Pigment", "Digital Print"],
+  Spinner: ["Ring-spun", "Open-end", "Compact", "Organic"],
+  Ginner: ["Organic Cotton", "BCI Cotton", "Recycled Cotton"],
+  Farmer: ["Organic", "Regenerative", "Fair Trade", "BCI"],
+  "Logistics Provider": ["Ocean Freight", "Air Freight", "Warehousing", "Customs"],
+  "Sustainability Partner": ["Traceability", "Digital Product Passport", "Carbon Accounting", "Audit"],
+  "Certification Body": ["GOTS", "OEKO-TEX", "GRS", "Social Audit"],
+};
+
 function slugify(s: string): string {
   return s
     .toLowerCase()
@@ -151,6 +164,7 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
   const [capabilities, setCapabilities] = useState<string[]>([]);
   const [productCategories, setProductCategories] = useState<string[]>([]);
   const [productTypes, setProductTypes] = useState<string[]>([]);
+  const [specializations, setSpecializations] = useState<string[]>([]);
   const [moq, setMoq] = useState("");
   const [leadTimeDays, setLeadTimeDays] = useState("");
   const [capacity, setCapacity] = useState("");
@@ -219,6 +233,7 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
         capabilities: isManufacturer ? capabilities : [],
         productCategories: isBrand ? productCategories : [],
         productTypes: isBrand ? productTypes : [],
+        specializations,
       };
       const res = await createOrgFn({ data: payload });
 
@@ -374,6 +389,14 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
                 <Input id="onTimeRate" type="number" min={0} max={100} value={onTimeRate} onChange={(e) => setOnTimeRate(e.target.value)} placeholder="92" />
               </div>
             </div>
+
+            <ChipMultiSelect
+              label="Specializations"
+              options={SPECIALIZATION_SUGGESTIONS[type] ?? []}
+              value={specializations}
+              onChange={setSpecializations}
+              placeholder="e.g. Sportswear, Denim, Kidswear"
+            />
 
             <ChipMultiSelect
               label="Certifications"

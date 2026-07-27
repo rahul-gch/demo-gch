@@ -15,6 +15,7 @@ import { ActivityTimeline } from "@/components/dashboard/ActivityTimeline";
 import { OpportunitiesPanel } from "@/components/dashboard/OpportunitiesPanel";
 import { QuickActionsDock } from "@/components/dashboard/QuickActionsDock";
 import { PassportCards } from "@/components/dashboard/PassportCards";
+import { OperationsCard } from "@/components/dashboard/OperationsCard";
 import { KpiTable } from "@/components/KpiTable";
 import { BenchmarkChart } from "@/components/BenchmarkChart";
 import { DocumentsList } from "@/components/DocumentsList";
@@ -52,6 +53,15 @@ function OverviewMissionControl({ e }: { e: Entity }) {
           <span className="text-xs text-muted-foreground">Verified network identity</span>
         </div>
         <PassportCards entity={e} />
+      </Section>
+      <Divider />
+      <Divider />
+      <Section>
+        <div className="flex items-baseline justify-between">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700">Operations</h2>
+          <span className="text-xs text-muted-foreground">Editable · lead time · MOQ · capacity · specializations</span>
+        </div>
+        <OperationsCard entity={e} />
       </Section>
       <Divider />
       <Section>

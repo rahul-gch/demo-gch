@@ -29,6 +29,7 @@ const createOrgSchema = z.object({
   capabilities: z.array(z.string().trim().max(80)).max(40).optional().nullable(),
   productCategories: z.array(z.string().trim().max(80)).max(20).optional().nullable(),
   productTypes: z.array(z.string().trim().max(80)).max(40).optional().nullable(),
+  specializations: z.array(z.string().trim().max(80)).max(20).optional().nullable(),
 });
 
 function slugify(input: string): string {
@@ -89,6 +90,7 @@ export const createOrg = createServerFn({ method: "POST" })
         capabilities: data.capabilities ?? [],
         product_categories: data.productCategories ?? [],
         product_types: data.productTypes ?? [],
+        specializations: data.specializations ?? [],
       })
       .select("id, slug")
       .single();
@@ -142,3 +144,40 @@ export const myOrgMemberships = createServerFn({ method: "GET" })
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const _rolesUnused: readonly string[] = orgRoleValues;
+
+const updateOpsSchema = z.object({
+  orgId: z.string().uuid(),
+  moq: z.string().trim().max(60).optional().nullable(),
+  leadTimeDays: z.number().int().min(0).max(1000).optional().nullable(),
+  capacity: z.string().trim().max(120).optional().nullable(),
+  onTimeRate: z.number().int().min(0).max(100).optional().nullable(),
+  materials: z.array(z.string().trim().max(80)).max(40).optional().nullable(),
+  capabilities: z.array(z.string().trim().max(80)).max(40).optional().nullable(),
+  specializations: z.array(z.string().trim().max(80)).max(20).optional().nullable(),
+});
+
+export const updateOrgOperations = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => updateOpsSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: canEdit, error: roleErr } = await supabase.rpc("user_can_edit", {
+      _user: userId,
+      _org: data.orgId,
+    });
+    if (roleErr) throw new Error(roleErr.message);
+    if (!canEdit) throw new Error("You don't have permission to edit this organization.");
+
+    const patch: Record<string, unknown> = {};
+    if (data.moq !== undefined) patch.moq = data.moq;
+    if (data.leadTimeDays !== undefined) patch.lead_time_days = data.leadTimeDays;
+    if (data.capacity !== undefined) patch.capacity = data.capacity;
+    if (data.onTimeRate !== undefined) patch.on_time_rate = data.onTimeRate;
+    if (data.materials !== undefined) patch.materials = data.materials ?? [];
+    if (data.capabilities !== undefined) patch.capabilities = data.capabilities ?? [];
+    if (data.specializations !== undefined) patch.specializations = data.specializations ?? [];
+
+    const { error } = await supabase.from("orgs").update(patch as never).eq("id", data.orgId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
