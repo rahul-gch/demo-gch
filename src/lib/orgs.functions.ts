@@ -177,7 +177,7 @@ export const updateOrgOperations = createServerFn({ method: "POST" })
     if (data.capabilities !== undefined) patch.capabilities = data.capabilities ?? [];
     if (data.specializations !== undefined) patch.specializations = data.specializations ?? [];
 
-    const { error } = await supabase.from("orgs").update(patch).eq("id", data.orgId);
+    const { error } = await supabase.from("orgs").update(patch as never).eq("id", data.orgId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
