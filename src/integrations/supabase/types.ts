@@ -182,6 +182,7 @@ export type Database = {
           region: string | null
           size: string | null
           slug: string
+          specializations: string[]
           tier: number | null
           type: string
           updated_at: string
@@ -207,6 +208,7 @@ export type Database = {
           region?: string | null
           size?: string | null
           slug: string
+          specializations?: string[]
           tier?: number | null
           type?: string
           updated_at?: string
@@ -232,6 +234,7 @@ export type Database = {
           region?: string | null
           size?: string | null
           slug?: string
+          specializations?: string[]
           tier?: number | null
           type?: string
           updated_at?: string
