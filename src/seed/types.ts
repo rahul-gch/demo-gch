@@ -84,4 +84,5 @@ export interface Entity extends ReliabilityFields {
   rating?: number;
   productCategories?: string[];
   productTypes?: string[];
+  specializations?: string[];
 }

@@ -14,7 +14,9 @@ export interface OrgOverride {
   onTimeRate?: number;
   avgDelayDays?: number;
   materials?: string[];
+  capabilities?: string[];
   certifications?: string[];
+  specializations?: string[];
 }
 
 const KEY = "gch.org-overrides.v1";

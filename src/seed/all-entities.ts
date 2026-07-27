@@ -7,8 +7,9 @@ import { NIKE } from "./nike";
 import { HM } from "./hm";
 import { MANDS } from "./mands";
 import { PRIMARK } from "./primark";
+import { TEXTILEGENESIS } from "./textilegenesis";
 
-export const ALL_ENTITIES: Entity[] = [NIKE, HM, MANDS, PRIMARK, ...BASE_ENTITIES];
+export const ALL_ENTITIES: Entity[] = [NIKE, HM, MANDS, PRIMARK, TEXTILEGENESIS, ...BASE_ENTITIES];
 
 import { applyOverride } from "./org-overrides";
 

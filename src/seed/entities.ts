@@ -7352,7 +7352,8 @@ export const ENTITIES: Entity[] = [
     "recommendedNextAction": "Profile complete — flagship 5-star partner",
     "rating": 5,
     "onTimeRate": 96,
-    "avgDelayDays": 1
+    "avgDelayDays": 1,
+    "specializations": ["Denim", "Sustainable Denim", "Selvedge", "Luxury Denim"]
   },
 
   {
