@@ -391,6 +391,14 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
             </div>
 
             <ChipMultiSelect
+              label="Specializations"
+              options={SPECIALIZATION_SUGGESTIONS[type] ?? []}
+              value={specializations}
+              onChange={setSpecializations}
+              placeholder="e.g. Sportswear, Denim, Kidswear"
+            />
+
+            <ChipMultiSelect
               label="Certifications"
               options={COMMON_CERTS}
               value={certs}
