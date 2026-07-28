@@ -1,32 +1,25 @@
-## Plan
+## Match profile sheet — cleanup + narrative "Why this match"
 
-### 1. Add TextileGenesis organization
-Add a new curated org entry (like NIKE, HM) as a Sustainability Partner / Traceability Platform:
-- Create `src/seed/textilegenesis.ts` with full profile: name "TextileGenesis", HQ Hong Kong, entity type "Sustainability Partner", description covering blockchain-based fiber-to-retail traceability, key partners (M&S, Mango, Lenzing, Bestseller, Zegna, Lululemon, Gap), specialization "Digital traceability & DPP for fashion supply chains", capabilities, certifications, contacts, 5-star rating, verified status.
-- Import into `src/seed/all-entities.ts` alongside NIKE/HM/MANDS/PRIMARK.
+Rework the Match Profile side sheet used across Matchmaking, Supply chain recommendations, and Ecosystem.
 
-### 2. Add "Specialization" field to organizations
-- Extend `Entity` type in `src/seed/types.ts` with `specializations?: string[]` (e.g. "Sportswear", "Denim", "Kidswear", "Traceability platform").
-- Add `specializations text[]` column via migration on `orgs` table.
-- Include in `src/lib/orgs.functions.ts` create/update payload.
-- Add a chip-based multi-input in `CreateOrgForm.tsx` (suggestions per entity type: brands → Sportswear/Womenswear/Menswear/Kidswear/Luxury/Denim/etc.; manufacturers → Knitwear/Denim/Activewear/Outerwear).
-- Seed specializations on Sharabati (Denim), NIKE (Sportswear/Footwear), HM (Fast fashion), M&S, Primark, TextileGenesis (Traceability).
+### Changes in `src/components/MatchProfileSheet.tsx`
 
-### 3. Editable operational details on dashboard
-Add an inline-editable "Operations" card on the org dashboard overview:
-- New component `src/components/dashboard/OperationsCard.tsx` showing Lead time (days), MOQ, Capacity, On-time rate, Avg delay, Delivery timeframe, Materials, Specializations.
-- View mode: read-only pills/values. Edit mode (pencil button, gated to org members with edit rights via existing `user_can_edit`): inline form with Save/Cancel.
-- Persistence:
-  - For real DB-backed orgs (UUID matches `orgs` table): call a new `updateOrgOperations` server function in `src/lib/orgs.functions.ts` using `requireSupabaseAuth` + `user_can_edit` check.
-  - For seeded demo orgs (gch-*): fall back to existing `setOverride` in `src/seed/org-overrides.ts` (already merges via `applyOverride` in `getEntity`) — extend `OrgOverride` with `specializations` and `capabilities`.
-- Insert card into `_authenticated.organizations.$id.index.tsx` overview, above Performance section.
+1. **Remove the "Why this is a match" chip list and the per-factor progress bars** (Material / Cert / Tier / Region / Kpi / Capacity / Delivery). Drop the `MatchScore`/`scoreMatch` import and the `detail` block.
+2. **Remove the top-right "% match" badge** in the header (keeps the sheet score-free per earlier request).
+3. **Add an Accordion "Why this match"** (shadcn `Accordion`, single, collapsible, closed by default) rendering a short paragraph explanation, generated from viewer + partner:
+   - Sentence 1: tier relationship (e.g. "Direct adjacent-tier supply fit between a Brand and a Tier‑2 Fabric Mill.")
+   - Sentence 2: material / capability / product overlap (list up to 3 shared items).
+   - Sentence 3: region / country note.
+   - Sentence 4: reliability note using lead time + on-time rate.
+   - Sentence 5: certification alignment (shared certs, or "Certifications align with your compliance profile").
+   - Falls back gracefully with dummy but plausible sentences when a field is missing.
+4. **Fill Operations with dummy data when fields are empty** — reuse the existing `reliabilityOf` pattern and add deterministic fallbacks derived from `e.id` hash so the same org always shows the same values:
+   - Lead time: existing or 28–45 d
+   - Delivery timeframe: existing or lead time + 3
+   - On-time rate: existing or 88–97%
+   - Avg delay: existing or 0–4 d
+   - Capacity: existing or e.g. "120,000 units / month" (spinner: "8,500 kg / day", mill: "180,000 m / month", garment: "120,000 pcs / month", etc. picked from entityType)
+   - MOQ: existing or e.g. "1,000 pcs" (varies by entityType)
+5. Keep Materials, Certifications, Send-a-message, and Open full profile sections unchanged.
 
-### 4. Verification
-- Typecheck.
-- Confirm TextileGenesis appears in organizations index and its dashboard renders.
-- Confirm inline edit persists across reload for a seed org (localStorage) and a DB org (Supabase).
-
-### Technical notes
-- Migration: `ALTER TABLE public.orgs ADD COLUMN specializations text[] NOT NULL DEFAULT '{}'`.
-- No changes to existing NHRI/Health scoring logic.
-- No changes to routing.
+No other files change. No backend, no schema.
