@@ -10,9 +10,14 @@ import {
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import {
   MapPin,
   Truck,
@@ -23,18 +28,119 @@ import {
   Send,
   CalendarPlus,
   ArrowUpRight,
+  Sparkles,
 } from "lucide-react";
-import type { MatchScore } from "@/seed/matchmaking";
-import { scoreMatch } from "@/seed/matchmaking";
 import { appendMessage } from "@/seed/comms";
 import { toast } from "sonner";
 import { MeetingRequestDialog } from "./MeetingRequestDialog";
 
-function reliabilityOf(e: Entity) {
-  const otr = e.onTimeRate ?? Math.max(70, 95 - ((e.leadTimeDays ?? 30) % 25));
-  const delay = e.avgDelayDays ?? Math.max(0, Math.round(((e.leadTimeDays ?? 30) % 9) - 2));
-  const timeframe = e.deliveryTimeframeDays ?? e.leadTimeDays ?? 30;
-  return { otr, delay, timeframe };
+function hash(id: string) {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return h;
+}
+function pick<T>(id: string, salt: number, arr: T[]) {
+  return arr[(hash(id) + salt) % arr.length];
+}
+
+function operationsOf(e: Entity) {
+  const h = hash(e.id);
+  const leadTime = e.leadTimeDays || 28 + (h % 18); // 28–45
+  const timeframe = e.deliveryTimeframeDays ?? leadTime + 3;
+  const otr = e.onTimeRate ?? 88 + (h % 10); // 88–97
+  const delay = e.avgDelayDays ?? h % 5; // 0–4
+  const capacityByType: Record<string, string[]> = {
+    Spinner: ["8,500 kg / day", "12,000 kg / day", "6,200 kg / day"],
+    "Fabric Mill": ["180,000 m / month", "240,000 m / month", "95,000 m / month"],
+    "Dye House": ["45,000 kg / month", "70,000 kg / month"],
+    "Garment Factory": ["120,000 pcs / month", "220,000 pcs / month", "80,000 pcs / month"],
+    Ginner: ["3,200 bales / month", "5,400 bales / month"],
+    Farmer: ["180 ha under cultivation", "420 ha under cultivation"],
+    "Logistics Provider": ["18 shipments / week", "45 shipments / week"],
+    Brand: ["3.2M units / year sourced", "6.5M units / year sourced"],
+  };
+  const moqByType: Record<string, string[]> = {
+    Spinner: ["500 kg", "1,000 kg", "2,000 kg"],
+    "Fabric Mill": ["1,500 m", "3,000 m", "5,000 m"],
+    "Dye House": ["300 kg", "800 kg"],
+    "Garment Factory": ["500 pcs", "1,000 pcs", "2,500 pcs"],
+    Ginner: ["50 bales", "120 bales"],
+    Farmer: ["10 tonnes", "25 tonnes"],
+    "Logistics Provider": ["1 container (20ft)", "1 pallet"],
+    Brand: ["—", "—"],
+  };
+  const capacity =
+    e.capacity ||
+    pick(e.id, 1, capacityByType[e.entityType] ?? ["120,000 units / month", "60,000 units / month"]);
+  const moq = e.moq || pick(e.id, 2, moqByType[e.entityType] ?? ["1,000 pcs", "2,500 pcs"]);
+  return { leadTime, timeframe, otr, delay, capacity, moq };
+}
+
+function whyThisMatch(viewer: Entity | null | undefined, e: Entity): string[] {
+  const lines: string[] = [];
+
+  if (viewer) {
+    lines.push(
+      `${viewer.entityType} → ${e.entityType} pairing across ${viewer.actorType} and ${e.actorType} — a natural supply-chain adjacency for collaboration and traceability.`,
+    );
+  } else {
+    lines.push(
+      `${e.entityType} operating at ${e.actorType}, positioned to plug into an end-to-end verified supply chain.`,
+    );
+  }
+
+  const sharedMaterials = viewer
+    ? e.materials.filter((m) => viewer.materials.map((x) => x.toLowerCase()).includes(m.toLowerCase()))
+    : [];
+  if (sharedMaterials.length > 0) {
+    lines.push(
+      `Shared material focus on ${sharedMaterials.slice(0, 3).join(", ")} means product-development handoffs stay consistent from fibre to finished good.`,
+    );
+  } else if (e.materials.length > 0) {
+    lines.push(
+      `Works with ${e.materials.slice(0, 3).join(", ")} — well aligned with the material mix commonly sourced across this network.`,
+    );
+  }
+
+  if (viewer && viewer.country === e.country) {
+    lines.push(
+      `Same country (${e.country}) shortens logistics, simplifies customs, and enables in-person audits within one working day.`,
+    );
+  } else if (viewer && viewer.region === e.region) {
+    lines.push(
+      `Both operate in ${e.region}, keeping freight lead times manageable and reducing cross-border complexity.`,
+    );
+  } else {
+    lines.push(
+      `Located in ${[e.city, e.country].filter(Boolean).join(", ")} — a well-connected sourcing hub with established freight corridors.`,
+    );
+  }
+
+  const ops = operationsOf(e);
+  lines.push(
+    `Reliable delivery profile: ~${ops.leadTime}-day lead time and a ${ops.otr}% on-time rate over the last 12 months, with average delays under ${Math.max(1, ops.delay)} day${ops.delay === 1 ? "" : "s"}.`,
+  );
+
+  const sharedCerts = viewer
+    ? e.certifications.filter((c) =>
+        viewer.certifications.map((x) => x.toLowerCase()).includes(c.toLowerCase()),
+      )
+    : [];
+  if (sharedCerts.length > 0) {
+    lines.push(
+      `Compliance overlap on ${sharedCerts.slice(0, 3).join(", ")} — audit trails and transaction certificates can be issued without gaps.`,
+    );
+  } else if (e.certifications.length > 0) {
+    lines.push(
+      `Holds ${e.certifications.slice(0, 3).join(", ")}, aligning with the certification standards typically required by brand partners.`,
+    );
+  } else {
+    lines.push(
+      `Certification profile can be uplifted quickly through the platform's compliance workflow to match your requirements.`,
+    );
+  }
+
+  return lines;
 }
 
 export function MatchProfileSheet({
@@ -65,8 +171,8 @@ export function MatchProfileSheet({
 
   if (!match) return null;
   const e = match.entity;
-  const rel = reliabilityOf(e);
-  const detail: MatchScore | null = viewer ? scoreMatch(viewer, e) : null;
+  const ops = operationsOf(e);
+  const reasons = whyThisMatch(viewer, e);
 
   const send = () => {
     if (!draft.trim()) return;
@@ -105,62 +211,53 @@ export function MatchProfileSheet({
                 <MapPin className="mr-1 h-3 w-3" />
                 {[e.city, e.country].filter(Boolean).join(", ")}
               </Badge>
-              <Badge className="bg-slate-900 text-white">{match.score}% match</Badge>
             </SheetDescription>
           </SheetHeader>
 
           <div className="mt-5 space-y-5 pb-6">
-            <section>
-              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Why this is a match
-              </div>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {match.reasons.map((r) => (
-                  <Badge key={r} variant="secondary" className="font-normal">
-                    {r}
-                  </Badge>
-                ))}
-              </div>
-              {detail && (
-                <div className="mt-3 space-y-1.5">
-                  {Object.entries(detail.breakdown).map(([k, v]) => (
-                    <div key={k} className="flex items-center gap-2 text-xs">
-                      <span className="w-20 capitalize text-muted-foreground">{k}</span>
-                      <Progress value={(v / 20) * 100} className="h-1.5 flex-1" />
-                      <span className="w-10 text-right tabular-nums">{v.toFixed(1)}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
-
-            <Separator />
+            <Accordion type="single" collapsible>
+              <AccordionItem value="why" className="rounded-md border px-3">
+                <AccordionTrigger className="py-3 text-sm font-semibold">
+                  <span className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-amber-500" />
+                    Why this match
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent className="pb-4">
+                  <div className="space-y-2 text-sm leading-relaxed text-muted-foreground">
+                    {reasons.map((r, i) => (
+                      <p key={i}>{r}</p>
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
 
             <section>
               <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Operations
               </div>
               <div className="mt-2 grid grid-cols-2 gap-3">
-                <Stat icon={<Clock className="h-4 w-4" />} label="Lead time" value={`${e.leadTimeDays || rel.timeframe} d`} />
-                <Stat icon={<Truck className="h-4 w-4" />} label="Delivery timeframe" value={`${rel.timeframe} d`} />
+                <Stat icon={<Clock className="h-4 w-4" />} label="Lead time" value={`${ops.leadTime} d`} />
+                <Stat icon={<Truck className="h-4 w-4" />} label="Delivery timeframe" value={`${ops.timeframe} d`} />
                 <Stat
                   icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />}
                   label="On-time rate"
-                  value={`${rel.otr}%`}
+                  value={`${ops.otr}%`}
                 />
                 <Stat
                   icon={
-                    rel.delay > 3 ? (
+                    ops.delay > 3 ? (
                       <AlertTriangle className="h-4 w-4 text-amber-600" />
                     ) : (
                       <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                     )
                   }
                   label="Avg delay"
-                  value={`${rel.delay} d`}
+                  value={`${ops.delay} d`}
                 />
-                <Stat icon={<Package className="h-4 w-4" />} label="Capacity" value={e.capacity || "—"} />
-                <Stat icon={<Package className="h-4 w-4" />} label="MOQ" value={e.moq || "—"} />
+                <Stat icon={<Package className="h-4 w-4" />} label="Capacity" value={ops.capacity} />
+                <Stat icon={<Package className="h-4 w-4" />} label="MOQ" value={ops.moq} />
               </div>
             </section>
 
