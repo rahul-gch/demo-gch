@@ -1,4 +1,7 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useSuspenseQuery } from "@tanstack/react-query";
+import { entitiesQueryOptions, ensureRegistry } from "@/lib/registry";
+import { hydrateEntities, isRegistryHydrated } from "@/seed/all-entities";
+
 import {
   Outlet,
   Link,
@@ -70,7 +73,11 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  loader: async ({ context }) => {
+    await ensureRegistry(context.queryClient);
+  },
   head: () => ({
+
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
@@ -134,10 +141,20 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <RegistryGate>
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+      </RegistryGate>
     </QueryClientProvider>
   );
 }
+
+/** Hydrates the client-side organization registry before routes render. */
+function RegistryGate({ children }: { children: React.ReactNode }) {
+  const { data } = useSuspenseQuery(entitiesQueryOptions);
+  if (data && !isRegistryHydrated()) hydrateEntities(data);
+  return <>{children}</>;
+}
+
 
 

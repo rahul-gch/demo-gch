@@ -163,82 +163,178 @@ export type Database = {
       }
       orgs: {
         Row: {
+          address: string | null
+          avg_delay_days: number | null
+          banner_urls: string[]
           capabilities: string[]
           capacity: string | null
+          certification_details: Json
           certifications: string[]
+          city: string | null
+          comments: string | null
+          confidence_score: number | null
+          contacts: Json
           country: string | null
           created_at: string
+          delivery_timeframe_days: number | null
           description: string | null
+          entity_type: string | null
+          evidence_count: number
+          expired_cert_count: number
+          gch_number: string | null
+          governance: string | null
           id: string
+          kpi_readiness: number
+          latitude: number | null
           lead_time_days: number | null
+          legacy_id: string | null
           logo_url: string | null
+          longitude: number | null
+          matchmaking_readiness: number
           materials: string[]
+          missing_data_count: number
+          missing_fields: string[]
           moq: string | null
           name: string
           on_time_rate: number | null
+          organization_type: string | null
+          preferred_channel: string | null
           product_categories: string[]
           product_types: string[]
+          profile_completeness: number
           rating: number | null
+          raw_entity_type: string | null
+          recommended_next_action: string | null
           region: string | null
+          risk_level: string | null
           size: string | null
           slug: string
           specializations: string[]
           tier: number | null
+          traceability_notes: string | null
+          traceability_readiness: number
           type: string
           updated_at: string
+          verification_status: string | null
+          verified_cert_count: number
           website: string | null
+          zip_code: string | null
         }
         Insert: {
+          address?: string | null
+          avg_delay_days?: number | null
+          banner_urls?: string[]
           capabilities?: string[]
           capacity?: string | null
+          certification_details?: Json
           certifications?: string[]
+          city?: string | null
+          comments?: string | null
+          confidence_score?: number | null
+          contacts?: Json
           country?: string | null
           created_at?: string
+          delivery_timeframe_days?: number | null
           description?: string | null
+          entity_type?: string | null
+          evidence_count?: number
+          expired_cert_count?: number
+          gch_number?: string | null
+          governance?: string | null
           id?: string
+          kpi_readiness?: number
+          latitude?: number | null
           lead_time_days?: number | null
+          legacy_id?: string | null
           logo_url?: string | null
+          longitude?: number | null
+          matchmaking_readiness?: number
           materials?: string[]
+          missing_data_count?: number
+          missing_fields?: string[]
           moq?: string | null
           name: string
           on_time_rate?: number | null
+          organization_type?: string | null
+          preferred_channel?: string | null
           product_categories?: string[]
           product_types?: string[]
+          profile_completeness?: number
           rating?: number | null
+          raw_entity_type?: string | null
+          recommended_next_action?: string | null
           region?: string | null
+          risk_level?: string | null
           size?: string | null
           slug: string
           specializations?: string[]
           tier?: number | null
+          traceability_notes?: string | null
+          traceability_readiness?: number
           type?: string
           updated_at?: string
+          verification_status?: string | null
+          verified_cert_count?: number
           website?: string | null
+          zip_code?: string | null
         }
         Update: {
+          address?: string | null
+          avg_delay_days?: number | null
+          banner_urls?: string[]
           capabilities?: string[]
           capacity?: string | null
+          certification_details?: Json
           certifications?: string[]
+          city?: string | null
+          comments?: string | null
+          confidence_score?: number | null
+          contacts?: Json
           country?: string | null
           created_at?: string
+          delivery_timeframe_days?: number | null
           description?: string | null
+          entity_type?: string | null
+          evidence_count?: number
+          expired_cert_count?: number
+          gch_number?: string | null
+          governance?: string | null
           id?: string
+          kpi_readiness?: number
+          latitude?: number | null
           lead_time_days?: number | null
+          legacy_id?: string | null
           logo_url?: string | null
+          longitude?: number | null
+          matchmaking_readiness?: number
           materials?: string[]
+          missing_data_count?: number
+          missing_fields?: string[]
           moq?: string | null
           name?: string
           on_time_rate?: number | null
+          organization_type?: string | null
+          preferred_channel?: string | null
           product_categories?: string[]
           product_types?: string[]
+          profile_completeness?: number
           rating?: number | null
+          raw_entity_type?: string | null
+          recommended_next_action?: string | null
           region?: string | null
+          risk_level?: string | null
           size?: string | null
           slug?: string
           specializations?: string[]
           tier?: number | null
+          traceability_notes?: string | null
+          traceability_readiness?: number
           type?: string
           updated_at?: string
+          verification_status?: string | null
+          verified_cert_count?: number
           website?: string | null
+          zip_code?: string | null
         }
         Relationships: []
       }

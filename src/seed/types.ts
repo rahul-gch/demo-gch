@@ -40,9 +40,15 @@ export interface Contact {
 
 export interface Entity extends ReliabilityFields {
   id: string;
+  /** Database UUID of the organization row (differs from `id` for imported registry orgs). */
+  orgUuid?: string;
+  slug?: string;
+  logoUrl?: string;
+  bannerUrls?: string[];
   gchNumber: string;
   name: string;
   website?: string;
+
 
   entityType: EntityType;
   rawEntityType: string;

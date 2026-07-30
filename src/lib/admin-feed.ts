@@ -1,4 +1,4 @@
-import { ALL_ENTITIES } from "@/seed/all-entities";
+import { ALL_ENTITIES, onRegistryHydrated } from "@/seed/all-entities";
 import type { Entity } from "@/seed/types";
 
 export type FeedEventKind =
@@ -130,6 +130,7 @@ function hash(s: string): number {
 }
 
 let cache: AdminFeedEvent[] | null = null;
+onRegistryHydrated(() => { cache = null; });
 
 export function getAdminFeedEvents(): AdminFeedEvent[] {
   if (cache) return cache;
