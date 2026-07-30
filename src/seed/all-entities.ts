@@ -54,7 +54,6 @@ export function isRegistryHydrated(): boolean {
 }
 
 export function hydrateEntities(entities: Entity[]) {
-  console.log("[registry] hydrate", entities.length);
   ALL_ENTITIES.length = 0;
   ALL_ENTITIES.push(...entities);
 
