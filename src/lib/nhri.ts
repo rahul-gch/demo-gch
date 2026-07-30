@@ -2,7 +2,7 @@
 // A single 0-100 score per entity, deterministically derived from seed data.
 // This is the signature "credit score" of Global Chain Hub.
 import type { Entity } from "@/seed/types";
-import { ALL_ENTITIES } from "@/seed/all-entities";
+import { ALL_ENTITIES, onRegistryHydrated } from "@/seed/all-entities";
 
 export type NhriBand = "Excellent" | "Strong" | "Developing" | "At Risk";
 
@@ -137,6 +137,10 @@ function quickScore(e: Entity): number {
 }
 
 let _rankCache: Map<string, number> | null = null;
+onRegistryHydrated(() => {
+  _rankCache = null;
+});
+
 function ensureRank() {
   if (_rankCache) return _rankCache;
   const scored = ALL_ENTITIES.map((e) => ({ id: e.id, s: quickScore(e) }));

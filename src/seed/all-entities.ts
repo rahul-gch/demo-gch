@@ -1,47 +1,96 @@
-// Combines auto-generated ENTITIES with manually curated showcase orgs
-// (e.g. NIKE). Routes and seed helpers should import from here instead
-// of src/seed/entities.ts so the curated additions are always included.
+// Live organization registry, hydrated from the database.
+//
+// The registry keeps stable module-level references (ALL_ENTITIES,
+// summaryMetrics, ENTITY_TYPE_BREAKDOWN) that are mutated in place when data
+// arrives, so existing synchronous consumers keep working.
 import type { Entity } from "./types";
-import { ENTITIES as BASE_ENTITIES } from "./entities";
-import { NIKE } from "./nike";
-import { HM } from "./hm";
-import { MANDS } from "./mands";
-import { PRIMARK } from "./primark";
-import { TEXTILEGENESIS } from "./textilegenesis";
-
-export const ALL_ENTITIES: Entity[] = [NIKE, HM, MANDS, PRIMARK, TEXTILEGENESIS, ...BASE_ENTITIES];
-
 import { applyOverride } from "./org-overrides";
 
-export function getEntity(id: string): Entity | undefined {
-  const base = ALL_ENTITIES.find((e) => e.id === id);
-  return base ? applyOverride(base) : undefined;
-}
+export const ENTITY_TYPES = [
+  "Brand",
+  "Farmer",
+  "Ginner",
+  "Spinner",
+  "Fabric Mill",
+  "Dye House",
+  "Garment Factory",
+  "Logistics Provider",
+  "Certification Body",
+  "Sustainability Partner",
+] as const;
+
+export const ALL_ENTITIES: Entity[] = [];
+
+const byId = new Map<string, Entity>();
 
 export const summaryMetrics = {
-  total: ALL_ENTITIES.length,
-  totalRegistry: ALL_ENTITIES.length,
-  seededVisible: ALL_ENTITIES.length,
-  verified: ALL_ENTITIES.filter((e) => e.verificationStatus === "Verified").length,
-  pending: ALL_ENTITIES.filter((e) => e.verificationStatus === "Pending").length,
-  incomplete: ALL_ENTITIES.filter((e) => e.verificationStatus === "Incomplete").length,
-  flagged: ALL_ENTITIES.filter((e) => e.verificationStatus === "Flagged").length,
-  highRisk: ALL_ENTITIES.filter((e) => e.riskLevel === "High").length,
-  avgConfidence: Math.round(
-    ALL_ENTITIES.reduce((s, e) => s + e.confidenceScore, 0) / ALL_ENTITIES.length,
-  ),
-  avgCompleteness: Math.round(
-    ALL_ENTITIES.reduce((s, e) => s + e.profileCompleteness, 0) / ALL_ENTITIES.length,
-  ),
-  countries: new Set(ALL_ENTITIES.map((e) => e.country)).size,
-  missingTotal: ALL_ENTITIES.reduce((s, e) => s + e.missingDataCount, 0),
-  matchmakingReady: ALL_ENTITIES.filter((e) => e.matchmakingReadiness >= 60).length,
+  total: 0,
+  totalRegistry: 0,
+  seededVisible: 0,
+  verified: 0,
+  pending: 0,
+  incomplete: 0,
+  flagged: 0,
+  highRisk: 0,
+  avgConfidence: 0,
+  avgCompleteness: 0,
+  countries: 0,
+  missingTotal: 0,
+  matchmakingReady: 0,
 };
 
-export const ENTITY_TYPE_BREAKDOWN: { type: string; count: number }[] = (() => {
-  const map = new Map<string, number>();
-  for (const e of ALL_ENTITIES) map.set(e.entityType, (map.get(e.entityType) || 0) + 1);
-  return Array.from(map.entries()).map(([type, count]) => ({ type, count }));
-})();
+export const ENTITY_TYPE_BREAKDOWN: { type: string; count: number }[] = [];
 
-export { ENTITY_TYPES } from "./entities";
+const hydrationListeners = new Set<() => void>();
+
+/** Subscribe to registry hydration (used to reset derived caches). */
+export function onRegistryHydrated(fn: () => void): () => void {
+  hydrationListeners.add(fn);
+  return () => hydrationListeners.delete(fn);
+}
+
+export function isRegistryHydrated(): boolean {
+  return ALL_ENTITIES.length > 0;
+}
+
+export function hydrateEntities(entities: Entity[]) {
+  console.log("[registry] hydrate", entities.length);
+  ALL_ENTITIES.length = 0;
+  ALL_ENTITIES.push(...entities);
+
+  byId.clear();
+  for (const e of entities) {
+    byId.set(e.id, e);
+    if (e.orgUuid) byId.set(e.orgUuid, e);
+    if (e.slug) byId.set(e.slug, e);
+  }
+
+  const n = entities.length || 1;
+  summaryMetrics.total = entities.length;
+  summaryMetrics.totalRegistry = entities.length;
+  summaryMetrics.seededVisible = entities.length;
+  summaryMetrics.verified = entities.filter((e) => e.verificationStatus === "Verified").length;
+  summaryMetrics.pending = entities.filter((e) => e.verificationStatus === "Pending").length;
+  summaryMetrics.incomplete = entities.filter((e) => e.verificationStatus === "Incomplete").length;
+  summaryMetrics.flagged = entities.filter((e) => e.verificationStatus === "Flagged").length;
+  summaryMetrics.highRisk = entities.filter((e) => e.riskLevel === "High").length;
+  summaryMetrics.avgConfidence = Math.round(entities.reduce((s, e) => s + e.confidenceScore, 0) / n);
+  summaryMetrics.avgCompleteness = Math.round(
+    entities.reduce((s, e) => s + e.profileCompleteness, 0) / n,
+  );
+  summaryMetrics.countries = new Set(entities.map((e) => e.country).filter(Boolean)).size;
+  summaryMetrics.missingTotal = entities.reduce((s, e) => s + e.missingDataCount, 0);
+  summaryMetrics.matchmakingReady = entities.filter((e) => e.matchmakingReadiness >= 60).length;
+
+  const map = new Map<string, number>();
+  for (const e of entities) map.set(e.entityType, (map.get(e.entityType) || 0) + 1);
+  ENTITY_TYPE_BREAKDOWN.length = 0;
+  ENTITY_TYPE_BREAKDOWN.push(...Array.from(map.entries()).map(([type, count]) => ({ type, count })));
+
+  for (const fn of hydrationListeners) fn();
+}
+
+export function getEntity(id: string): Entity | undefined {
+  const base = byId.get(id);
+  return base ? applyOverride(base) : undefined;
+}
