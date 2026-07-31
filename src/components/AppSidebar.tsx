@@ -24,6 +24,8 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { amIPlatformAdmin } from "@/lib/admin.functions";
 import { useActingOrgId, useUnreadTotal } from "@/lib/use-comms";
 
 const items = [
