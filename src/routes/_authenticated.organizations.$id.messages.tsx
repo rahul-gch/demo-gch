@@ -1,13 +1,13 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import {
-  appendMessage,
-  getThread,
-  getThreadIdsForOrg,
-  markThreadRead,
-} from "@/seed/comms";
+import { useEffect, useState } from "react";
 import { getEntity } from "@/seed/all-entities";
-import { useCommsVersion } from "@/lib/use-comms";
+import {
+  useActingOrgId,
+  useConversations,
+  useMarkRead,
+  useSendMessage,
+  useThread,
+} from "@/lib/use-comms";
 import { ConversationList } from "@/components/messages/ConversationList";
 import { ChatHeader } from "@/components/messages/ChatHeader";
 import { MessageList } from "@/components/messages/MessageList";
@@ -23,36 +23,49 @@ export const Route = createFileRoute("/_authenticated/organizations/$id/messages
     if (!entity) throw notFound();
     return { entity };
   },
+  head: () => ({
+    meta: [
+      { title: "Organization messages — Global Chain Hub" },
+      {
+        name: "description",
+        content: "Conversations between this organization and its supply chain partners.",
+      },
+      { property: "og:title", content: "Organization messages — Global Chain Hub" },
+      {
+        property: "og:description",
+        content: "Conversations between this organization and its supply chain partners.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: OrgMessagesPage,
 });
 
 function OrgMessagesPage() {
   const { entity: viewer } = Route.useLoaderData();
-  useCommsVersion();
-  const ids = useMemo(
-    () => getThreadIdsForOrg(viewer.id).filter((id) => id !== viewer.id),
-    [viewer.id],
-  );
-  const [activeId, setActiveId] = useState<string | null>(ids[0] ?? null);
+  const orgId = useActingOrgId(viewer.orgUuid ?? null);
+  const { conversations, isLoading } = useConversations(orgId);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [filter, setFilter] = useState("");
   const [draft, setDraft] = useState("");
   const [infoOpen, setInfoOpen] = useState(false);
 
-  useEffect(() => {
-    if (activeId) markThreadRead(activeId);
-  }, [activeId]);
+  const active = conversations.find((c) => c.id === activeId) ?? conversations[0] ?? null;
+  const { messages } = useThread(active?.id ?? null, orgId);
+  const markRead = useMarkRead(orgId);
+  const sendMessage = useSendMessage(orgId);
 
-  const activeEntity = activeId ? getEntity(activeId) : null;
-  const activeMessages = activeId ? getThread(activeId) : [];
+  useEffect(() => {
+    if (active && active.unread > 0) markRead.mutate(active.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active?.id, active?.unread]);
+
+  const activeEntity = active?.entity ?? null;
 
   const send = () => {
-    if (!activeId || !draft.trim()) return;
-    appendMessage(activeId, {
-      from: "me",
-      authorName: viewer.name,
-      authorRole: "Org Admin",
-      body: draft.trim(),
-    });
+    if (!active || !draft.trim() || !orgId) return;
+    sendMessage.mutate({ counterpartOrgId: active.counterpartOrgId, body: draft.trim() });
     setDraft("");
   };
 
@@ -74,8 +87,8 @@ function OrgMessagesPage() {
       >
         <div className="min-h-0 min-w-0 border-r">
           <ConversationList
-            ids={ids}
-            activeId={activeId}
+            conversations={conversations}
+            activeId={active?.id ?? null}
             onSelect={setActiveId}
             filter={filter}
             onFilterChange={setFilter}
@@ -90,7 +103,7 @@ function OrgMessagesPage() {
                 onToggleInfo={() => setInfoOpen((v) => !v)}
                 infoOpen={infoOpen}
               />
-              <MessageList messages={activeMessages} entity={activeEntity} />
+              <MessageList messages={messages} entity={activeEntity} />
               <MessageComposer
                 value={draft}
                 onChange={setDraft}
@@ -103,7 +116,12 @@ function OrgMessagesPage() {
               <div className="grid h-14 w-14 place-items-center rounded-2xl bg-muted">
                 <MessageSquare className="h-6 w-6 text-muted-foreground" />
               </div>
-              <div className="text-sm font-medium">Select a conversation</div>
+              <div className="text-sm font-medium">
+                {isLoading ? "Loading conversations…" : "No conversations yet"}
+              </div>
+              <p className="max-w-sm text-xs text-muted-foreground">
+                Start one from matchmaking or a partner profile.
+              </p>
             </div>
           )}
         </div>
