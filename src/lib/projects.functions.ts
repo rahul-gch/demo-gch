@@ -133,6 +133,17 @@ export const createProjectFn = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+
+    const { data: canEdit } = await supabase.rpc("user_can_edit", {
+      _user: userId,
+      _org: data.orgId,
+    });
+    if (!canEdit) {
+      throw new Error(
+        "You need to be an owner, admin or editor of this organization to create a project.",
+      );
+    }
+
     const { data: org } = await supabase
       .from("orgs")
       .select("name, country")
