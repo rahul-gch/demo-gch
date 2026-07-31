@@ -30,7 +30,7 @@ import {
   ArrowUpRight,
   Sparkles,
 } from "lucide-react";
-import { appendMessage } from "@/seed/comms";
+import { useActingOrgId, useSendMessage } from "@/lib/use-comms";
 import { toast } from "sonner";
 import { MeetingRequestDialog } from "./MeetingRequestDialog";
 
@@ -173,17 +173,30 @@ export function MatchProfileSheet({
   const e = match.entity;
   const ops = operationsOf(e);
   const reasons = whyThisMatch(viewer, e);
+  const myOrgId = useActingOrgId(viewer?.orgUuid ?? null);
+  const sendMessage = useSendMessage(myOrgId);
 
   const send = () => {
     if (!draft.trim()) return;
-    appendMessage(e.id, {
-      from: "me",
-      authorName: viewer?.name ?? "You",
-      authorRole: viewer ? "Org Admin" : "Network Admin",
-      body: draft.trim(),
-    });
-    setDraft("");
-    toast.success(`Message sent to ${e.name}`);
+    if (!myOrgId) {
+      toast.error("Join or create an organization before messaging partners.");
+      return;
+    }
+    if (!e.orgUuid || e.orgUuid === myOrgId) {
+      toast.error("This organization cannot be messaged yet.");
+      return;
+    }
+    sendMessage.mutate(
+      { counterpartOrgId: e.orgUuid, body: draft.trim() },
+      {
+        onSuccess: () => {
+          setDraft("");
+          toast.success(`Message sent to ${e.name}`);
+        },
+        onError: (err) =>
+          toast.error(err instanceof Error ? err.message : "Could not send message"),
+      },
+    );
   };
 
   return (
@@ -321,7 +334,7 @@ export function MatchProfileSheet({
           </div>
         </SheetContent>
       </Sheet>
-      <MeetingRequestDialog entity={e} open={meetOpen} onOpenChange={setMeetOpen} viewerOrgId={viewer?.id} />
+      <MeetingRequestDialog entity={e} open={meetOpen} onOpenChange={setMeetOpen} viewerOrgUuid={viewer?.orgUuid ?? null} />
     </>
   );
 }
