@@ -212,7 +212,7 @@ export const ensureStarterConversations = createServerFn({ method: "POST" })
         author_name: author.name,
         author_role: author.role,
         body,
-        created_at: daysAgoIso(i + 1, j * 3),
+        created_at: daysAgoIso(i + 1, (script.lines.length - 1 - j) * 3),
       }));
       await supabaseAdmin.from("messages").insert(rows);
       await supabaseAdmin
