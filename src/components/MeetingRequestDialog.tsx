@@ -12,19 +12,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { addMeeting } from "@/seed/comms";
+import { useActingOrgId, useCreateMeeting } from "@/lib/use-comms";
 import { toast } from "sonner";
 
 export function MeetingRequestDialog({
   entity,
   open,
   onOpenChange,
-  viewerOrgId,
+  viewerOrgUuid,
 }: {
   entity: Entity;
   open: boolean;
   onOpenChange: (o: boolean) => void;
-  viewerOrgId?: string;
+  viewerOrgUuid?: string | null;
 }) {
   const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
   const [date, setDate] = useState(tomorrow);
@@ -34,17 +34,37 @@ export function MeetingRequestDialog({
     `Intro call with ${entity.name} — discuss capacity, lead time and fit.`,
   );
 
+  const orgId = useActingOrgId(viewerOrgUuid ?? null);
+  const createMeeting = useCreateMeeting(orgId);
+
   const submit = () => {
-    addMeeting({
-      orgId: entity.id,
-      orgName: entity.name,
-      proposedFor: new Date(`${date}T${time}:00`).toISOString(),
-      durationMin: duration,
-      agenda,
-      viewerOrgId,
-    });
-    toast.success(`Meeting requested with ${entity.name}`);
-    onOpenChange(false);
+    if (!orgId) {
+      toast.error("Join or create an organization before requesting meetings.");
+      return;
+    }
+    if (!entity.orgUuid) {
+      toast.error("This organization is not available for meeting requests yet.");
+      return;
+    }
+    if (entity.orgUuid === orgId) {
+      toast.error("You cannot request a meeting with your own organization.");
+      return;
+    }
+    createMeeting.mutate(
+      {
+        recipientOrgId: entity.orgUuid,
+        proposedFor: new Date(`${date}T${time}:00`).toISOString(),
+        durationMin: duration,
+        agenda,
+      },
+      {
+        onSuccess: () => {
+          toast.success(`Meeting requested with ${entity.name}`);
+          onOpenChange(false);
+        },
+        onError: (e) => toast.error(e instanceof Error ? e.message : "Could not send request"),
+      },
+    );
   };
 
   return (
@@ -88,7 +108,9 @@ export function MeetingRequestDialog({
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={submit}>Send request</Button>
+          <Button onClick={submit} disabled={createMeeting.isPending}>
+            {createMeeting.isPending ? "Sending…" : "Send request"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
