@@ -169,12 +169,13 @@ export function MatchProfileSheet({
     }
   }, [open, initialAction, match?.entity.id]);
 
+  const myOrgId = useActingOrgId(viewer?.orgUuid ?? null);
+  const sendMessage = useSendMessage(myOrgId);
+
   if (!match) return null;
   const e = match.entity;
   const ops = operationsOf(e);
   const reasons = whyThisMatch(viewer, e);
-  const myOrgId = useActingOrgId(viewer?.orgUuid ?? null);
-  const sendMessage = useSendMessage(myOrgId);
 
   const send = () => {
     if (!draft.trim()) return;
