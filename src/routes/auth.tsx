@@ -90,8 +90,17 @@ function AuthPage() {
             <GoogleIcon />
             <span className="ml-2">{loading ? "Signing in…" : "Continue with Google"}</span>
           </Button>
+          <div className="relative text-center text-xs text-muted-foreground">
+            <span className="relative z-10 bg-card px-2">or use your email</span>
+            <div className="absolute inset-x-0 top-1/2 border-t" />
+          </div>
+          <EmailAuthForm
+            mode="signin"
+            onSignedIn={() => nav({ to: sanitizeNext(next), replace: true })}
+          />
           <p className="text-center text-xs text-muted-foreground">
-            New here? <a href="/signup" className="text-primary hover:underline">Create an organization</a>, or ask an admin for an invite link.
+            Setting up a new organization?{" "}
+            <a href="/signup" className="text-primary hover:underline">Create an organization</a>
           </p>
         </CardContent>
       </Card>
