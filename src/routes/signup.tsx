@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Globe2 } from "lucide-react";
 import { CreateOrgForm } from "@/components/signup/CreateOrgForm";
 import { JoinWithInviteForm } from "@/components/signup/JoinWithInviteForm";
+import { EmailAuthForm } from "@/components/auth/EmailAuthForm";
 
 const searchSchema = z.object({ tab: z.enum(["create", "join"]).optional() });
 
@@ -85,11 +86,23 @@ function SignupPage() {
           </CardHeader>
           <CardContent className="space-y-6">
             {!checking && !signedIn && (
-              <div className="rounded-lg border bg-muted/40 p-4">
-                <p className="mb-3 text-sm">Sign in with Google first — we'll link your new organization to your account.</p>
-                <Button onClick={signInGoogle} disabled={signingIn} className="w-full sm:w-auto">
+              <div className="space-y-4 rounded-lg border bg-muted/40 p-4">
+                <p className="text-sm">
+                  Create your account first — we'll link your new organization to it.
+                </p>
+                <Button
+                  onClick={signInGoogle}
+                  disabled={signingIn}
+                  variant="outline"
+                  className="w-full"
+                >
                   {signingIn ? "Signing in…" : "Continue with Google"}
                 </Button>
+                <div className="relative text-center text-xs text-muted-foreground">
+                  <span className="relative z-10 bg-muted/40 px-2">or sign up with email</span>
+                  <div className="absolute inset-x-0 top-1/2 border-t" />
+                </div>
+                <EmailAuthForm mode="signup" compact />
               </div>
             )}
             {signedIn && (
