@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Globe2 } from "lucide-react";
+import { EmailAuthForm } from "@/components/auth/EmailAuthForm";
 
 const searchSchema = z.object({ next: z.string().optional() });
 
