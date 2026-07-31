@@ -73,7 +73,7 @@ import {
   type ProjectPartner,
   type RequestPriority,
   type RequestStatus,
-} from "@/seed/projects";
+} from "@/lib/projects-types";
 import { ProjectStatusBadge } from "./ProjectShell";
 
 const FOLDERS: DocFolder[] = [
