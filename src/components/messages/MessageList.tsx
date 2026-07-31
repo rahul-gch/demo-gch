@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useRef } from "react";
 import type { Entity } from "@/seed/types";
-import type { ThreadMessage } from "@/seed/comms";
+import type { ThreadMessage } from "@/lib/comms-types";
 import { OrgAvatar, formatDayLabel } from "./shared";
 import { cn } from "@/lib/utils";
 import { Reply, Copy, Smile, MoreHorizontal } from "lucide-react";

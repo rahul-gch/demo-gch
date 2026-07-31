@@ -23,8 +23,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
-import { unreadCount } from "@/seed/comms";
-import { useCommsVersion } from "@/lib/use-comms";
+import { useActingOrgId, useUnreadTotal } from "@/lib/use-comms";
 
 const items = [
   { title: "Platform Dashboard", url: "/", icon: LayoutDashboard },
@@ -39,10 +38,10 @@ const items = [
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  useCommsVersion();
   const isActive = (url: string) =>
     url === "/" ? pathname === "/" : pathname.startsWith(url);
-  const unread = typeof window !== "undefined" ? unreadCount() : 0;
+  const actingOrgId = useActingOrgId();
+  const unread = useUnreadTotal(actingOrgId);
 
   return (
     <Sidebar collapsible="icon">

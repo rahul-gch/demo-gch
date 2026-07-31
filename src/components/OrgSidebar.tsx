@@ -28,18 +28,13 @@ import {
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 import type { Entity } from "@/seed/types";
-import { unreadCountForOrg, pendingMeetingCountForOrg } from "@/seed/comms";
-import { useCommsVersion } from "@/lib/use-comms";
+import { usePendingMeetingCount, useUnreadTotal } from "@/lib/use-comms";
 
 export function OrgSidebar({ entity }: { entity: Entity }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  useCommsVersion();
-
   const base = `/organizations/${entity.id}`;
-  const inbox =
-    typeof window !== "undefined"
-      ? unreadCountForOrg(entity.id) + pendingMeetingCountForOrg(entity.id)
-      : 0;
+  const orgUuid = entity.orgUuid ?? null;
+  const inbox = useUnreadTotal(orgUuid) + usePendingMeetingCount(orgUuid);
 
   const items = [
     { title: "Home / Feed", url: `${base}/feed`, icon: Rss },
