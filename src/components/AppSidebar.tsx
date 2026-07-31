@@ -10,6 +10,7 @@ import {
   Sparkles,
   Activity,
   Plus,
+  ShieldCheck,
 } from "lucide-react";
 import {
   Sidebar,
@@ -82,6 +83,20 @@ export function AppSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              {isAdmin.data?.isAdmin && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname.startsWith("/admin")}
+                    tooltip="Organization onboarding"
+                  >
+                    <Link to="/admin/organizations" className="flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4" />
+                      <span className="flex-1">Onboarding</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
