@@ -125,6 +125,7 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
   const [type, setType] = useState("");
+  const [customType, setCustomType] = useState("");
   const [country, setCountry] = useState("");
   const [website, setWebsite] = useState("");
   const [description, setDescription] = useState("");
