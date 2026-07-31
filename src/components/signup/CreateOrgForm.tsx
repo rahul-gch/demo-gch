@@ -160,13 +160,21 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
     return () => URL.revokeObjectURL(url);
   }, [logoFile]);
 
+  const effectiveType = type === "Other" ? customType.trim() : type;
+
   const canSubmit = useMemo(
-    () => signedIn && name.trim().length >= 2 && slug.length >= 2 && type && country.trim() && !submitting,
-    [signedIn, name, slug, type, country, submitting],
+    () =>
+      signedIn &&
+      name.trim().length >= 2 &&
+      slug.length >= 2 &&
+      effectiveType.length >= 2 &&
+      country.trim() &&
+      !submitting,
+    [signedIn, name, slug, effectiveType, country, submitting],
   );
 
   const isManufacturer = MANUFACTURER_TYPES.has(type);
-  const isBrand = type === "Brand";
+  const isBrand = BRAND_TYPES.has(type);
 
   const onFile = (f: File | null) => {
     if (!f) return;
