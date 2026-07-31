@@ -18,22 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, Upload, X } from "lucide-react";
 
-const ORG_TYPES = [
-  "Brand",
-  "Farmer",
-  "Ginner",
-  "Spinner",
-  "Fabric Mill",
-  "Dye House",
-  "Garment Factory",
-  "Logistics Provider",
-  "Certification Body",
-  "Sustainability Partner",
-];
-
-const MANUFACTURER_TYPES = new Set([
-  "Farmer", "Ginner", "Spinner", "Fabric Mill", "Dye House", "Garment Factory",
-]);
+import { ORG_TYPES, MANUFACTURER_TYPES, BRAND_TYPES, SPECIALIZATION_SUGGESTIONS } from "@/lib/org-types";
 
 const SIZE_OPTIONS = ["1-10", "11-50", "51-200", "201-1000", "1000+"];
 
@@ -53,19 +38,6 @@ const COMMON_CAPABILITIES = [
 
 const PRODUCT_CATEGORIES = ["Women", "Men", "Kids", "Baby", "Unisex", "Accessories"];
 const PRODUCT_TYPES = ["T-shirts", "Denim", "Outerwear", "Loungewear", "Activewear", "Formalwear", "Underwear", "Knitwear"];
-
-const SPECIALIZATION_SUGGESTIONS: Record<string, string[]> = {
-  Brand: ["Sportswear", "Womenswear", "Menswear", "Kidswear", "Denim", "Luxury", "Fast fashion", "Outdoor", "Loungewear", "Footwear"],
-  "Garment Factory": ["Knitwear", "Denim", "Activewear", "Outerwear", "T-shirts", "Formalwear", "Underwear"],
-  "Fabric Mill": ["Denim", "Jersey Knits", "Woven", "Performance Fabrics", "Selvedge"],
-  "Dye House": ["Reactive Dyeing", "Indigo", "Pigment", "Digital Print"],
-  Spinner: ["Ring-spun", "Open-end", "Compact", "Organic"],
-  Ginner: ["Organic Cotton", "BCI Cotton", "Recycled Cotton"],
-  Farmer: ["Organic", "Regenerative", "Fair Trade", "BCI"],
-  "Logistics Provider": ["Ocean Freight", "Air Freight", "Warehousing", "Customs"],
-  "Sustainability Partner": ["Traceability", "Digital Product Passport", "Carbon Accounting", "Audit"],
-  "Certification Body": ["GOTS", "OEKO-TEX", "GRS", "Social Audit"],
-};
 
 function slugify(s: string): string {
   return s
