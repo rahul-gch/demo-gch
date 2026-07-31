@@ -10,6 +10,7 @@ import {
   Sparkles,
   Activity,
   Plus,
+  ShieldCheck,
 } from "lucide-react";
 import {
   Sidebar,
@@ -23,6 +24,8 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { amIPlatformAdmin } from "@/lib/admin.functions";
 import { useActingOrgId, useUnreadTotal } from "@/lib/use-comms";
 
 const items = [
@@ -42,6 +45,11 @@ export function AppSidebar() {
     url === "/" ? pathname === "/" : pathname.startsWith(url);
   const actingOrgId = useActingOrgId();
   const unread = useUnreadTotal(actingOrgId);
+  const isAdmin = useQuery({
+    queryKey: ["platform-admin"],
+    queryFn: () => amIPlatformAdmin(),
+    staleTime: 5 * 60_000,
+  });
 
   return (
     <Sidebar collapsible="icon">
@@ -82,6 +90,20 @@ export function AppSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              {isAdmin.data?.isAdmin && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname.startsWith("/admin")}
+                    tooltip="Organization onboarding"
+                  >
+                    <Link to="/admin/organizations" className="flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4" />
+                      <span className="flex-1">Onboarding</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

@@ -18,22 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, Upload, X } from "lucide-react";
 
-const ORG_TYPES = [
-  "Brand",
-  "Farmer",
-  "Ginner",
-  "Spinner",
-  "Fabric Mill",
-  "Dye House",
-  "Garment Factory",
-  "Logistics Provider",
-  "Certification Body",
-  "Sustainability Partner",
-];
-
-const MANUFACTURER_TYPES = new Set([
-  "Farmer", "Ginner", "Spinner", "Fabric Mill", "Dye House", "Garment Factory",
-]);
+import { ORG_TYPES, MANUFACTURER_TYPES, BRAND_TYPES, SPECIALIZATION_SUGGESTIONS } from "@/lib/org-types";
 
 const SIZE_OPTIONS = ["1-10", "11-50", "51-200", "201-1000", "1000+"];
 
@@ -53,19 +38,6 @@ const COMMON_CAPABILITIES = [
 
 const PRODUCT_CATEGORIES = ["Women", "Men", "Kids", "Baby", "Unisex", "Accessories"];
 const PRODUCT_TYPES = ["T-shirts", "Denim", "Outerwear", "Loungewear", "Activewear", "Formalwear", "Underwear", "Knitwear"];
-
-const SPECIALIZATION_SUGGESTIONS: Record<string, string[]> = {
-  Brand: ["Sportswear", "Womenswear", "Menswear", "Kidswear", "Denim", "Luxury", "Fast fashion", "Outdoor", "Loungewear", "Footwear"],
-  "Garment Factory": ["Knitwear", "Denim", "Activewear", "Outerwear", "T-shirts", "Formalwear", "Underwear"],
-  "Fabric Mill": ["Denim", "Jersey Knits", "Woven", "Performance Fabrics", "Selvedge"],
-  "Dye House": ["Reactive Dyeing", "Indigo", "Pigment", "Digital Print"],
-  Spinner: ["Ring-spun", "Open-end", "Compact", "Organic"],
-  Ginner: ["Organic Cotton", "BCI Cotton", "Recycled Cotton"],
-  Farmer: ["Organic", "Regenerative", "Fair Trade", "BCI"],
-  "Logistics Provider": ["Ocean Freight", "Air Freight", "Warehousing", "Customs"],
-  "Sustainability Partner": ["Traceability", "Digital Product Passport", "Carbon Accounting", "Audit"],
-  "Certification Body": ["GOTS", "OEKO-TEX", "GRS", "Social Audit"],
-};
 
 function slugify(s: string): string {
   return s
@@ -153,6 +125,7 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
   const [type, setType] = useState("");
+  const [customType, setCustomType] = useState("");
   const [country, setCountry] = useState("");
   const [website, setWebsite] = useState("");
   const [description, setDescription] = useState("");
@@ -188,13 +161,21 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
     return () => URL.revokeObjectURL(url);
   }, [logoFile]);
 
+  const effectiveType = type === "Other" ? customType.trim() : type;
+
   const canSubmit = useMemo(
-    () => signedIn && name.trim().length >= 2 && slug.length >= 2 && type && country.trim() && !submitting,
-    [signedIn, name, slug, type, country, submitting],
+    () =>
+      signedIn &&
+      name.trim().length >= 2 &&
+      slug.length >= 2 &&
+      effectiveType.length >= 2 &&
+      country.trim() &&
+      !submitting,
+    [signedIn, name, slug, effectiveType, country, submitting],
   );
 
   const isManufacturer = MANUFACTURER_TYPES.has(type);
-  const isBrand = type === "Brand";
+  const isBrand = BRAND_TYPES.has(type);
 
   const onFile = (f: File | null) => {
     if (!f) return;
@@ -216,7 +197,7 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
       const payload = {
         name: name.trim(),
         slug: slug || slugify(name),
-        type,
+        type: effectiveType,
         country: country.trim(),
         website: website.trim() || null,
         description: description.trim() || null,
@@ -284,10 +265,18 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
             <Label>Organization type *</Label>
             <Select value={type} onValueChange={setType}>
               <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-72">
                 {ORG_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
               </SelectContent>
             </Select>
+            {type === "Other" && (
+              <Input
+                value={customType}
+                onChange={(e) => setCustomType(e.target.value)}
+                placeholder="Describe your organization type"
+                className="mt-2"
+              />
+            )}
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="country">Country *</Label>

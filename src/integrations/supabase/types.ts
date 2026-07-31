@@ -506,6 +506,68 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_invites: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string | null
+          expires_at: string
+          id: string
+          invited_by: string | null
+          max_uses: number
+          note: string | null
+          org_name: string | null
+          revoked_at: string | null
+          role: Database["public"]["Enums"]["org_role"]
+          target_org_id: string | null
+          token: string
+          updated_at: string
+          uses: number
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string | null
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          max_uses?: number
+          note?: string | null
+          org_name?: string | null
+          revoked_at?: string | null
+          role?: Database["public"]["Enums"]["org_role"]
+          target_org_id?: string | null
+          token?: string
+          updated_at?: string
+          uses?: number
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string | null
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          max_uses?: number
+          note?: string | null
+          org_name?: string | null
+          revoked_at?: string | null
+          role?: Database["public"]["Enums"]["org_role"]
+          target_org_id?: string | null
+          token?: string
+          updated_at?: string
+          uses?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_invites_target_org_id_fkey"
+            columns: ["target_org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_activity: {
         Row: {
           actor_org_id: string | null
@@ -931,6 +993,10 @@ export type Database = {
         Args: { _display_name?: string; _token: string }
         Returns: string
       }
+      accept_platform_invite: {
+        Args: { _display_name?: string; _token: string }
+        Returns: string
+      }
       get_invite_by_token: {
         Args: { _token: string }
         Returns: {
@@ -947,15 +1013,29 @@ export type Database = {
         Args: { _org_a: string; _org_b: string }
         Returns: string
       }
+      get_platform_invite_by_token: {
+        Args: { _token: string }
+        Returns: {
+          email: string
+          expires_at: string
+          org_name: string
+          role: Database["public"]["Enums"]["org_role"]
+          status: string
+          target_org_id: string
+          target_org_name: string
+        }[]
+      }
       is_conversation_participant: {
         Args: { _conversation: string; _user: string }
         Returns: boolean
       }
       is_org_member: { Args: { _org: string; _user: string }; Returns: boolean }
+      is_platform_admin: { Args: { _user: string }; Returns: boolean }
       is_project_partner: {
         Args: { _project: string; _user: string }
         Returns: boolean
       }
+      platform_admin_domains: { Args: never; Returns: string[] }
       project_permission: {
         Args: { _key: string; _project: string; _user: string }
         Returns: boolean

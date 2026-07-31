@@ -10,9 +10,11 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated.index'
+import { Route as OnboardingTokenRouteImport } from './routes/onboarding.$token'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated.settings'
@@ -24,6 +26,7 @@ import { Route as AuthenticatedMapRouteImport } from './routes/_authenticated.ma
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated.feed'
 import { Route as AuthenticatedOrganizationsIndexRouteImport } from './routes/_authenticated.organizations.index'
 import { Route as AuthenticatedOrganizationsIdRouteImport } from './routes/_authenticated.organizations.$id'
+import { Route as AuthenticatedAdminOrganizationsRouteImport } from './routes/_authenticated.admin.organizations'
 import { Route as AuthenticatedOrganizationsIdIndexRouteImport } from './routes/_authenticated.organizations.$id.index'
 import { Route as AuthenticatedOrganizationsIdSupplyChainRouteImport } from './routes/_authenticated.organizations.$id.supply-chain'
 import { Route as AuthenticatedOrganizationsIdSettingsRouteImport } from './routes/_authenticated.organizations.$id.settings'
@@ -51,6 +54,11 @@ const SignupRoute = SignupRouteImport.update({
   path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -64,6 +72,11 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedRoute,
+} as any)
+const OnboardingTokenRoute = OnboardingTokenRouteImport.update({
+  id: '/onboarding/$token',
+  path: '/onboarding/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const InviteTokenRoute = InviteTokenRouteImport.update({
   id: '/invite/$token',
@@ -123,6 +136,12 @@ const AuthenticatedOrganizationsIdRoute =
     id: '/$id',
     path: '/$id',
     getParentRoute: () => AuthenticatedOrganizationsRoute,
+  } as any)
+const AuthenticatedAdminOrganizationsRoute =
+  AuthenticatedAdminOrganizationsRouteImport.update({
+    id: '/admin/organizations',
+    path: '/admin/organizations',
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedOrganizationsIdIndexRoute =
   AuthenticatedOrganizationsIdIndexRouteImport.update({
@@ -254,6 +273,7 @@ const AuthenticatedOrganizationsIdProjectsProjectIdActivityRoute =
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/map': typeof AuthenticatedMapRoute
@@ -264,6 +284,8 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/onboarding/$token': typeof OnboardingTokenRoute
+  '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/organizations/$id': typeof AuthenticatedOrganizationsIdRouteWithChildren
   '/organizations/': typeof AuthenticatedOrganizationsIndexRoute
   '/organizations/$id/compliance': typeof AuthenticatedOrganizationsIdComplianceRoute
@@ -290,6 +312,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/map': typeof AuthenticatedMapRoute
@@ -299,7 +322,9 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/onboarding/$token': typeof OnboardingTokenRoute
   '/': typeof AuthenticatedIndexRoute
+  '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/organizations': typeof AuthenticatedOrganizationsIndexRoute
   '/organizations/$id/compliance': typeof AuthenticatedOrganizationsIdComplianceRoute
   '/organizations/$id/feed': typeof AuthenticatedOrganizationsIdFeedRoute
@@ -325,6 +350,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
   '/_authenticated/map': typeof AuthenticatedMapRoute
@@ -335,7 +361,9 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/onboarding/$token': typeof OnboardingTokenRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/_authenticated/organizations/$id': typeof AuthenticatedOrganizationsIdRouteWithChildren
   '/_authenticated/organizations/': typeof AuthenticatedOrganizationsIndexRoute
   '/_authenticated/organizations/$id/compliance': typeof AuthenticatedOrganizationsIdComplianceRoute
@@ -365,6 +393,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/reset-password'
     | '/signup'
     | '/feed'
     | '/map'
@@ -375,6 +404,8 @@ export interface FileRouteTypes {
     | '/settings'
     | '/auth/callback'
     | '/invite/$token'
+    | '/onboarding/$token'
+    | '/admin/organizations'
     | '/organizations/$id'
     | '/organizations/'
     | '/organizations/$id/compliance'
@@ -401,6 +432,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
+    | '/reset-password'
     | '/signup'
     | '/feed'
     | '/map'
@@ -410,7 +442,9 @@ export interface FileRouteTypes {
     | '/settings'
     | '/auth/callback'
     | '/invite/$token'
+    | '/onboarding/$token'
     | '/'
+    | '/admin/organizations'
     | '/organizations'
     | '/organizations/$id/compliance'
     | '/organizations/$id/feed'
@@ -435,6 +469,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_authenticated'
     | '/auth'
+    | '/reset-password'
     | '/signup'
     | '/_authenticated/feed'
     | '/_authenticated/map'
@@ -445,7 +480,9 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/auth/callback'
     | '/invite/$token'
+    | '/onboarding/$token'
     | '/_authenticated/'
+    | '/_authenticated/admin/organizations'
     | '/_authenticated/organizations/$id'
     | '/_authenticated/organizations/'
     | '/_authenticated/organizations/$id/compliance'
@@ -474,8 +511,10 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   InviteTokenRoute: typeof InviteTokenRoute
+  OnboardingTokenRoute: typeof OnboardingTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -485,6 +524,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -507,6 +553,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/onboarding/$token': {
+      id: '/onboarding/$token'
+      path: '/onboarding/$token'
+      fullPath: '/onboarding/$token'
+      preLoaderRoute: typeof OnboardingTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/invite/$token': {
       id: '/invite/$token'
@@ -584,6 +637,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/organizations/$id'
       preLoaderRoute: typeof AuthenticatedOrganizationsIdRouteImport
       parentRoute: typeof AuthenticatedOrganizationsRoute
+    }
+    '/_authenticated/admin/organizations': {
+      id: '/_authenticated/admin/organizations'
+      path: '/admin/organizations'
+      fullPath: '/admin/organizations'
+      preLoaderRoute: typeof AuthenticatedAdminOrganizationsRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/organizations/$id/': {
       id: '/_authenticated/organizations/$id/'
@@ -860,6 +920,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedOrganizationsRoute: typeof AuthenticatedOrganizationsRouteWithChildren
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedAdminOrganizationsRoute: typeof AuthenticatedAdminOrganizationsRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -871,6 +932,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedOrganizationsRoute: AuthenticatedOrganizationsRouteWithChildren,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedAdminOrganizationsRoute: AuthenticatedAdminOrganizationsRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -890,19 +952,11 @@ const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
+  ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   InviteTokenRoute: InviteTokenRoute,
+  OnboardingTokenRoute: OnboardingTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

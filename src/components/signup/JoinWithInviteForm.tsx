@@ -33,6 +33,10 @@ export function JoinWithInviteForm() {
       toast.error("Enter an invite link or token");
       return;
     }
+    if (/\/onboarding\//i.test(value)) {
+      nav({ to: "/onboarding/$token", params: { token } });
+      return;
+    }
     nav({ to: "/invite/$token", params: { token } });
   };
 
