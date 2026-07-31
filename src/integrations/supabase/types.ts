@@ -506,6 +506,422 @@ export type Database = {
         }
         Relationships: []
       }
+      project_activity: {
+        Row: {
+          actor_org_id: string | null
+          actor_user_id: string | null
+          created_at: string
+          id: string
+          message: string
+          project_id: string
+          type: string
+        }
+        Insert: {
+          actor_org_id?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          project_id: string
+          type: string
+        }
+        Update: {
+          actor_org_id?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          project_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_activity_actor_org_id_fkey"
+            columns: ["actor_org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_activity_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_discussions: {
+        Row: {
+          attachments: Json
+          author_name: string
+          author_org_id: string | null
+          author_user_id: string | null
+          body: string
+          created_at: string
+          id: string
+          mentions: string[]
+          project_id: string
+          reactions: Json
+          replies: Json
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          attachments?: Json
+          author_name?: string
+          author_org_id?: string | null
+          author_user_id?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          mentions?: string[]
+          project_id: string
+          reactions?: Json
+          replies?: Json
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          attachments?: Json
+          author_name?: string
+          author_org_id?: string | null
+          author_user_id?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          mentions?: string[]
+          project_id?: string
+          reactions?: Json
+          replies?: Json
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_discussions_author_org_id_fkey"
+            columns: ["author_org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_discussions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_documents: {
+        Row: {
+          comments: Json
+          created_at: string
+          folder: string
+          id: string
+          mime: string | null
+          name: string
+          project_id: string
+          size_bytes: number | null
+          storage_path: string | null
+          uploaded_by: string | null
+          uploaded_by_org_id: string | null
+          url: string | null
+          version: number
+          visibility: string
+        }
+        Insert: {
+          comments?: Json
+          created_at?: string
+          folder?: string
+          id?: string
+          mime?: string | null
+          name: string
+          project_id: string
+          size_bytes?: number | null
+          storage_path?: string | null
+          uploaded_by?: string | null
+          uploaded_by_org_id?: string | null
+          url?: string | null
+          version?: number
+          visibility?: string
+        }
+        Update: {
+          comments?: Json
+          created_at?: string
+          folder?: string
+          id?: string
+          mime?: string | null
+          name?: string
+          project_id?: string
+          size_bytes?: number | null
+          storage_path?: string | null
+          uploaded_by?: string | null
+          uploaded_by_org_id?: string | null
+          url?: string | null
+          version?: number
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_documents_uploaded_by_org_id_fkey"
+            columns: ["uploaded_by_org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_meetings: {
+        Row: {
+          action_items: Json
+          agenda: string
+          attachments: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          link: string | null
+          meeting_date: string
+          meeting_time: string
+          notes: string
+          participants: string[]
+          project_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          action_items?: Json
+          agenda?: string
+          attachments?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          link?: string | null
+          meeting_date?: string
+          meeting_time?: string
+          notes?: string
+          participants?: string[]
+          project_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          action_items?: Json
+          agenda?: string
+          attachments?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          link?: string | null
+          meeting_date?: string
+          meeting_time?: string
+          notes?: string
+          participants?: string[]
+          project_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_meetings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_partners: {
+        Row: {
+          created_at: string
+          id: string
+          org_id: string
+          permissions: Json
+          project_id: string
+          role: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          org_id: string
+          permissions?: Json
+          project_id: string
+          role?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          org_id?: string
+          permissions?: Json
+          project_id?: string
+          role?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_partners_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_partners_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_requests: {
+        Row: {
+          assigned_org_id: string | null
+          attachments: Json
+          comments: Json
+          created_at: string
+          description: string
+          due_date: string | null
+          id: string
+          priority: string
+          project_id: string
+          requested_by: string | null
+          requested_by_org_id: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_org_id?: string | null
+          attachments?: Json
+          comments?: Json
+          created_at?: string
+          description?: string
+          due_date?: string | null
+          id?: string
+          priority?: string
+          project_id: string
+          requested_by?: string | null
+          requested_by_org_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_org_id?: string | null
+          attachments?: Json
+          comments?: Json
+          created_at?: string
+          description?: string
+          due_date?: string | null
+          id?: string
+          priority?: string
+          project_id?: string
+          requested_by?: string | null
+          requested_by_org_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_requests_assigned_org_id_fkey"
+            columns: ["assigned_org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_requests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_requests_requested_by_org_id_fkey"
+            columns: ["requested_by_org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          country: string
+          created_at: string
+          created_by: string | null
+          description: string
+          end_date: string
+          id: string
+          image: string
+          industry: string
+          name: string
+          objectives: string[]
+          owner_org_id: string
+          progress: number
+          start_date: string
+          status: string
+          tags: string[]
+          updated_at: string
+        }
+        Insert: {
+          country?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          end_date?: string
+          id?: string
+          image?: string
+          industry?: string
+          name: string
+          objectives?: string[]
+          owner_org_id: string
+          progress?: number
+          start_date?: string
+          status?: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Update: {
+          country?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          end_date?: string
+          id?: string
+          image?: string
+          industry?: string
+          name?: string
+          objectives?: string[]
+          owner_org_id?: string
+          progress?: number
+          start_date?: string
+          status?: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_owner_org_id_fkey"
+            columns: ["owner_org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -536,6 +952,14 @@ export type Database = {
         Returns: boolean
       }
       is_org_member: { Args: { _org: string; _user: string }; Returns: boolean }
+      is_project_partner: {
+        Args: { _project: string; _user: string }
+        Returns: boolean
+      }
+      project_permission: {
+        Args: { _key: string; _project: string; _user: string }
+        Returns: boolean
+      }
       user_can_edit: { Args: { _org: string; _user: string }; Returns: boolean }
       user_can_manage: {
         Args: { _org: string; _user: string }
