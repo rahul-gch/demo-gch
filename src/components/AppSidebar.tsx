@@ -45,6 +45,11 @@ export function AppSidebar() {
     url === "/" ? pathname === "/" : pathname.startsWith(url);
   const actingOrgId = useActingOrgId();
   const unread = useUnreadTotal(actingOrgId);
+  const isAdmin = useQuery({
+    queryKey: ["platform-admin"],
+    queryFn: () => amIPlatformAdmin(),
+    staleTime: 5 * 60_000,
+  });
 
   return (
     <Sidebar collapsible="icon">
