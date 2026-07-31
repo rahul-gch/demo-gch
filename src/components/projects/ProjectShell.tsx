@@ -14,7 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import type { Project } from "@/seed/projects";
+import type { Project } from "@/lib/projects-types";
 import type { Entity } from "@/seed/types";
 
 const STATUS_TONE: Record<Project["status"], string> = {
