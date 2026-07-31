@@ -3,8 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search } from "lucide-react";
 import type { Entity } from "@/seed/types";
-import { getThread } from "@/seed/comms";
-import { getEntity } from "@/seed/all-entities";
+import type { ConversationView } from "@/lib/use-comms";
 import { OrgAvatar, isOnline } from "./shared";
 import { cn } from "@/lib/utils";
 
@@ -23,33 +22,30 @@ function relTime(iso?: string): string {
 }
 
 export function ConversationList({
-  ids,
+  conversations,
   activeId,
   onSelect,
   filter,
   onFilterChange,
 }: {
-  ids: string[];
+  conversations: ConversationView[];
   activeId: string | null;
   onSelect: (id: string) => void;
   filter: string;
   onFilterChange: (v: string) => void;
 }) {
   const threads = useMemo(() => {
-    return ids
-      .map((id) => {
-        const entity = getEntity(id);
-        const msgs = getThread(id);
-        const last = msgs[msgs.length - 1];
-        const unread = msgs.filter((m) => m.from === "them" && !m.read).length;
-        return { id, entity, last, unread };
-      })
-      .filter((t): t is { id: string; entity: Entity; last: any; unread: number } => !!t.entity)
+    return conversations
+      .map((c) => ({
+        id: c.id,
+        entity: c.entity as Entity,
+        last: { at: c.lastMessageAt, body: c.lastBody, from: c.lastFromMe ? "me" : "them" },
+        unread: c.unread,
+      }))
       .filter((t) =>
         filter ? t.entity.name.toLowerCase().includes(filter.toLowerCase()) : true,
-      )
-      .sort((a, b) => (b.last?.at ?? "").localeCompare(a.last?.at ?? ""));
-  }, [ids, filter]);
+      );
+  }, [conversations, filter]);
 
   return (
     <div className="flex h-full min-w-0 flex-col overflow-hidden">

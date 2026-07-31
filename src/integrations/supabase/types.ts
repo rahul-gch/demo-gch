@@ -14,6 +14,174 @@ export type Database = {
   }
   public: {
     Tables: {
+      conversation_participants: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          id: string
+          last_read_at: string
+          org_id: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          id?: string
+          last_read_at?: string
+          org_id: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          last_read_at?: string
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_participants_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_participants_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          last_message_at: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_message_at?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_message_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      meeting_requests: {
+        Row: {
+          agenda: string
+          created_at: string
+          duration_min: number
+          id: string
+          proposed_for: string
+          recipient_org_id: string
+          requested_by: string | null
+          requester_org_id: string
+          response_note: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          agenda?: string
+          created_at?: string
+          duration_min?: number
+          id?: string
+          proposed_for: string
+          recipient_org_id: string
+          requested_by?: string | null
+          requester_org_id: string
+          response_note?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          agenda?: string
+          created_at?: string
+          duration_min?: number
+          id?: string
+          proposed_for?: string
+          recipient_org_id?: string
+          requested_by?: string | null
+          requester_org_id?: string
+          response_note?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_requests_recipient_org_id_fkey"
+            columns: ["recipient_org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_requests_requester_org_id_fkey"
+            columns: ["requester_org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          author_name: string
+          author_role: string | null
+          body: string
+          conversation_id: string
+          created_at: string
+          id: string
+          sender_org_id: string
+          sender_user_id: string | null
+        }
+        Insert: {
+          author_name: string
+          author_role?: string | null
+          body: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          sender_org_id: string
+          sender_user_id?: string | null
+        }
+        Update: {
+          author_name?: string
+          author_role?: string | null
+          body?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          sender_org_id?: string
+          sender_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_org_id_fkey"
+            columns: ["sender_org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       org_documents: {
         Row: {
           category: Database["public"]["Enums"]["doc_category"]
@@ -358,6 +526,14 @@ export type Database = {
           role: Database["public"]["Enums"]["org_role"]
           status: string
         }[]
+      }
+      get_or_create_conversation: {
+        Args: { _org_a: string; _org_b: string }
+        Returns: string
+      }
+      is_conversation_participant: {
+        Args: { _conversation: string; _user: string }
+        Returns: boolean
       }
       is_org_member: { Args: { _org: string; _user: string }; Returns: boolean }
       user_can_edit: { Args: { _org: string; _user: string }; Returns: boolean }
