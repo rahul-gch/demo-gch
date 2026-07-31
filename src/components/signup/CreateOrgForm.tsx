@@ -197,7 +197,7 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
       const payload = {
         name: name.trim(),
         slug: slug || slugify(name),
-        type,
+        type: effectiveType,
         country: country.trim(),
         website: website.trim() || null,
         description: description.trim() || null,
@@ -265,10 +265,18 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
             <Label>Organization type *</Label>
             <Select value={type} onValueChange={setType}>
               <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-72">
                 {ORG_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
               </SelectContent>
             </Select>
+            {type === "Other" && (
+              <Input
+                value={customType}
+                onChange={(e) => setCustomType(e.target.value)}
+                placeholder="Describe your organization type"
+                className="mt-2"
+              />
+            )}
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="country">Country *</Label>
