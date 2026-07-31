@@ -1,14 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import {
-  appendMessage,
-  getThread,
-  getThreadIds,
-  markThreadRead,
-} from "@/seed/comms";
-import { getEntity } from "@/seed/all-entities";
-import { useCommsVersion } from "@/lib/use-comms";
+  useActingOrgId,
+  useConversations,
+  useMarkRead,
+  useSendMessage,
+  useThread,
+} from "@/lib/use-comms";
 import { ConversationList } from "@/components/messages/ConversationList";
 import { ChatHeader } from "@/components/messages/ChatHeader";
 import { MessageList } from "@/components/messages/MessageList";
@@ -19,33 +18,49 @@ import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/_authenticated/messages")({
-  head: () => ({ meta: [{ title: "Messages — Global Chain Hub" }] }),
+  head: () => ({
+    meta: [
+      { title: "Messages — Global Chain Hub" },
+      {
+        name: "description",
+        content:
+          "Secure organization-to-organization conversations across the Global Chain Hub network.",
+      },
+      { property: "og:title", content: "Messages — Global Chain Hub" },
+      {
+        property: "og:description",
+        content: "Secure organization-to-organization conversations across the network.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: MessagesPage,
 });
 
 function MessagesPage() {
-  useCommsVersion();
-  const ids = useMemo(() => getThreadIds(), []);
-  const [activeId, setActiveId] = useState<string | null>(ids[0] ?? null);
+  const orgId = useActingOrgId();
+  const { conversations, isLoading } = useConversations(orgId);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [filter, setFilter] = useState("");
   const [draft, setDraft] = useState("");
   const [infoOpen, setInfoOpen] = useState(false);
 
-  useEffect(() => {
-    if (activeId) markThreadRead(activeId);
-  }, [activeId]);
+  const active = conversations.find((c) => c.id === activeId) ?? conversations[0] ?? null;
+  const { messages } = useThread(active?.id ?? null, orgId);
+  const markRead = useMarkRead(orgId);
+  const sendMessage = useSendMessage(orgId);
 
-  const activeEntity = activeId ? getEntity(activeId) : null;
-  const activeMessages = activeId ? getThread(activeId) : [];
+  useEffect(() => {
+    if (active && active.unread > 0) markRead.mutate(active.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active?.id, active?.unread]);
+
+  const activeEntity = active?.entity ?? null;
 
   const send = () => {
-    if (!activeId || !draft.trim()) return;
-    appendMessage(activeId, {
-      from: "me",
-      authorName: "You",
-      authorRole: "Network Admin",
-      body: draft.trim(),
-    });
+    if (!active || !draft.trim() || !orgId) return;
+    sendMessage.mutate({ counterpartOrgId: active.counterpartOrgId, body: draft.trim() });
     setDraft("");
   };
 
@@ -67,8 +82,8 @@ function MessagesPage() {
         >
           <div className="min-h-0 min-w-0 border-r">
             <ConversationList
-              ids={ids}
-              activeId={activeId}
+              conversations={conversations}
+              activeId={active?.id ?? null}
               onSelect={setActiveId}
               filter={filter}
               onFilterChange={setFilter}
@@ -83,7 +98,7 @@ function MessagesPage() {
                   onToggleInfo={() => setInfoOpen((v) => !v)}
                   infoOpen={infoOpen}
                 />
-                <MessageList messages={activeMessages} entity={activeEntity} />
+                <MessageList messages={messages} entity={activeEntity} />
                 <MessageComposer
                   value={draft}
                   onChange={setDraft}
@@ -92,7 +107,7 @@ function MessagesPage() {
                 />
               </>
             ) : (
-              <EmptyChat />
+              <EmptyChat loading={isLoading} hasOrg={!!orgId} />
             )}
           </div>
 
@@ -105,15 +120,8 @@ function MessagesPage() {
 
         {/* Drawer variant for < xl */}
         {activeEntity && (
-          <Sheet
-            open={infoOpen}
-            onOpenChange={setInfoOpen}
-            modal={false}
-          >
-            <SheetContent
-              side="right"
-              className="w-[320px] p-0 xl:hidden"
-            >
+          <Sheet open={infoOpen} onOpenChange={setInfoOpen} modal={false}>
+            <SheetContent side="right" className="w-[320px] p-0 xl:hidden">
               <SheetTitle className="sr-only">Organization details</SheetTitle>
               <SheetDescription className="sr-only">
                 Profile, shared documents, and actions for the selected organization.
@@ -127,15 +135,19 @@ function MessagesPage() {
   );
 }
 
-function EmptyChat() {
+function EmptyChat({ loading, hasOrg }: { loading: boolean; hasOrg: boolean }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-2 p-10 text-center">
       <div className="grid h-14 w-14 place-items-center rounded-2xl bg-muted">
         <MessageSquare className="h-6 w-6 text-muted-foreground" />
       </div>
-      <div className="text-sm font-medium">Select a conversation</div>
+      <div className="text-sm font-medium">
+        {loading ? "Loading conversations…" : hasOrg ? "No conversations yet" : "No organization"}
+      </div>
       <p className="max-w-sm text-xs text-muted-foreground">
-        Pick an organization from the list to view the shared thread, files and meeting history.
+        {hasOrg
+          ? "Start a conversation from matchmaking or an organization profile."
+          : "Join or create an organization to start messaging partners."}
       </p>
     </div>
   );
