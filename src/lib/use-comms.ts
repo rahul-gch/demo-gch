@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useId, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { myOrgMemberships } from "@/lib/orgs.functions";
@@ -41,6 +41,7 @@ export interface ConversationView extends ConversationSummary {
 
 export function useConversations(orgId: string | null) {
   const queryClient = useQueryClient();
+  const instanceId = useId();
 
   const query = useQuery({
     queryKey: ["conversations", orgId],
@@ -58,7 +59,7 @@ export function useConversations(orgId: string | null) {
   useEffect(() => {
     if (!orgId) return;
     const channel = supabase
-      .channel(`messages-${orgId}`)
+      .channel(`messages-${orgId}-${instanceId}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, (payload) => {
         const convId = (payload.new as { conversation_id?: string })?.conversation_id;
         queryClient.invalidateQueries({ queryKey: ["conversations", orgId] });
@@ -68,7 +69,7 @@ export function useConversations(orgId: string | null) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [orgId, queryClient]);
+  }, [orgId, queryClient, instanceId]);
 
   const conversations = useMemo<ConversationView[]>(
     () =>
