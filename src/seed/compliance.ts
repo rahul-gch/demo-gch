@@ -86,6 +86,7 @@ function pick<T>(rng: () => number, arr: T[]): T {
 }
 
 export function getMockSocialAudits(e: Entity): SocialAudit[] {
+  if (e.isSeeded !== true) return [];
   const rand = seed(e.id + ":audits");
   const count = 3 + Math.floor(rand() * 3);
   const facility = e.city || e.country || "Main facility";
@@ -142,6 +143,7 @@ export function getMockSocialAudits(e: Entity): SocialAudit[] {
 }
 
 export function getMockTransactionCerts(e: Entity): TransactionCert[] {
+  if (e.isSeeded !== true) return [];
   const rand = seed(e.id + ":tc");
   const count = 4 + Math.floor(rand() * 3);
   const materials = e.materials.length ? e.materials : ["Organic Cotton", "Recycled Polyester"];
