@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { refreshRegistry } from "@/lib/registry";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { createOrg } from "@/lib/orgs.functions";
@@ -119,6 +121,7 @@ function ChipMultiSelect({
 export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
   const nav = useNavigate();
   const createOrgFn = useServerFn(createOrg);
+  const queryClient = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState("");
@@ -232,6 +235,7 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
         }
       }
 
+      await refreshRegistry(queryClient);
       toast.success("Organization created");
       nav({ to: "/organizations/$id", params: { id: res.id } });
     } catch (e) {
