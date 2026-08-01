@@ -152,11 +152,19 @@ export function SupplyChainSnapshot({ entity }: { entity: Entity }) {
         </Button>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-          {tiles.map(([k, v]) => (
-            <Tile key={k} tile={k} value={v} active={open === k} onClick={() => setOpen(open === k ? null : k)} />
-          ))}
-        </div>
+        {!hasData && (
+          <p className="rounded-lg border border-dashed bg-slate-50/60 p-6 text-center text-sm text-muted-foreground">
+            No supply chain mapped yet. Upload your supplier list to see suppliers, risks and
+            certifications here.
+          </p>
+        )}
+        {hasData && (
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+            {tiles.map(([k, v]) => (
+              <Tile key={k} tile={k} value={v} active={open === k} onClick={() => setOpen(open === k ? null : k)} />
+            ))}
+          </div>
+        )}
 
         <div
           className={`grid overflow-hidden transition-all duration-300 ${
