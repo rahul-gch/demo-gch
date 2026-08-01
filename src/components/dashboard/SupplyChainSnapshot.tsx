@@ -104,6 +104,7 @@ function Tile({
 
 export function SupplyChainSnapshot({ entity }: { entity: Entity }) {
   const s = buildSupplyChainSnapshot(entity);
+  const hasData = s.suppliers > 0;
   const conns = useMemo(() => getEcosystemConnections(entity).map((x) => x.entity), [entity]);
   const [open, setOpen] = useState<TileKey | null>(null);
   const max = Math.max(...s.tiers.map((t) => t.value), 1);
