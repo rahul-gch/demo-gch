@@ -18,3 +18,15 @@ export async function ensureRegistry(queryClient: QueryClient) {
   if (!isRegistryHydrated() && entities.length) hydrateEntities(entities);
   return entities;
 }
+
+/**
+ * Forces a fresh fetch of the organization registry and re-hydrates the
+ * in-memory lookup. Call after creating or joining an organization so the new
+ * org is resolvable before navigating to its workspace.
+ */
+export async function refreshRegistry(queryClient: QueryClient) {
+  await queryClient.invalidateQueries({ queryKey: entitiesQueryOptions.queryKey });
+  const entities = await queryClient.fetchQuery(entitiesQueryOptions);
+  if (entities.length) hydrateEntities(entities);
+  return entities;
+}
