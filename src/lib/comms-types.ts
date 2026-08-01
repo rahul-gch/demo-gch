@@ -26,9 +26,23 @@ export interface MeetingRequest {
   viewerOrgId?: string;
 }
 
+export interface ConversationCounterpart {
+  id: string;
+  name: string;
+  entityType: string | null;
+  organizationType: string | null;
+  country: string | null;
+  city: string | null;
+  logoUrl: string | null;
+  verificationStatus: string | null;
+  routeId: string | null;
+  slug: string | null;
+}
+
 export interface ConversationSummary {
   id: string;
   counterpartOrgId: string;
+  counterpart: ConversationCounterpart | null;
   lastMessageAt: string;
   unread: number;
   lastBody: string | null;
