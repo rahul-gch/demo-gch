@@ -115,20 +115,16 @@ function OnboardingPage() {
                 <p className="text-lg font-semibold break-words">
                   {orgLabel ?? data.email ?? "your organization"}
                 </p>
-                <div className="flex flex-wrap justify-center gap-2 text-xs">
-                  <Badge variant="outline" className="capitalize">Role: {data.role}</Badge>
-                  <Badge variant="secondary" className="capitalize">{data.status}</Badge>
-                </div>
                 <p className="text-xs text-muted-foreground">
                   {data.target_org_id
-                    ? "Accept to take ownership of your organization profile."
-                    : "Accept, then set up your organization profile."}
+                    ? "Create your account to set up your organization profile."
+                    : "Create your account, then set up your organization profile."}
                 </p>
               </div>
 
               {data.status !== "active" && (
                 <p className="text-center text-xs text-muted-foreground">
-                  This invitation is {data.status}. Ask the Global Chain Hub team for a new link.
+                  This invitation is no longer valid. Ask the Global Chain Hub team for a new link.
                 </p>
               )}
 
@@ -150,17 +146,20 @@ function OnboardingPage() {
                   <p className="text-center text-xs text-muted-foreground">
                     Signed in as <span className="font-medium">{email}</span>
                   </p>
-                  {data.email && data.email.toLowerCase() !== email.toLowerCase() && (
+                  {mismatch ? (
                     <p className="rounded-md bg-amber-50 p-3 text-xs text-amber-800">
                       This invitation was sent to <span className="font-medium">{data.email}</span>.
-                      Sign in with that account to accept.
+                      Sign in with that account to continue.
                     </p>
+                  ) : (
+                    <Button onClick={accept} disabled={busy} className="w-full" size="lg">
+                      {busy ? "Setting up your workspace…" : "Continue"}
+                    </Button>
                   )}
-                  <Button onClick={accept} disabled={busy} className="w-full" size="lg">
-                    {busy ? "Accepting…" : "Accept invitation"}
-                  </Button>
                 </div>
               )}
+            </>
+          )}
             </>
           )}
         </CardContent>
