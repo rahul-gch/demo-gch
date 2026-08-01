@@ -4,6 +4,7 @@ import { getMockKpis } from "@/seed/showcase";
 import { ArrowDownRight, ArrowUpRight, Package, Truck } from "lucide-react";
 
 function Sparkline({ values }: { values: number[] }) {
+  if (values.length < 2) return null;
   const w = 100;
   const h = 28;
   const max = Math.max(...values);
@@ -76,10 +77,10 @@ export function MiniDashboard({ entity }: { entity: Entity }) {
           value={
             <span className="inline-flex items-center gap-2">
               <Package className="h-5 w-5 text-slate-400" />
-              {k.activeOrders}
+              {k.ordersSpark.length ? k.activeOrders : "—"}
             </span>
           }
-          hint="Last 12 weeks"
+          hint={k.ordersSpark.length ? "Last 12 weeks" : "No order data yet"}
         >
           <Sparkline values={k.ordersSpark} />
         </KpiCard>
@@ -88,10 +89,12 @@ export function MiniDashboard({ entity }: { entity: Entity }) {
           value={
             <span className="inline-flex items-center gap-2">
               <Truck className="h-5 w-5 text-slate-400" />
-              {k.onTimeDelivery}%
+              {k.onTimeDelivery ? `${k.onTimeDelivery}%` : "—"}
             </span>
           }
-          hint={
+          hint={!k.onTimeDelivery ? (
+            "No delivery data yet"
+          ) : (
             <span className="inline-flex items-center gap-1">
               {k.onTimeTrend >= 0 ? (
                 <ArrowUpRight className="h-3 w-3 text-emerald-600" />
@@ -100,7 +103,7 @@ export function MiniDashboard({ entity }: { entity: Entity }) {
               )}
               {Math.abs(k.onTimeTrend)}% MoM
             </span>
-          }
+          )}
         />
       </div>
 
@@ -110,6 +113,11 @@ export function MiniDashboard({ entity }: { entity: Entity }) {
             <CardTitle className="text-base font-semibold">Monthly volume</CardTitle>
           </CardHeader>
           <CardContent>
+            {k.monthlyVolume.length === 0 && (
+              <p className="py-10 text-center text-sm text-muted-foreground">
+                No volume data yet — add production figures to your profile.
+              </p>
+            )}
             <div className="flex h-40 items-end gap-3">
               {k.monthlyVolume.map((m) => {
                 const max = Math.max(...k.monthlyVolume.map((x) => x.value));
@@ -134,6 +142,11 @@ export function MiniDashboard({ entity }: { entity: Entity }) {
             <CardTitle className="text-base font-semibold">Material mix</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
+            {k.materialMix.length === 0 && (
+              <p className="py-10 text-center text-sm text-muted-foreground">
+                No materials listed yet.
+              </p>
+            )}
             {k.materialMix.map((m) => {
               const max = Math.max(...k.materialMix.map((x) => x.value));
               const w = (m.value / max) * 100;
