@@ -248,6 +248,7 @@ export function SupplyChainSnapshot({ entity }: { entity: Entity }) {
             })}
           </div>
         </div>
+        )}
       </CardContent>
     </Card>
   );
