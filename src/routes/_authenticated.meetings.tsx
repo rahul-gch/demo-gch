@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { ActingOrgSwitcher } from "@/components/messages/ActingOrgSwitcher";
 import { AppShell } from "@/components/AppShell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -26,7 +28,8 @@ export const Route = createFileRoute("/_authenticated/meetings")({
 });
 
 function MeetingsPage() {
-  const orgId = useActingOrgId();
+  const [preferred, setPreferred] = useState<string | null>(null);
+  const orgId = useActingOrgId(preferred);
   const { meetings, isLoading } = useMeetings(orgId);
   const respond = useSetMeetingStatus();
   const buckets = bucketMeetings(meetings);
@@ -34,11 +37,14 @@ function MeetingsPage() {
   return (
     <AppShell>
       <div className="mx-auto max-w-5xl space-y-6 px-2">
-        <header>
-          <h1 className="text-2xl font-semibold tracking-tight">Meetings</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Meeting requests across matched organizations. Sent from any match detail panel.
-          </p>
+        <header className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Meetings</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Meeting requests across matched organizations. Sent from any match detail panel.
+            </p>
+          </div>
+          <ActingOrgSwitcher value={orgId} onChange={setPreferred} />
         </header>
 
         <Tabs defaultValue="Pending">

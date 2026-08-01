@@ -78,6 +78,18 @@ function fmt(v: number, unit: string): string {
 }
 
 export function getKpisForEntity(e: Entity): EntityKpi[] {
+  // Newly created organizations report nothing until they enter their own data.
+  if (e.isSeeded !== true) {
+    return KPI_LIBRARY.map((kpi) => ({
+      kpi,
+      value: 0,
+      displayValue: "—",
+      confidence: 0,
+      band: getConfidenceBand(0),
+      source: "Not reported",
+      reported: false,
+    }));
+  }
   const rand = seedFn(e.id + ":kpi");
   const bias = entityBias(e);
   const overrides = ENTITY_KPI_OVERRIDES[e.id];

@@ -40,6 +40,13 @@ export interface Contact {
 
 export interface Entity extends ReliabilityFields {
   id: string;
+  /**
+   * True for organizations imported from the original registry (they carry a
+   * legacy id and showcase/demo content). Organizations created through
+   * signup, invite or the admin console are false and must never display
+   * generated demo data.
+   */
+  isSeeded?: boolean;
   /** Database UUID of the organization row (differs from `id` for imported registry orgs). */
   orgUuid?: string;
   slug?: string;

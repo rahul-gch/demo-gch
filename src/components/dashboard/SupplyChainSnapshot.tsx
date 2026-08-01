@@ -104,6 +104,7 @@ function Tile({
 
 export function SupplyChainSnapshot({ entity }: { entity: Entity }) {
   const s = buildSupplyChainSnapshot(entity);
+  const hasData = s.suppliers > 0;
   const conns = useMemo(() => getEcosystemConnections(entity).map((x) => x.entity), [entity]);
   const [open, setOpen] = useState<TileKey | null>(null);
   const max = Math.max(...s.tiers.map((t) => t.value), 1);
@@ -151,11 +152,19 @@ export function SupplyChainSnapshot({ entity }: { entity: Entity }) {
         </Button>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-          {tiles.map(([k, v]) => (
-            <Tile key={k} tile={k} value={v} active={open === k} onClick={() => setOpen(open === k ? null : k)} />
-          ))}
-        </div>
+        {!hasData && (
+          <p className="rounded-lg border border-dashed bg-slate-50/60 p-6 text-center text-sm text-muted-foreground">
+            No supply chain mapped yet. Upload your supplier list to see suppliers, risks and
+            certifications here.
+          </p>
+        )}
+        {hasData && (
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+            {tiles.map(([k, v]) => (
+              <Tile key={k} tile={k} value={v} active={open === k} onClick={() => setOpen(open === k ? null : k)} />
+            ))}
+          </div>
+        )}
 
         <div
           className={`grid overflow-hidden transition-all duration-300 ${
@@ -212,6 +221,7 @@ export function SupplyChainSnapshot({ entity }: { entity: Entity }) {
           </div>
         </div>
 
+        {s.tiers.length > 0 && (
         <div>
           <div className="mb-2 flex items-center justify-between">
             <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
@@ -238,6 +248,7 @@ export function SupplyChainSnapshot({ entity }: { entity: Entity }) {
             })}
           </div>
         </div>
+        )}
       </CardContent>
     </Card>
   );

@@ -9,7 +9,16 @@ export interface EcosystemConnection {
 
 const TIER_ORDER = ["Tier 4", "Tier 3", "Tier 2", "Tier 1", "Tier 0"] as const;
 
+/**
+ * Organizations imported from the original registry carry showcase content.
+ * Newly created organizations start empty and must feed in their own data.
+ */
+export function isSeededOrg(e: Entity): boolean {
+  return e.isSeeded === true;
+}
+
 export function getEcosystemConnections(e: Entity): EcosystemConnection[] {
+  if (!isSeededOrg(e)) return [];
   const rand = seed(e.id + ":eco");
   const idx = TIER_ORDER.indexOf(e.actorType);
   const upstreamTier = TIER_ORDER[Math.max(0, idx - 1)];
@@ -85,7 +94,17 @@ export interface MockKpis {
   materialMix: { label: string; value: number }[];
 }
 
+const EMPTY_KPIS: MockKpis = {
+  activeOrders: 0,
+  ordersSpark: [],
+  onTimeDelivery: 0,
+  onTimeTrend: 0,
+  monthlyVolume: [],
+  materialMix: [],
+};
+
 export function getMockKpis(e: Entity): MockKpis {
+  if (!isSeededOrg(e)) return EMPTY_KPIS;
   const rand = seed(e.id);
   const base = 30 + Math.floor(rand() * 80);
   const ordersSpark = Array.from({ length: 12 }, () =>
@@ -116,74 +135,6 @@ export function getMockKpis(e: Entity): MockKpis {
   };
 }
 
-export interface MockMessage {
-  id: string;
-  from: "admin" | "entity";
-  authorName: string;
-  authorRole: string;
-  body: string;
-  at: string;
-  read: boolean;
-}
-
-export function getMockMessages(e: Entity): MockMessage[] {
-  const adminName = "Anya Sharma";
-  const adminRole = "GCH Platform Admin";
-  const entityName = e.contacts[0]?.name || "Operations Team";
-  const entityRole = e.contacts[0]?.role || "Director";
-
-  const baseDay = 21 - (parseInt(e.id.slice(-3)) % 8);
-  const day = (offset: number) => `2026-05-${String(baseDay + offset).padStart(2, "0")}`;
-
-  return [
-    {
-      id: `${e.id}-m1`,
-      from: "admin",
-      authorName: adminName,
-      authorRole: adminRole,
-      body: `Hi ${e.name.split(" ")[0]} team — welcome to Global Chain Hub. Could you upload your latest certifications so we can complete your verification?`,
-      at: `${day(0)} 09:14`,
-      read: true,
-    },
-    {
-      id: `${e.id}-m2`,
-      from: "entity",
-      authorName: entityName,
-      authorRole: entityRole,
-      body: `Hello Anya, thank you. We'll share the updated ${e.certifications[0] || "GOTS"} certificate this week along with our facility audit report.`,
-      at: `${day(0)} 11:47`,
-      read: true,
-    },
-    {
-      id: `${e.id}-m3`,
-      from: "admin",
-      authorName: adminName,
-      authorRole: adminRole,
-      body: `Perfect. We've also flagged ${e.missingFields.length || 2} missing fields on your profile — see the "Missing data" panel. Let us know if you need help.`,
-      at: `${day(1)} 08:30`,
-      read: true,
-    },
-    {
-      id: `${e.id}-m4`,
-      from: "entity",
-      authorName: entityName,
-      authorRole: entityRole,
-      body: `Noted. We'll have our commercial lead complete the capacity and MOQ fields by Friday.`,
-      at: `${day(2)} 15:02`,
-      read: true,
-    },
-    {
-      id: `${e.id}-m5`,
-      from: "admin",
-      authorName: adminName,
-      authorRole: adminRole,
-      body: `Great — once that's in, your matchmaking readiness should cross 80%. Talk soon.`,
-      at: `${day(3)} 10:11`,
-      read: false,
-    },
-  ];
-}
-
 export interface MockActivity {
   id: string;
   kind: "upload" | "review" | "score" | "message" | "edit";
@@ -192,6 +143,7 @@ export interface MockActivity {
 }
 
 export function getMockActivity(e: Entity): MockActivity[] {
+  if (!isSeededOrg(e)) return [];
   return [
     { id: "a1", kind: "score", text: `Confidence score updated to ${e.confidenceScore}%`, at: "2 days ago" },
     {
@@ -216,6 +168,7 @@ export interface MockDocument {
 }
 
 export function getMockDocuments(e: Entity): MockDocument[] {
+  if (!isSeededOrg(e)) return [];
   const docs: MockDocument[] = [];
   e.certifications.slice(0, 3).forEach((c, i) => {
     docs.push({

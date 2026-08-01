@@ -22,6 +22,11 @@ export function ActivityTimeline({ entity }: { entity: Entity }) {
         <CardTitle className="text-base font-semibold">Activity timeline</CardTitle>
       </CardHeader>
       <CardContent className="space-y-5">
+        {events.length === 0 && (
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            No activity yet. Actions on your profile, documents and partners will appear here.
+          </p>
+        )}
         {groups.map((g) => {
           const items = events.filter((e) => e.when === g);
           if (!items.length) return null;

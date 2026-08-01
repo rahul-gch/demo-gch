@@ -81,6 +81,7 @@ function MetricPill({
 
 export function EcosystemSummary({ entity }: { entity: Entity }) {
   const c = buildEcosystemCounts(entity);
+  const hasData = c.organizations > 0;
   const conns = useMemo(() => getEcosystemConnections(entity).map((x) => x.entity), [entity]);
   const [open, setOpen] = useState<MetricKey | null>(null);
 
@@ -134,6 +135,13 @@ export function EcosystemSummary({ entity }: { entity: Entity }) {
         </Button>
       </CardHeader>
       <CardContent className="space-y-4">
+        {!hasData && (
+          <p className="rounded-lg border border-dashed bg-slate-50/60 p-6 text-center text-sm text-muted-foreground">
+            No network connections yet. Add partners and map your supply chain to build your
+            ecosystem view.
+          </p>
+        )}
+        {hasData && (
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7">
           {metrics.map(([k, v]) => (
             <MetricPill
@@ -145,6 +153,7 @@ export function EcosystemSummary({ entity }: { entity: Entity }) {
             />
           ))}
         </div>
+        )}
 
         <div
           className={`grid overflow-hidden transition-all duration-300 ${
