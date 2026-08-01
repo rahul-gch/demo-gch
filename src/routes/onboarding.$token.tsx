@@ -8,7 +8,7 @@ import { acceptPlatformInvite, lookupPlatformInvite } from "@/lib/admin.function
 import { EmailAuthForm } from "@/components/auth/EmailAuthForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+
 import { toast } from "sonner";
 import { Building2 } from "lucide-react";
 
