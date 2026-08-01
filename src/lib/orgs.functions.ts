@@ -136,10 +136,14 @@ export const myOrgMemberships = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("org_members")
-      .select("org_id, role")
+      .select("org_id, role, orgs(name)")
       .eq("user_id", context.userId);
     if (error) throw new Error(error.message);
-    return data ?? [];
+    return (data ?? []).map((r) => ({
+      org_id: r.org_id as string,
+      role: r.role as string,
+      org_name: ((r as { orgs?: { name?: string } | null }).orgs?.name ?? "Organization") as string,
+    }));
   });
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

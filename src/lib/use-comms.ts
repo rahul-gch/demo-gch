@@ -29,6 +29,19 @@ export function useMyOrgIds() {
   return useMemo(() => (data ?? []).map((m) => m.org_id as string), [data]);
 }
 
+/** Memberships with display names, for the acting-organization switcher. */
+export function useMyOrgs() {
+  const { data } = useQuery({
+    queryKey: ["my-org-memberships"],
+    queryFn: () => myOrgMemberships(),
+    staleTime: 5 * 60_000,
+  });
+  return useMemo(
+    () => (data ?? []).map((m) => ({ id: m.org_id as string, name: m.org_name as string })),
+    [data],
+  );
+}
+
 export function useActingOrgId(preferred?: string | null): string | null {
   const ids = useMyOrgIds();
   if (preferred && ids.includes(preferred)) return preferred;
