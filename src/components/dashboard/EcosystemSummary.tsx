@@ -81,6 +81,7 @@ function MetricPill({
 
 export function EcosystemSummary({ entity }: { entity: Entity }) {
   const c = buildEcosystemCounts(entity);
+  const hasData = c.organizations > 0;
   const conns = useMemo(() => getEcosystemConnections(entity).map((x) => x.entity), [entity]);
   const [open, setOpen] = useState<MetricKey | null>(null);
 
