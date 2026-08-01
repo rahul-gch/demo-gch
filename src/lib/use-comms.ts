@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { myOrgMemberships } from "@/lib/orgs.functions";
 import {
-  ensureStarterConversations,
   listConversations,
   listMessages,
   markConversationRead,
@@ -16,6 +15,7 @@ import {
 } from "@/lib/meetings.functions";
 import type { ConversationSummary, MeetingRequest, ThreadMessage } from "@/lib/comms-types";
 import { getEntity } from "@/seed/all-entities";
+import { fallbackEntity } from "@/lib/entity-fallback";
 
 export type { ThreadMessage, MeetingRequest } from "@/lib/comms-types";
 
@@ -36,7 +36,7 @@ export function useActingOrgId(preferred?: string | null): string | null {
 }
 
 export interface ConversationView extends ConversationSummary {
-  entity: ReturnType<typeof getEntity>;
+  entity: NonNullable<ReturnType<typeof getEntity>>;
 }
 
 export function useConversations(orgId: string | null) {
@@ -46,13 +46,7 @@ export function useConversations(orgId: string | null) {
   const query = useQuery({
     queryKey: ["conversations", orgId],
     enabled: !!orgId,
-    queryFn: async () => {
-      const first = await listConversations({ data: { orgId: orgId! } });
-      if (first.length > 0) return first;
-      const seeded = await ensureStarterConversations({ data: { orgId: orgId! } });
-      if (seeded.created > 0) return listConversations({ data: { orgId: orgId! } });
-      return first;
-    },
+    queryFn: () => listConversations({ data: { orgId: orgId! } }),
   });
 
   // Live delivery: any new message refreshes the list and the open thread.
@@ -74,8 +68,12 @@ export function useConversations(orgId: string | null) {
   const conversations = useMemo<ConversationView[]>(
     () =>
       (query.data ?? [])
-        .map((c) => ({ ...c, entity: getEntity(c.counterpartOrgId) }))
-        .filter((c) => !!c.entity),
+        .map((c) => {
+          const known = getEntity(c.counterpartOrgId);
+          const entity = known ?? (c.counterpart ? fallbackEntity(c.counterpart) : null);
+          return entity ? { ...c, entity } : null;
+        })
+        .filter((c): c is ConversationView => c !== null),
     [query.data],
   );
 
