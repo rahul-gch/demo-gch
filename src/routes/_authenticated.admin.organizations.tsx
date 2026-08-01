@@ -233,17 +233,8 @@ function OnboardingInvites() {
               Leave empty for a link anyone can use once.
             </p>
           </div>
-          <div className="space-y-1.5">
-            <Label>Role on joining</Label>
-            <Select value={role} onValueChange={(v) => setRole(v as typeof role)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {["owner", "admin", "editor", "viewer"].map((r) => (
-                  <SelectItem key={r} value={r} className="capitalize">{r}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+
+
 
           <label className="flex items-start gap-2 rounded-md border p-3 text-sm">
             <input
