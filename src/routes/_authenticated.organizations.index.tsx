@@ -91,7 +91,7 @@ function OrganizationsPage() {
       }
       return true;
     });
-  }, [q, entityType, actorType, country, certification, risk, confidence, verification, completeness]);
+  }, [ENTITIES, q, entityType, actorType, country, certification, risk, confidence, verification, completeness]);
 
   return (
     <AppShell>
