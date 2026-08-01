@@ -324,7 +324,7 @@ function OnboardingInvites() {
                     {i.org_name || i.email || "Open onboarding link"}
                   </p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {i.email ? `${i.email} · ` : ""}role {i.role} · expires{" "}
+                    {i.email ? `${i.email} · ` : ""}expires{" "}
                     {new Date(i.expires_at as string).toLocaleDateString()}
                   </p>
                 </div>
