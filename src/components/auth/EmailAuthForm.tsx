@@ -148,8 +148,15 @@ export function EmailAuthForm({
           autoComplete={mode === "signup" ? "new-password" : "current-password"}
           required
         />
-        {mode === "signup" && password.length > 0 && (
-          <p className={`text-xs ${strength.tone}`}>Password strength: {strength.label}</p>
+        {mode === "signup" && (
+          password.length > 0 ? (
+            <p className={`text-xs ${strength.tone}`}>Password strength: {strength.label}</p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Use 8+ characters with a mix of letters, numbers and symbols. Common or breached
+              passwords are rejected.
+            </p>
+          )
         )}
       </div>
       {mode === "signup" && (
