@@ -185,3 +185,76 @@ export const updateOrgOperations = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+const profileSchema = z.object({
+  orgId: z.string().uuid(),
+  name: z.string().trim().min(2).max(120).optional(),
+  type: z.string().trim().min(2).max(80).optional(),
+  country: z.string().trim().max(80).optional().nullable(),
+  region: z.string().trim().max(80).optional().nullable(),
+  city: z.string().trim().max(80).optional().nullable(),
+  website: z.string().trim().max(255).optional().nullable(),
+  description: z.string().trim().max(4000).optional().nullable(),
+  size: z.string().trim().max(40).optional().nullable(),
+  logoUrl: z.string().trim().max(500).optional().nullable(),
+  certifications: z.array(z.string().trim().max(80)).max(40).optional().nullable(),
+  materials: z.array(z.string().trim().max(80)).max(60).optional().nullable(),
+  capabilities: z.array(z.string().trim().max(80)).max(60).optional().nullable(),
+  productCategories: z.array(z.string().trim().max(80)).max(30).optional().nullable(),
+  productTypes: z.array(z.string().trim().max(80)).max(60).optional().nullable(),
+  specializations: z.array(z.string().trim().max(80)).max(30).optional().nullable(),
+  moq: z.string().trim().max(60).optional().nullable(),
+  leadTimeDays: z.number().int().min(0).max(1000).optional().nullable(),
+  deliveryTimeframeDays: z.number().int().min(0).max(1000).optional().nullable(),
+  avgDelayDays: z.number().int().min(0).max(365).optional().nullable(),
+  capacity: z.string().trim().max(120).optional().nullable(),
+  onTimeRate: z.number().int().min(0).max(100).optional().nullable(),
+});
+
+/** Full organization profile update — owners/admins of the org only. */
+export const updateOrgProfile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => profileSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: canManage, error: roleErr } = await supabase.rpc("user_can_manage", {
+      _user: userId,
+      _org: data.orgId,
+    });
+    if (roleErr) throw new Error(roleErr.message);
+    if (!canManage) throw new Error("Only organization owners and admins can edit the profile.");
+
+    const map: Record<string, string> = {
+      name: "name",
+      type: "type",
+      country: "country",
+      region: "region",
+      city: "city",
+      website: "website",
+      description: "description",
+      size: "size",
+      logoUrl: "logo_url",
+      certifications: "certifications",
+      materials: "materials",
+      capabilities: "capabilities",
+      productCategories: "product_categories",
+      productTypes: "product_types",
+      specializations: "specializations",
+      moq: "moq",
+      leadTimeDays: "lead_time_days",
+      deliveryTimeframeDays: "delivery_timeframe_days",
+      avgDelayDays: "avg_delay_days",
+      capacity: "capacity",
+      onTimeRate: "on_time_rate",
+    };
+    const patch: Record<string, unknown> = {};
+    for (const [key, column] of Object.entries(map)) {
+      const value = (data as Record<string, unknown>)[key];
+      if (value !== undefined) patch[column] = value;
+    }
+    if (Object.keys(patch).length === 0) return { ok: true };
+
+    const { error } = await supabase.from("orgs").update(patch as never).eq("id", data.orgId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

@@ -1,4 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { amIPlatformAdmin } from "@/lib/admin.functions";
+import { myOrgMemberships } from "@/lib/orgs.functions";
+
 import { AppShell } from "@/components/AppShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,6 +42,25 @@ import { OpsFooter } from "@/components/ops/OpsFooter";
 import { platformCounts, todaysPriorities, platformAlerts } from "@/lib/ops-derive";
 
 export const Route = createFileRoute("/_authenticated/")({
+  beforeLoad: async () => {
+    // Only Global Chain Hub platform admins see the operations console.
+    const [admin, memberships] = await Promise.all([
+      amIPlatformAdmin().catch(() => ({ isAdmin: false })),
+      myOrgMemberships().catch(() => [] as { org_id: string }[]),
+    ]);
+    if (admin?.isAdmin) return;
+    const first = memberships[0];
+    if (first) {
+      const entity = getEntity(first.org_id);
+      throw redirect({
+        to: "/organizations/$id",
+        params: { id: entity?.id ?? first.org_id },
+        replace: true,
+      });
+    }
+    throw redirect({ to: "/signup", search: { tab: "create" as const }, replace: true });
+  },
+
   head: () => ({
     meta: [
       { title: "Operations Console — Global Chain Hub" },

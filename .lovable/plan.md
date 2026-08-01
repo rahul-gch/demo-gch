@@ -1,28 +1,31 @@
-## What I found
+## Problem (verified in code)
 
-- The demo messages are **real rows in the database**, not code: 10 conversations and 24 messages were inserted by an earlier seeding migration (0 meeting requests). That's why they still show after the code-side mock data was removed.
-- The onboarding page shows "Role: Owner" + "Active" badges because the invite record carries a `role` field, and the admin console has a role dropdown defaulting to `owner`.
-- Email confirmation is required on sign-up, so on `/onboarding/<token>` the "Create account" button ends at the "Check your inbox" screen — the user never gets signed in, never reaches "Accept invitation", and never gets a profile. That matches "it's not coming to the next page".
+1. **Everyone lands on the admin console.** `src/routes/_authenticated.index.tsx` (route `/`) renders the "Global Chain Hub · Admin" Platform Operations Center with no admin check at all. The only admin check (`amIPlatformAdmin`) is used in `/admin/organizations` and to show one extra sidebar link. `AppSidebar` also hardcodes the subtitle "Admin Console" and shows Platform Dashboard / Organizations / Map / Matchmaking to every user.
+2. **Signup is two disconnected steps.** `/signup` first makes the user create an account, then a long multi-step `CreateOrgForm` (type, country, certifications, materials, capabilities, product categories, logo…) before they can get in. Onboarding invites route to the same form.
+3. **Org settings don't persist.** `/organizations/$id/settings` writes to a local in-browser override store, not the database, so "fill details later in settings" isn't actually possible yet.
 
 ## Plan
 
-### 1. Remove all seeded messaging data
-Migration deleting every seeded conversation, conversation participant and message (and any meeting requests) so all organizations — old and new — start with a genuinely empty inbox. Messaging then only ever shows real user-sent messages.
+### 1. Gate the admin console
+- Add a shared `useIsPlatformAdmin()` hook wrapping the existing `amIPlatformAdmin` server fn.
+- In `/` (`_authenticated.index.tsx`): if the user is a platform admin, render the current ops console. If not, redirect them to their organization dashboard (`/organizations/$id`) using their first membership; if they have no org yet, send them to the org-setup screen.
+- `AppSidebar`: split navigation into an admin set (Platform Dashboard, Activity Feed, Organizations, Map, Matchmaking, Admin console) and a member set (My organization, Messages, Meetings, Settings). Header subtitle becomes "Admin Console" only for admins, otherwise the org name.
+- Keep server-side authority as-is: admin server functions already call `assertAdmin`, so this is presentation gating on top of enforced backend checks.
 
-### 2. Simplify the onboarding invitation
-- Drop the role concept from the onboarding UX: remove the role dropdown from the admin invite form and the "Role: …" / status badges from `/onboarding/$token`. Invites are always just "join the platform" (the underlying record keeps defaulting to owner of whatever org they create, but it's never shown or chosen).
-- Reword the admin invite card and the onboarding card to plain platform-onboarding language.
-- Invite list rows show email, expiry and status only.
+### 2. One-step signup
+- `/signup` becomes a single screen: create account (Google or email) → immediately create the organization with just **name, type, country**.
+- Remove the multi-step wizard from the signup path; `CreateOrgForm` is reduced to those three fields plus an optional logo. All remaining fields (description, website, size, certifications, materials, capabilities, product types, MOQ, lead time, capacity) move to Settings.
+- After creation, refresh the registry (existing `refreshRegistry`) and land straight on the new org dashboard.
+- If a signed-in user has no org, `/` sends them to this same short setup screen instead of a 404 or the admin console.
+- Onboarding invite links (`/onboarding/$token`) keep working and feed into the same short setup.
 
-### 3. Make the onboarding link actually work end to end
-- Turn on automatic email confirmation so account creation from an invite link signs the person in immediately instead of stalling on "check your inbox".
-- After sign-up/sign-in on the onboarding page, auto-accept the invitation (no extra click) and route the user straight to organization setup:
-  - invite tied to an existing organization → its dashboard
-  - open invite → the create-organization form, then their new org's dashboard
-- Handle the Google path the same way (return from `/auth/callback` resumes the pending onboarding token).
-- Show clear inline errors if the token is expired/revoked or the invited email doesn't match.
+### 3. Make Settings the real profile editor
+- Rewrite `/organizations/$id/settings` "Profile" tab to load from and save to the database via an `updateOrg` server function (extending the existing one in `src/lib/orgs.functions.ts`), replacing the local override store for org-owned fields.
+- Fields: name, type, country, region, city, website, description, size, logo, certifications, materials, capabilities, product categories/types, MOQ, lead time, capacity, on-time rate.
+- Show a small "complete your profile" prompt on the org dashboard linking here, so new orgs know where to fill data.
+- Only owners/admins of that org can save (enforced in the server function).
 
 ### Technical notes
-- Migration: `DELETE FROM messages; DELETE FROM conversation_participants; DELETE FROM conversations; DELETE FROM meeting_requests;`
-- `supabase--configure_auth` with `auto_confirm_email: true`.
-- Files touched: `src/routes/onboarding.$token.tsx`, `src/routes/_authenticated.admin.organizations.tsx`, `src/components/auth/EmailAuthForm.tsx` (signed-in callback path), `src/lib/admin.functions.ts` (role optional in create-invite input).
+- No schema changes needed — `orgs` already has every column the form writes.
+- Admin identity stays the existing `is_platform_admin` RPC (globalchainhub.io emails); no client-side role storage.
+- Redirects use TanStack `redirect()` in `beforeLoad` so no admin content flashes before the redirect.
