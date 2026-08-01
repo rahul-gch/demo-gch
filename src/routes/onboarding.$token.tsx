@@ -87,6 +87,16 @@ function OnboardingPage() {
     | undefined;
 
   const orgLabel = data?.target_org_name || data?.org_name || null;
+  const mismatch = Boolean(
+    data?.email && email && data.email.toLowerCase() !== email.toLowerCase(),
+  );
+
+  // Once signed in with the right account, take them straight through.
+  useEffect(() => {
+    if (!data || data.status !== "active" || !email || mismatch || busy) return;
+    void accept();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, email, mismatch]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-6">
