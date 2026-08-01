@@ -220,6 +220,18 @@ export interface ReadinessBreakdownData {
 }
 
 export function buildReadiness(e: Entity, nhriScore: number): ReadinessBreakdownData {
+  if (!isSeededOrg(e)) {
+    return {
+      overall: Math.round((nhriScore + e.matchmakingReadiness + e.kpiReadiness) / 3),
+      bars: [
+        { label: "Matchmaking", value: e.matchmakingReadiness },
+        { label: "Supply Chain", value: e.traceabilityReadiness },
+        { label: "Compliance", value: Math.min(100, e.verifiedCertCount * 20) },
+        { label: "Digital Passport", value: e.profileCompleteness },
+        { label: "Blockchain Ready", value: 0 },
+      ],
+    };
+  }
   const overall = Math.round((nhriScore + e.matchmakingReadiness + e.kpiReadiness) / 3);
   const bars = [
     { label: "Matchmaking", value: e.matchmakingReadiness },
