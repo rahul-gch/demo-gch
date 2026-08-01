@@ -167,7 +167,6 @@ function OnboardingInvites() {
   });
 
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<"owner" | "admin" | "editor" | "viewer">("owner");
   const [note, setNote] = useState("");
   const [withShell, setWithShell] = useState(false);
   const [orgName, setOrgName] = useState("");
@@ -179,7 +178,6 @@ function OnboardingInvites() {
       createPlatformInvite({
         data: {
           email: email.trim() || null,
-          role,
           note: note.trim() || null,
           expiresInDays: 30,
           orgName: withShell ? orgName.trim() : null,
