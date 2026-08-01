@@ -16,6 +16,7 @@ import { OrgInfoSidebar } from "@/components/messages/OrgInfoSidebar";
 import { MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
+import { ActingOrgSwitcher } from "@/components/messages/ActingOrgSwitcher";
 
 export const Route = createFileRoute("/_authenticated/messages")({
   head: () => ({
@@ -39,7 +40,8 @@ export const Route = createFileRoute("/_authenticated/messages")({
 });
 
 function MessagesPage() {
-  const orgId = useActingOrgId();
+  const [preferred, setPreferred] = useState<string | null>(null);
+  const orgId = useActingOrgId(preferred);
   const { conversations, isLoading } = useConversations(orgId);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [filter, setFilter] = useState("");
@@ -67,11 +69,14 @@ function MessagesPage() {
   return (
     <AppShell>
       <div className="mx-auto h-[calc(100vh-6rem)] w-full min-w-0 max-w-[1600px] overflow-hidden px-2 sm:px-4">
-        <header className="mb-4">
-          <h1 className="text-2xl font-semibold tracking-tight">Messages</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Secure conversations with matched organizations across the network.
-          </p>
+        <header className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Messages</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Secure conversations with matched organizations across the network.
+            </p>
+          </div>
+          <ActingOrgSwitcher value={orgId} onChange={setPreferred} />
         </header>
         <div
           className={cn(
