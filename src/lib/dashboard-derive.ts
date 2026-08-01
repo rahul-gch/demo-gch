@@ -1,6 +1,6 @@
 import type { Entity } from "@/seed/types";
 import { ALL_ENTITIES } from "@/seed/all-entities";
-import { getEcosystemConnections, getMatchSuggestions } from "@/seed/showcase";
+import { getEcosystemConnections, getMatchSuggestions, isSeededOrg } from "@/seed/showcase";
 
 export function greetingForNow(): { greet: string; icon: "sun" | "moon" | "sunset" } {
   const h = new Date().getHours();
@@ -19,6 +19,19 @@ export interface AiSummary {
 }
 
 export function buildAiSummary(e: Entity, healthScore: number, userName = "there"): AiSummary {
+  if (!isSeededOrg(e)) {
+    const missing = buildMissingFields(e).length;
+    return {
+      missingDocs: missing,
+      matches: 0,
+      attentionProjects: 0,
+      updatedCerts: e.verifiedCertCount,
+      paragraph:
+        `${greetingForNow().greet}, ${userName}. ${e.name} is a new organization on Global Chain Hub. ` +
+        `Complete your profile${missing ? ` — ${missing} field${missing === 1 ? "" : "s"} still missing` : ""} ` +
+        `to unlock matchmaking, readiness scoring and partner discovery.`,
+    };
+  }
   const missingDocs = Math.max(0, e.missingDataCount);
   const matches = Math.min(6, getMatchSuggestions(e).length);
   const conns = getEcosystemConnections(e);
@@ -46,6 +59,32 @@ export interface CriticalAction {
 }
 
 export function buildCriticalActions(e: Entity): CriticalAction[] {
+  if (!isSeededOrg(e)) {
+    const missing = buildMissingFields(e);
+    return [
+      {
+        id: "profile",
+        tone: missing.length > 4 ? "amber" : "sky",
+        title: missing.length ? `Complete ${missing.length} profile field${missing.length === 1 ? "" : "s"}` : "Profile complete",
+        detail: missing.length ? missing.slice(0, 3).map((m) => m.label).join(" · ") : "All core profile fields are filled in.",
+        cta: "Edit profile",
+      },
+      {
+        id: "certs",
+        tone: e.certifications.length ? "sky" : "amber",
+        title: e.certifications.length ? `${e.certifications.length} certification${e.certifications.length === 1 ? "" : "s"} listed` : "Add your certifications",
+        detail: "Upload certificates so partners can verify your organization.",
+        cta: "Upload",
+      },
+      {
+        id: "ops",
+        tone: e.moq && e.capacity ? "sky" : "amber",
+        title: e.moq && e.capacity ? "Operations details added" : "Add MOQ, capacity and lead time",
+        detail: "Operational data powers matchmaking with the right partners.",
+        cta: "Add details",
+      },
+    ];
+  }
   const expiring = e.certificationDetails.filter((c) => c.status !== "Verified").slice(0, 1)[0];
   const matches = getMatchSuggestions(e);
   const risk = e.riskLevel;
@@ -89,7 +128,18 @@ export interface EcosystemCounts {
   certifiers: number;
 }
 
+const EMPTY_ECOSYSTEM: EcosystemCounts = {
+  organizations: 0,
+  countries: 0,
+  suppliers: 0,
+  research: 0,
+  ngos: 0,
+  auditors: 0,
+  certifiers: 0,
+};
+
 export function buildEcosystemCounts(e: Entity): EcosystemCounts {
+  if (!isSeededOrg(e)) return EMPTY_ECOSYSTEM;
   const conns = getEcosystemConnections(e).map((c) => c.entity);
   const set = new Set(conns.map((c) => c.id));
   const list = ALL_ENTITIES.filter((x) => set.has(x.id));
@@ -148,6 +198,9 @@ export interface SupplyChainSnapshotData {
 }
 
 export function buildSupplyChainSnapshot(e: Entity): SupplyChainSnapshotData {
+  if (!isSeededOrg(e)) {
+    return { suppliers: 0, countries: 0, risks: 0, delays: 0, certified: 0, tiers: [] };
+  }
   const conns = getEcosystemConnections(e).map((c) => c.entity);
   const suppliers = conns.length + 12;
   const countries = new Set(conns.map((c) => c.country)).size + 3;
@@ -186,6 +239,7 @@ export interface TimelineEvent {
 }
 
 export function buildTimeline(e: Entity): TimelineEvent[] {
+  if (!isSeededOrg(e)) return [];
   return [
     { when: "Today", time: "1h ago", title: `Project milestone completed on ${e.name.split(" ")[0]} pilot`, kind: "project" },
     { when: "Today", time: "3h ago", title: `Research paper published in ecosystem`, kind: "upload" },
@@ -205,6 +259,7 @@ export interface OpportunityItem {
 }
 
 export function buildOpportunities(e: Entity): OpportunityItem[] {
+  if (!isSeededOrg(e)) return [];
   const matches = getMatchSuggestions(e);
   const top = matches[0];
   return [
