@@ -221,6 +221,7 @@ export function SupplyChainSnapshot({ entity }: { entity: Entity }) {
           </div>
         </div>
 
+        {s.tiers.length > 0 && (
         <div>
           <div className="mb-2 flex items-center justify-between">
             <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
