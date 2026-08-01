@@ -24,6 +24,7 @@ export function rowToEntity(row: OrgRow): Entity {
   const tier = row.tier as number | null;
   return {
     id: str(row.legacy_id) || str(row.id),
+    isSeeded: !!str(row.legacy_id),
     orgUuid: str(row.id),
     slug: str(row.slug),
     gchNumber: str(row.gch_number),
