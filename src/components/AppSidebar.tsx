@@ -26,15 +26,24 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { amIPlatformAdmin } from "@/lib/admin.functions";
-import { useActingOrgId, useUnreadTotal } from "@/lib/use-comms";
+import { useActingOrgId, useMyOrgs, useUnreadTotal } from "@/lib/use-comms";
+import { getEntity } from "@/seed/all-entities";
 
-const items = [
+type NavItem = {
+  title: string;
+  url: string;
+  icon: typeof LayoutDashboard;
+  badgeKind?: "unread";
+  params?: Record<string, string>;
+};
+
+const ADMIN_ITEMS: NavItem[] = [
   { title: "Platform Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Activity Feed", url: "/feed", icon: Activity },
   { title: "Organizations", url: "/organizations", icon: Building2 },
   { title: "Map View", url: "/map", icon: Map },
   { title: "Matchmaking", url: "/matchmaking", icon: Sparkles },
-  { title: "Messages", url: "/messages", icon: MessageSquare, badgeKind: "unread" as const },
+  { title: "Messages", url: "/messages", icon: MessageSquare, badgeKind: "unread" },
   { title: "Meetings", url: "/meetings", icon: Calendar },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
@@ -45,11 +54,31 @@ export function AppSidebar() {
     url === "/" ? pathname === "/" : pathname.startsWith(url);
   const actingOrgId = useActingOrgId();
   const unread = useUnreadTotal(actingOrgId);
+  const myOrgs = useMyOrgs();
   const isAdmin = useQuery({
     queryKey: ["platform-admin"],
     queryFn: () => amIPlatformAdmin(),
     staleTime: 5 * 60_000,
   });
+
+  const admin = !!isAdmin.data?.isAdmin;
+  const primaryOrg = myOrgs[0];
+  const primaryOrgPath = primaryOrg
+    ? `/organizations/${getEntity(primaryOrg.id)?.id ?? primaryOrg.id}`
+    : null;
+
+  const items: NavItem[] = admin
+    ? ADMIN_ITEMS
+    : [
+        ...(primaryOrgPath
+          ? [{ title: "My organization", url: primaryOrgPath, icon: Building2 }]
+          : []),
+        { title: "Organizations", url: "/organizations", icon: Building2 },
+        { title: "Matchmaking", url: "/matchmaking", icon: Sparkles },
+        { title: "Messages", url: "/messages", icon: MessageSquare, badgeKind: "unread" },
+        { title: "Meetings", url: "/meetings", icon: Calendar },
+        { title: "Settings", url: "/settings", icon: Settings },
+      ];
 
   return (
     <Sidebar collapsible="icon">
@@ -58,12 +87,15 @@ export function AppSidebar() {
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
             <Globe2 className="h-4 w-4" />
           </div>
-          <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-            <span className="text-sm font-semibold leading-tight">Global Chain Hub</span>
-            <span className="text-[11px] text-muted-foreground">Admin Console</span>
+          <div className="flex min-w-0 flex-col group-data-[collapsible=icon]:hidden">
+            <span className="truncate text-sm font-semibold leading-tight">Global Chain Hub</span>
+            <span className="truncate text-[11px] text-muted-foreground">
+              {admin ? "Admin Console" : primaryOrg?.name ?? "Workspace"}
+            </span>
           </div>
         </div>
       </SidebarHeader>
+
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
