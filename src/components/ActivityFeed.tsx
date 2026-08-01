@@ -19,6 +19,9 @@ export function ActivityFeed({ entity }: { entity: Entity }) {
         <CardTitle className="text-base font-semibold">Recent activity</CardTitle>
       </CardHeader>
       <CardContent>
+        {items.length === 0 && (
+          <p className="py-4 text-sm text-muted-foreground">No activity recorded yet.</p>
+        )}
         <ul className="space-y-4">
           {items.map((a) => {
             const Icon = ICONS[a.kind];

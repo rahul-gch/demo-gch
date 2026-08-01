@@ -8,6 +8,7 @@ const ICONS = { grant: Landmark, partner: Handshake, research: FlaskConical } as
 
 export function OpportunitiesPanel({ entity }: { entity: Entity }) {
   const items = buildOpportunities(entity);
+  if (items.length === 0) return null;
   return (
     <Card className="border-amber-100 bg-gradient-to-br from-amber-50/70 via-white to-white shadow-sm">
       <CardHeader>
