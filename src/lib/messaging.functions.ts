@@ -1,8 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import type { ConversationSummary, RawMessage } from "@/lib/comms-types";
-import { STARTER_THREADS, starterAuthor, daysAgoIso } from "@/lib/comms.server";
+import type { ConversationCounterpart, ConversationSummary, RawMessage } from "@/lib/comms-types";
 
 export const listConversations = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -37,6 +36,30 @@ export const listConversations = createServerFn({ method: "POST" })
       if (p.org_id !== data.orgId) counterpart.set(p.conversation_id, p.org_id);
     }
 
+    const otherIds = Array.from(new Set(Array.from(counterpart.values())));
+    const { data: orgRows } = await supabase
+      .from("orgs")
+      .select(
+        "id, name, entity_type, type, organization_type, country, city, logo_url, verification_status, legacy_id, slug",
+      )
+      .in("id", otherIds.length ? otherIds : ["00000000-0000-0000-0000-000000000000"]);
+
+    const orgById = new Map<string, ConversationCounterpart>();
+    for (const o of orgRows ?? []) {
+      orgById.set(o.id, {
+        id: o.id,
+        name: o.name,
+        entityType: o.entity_type ?? o.type ?? null,
+        organizationType: o.organization_type ?? o.type ?? null,
+        country: o.country ?? null,
+        city: o.city ?? null,
+        logoUrl: o.logo_url ?? null,
+        verificationStatus: o.verification_status ?? null,
+        routeId: o.legacy_id ?? o.id,
+        slug: o.slug ?? null,
+      });
+    }
+
     const acc = new Map<string, ConversationSummary>();
     for (const id of ids) {
       const other = counterpart.get(id);
@@ -44,6 +67,7 @@ export const listConversations = createServerFn({ method: "POST" })
       acc.set(id, {
         id,
         counterpartOrgId: other,
+        counterpart: orgById.get(other) ?? null,
         lastMessageAt: readAt.get(id) ?? new Date(0).toISOString(),
         unread: 0,
         lastBody: null,
@@ -158,69 +182,4 @@ export const markConversationRead = createServerFn({ method: "POST" })
       .eq("org_id", data.orgId);
     if (error) throw new Error(error.message);
     return { ok: true };
-  });
-
-/**
- * First-run demo continuity: if an organization has no conversations yet, open a
- * handful of threads with well-profiled partner organizations so the inbox is
- * not empty. Everything created here is a real database row.
- */
-export const ensureStarterConversations = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ orgId: z.string().uuid() }).parse(d))
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-
-    const { data: isMember } = await supabase.rpc("is_org_member", {
-      _user: userId,
-      _org: data.orgId,
-    });
-    if (!isMember) return { created: 0 };
-
-    const { count } = await supabase
-      .from("conversation_participants")
-      .select("id", { count: "exact", head: true })
-      .eq("org_id", data.orgId);
-    if ((count ?? 0) > 0) return { created: 0 };
-
-    const { data: partners } = await supabase
-      .from("orgs")
-      .select("id, name")
-      .neq("id", data.orgId)
-      .not("legacy_id", "is", null)
-      .order("profile_completeness", { ascending: false })
-      .limit(5);
-    if (!partners || partners.length === 0) return { created: 0 };
-
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    let created = 0;
-    for (let i = 0; i < partners.length; i++) {
-      const p = partners[i];
-      const { data: conversationId, error } = await supabase.rpc("get_or_create_conversation", {
-        _org_a: data.orgId,
-        _org_b: p.id,
-      });
-      if (error || !conversationId) continue;
-
-      const script = STARTER_THREADS[i % STARTER_THREADS.length];
-      const author = starterAuthor(p.name);
-      const rows = script.lines.map((body, j) => ({
-        conversation_id: conversationId as string,
-        sender_org_id: p.id,
-        sender_user_id: null,
-        author_name: author.name,
-        author_role: author.role,
-        body,
-        created_at: daysAgoIso(i + 1, (script.lines.length - 1 - j) * 3),
-      }));
-      await supabaseAdmin.from("messages").insert(rows);
-      await supabaseAdmin
-        .from("conversations")
-        .update({ last_message_at: rows[rows.length - 1].created_at })
-        .eq("id", conversationId as string);
-      created += 1;
-    }
-
-    return { created };
   });
