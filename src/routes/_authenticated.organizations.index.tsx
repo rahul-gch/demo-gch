@@ -20,7 +20,9 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { VerificationBadge, RiskBadge } from "@/components/StatusBadge";
-import { ALL_ENTITIES as ENTITIES, ENTITY_TYPES } from "@/seed/all-entities";
+import { ALL_ENTITIES, ENTITY_TYPES } from "@/seed/all-entities";
+import { useQuery } from "@tanstack/react-query";
+import { entitiesQueryOptions } from "@/lib/registry";
 
 export const Route = createFileRoute("/_authenticated/organizations/")({
   head: () => ({
@@ -49,9 +51,13 @@ function OrganizationsPage() {
   const [verification, setVerification] = useState(ALL);
   const [completeness, setCompleteness] = useState(ALL);
 
-  const countries = useMemo(() => uniq(ENTITIES.map((e) => e.country)), []);
-  const actors = useMemo(() => uniq(ENTITIES.map((e) => e.actorType)), []);
-  const certs = useMemo(() => uniq(ENTITIES.flatMap((e) => e.certifications)), []);
+  // Subscribe to the registry query so newly created orgs appear without a reload.
+  const registry = useQuery({ ...entitiesQueryOptions, refetchOnMount: "always" });
+  const ENTITIES = registry.data?.length ? registry.data : ALL_ENTITIES;
+
+  const countries = useMemo(() => uniq(ENTITIES.map((e) => e.country)), [ENTITIES]);
+  const actors = useMemo(() => uniq(ENTITIES.map((e) => e.actorType)), [ENTITIES]);
+  const certs = useMemo(() => uniq(ENTITIES.flatMap((e) => e.certifications)), [ENTITIES]);
 
   const rows = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -85,7 +91,7 @@ function OrganizationsPage() {
       }
       return true;
     });
-  }, [q, entityType, actorType, country, certification, risk, confidence, verification, completeness]);
+  }, [ENTITIES, q, entityType, actorType, country, certification, risk, confidence, verification, completeness]);
 
   return (
     <AppShell>

@@ -113,6 +113,8 @@ function RecentSignups() {
   const q = useQuery({
     queryKey: ["admin-recent-signups"],
     queryFn: () => listRecentSignups({ data: { limit: 25 } }),
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
   return (

@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { refreshRegistry } from "@/lib/registry";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { acceptInvite, lookupInvite } from "@/lib/invites.functions";
@@ -18,6 +19,7 @@ export const Route = createFileRoute("/invite/$token")({
 function InvitePage() {
   const { token } = Route.useParams();
   const nav = useNavigate();
+  const queryClient = useQueryClient();
   const [userEmail, setUserEmail] = useState<string | null | undefined>(undefined);
   const [accepting, setAccepting] = useState(false);
 
@@ -47,6 +49,7 @@ function InvitePage() {
     setAccepting(true);
     try {
       const res = await acceptInvite({ data: { token } });
+      await refreshRegistry(queryClient);
       toast.success("Joined organization");
       nav({ to: "/organizations/$id", params: { id: res.orgId }, replace: true });
     } catch (e) {

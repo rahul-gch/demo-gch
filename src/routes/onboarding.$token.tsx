@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { refreshRegistry } from "@/lib/registry";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { acceptPlatformInvite, lookupPlatformInvite } from "@/lib/admin.functions";
@@ -28,6 +29,7 @@ export const Route = createFileRoute("/onboarding/$token")({
 function OnboardingPage() {
   const { token } = Route.useParams();
   const nav = useNavigate();
+  const queryClient = useQueryClient();
   const [email, setEmail] = useState<string | null | undefined>(undefined);
   const [busy, setBusy] = useState(false);
 
@@ -57,6 +59,7 @@ function OnboardingPage() {
     setBusy(true);
     try {
       const res = await acceptPlatformInvite({ data: { token } });
+      await refreshRegistry(queryClient);
       if (res.orgId) {
         toast.success("Welcome aboard");
         nav({ to: "/organizations/$id", params: { id: res.orgId }, replace: true });
