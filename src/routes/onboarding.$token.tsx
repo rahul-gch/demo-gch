@@ -160,8 +160,6 @@ function OnboardingPage() {
               )}
             </>
           )}
-            </>
-          )}
         </CardContent>
       </Card>
     </div>
