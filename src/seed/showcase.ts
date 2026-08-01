@@ -9,7 +9,16 @@ export interface EcosystemConnection {
 
 const TIER_ORDER = ["Tier 4", "Tier 3", "Tier 2", "Tier 1", "Tier 0"] as const;
 
+/**
+ * Organizations imported from the original registry carry showcase content.
+ * Newly created organizations start empty and must feed in their own data.
+ */
+export function isSeededOrg(e: Entity): boolean {
+  return e.isSeeded === true;
+}
+
 export function getEcosystemConnections(e: Entity): EcosystemConnection[] {
+  if (!isSeededOrg(e)) return [];
   const rand = seed(e.id + ":eco");
   const idx = TIER_ORDER.indexOf(e.actorType);
   const upstreamTier = TIER_ORDER[Math.max(0, idx - 1)];
