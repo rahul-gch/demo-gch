@@ -167,7 +167,6 @@ function OnboardingInvites() {
   });
 
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<"owner" | "admin" | "editor" | "viewer">("owner");
   const [note, setNote] = useState("");
   const [withShell, setWithShell] = useState(false);
   const [orgName, setOrgName] = useState("");
@@ -179,7 +178,6 @@ function OnboardingInvites() {
       createPlatformInvite({
         data: {
           email: email.trim() || null,
-          role,
           note: note.trim() || null,
           expiresInDays: 30,
           orgName: withShell ? orgName.trim() : null,
@@ -235,17 +233,8 @@ function OnboardingInvites() {
               Leave empty for a link anyone can use once.
             </p>
           </div>
-          <div className="space-y-1.5">
-            <Label>Role on joining</Label>
-            <Select value={role} onValueChange={(v) => setRole(v as typeof role)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {["owner", "admin", "editor", "viewer"].map((r) => (
-                  <SelectItem key={r} value={r} className="capitalize">{r}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+
+
 
           <label className="flex items-start gap-2 rounded-md border p-3 text-sm">
             <input
@@ -335,7 +324,7 @@ function OnboardingInvites() {
                     {i.org_name || i.email || "Open onboarding link"}
                   </p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {i.email ? `${i.email} · ` : ""}role {i.role} · expires{" "}
+                    {i.email ? `${i.email} · ` : ""}expires{" "}
                     {new Date(i.expires_at as string).toLocaleDateString()}
                   </p>
                 </div>

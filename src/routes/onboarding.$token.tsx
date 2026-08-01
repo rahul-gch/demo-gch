@@ -8,7 +8,7 @@ import { acceptPlatformInvite, lookupPlatformInvite } from "@/lib/admin.function
 import { EmailAuthForm } from "@/components/auth/EmailAuthForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+
 import { toast } from "sonner";
 import { Building2 } from "lucide-react";
 
@@ -87,6 +87,16 @@ function OnboardingPage() {
     | undefined;
 
   const orgLabel = data?.target_org_name || data?.org_name || null;
+  const mismatch = Boolean(
+    data?.email && email && data.email.toLowerCase() !== email.toLowerCase(),
+  );
+
+  // Once signed in with the right account, take them straight through.
+  useEffect(() => {
+    if (!data || data.status !== "active" || !email || mismatch || busy) return;
+    void accept();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, email, mismatch]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-6">
@@ -115,20 +125,16 @@ function OnboardingPage() {
                 <p className="text-lg font-semibold break-words">
                   {orgLabel ?? data.email ?? "your organization"}
                 </p>
-                <div className="flex flex-wrap justify-center gap-2 text-xs">
-                  <Badge variant="outline" className="capitalize">Role: {data.role}</Badge>
-                  <Badge variant="secondary" className="capitalize">{data.status}</Badge>
-                </div>
                 <p className="text-xs text-muted-foreground">
                   {data.target_org_id
-                    ? "Accept to take ownership of your organization profile."
-                    : "Accept, then set up your organization profile."}
+                    ? "Create your account to set up your organization profile."
+                    : "Create your account, then set up your organization profile."}
                 </p>
               </div>
 
               {data.status !== "active" && (
                 <p className="text-center text-xs text-muted-foreground">
-                  This invitation is {data.status}. Ask the Global Chain Hub team for a new link.
+                  This invitation is no longer valid. Ask the Global Chain Hub team for a new link.
                 </p>
               )}
 
@@ -150,15 +156,16 @@ function OnboardingPage() {
                   <p className="text-center text-xs text-muted-foreground">
                     Signed in as <span className="font-medium">{email}</span>
                   </p>
-                  {data.email && data.email.toLowerCase() !== email.toLowerCase() && (
+                  {mismatch ? (
                     <p className="rounded-md bg-amber-50 p-3 text-xs text-amber-800">
                       This invitation was sent to <span className="font-medium">{data.email}</span>.
-                      Sign in with that account to accept.
+                      Sign in with that account to continue.
                     </p>
+                  ) : (
+                    <Button onClick={accept} disabled={busy} className="w-full" size="lg">
+                      {busy ? "Setting up your workspace…" : "Continue"}
+                    </Button>
                   )}
-                  <Button onClick={accept} disabled={busy} className="w-full" size="lg">
-                    {busy ? "Accepting…" : "Accept invitation"}
-                  </Button>
                 </div>
               )}
             </>
