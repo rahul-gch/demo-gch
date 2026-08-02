@@ -5,9 +5,15 @@ import { hydrateEntities, isRegistryHydrated } from "@/seed/all-entities";
 export const entitiesQueryOptions = queryOptions({
   queryKey: ["entities", "registry"],
   queryFn: async () => {
-    const entities = await listEntities();
-    hydrateEntities(entities);
-    return entities;
+    try {
+      const entities = await listEntities();
+      hydrateEntities(entities);
+      return entities;
+    } catch {
+      // Public pages (no authenticated session) don't need the org registry.
+      // On sign-in, onAuthStateChange invalidates this query so it refetches.
+      return [];
+    }
   },
   staleTime: 5 * 60_000,
 });
