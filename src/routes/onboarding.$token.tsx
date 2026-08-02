@@ -132,17 +132,9 @@ function OnboardingPage() {
               )}
 
               {data.status === "active" && email === null && (
-                <div className="space-y-4">
-                  <Button onClick={signInGoogle} variant="outline" className="w-full">
-                    Continue with Google
-                  </Button>
-                  <div className="relative text-center text-xs text-muted-foreground">
-                    <span className="bg-card px-2">or use your email</span>
-                    <div className="absolute inset-x-0 top-1/2 -z-10 border-t" />
-                  </div>
-                  <EmailAuthForm mode="signup" compact />
-                </div>
+                <EmailAuthForm mode="signup" compact />
               )}
+
 
               {data.status === "active" && email && (
                 <div className="space-y-2">
