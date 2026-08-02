@@ -1031,6 +1031,10 @@ export type Database = {
       }
       is_org_member: { Args: { _org: string; _user: string }; Returns: boolean }
       is_platform_admin: { Args: { _user: string }; Returns: boolean }
+      is_project_member: {
+        Args: { _project: string; _user: string }
+        Returns: boolean
+      }
       is_project_partner: {
         Args: { _project: string; _user: string }
         Returns: boolean
