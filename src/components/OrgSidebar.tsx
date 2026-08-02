@@ -101,18 +101,20 @@ export function OrgSidebar({ entity }: { entity: Entity }) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Back to all organizations">
-              <Link to="/organizations" className="flex items-center gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                <span>All organizations</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
+      {isAdmin && (
+        <SidebarFooter>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Back to all organizations">
+                <Link to="/organizations" className="flex items-center gap-2">
+                  <ArrowLeft className="h-4 w-4" />
+                  <span>All organizations</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+      )}
     </Sidebar>
   );
 }
