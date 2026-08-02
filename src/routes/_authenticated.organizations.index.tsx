@@ -1,4 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { amIPlatformAdmin } from "@/lib/admin.functions";
+import { myOrgMemberships } from "@/lib/orgs.functions";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,11 +22,30 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { VerificationBadge, RiskBadge } from "@/components/StatusBadge";
-import { ALL_ENTITIES, ENTITY_TYPES } from "@/seed/all-entities";
+import { ALL_ENTITIES, ENTITY_TYPES, getEntity } from "@/seed/all-entities";
 import { useQuery } from "@tanstack/react-query";
 import { entitiesQueryOptions } from "@/lib/registry";
 
 export const Route = createFileRoute("/_authenticated/organizations/")({
+  beforeLoad: async () => {
+    // The full registry is a platform-admin surface only. Members are sent to
+    // their own organization workspace instead.
+    const [admin, memberships] = await Promise.all([
+      amIPlatformAdmin().catch(() => ({ isAdmin: false })),
+      myOrgMemberships().catch(() => [] as { org_id: string }[]),
+    ]);
+    if (admin?.isAdmin) return;
+    const first = memberships[0];
+    if (first) {
+      const entity = getEntity(first.org_id);
+      throw redirect({
+        to: "/organizations/$id",
+        params: { id: entity?.id ?? first.org_id },
+        replace: true,
+      });
+    }
+    throw redirect({ to: "/signup", search: { tab: "create" as const }, replace: true });
+  },
   head: () => ({
     meta: [
       { title: "Organizations — Global Chain Hub" },
