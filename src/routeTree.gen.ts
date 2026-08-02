@@ -26,6 +26,7 @@ import { Route as AuthenticatedMapRouteImport } from './routes/_authenticated.ma
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated.feed'
 import { Route as AuthenticatedOrganizationsIndexRouteImport } from './routes/_authenticated.organizations.index'
 import { Route as AuthenticatedOrganizationsIdRouteImport } from './routes/_authenticated.organizations.$id'
+import { Route as AuthenticatedDirectoryIdRouteImport } from './routes/_authenticated.directory.$id'
 import { Route as AuthenticatedAdminOrganizationsRouteImport } from './routes/_authenticated.admin.organizations'
 import { Route as AuthenticatedOrganizationsIdIndexRouteImport } from './routes/_authenticated.organizations.$id.index'
 import { Route as AuthenticatedOrganizationsIdSupplyChainRouteImport } from './routes/_authenticated.organizations.$id.supply-chain'
@@ -136,6 +137,12 @@ const AuthenticatedOrganizationsIdRoute =
     id: '/$id',
     path: '/$id',
     getParentRoute: () => AuthenticatedOrganizationsRoute,
+  } as any)
+const AuthenticatedDirectoryIdRoute =
+  AuthenticatedDirectoryIdRouteImport.update({
+    id: '/directory/$id',
+    path: '/directory/$id',
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedAdminOrganizationsRoute =
   AuthenticatedAdminOrganizationsRouteImport.update({
@@ -286,6 +293,7 @@ export interface FileRoutesByFullPath {
   '/invite/$token': typeof InviteTokenRoute
   '/onboarding/$token': typeof OnboardingTokenRoute
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
+  '/directory/$id': typeof AuthenticatedDirectoryIdRoute
   '/organizations/$id': typeof AuthenticatedOrganizationsIdRouteWithChildren
   '/organizations/': typeof AuthenticatedOrganizationsIndexRoute
   '/organizations/$id/compliance': typeof AuthenticatedOrganizationsIdComplianceRoute
@@ -325,6 +333,7 @@ export interface FileRoutesByTo {
   '/onboarding/$token': typeof OnboardingTokenRoute
   '/': typeof AuthenticatedIndexRoute
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
+  '/directory/$id': typeof AuthenticatedDirectoryIdRoute
   '/organizations': typeof AuthenticatedOrganizationsIndexRoute
   '/organizations/$id/compliance': typeof AuthenticatedOrganizationsIdComplianceRoute
   '/organizations/$id/feed': typeof AuthenticatedOrganizationsIdFeedRoute
@@ -364,6 +373,7 @@ export interface FileRoutesById {
   '/onboarding/$token': typeof OnboardingTokenRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
+  '/_authenticated/directory/$id': typeof AuthenticatedDirectoryIdRoute
   '/_authenticated/organizations/$id': typeof AuthenticatedOrganizationsIdRouteWithChildren
   '/_authenticated/organizations/': typeof AuthenticatedOrganizationsIndexRoute
   '/_authenticated/organizations/$id/compliance': typeof AuthenticatedOrganizationsIdComplianceRoute
@@ -406,6 +416,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/onboarding/$token'
     | '/admin/organizations'
+    | '/directory/$id'
     | '/organizations/$id'
     | '/organizations/'
     | '/organizations/$id/compliance'
@@ -445,6 +456,7 @@ export interface FileRouteTypes {
     | '/onboarding/$token'
     | '/'
     | '/admin/organizations'
+    | '/directory/$id'
     | '/organizations'
     | '/organizations/$id/compliance'
     | '/organizations/$id/feed'
@@ -483,6 +495,7 @@ export interface FileRouteTypes {
     | '/onboarding/$token'
     | '/_authenticated/'
     | '/_authenticated/admin/organizations'
+    | '/_authenticated/directory/$id'
     | '/_authenticated/organizations/$id'
     | '/_authenticated/organizations/'
     | '/_authenticated/organizations/$id/compliance'
@@ -637,6 +650,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/organizations/$id'
       preLoaderRoute: typeof AuthenticatedOrganizationsIdRouteImport
       parentRoute: typeof AuthenticatedOrganizationsRoute
+    }
+    '/_authenticated/directory/$id': {
+      id: '/_authenticated/directory/$id'
+      path: '/directory/$id'
+      fullPath: '/directory/$id'
+      preLoaderRoute: typeof AuthenticatedDirectoryIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/admin/organizations': {
       id: '/_authenticated/admin/organizations'
@@ -921,6 +941,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedAdminOrganizationsRoute: typeof AuthenticatedAdminOrganizationsRoute
+  AuthenticatedDirectoryIdRoute: typeof AuthenticatedDirectoryIdRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -933,6 +954,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedAdminOrganizationsRoute: AuthenticatedAdminOrganizationsRoute,
+  AuthenticatedDirectoryIdRoute: AuthenticatedDirectoryIdRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

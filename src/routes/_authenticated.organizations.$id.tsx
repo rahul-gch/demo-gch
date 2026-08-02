@@ -1,7 +1,9 @@
-import { createFileRoute, Link, Outlet, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, notFound, redirect } from "@tanstack/react-router";
 import { OrgShell } from "@/components/OrgShell";
 import { getEntity } from "@/seed/all-entities";
 import { refreshRegistry } from "@/lib/registry";
+import { myOrgMemberships } from "@/lib/orgs.functions";
+import { amIPlatformAdmin } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/organizations/$id")({
@@ -13,8 +15,35 @@ export const Route = createFileRoute("/_authenticated/organizations/$id")({
       entity = getEntity(params.id);
     }
     if (!entity) throw notFound();
+
+    // Only members of this organization (and platform admins) get the internal
+    // workspace. Everyone else sees the read-only public network profile.
+    const [memberships, admin] = await Promise.all([
+      context.queryClient
+        .ensureQueryData({
+          queryKey: ["my-org-memberships"],
+          queryFn: () => myOrgMemberships(),
+          staleTime: 5 * 60_000,
+        })
+        .catch(() => [] as { org_id: string }[]),
+      context.queryClient
+        .ensureQueryData({
+          queryKey: ["platform-admin"],
+          queryFn: () => amIPlatformAdmin(),
+          staleTime: 5 * 60_000,
+        })
+        .catch(() => ({ isAdmin: false })),
+    ]);
+
+    const myOrgIds = new Set((memberships ?? []).map((m) => m.org_id));
+    const isMember = myOrgIds.has(entity.orgUuid ?? "") || myOrgIds.has(entity.id);
+    if (!isMember && !admin?.isAdmin) {
+      throw redirect({ to: "/directory/$id", params: { id: params.id } });
+    }
+
     return { entity };
   },
+
   head: ({ loaderData }) => ({
     meta: [
       { title: `${loaderData?.entity.name ?? "Organization"} — Global Chain Hub` },
