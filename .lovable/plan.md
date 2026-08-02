@@ -1,72 +1,43 @@
-# Connect globalchainhub.io: Landing page (apex) + App (subdomain)
+## Goal
 
-Two Lovable projects, two hostnames on one domain:
+Signing up becomes one short form: personal account details + minimal organization details (name, type). Everything else (logo, country, website, description, certifications, operations) is filled in later from Organization Settings. Google sign-in is removed everywhere.
 
-```
-globalchainhub.io  ─────────────►  Landing page project (Fashion Connect Hub)
-www.globalchainhub.io ──────────►  Landing page project (Fashion Connect Hub)
-app.globalchainhub.io ──────────►  THIS app project (Global Chain Hub)
-```
+## What changes
 
-Landing page keeps its current design. Its single "Sign up" button (and "Sign in" link) point to `https://app.globalchainhub.io/signup` and `https://app.globalchainhub.io/auth`. Everything else (org dashboards, messaging, meetings, matchmaking, admin) lives on the app subdomain.
+### 1. `/signup` — one combined onboarding form
+Replace the current "sign in first, then create org in a tab" layout with a single card:
+- Your name
+- Work email
+- Password + Confirm password
+- Organization name
+- Organization type (dropdown from the existing 25+ type list, with "Other" free text)
+- One button: **Create account & workspace**
 
----
+Flow on submit: create the account, then immediately create the organization, refresh the registry, and land the user on their new organization dashboard. Email auto-confirm is already on, so no inbox step is needed.
 
-## Track A — Landing page project (Fashion Connect Hub)
-*Done inside that project — I cannot write to it from this session, so open it and apply these edits, then publish + connect the apex domain there.*
+The "Join with invite" option stays, but as a small secondary link/tab rather than an equal-weight tab — invited users don't create an org.
 
-The landing page currently uses a waitlist email form (writes to `waitlist_signups`) and "Join Waitlist" scroll buttons. Replace them with a single "Sign up" button that links off-domain to the app.
+If a signed-in user with no organization opens `/signup`, they see only the organization half of the form.
 
-**1. `src/components/landing/LandingHeader.tsx`**
-- Desktop: change `<Link to="/login">Sign In</Link>` → `<a href="https://app.globalchainhub.io/auth">Sign In</a>`
-- Desktop + mobile: change `<a href="/#pricing">Join Waitlist</a>` → `<a href="https://app.globalchainhub.io/signup">Sign Up</a>` (rename label "Join Waitlist" → "Sign Up")
-- Mobile sheet: same two changes (Sign In link + Sign Up button)
+### 2. Remove Google sign-in
+- `/auth`: drop the "Continue with Google" button, divider and Google icon; email + password only.
+- `/signup`: drop the Google button and divider.
+- Existing OAuth callback route stays in place (harmless) so any in-flight links don't 404.
 
-**2. `src/components/landing/HeroSection.tsx`**
-- Replace the "Join Waitlist" button's `onClick` (scrolls to #pricing) with a plain link to `https://app.globalchainhub.io/signup` and rename it "Sign Up". Keep the "Learn More" button as-is.
+### 3. Country no longer required at signup
+Country moves to Settings. The organization-creation server function makes `country` optional so the shorter form validates.
 
-**3. `src/components/landing/CTASection.tsx`**
-- Remove the waitlist form + `waitlist_signups` insert. Replace the whole form block with one button linking to `https://app.globalchainhub.io/signup` (label "Sign Up"). Drop the now-unused `useState` and `supabase` import.
+### 4. Logo upload moves out of signup
+Logo upload is removed from the signup form (it already exists in Organization Settings).
 
-**4. Check the Pricing section** (search for any other `Join Waitlist` / `waitlist_signups` references) and apply the same single-button redirect.
+### 5. Settings stays the home for full details
+No change needed — Organization Settings already persists identity, operations and capabilities.
 
-**5. Publish** the Fashion Connect Hub project (it is already published/public — republish after the CTA edits).
+## Technical notes
 
-**6. Connect the apex domain** in that project: Project Settings → Project → Domains → Connect Domain → enter `globalchainhub.io`, then add `www.globalchainhub.io` separately. Follow the on-screen DNS records (A → 185.158.133.1 for `@` and `www`, plus the `_lovable` TXT). Set `globalchainhub.io` as Primary so `www` redirects to it. If the domain sits behind Cloudflare, expand Advanced and enable "Domain uses Cloudflare or a similar proxy".
-
----
-
-## Track B — This app project (Global Chain Hub)  ← done here
-
-**1. Verify the app behaves correctly as the subdomain target (no code change needed — confirm only):**
-- `/` (`_authenticated.index.tsx`) already redirects: platform admins → ops console; other users → their org dashboard; users with no org → `/signup`. The `_authenticated` gate sends logged-out visitors to `/auth`. So `app.globalchainhub.io/` lands people on sign-in, their dashboard, or signup — exactly right.
-- `/signup` and `/auth` are public routes and work standalone.
-
-**2. Publish this app** so a `.lovable.app` subdomain exists (required before a custom domain can connect). I'll run the publish here on approval. (Optional: set the Lovable slug to something clean like `gch-app`.)
-
-**3. Connect the subdomain** in this project: Project Settings → Project → Domains → Connect Domain → enter `app.globalchainhub.io`. Follow the on-screen record (a CNAME or A record for `app` — use exactly what the setup flow shows; if Cloudflare-proxied, enable proxy mode in Advanced). Wait for verification + SSL ("Active").
-
-**4. Sanity-check:** open `https://app.globalchainhub.io/signup` — the Create-org / Join-invite form loads; open `https://app.globalchainhub.io/auth` — sign-in works with the Google + email flows already wired.
-
----
-
-## DNS summary (at your registrar / DNS provider)
-```
-@    A     185.158.133.1        (landing page)
-www  A     185.158.133.1        (landing page, redirects to apex)
-_lovable TXT  lovable_verify=…   (landing project verification)
-app  <record from app setup flow>  (this app — follow the connect flow)
-```
-Use the exact values Lovable shows in each project's domain setup; don't guess. Allow up to 72h propagation (usually minutes).
-
----
-
-## Things to know
-- **Two separate backends:** the landing page project has its own Supabase (waitlist + its own dead `/login`). This app uses Lovable Cloud. Pointing all CTAs to `app.globalchainhub.io` means auth and data all live on the app side; the landing page's own `/login` / `/signup` routes become unused — that's expected and fine.
-- **One primary per project:** each project owns different hostnames, so there's no apex conflict.
-- **No routing changes in this app are required** — it already routes visitors to sign-in / signup / dashboard correctly.
-
-## What I will execute (on approval, build mode)
-- Publish this app project (creates its `.lovable.app` URL so the custom subdomain can attach).
-- Provide the ready-to-paste patched versions of the three landing-page component files for you to drop into the Fashion Connect Hub project (I cannot write them there directly).
-- Walk you through the two domain-connection flows.
+- `src/routes/signup.tsx`: rewritten as a single-step page; Google handler and tabs restructured.
+- `src/components/signup/CreateOrgForm.tsx`: reduced to org name + type; accepts optional account-creation step so it can run both fields in one submit.
+- `src/components/auth/EmailAuthForm.tsx`: unchanged for `/auth`; signup usage folded into the combined form.
+- `src/routes/auth.tsx`: remove `lovable.auth.signInWithOAuth` usage and Google UI.
+- `src/lib/orgs.functions.ts`: `country` becomes optional in `createOrgSchema`.
+- Registry refresh (`refreshRegistry`) is kept after creation to avoid the previously-seen 404 on the new org route.

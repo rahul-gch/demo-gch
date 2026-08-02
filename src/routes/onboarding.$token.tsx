@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { refreshRegistry } from "@/lib/registry";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { acceptPlatformInvite, lookupPlatformInvite } from "@/lib/admin.functions";
 import { EmailAuthForm } from "@/components/auth/EmailAuthForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,13 +46,6 @@ function OnboardingPage() {
     retry: false,
   });
 
-  const signInGoogle = async () => {
-    sessionStorage.setItem("gch:post-auth", `/onboarding/${token}`);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin + "/auth/callback",
-    });
-    if (result.error) toast.error(result.error.message || "Sign in failed");
-  };
 
   const accept = async () => {
     setBusy(true);
@@ -139,17 +131,9 @@ function OnboardingPage() {
               )}
 
               {data.status === "active" && email === null && (
-                <div className="space-y-4">
-                  <Button onClick={signInGoogle} variant="outline" className="w-full">
-                    Continue with Google
-                  </Button>
-                  <div className="relative text-center text-xs text-muted-foreground">
-                    <span className="bg-card px-2">or use your email</span>
-                    <div className="absolute inset-x-0 top-1/2 -z-10 border-t" />
-                  </div>
-                  <EmailAuthForm mode="signup" compact />
-                </div>
+                <EmailAuthForm mode="signup" compact />
               )}
+
 
               {data.status === "active" && email && (
                 <div className="space-y-2">

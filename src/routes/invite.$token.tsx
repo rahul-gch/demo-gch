@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { refreshRegistry } from "@/lib/registry";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
+import { EmailAuthForm } from "@/components/auth/EmailAuthForm";
 import { acceptInvite, lookupInvite } from "@/lib/invites.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,13 +37,6 @@ function InvitePage() {
     retry: false,
   });
 
-  const signIn = async () => {
-    sessionStorage.setItem("gch:post-auth", `/invite/${token}`);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin + "/auth/callback",
-    });
-    if (result.error) toast.error(result.error.message || "Sign in failed");
-  };
 
   const accept = async () => {
     setAccepting(true);
@@ -81,10 +74,14 @@ function InvitePage() {
           {invite.data && invite.data.status === "active" && (
             <>
               {userEmail === null && (
-                <Button onClick={signIn} className="w-full" size="lg" variant="outline">
-                  Sign in with Google to accept
-                </Button>
+                <div className="space-y-3">
+                  <p className="text-center text-xs text-muted-foreground">
+                    Create your account to accept this invitation.
+                  </p>
+                  <EmailAuthForm mode="signup" compact />
+                </div>
               )}
+
               {userEmail && (
                 <div className="space-y-2">
                   <p className="text-xs text-muted-foreground text-center">
