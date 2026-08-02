@@ -151,9 +151,11 @@ function RootComponent() {
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
       </RegistryGate>
+      <Toaster richColors closeButton position="top-center" />
     </QueryClientProvider>
   );
 }
+
 
 /** Hydrates the client-side organization registry before routes render. */
 function RegistryGate({ children }: { children: React.ReactNode }) {
