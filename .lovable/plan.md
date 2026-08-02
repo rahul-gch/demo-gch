@@ -1,43 +1,37 @@
-## Goal
+## Problem
 
-Signing up becomes one short form: personal account details + minimal organization details (name, type). Everything else (logo, country, website, description, certifications, operations) is filled in later from Organization Settings. Google sign-in is removed everywhere.
+Every link to another organization (Research Database "Open", Matchmaking, Map, Ecosystem cards) goes to `/organizations/:id`, which renders the full owner workspace: dashboard, projects, supply chain, compliance, requests, settings. Nothing checks whether the signed-in user is actually a member of that org, so an owner of "Rahul-ug Garments" gets an insider view of ACL IMPEX.
 
-## What changes
+## What to build
 
-### 1. `/signup` — one combined onboarding form
-Replace the current "sign in first, then create org in a tab" layout with a single card:
-- Your name
-- Work email
-- Password + Confirm password
-- Organization name
-- Organization type (dropdown from the existing 25+ type list, with "Other" free text)
-- One button: **Create account & workspace**
+**1. Public organization profile route** — `/directory/:id`
 
-Flow on submit: create the account, then immediately create the organization, refresh the registry, and land the user on their new organization dashboard. Email auto-confirm is already on, so no inbox step is needed.
+A new, read-only page with its own light shell (no org workspace sidebar; it renders inside the user's own context with a back link). Shows only public registry data:
 
-The "Join with invite" option stays, but as a small secondary link/tab rather than an equal-weight tab — invited users don't create an org.
+- Header: logo, name, GCH number, entity type, tier, location, verification status badge
+- About / description, website, region
+- Capabilities, materials, product categories, specializations
+- Certifications list (name + status only — no uploaded documents, no expiry evidence files)
+- Public operations summary where reported: MOQ, lead time, capacity, on-time rate (shown as "Not reported" when empty)
+- Actions: **Send message** and **Request meeting** (reusing the existing message/meeting flows, acting as the user's own org)
 
-If a signed-in user with no organization opens `/signup`, they see only the organization half of the form.
+Explicitly NOT shown: NHRI internals and readiness breakdown, missing-data lists, AI command center, projects, requests, documents/compliance uploads, supply chain, members, activity, settings.
 
-### 2. Remove Google sign-in
-- `/auth`: drop the "Continue with Google" button, divider and Google icon; email + password only.
-- `/signup`: drop the Google button and divider.
-- Existing OAuth callback route stays in place (harmless) so any in-flight links don't 404.
+**2. Point all outward links at the public profile**
 
-### 3. Country no longer required at signup
-Country moves to Settings. The organization-creation server function makes `country` optional so the shorter form validates.
+Update "Open"/profile links in `ResearchWorkspace`, `MatchmakingPanel` / `MatchProfileSheet`, `EcosystemConnections`, `SupplyChainSnapshot` / `RecommendedChain`, the map popups, and `organizations.index` (for non-admins) to `/directory/:id`.
 
-### 4. Logo upload moves out of signup
-Logo upload is removed from the signup form (it already exists in Organization Settings).
+**3. Guard the workspace route**
 
-### 5. Settings stays the home for full details
-No change needed — Organization Settings already persists identity, operations and capabilities.
+In `src/routes/_authenticated.organizations.$id.tsx`, the loader checks the user's memberships (`myOrgMemberships`) plus platform-admin status:
+- member or platform admin → current workspace, unchanged
+- otherwise → redirect to `/directory/:id`
+
+This closes the hole for anyone typing the URL directly, and keeps admin behaviour as today.
 
 ## Technical notes
 
-- `src/routes/signup.tsx`: rewritten as a single-step page; Google handler and tabs restructured.
-- `src/components/signup/CreateOrgForm.tsx`: reduced to org name + type; accepts optional account-creation step so it can run both fields in one submit.
-- `src/components/auth/EmailAuthForm.tsx`: unchanged for `/auth`; signup usage folded into the combined form.
-- `src/routes/auth.tsx`: remove `lovable.auth.signInWithOAuth` usage and Google UI.
-- `src/lib/orgs.functions.ts`: `country` becomes optional in `createOrgSchema`.
-- Registry refresh (`refreshRegistry`) is kept after creation to avoid the previously-seen 404 on the new org route.
+- Membership check runs server-side via the existing `myOrgMemberships` server function, cached through React Query so it doesn't refetch per navigation.
+- Route file: `src/routes/_authenticated.directory.$id.tsx` (stays under the auth gate — the directory is not anonymous), component in `src/components/directory/PublicOrgProfile.tsx`.
+- Data comes from the already-hydrated in-memory registry (`getEntity`) with the same `refreshRegistry` fallback the workspace route uses, so no new backend queries are needed.
+- Row-level security on `orgs` already limits reads to authenticated users; this change is about what the UI exposes, so no migration is required. If you also want field-level restriction at the database layer later, that's a separate follow-up.
