@@ -51,7 +51,7 @@ export function MeetingCard({
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <Link
-                to="/organizations/$id"
+                to="/directory/$id"
                 params={{ id: entity?.id ?? m.orgId }}
                 className="truncate text-base font-semibold tracking-tight hover:underline"
               >

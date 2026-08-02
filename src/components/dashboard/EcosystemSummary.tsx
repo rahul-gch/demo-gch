@@ -187,7 +187,7 @@ export function EcosystemSummary({ entity }: { entity: Entity }) {
                   {filtered.slice(0, 12).map((e) => (
                     <Link
                       key={e.id}
-                      to="/organizations/$id"
+                      to="/directory/$id"
                       params={{ id: e.id }}
                       className="group flex items-center justify-between gap-2 rounded-md border bg-white px-2.5 py-2 hover:bg-accent"
                     >

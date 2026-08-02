@@ -186,7 +186,7 @@ function PostRow({ post, onChange }: { post: Row; onChange: () => void }) {
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-medium">
                 <Link
-                  to="/organizations/$id"
+                  to="/directory/$id"
                   params={{ id: post.orgId }}
                   className="hover:underline"
                 >
