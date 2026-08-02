@@ -1,16 +1,12 @@
-import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner";
 import { Globe2 } from "lucide-react";
 import { CreateOrgForm } from "@/components/signup/CreateOrgForm";
 import { JoinWithInviteForm } from "@/components/signup/JoinWithInviteForm";
-import { EmailAuthForm } from "@/components/auth/EmailAuthForm";
 
 const searchSchema = z.object({ tab: z.enum(["create", "join"]).optional() });
 
@@ -29,41 +25,15 @@ export const Route = createFileRoute("/signup")({
 
 function SignupPage() {
   const { tab } = useSearch({ from: "/signup" });
-  const nav = useNavigate();
   const [email, setEmail] = useState<string | null>(null);
-  const [checking, setChecking] = useState(true);
-  const [signingIn, setSigningIn] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setEmail(data.user?.email ?? null);
-      setChecking(false);
-    });
+    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null));
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       setEmail(session?.user?.email ?? null);
     });
     return () => sub.subscription.unsubscribe();
   }, []);
-
-  const signInGoogle = async () => {
-    setSigningIn(true);
-    try {
-      sessionStorage.setItem("gch:post-auth", "/signup");
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin + "/auth/callback",
-      });
-      if (result.error) {
-        toast.error(result.error.message || "Sign in failed");
-        setSigningIn(false);
-        return;
-      }
-      if (result.redirected) return;
-      nav({ to: "/signup", replace: true });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Sign in failed");
-      setSigningIn(false);
-    }
-  };
 
   const signedIn = !!email;
 
@@ -79,32 +49,13 @@ function SignupPage() {
 
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>Get started</CardTitle>
+            <CardTitle>Set up your organization</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Create a new organization, or join one you've been invited to.
+              One short form — account and organization. You can complete the full profile later in
+              Settings.
             </p>
           </CardHeader>
           <CardContent className="space-y-6">
-            {!checking && !signedIn && (
-              <div className="space-y-4 rounded-lg border bg-muted/40 p-4">
-                <p className="text-sm">
-                  Create your account first — we'll link your new organization to it.
-                </p>
-                <Button
-                  onClick={signInGoogle}
-                  disabled={signingIn}
-                  variant="outline"
-                  className="w-full"
-                >
-                  {signingIn ? "Signing in…" : "Continue with Google"}
-                </Button>
-                <div className="relative text-center text-xs text-muted-foreground">
-                  <span className="relative z-10 bg-muted/40 px-2">or sign up with email</span>
-                  <div className="absolute inset-x-0 top-1/2 border-t" />
-                </div>
-                <EmailAuthForm mode="signup" compact />
-              </div>
-            )}
             {signedIn && (
               <div className="rounded-md border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
                 Signed in as <span className="font-medium text-foreground">{email}</span>
@@ -113,8 +64,8 @@ function SignupPage() {
 
             <Tabs defaultValue={tab === "join" ? "join" : "create"}>
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="create">Create new organization</TabsTrigger>
-                <TabsTrigger value="join">Join with invite</TabsTrigger>
+                <TabsTrigger value="create">New organization</TabsTrigger>
+                <TabsTrigger value="join">I have an invite</TabsTrigger>
               </TabsList>
               <TabsContent value="create" className="pt-4">
                 <CreateOrgForm signedIn={signedIn} />
