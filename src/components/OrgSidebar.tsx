@@ -35,6 +35,12 @@ export function OrgSidebar({ entity }: { entity: Entity }) {
   const base = `/organizations/${entity.id}`;
   const orgUuid = entity.orgUuid ?? null;
   const inbox = useUnreadTotal(orgUuid) + usePendingMeetingCount(orgUuid);
+  const adminQuery = useQuery({
+    queryKey: ["platform-admin"],
+    queryFn: () => amIPlatformAdmin(),
+    staleTime: 5 * 60_000,
+  });
+  const isAdmin = !!adminQuery.data?.isAdmin;
 
   const items = [
     { title: "Home / Feed", url: `${base}/feed`, icon: Rss },
