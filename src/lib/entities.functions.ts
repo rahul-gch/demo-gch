@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/integrations/supabase/types";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Entity } from "@/seed/types";
 
 const ORG_COLUMNS = `
@@ -82,39 +81,29 @@ export function rowToEntity(row: OrgRow): Entity {
   };
 }
 
-export const listEntities = createServerFn({ method: "GET" }).handler(async (): Promise<Entity[]> => {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_PUBLISHABLE_KEY;
-  if (!url || !key) {
-    console.error("[entities] missing supabase env", { hasUrl: !!url, hasKey: !!key });
-    return [];
-  }
-
-
-  const supabase = createClient<Database>(url, key, {
-    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
-    global: {
-      fetch: (input, init) => {
-        const h = new Headers(init?.headers);
-        if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`) h.delete("Authorization");
-        h.set("apikey", key);
-        return fetch(input, { ...init, headers: h });
-      },
-    },
+/**
+ * Returns every organization on the platform, hydrated into Entity objects.
+ *
+ * Runs as the signed-in user (not the publishable/anon key) so the directory is
+ * only available to authenticated members — the orgs SELECT policy is scoped to
+ * the authenticated role and the `contacts` field must never be exposed to anon.
+ */
+export const listEntities = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<Entity[]> => {
+    const supabase = context.supabase;
+    const all: Entity[] = [];
+    const pageSize = 1000;
+    for (let page = 0; page < 10; page++) {
+      const { data, error } = await supabase
+        .from("orgs")
+        .select(ORG_COLUMNS)
+        .order("name", { ascending: true })
+        .range(page * pageSize, page * pageSize + pageSize - 1);
+      if (error) throw new Error(error.message);
+      const rows = (data ?? []) as OrgRow[];
+      all.push(...rows.map(rowToEntity));
+      if (rows.length < pageSize) break;
+    }
+    return all;
   });
-
-  const all: Entity[] = [];
-  const pageSize = 1000;
-  for (let page = 0; page < 10; page++) {
-    const { data, error } = await supabase
-      .from("orgs")
-      .select(ORG_COLUMNS)
-      .order("name", { ascending: true })
-      .range(page * pageSize, page * pageSize + pageSize - 1);
-    if (error) throw new Error(error.message);
-    const rows = (data ?? []) as OrgRow[];
-    all.push(...rows.map(rowToEntity));
-    if (rows.length < pageSize) break;
-  }
-  return all;
-});
