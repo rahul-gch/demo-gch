@@ -74,10 +74,14 @@ function InvitePage() {
           {invite.data && invite.data.status === "active" && (
             <>
               {userEmail === null && (
-                <Button onClick={signIn} className="w-full" size="lg" variant="outline">
-                  Sign in with Google to accept
-                </Button>
+                <div className="space-y-3">
+                  <p className="text-center text-xs text-muted-foreground">
+                    Create your account to accept this invitation.
+                  </p>
+                  <EmailAuthForm mode="signup" compact />
+                </div>
               )}
+
               {userEmail && (
                 <div className="space-y-2">
                   <p className="text-xs text-muted-foreground text-center">
