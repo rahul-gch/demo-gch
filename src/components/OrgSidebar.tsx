@@ -29,6 +29,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import type { Entity } from "@/seed/types";
 import { usePendingMeetingCount, useUnreadTotal } from "@/lib/use-comms";
+import { useQuery } from "@tanstack/react-query";
+import { amIPlatformAdmin } from "@/lib/admin.functions";
 
 export function OrgSidebar({ entity }: { entity: Entity }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
