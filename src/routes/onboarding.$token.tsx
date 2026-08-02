@@ -47,13 +47,6 @@ function OnboardingPage() {
     retry: false,
   });
 
-  const signInGoogle = async () => {
-    sessionStorage.setItem("gch:post-auth", `/onboarding/${token}`);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin + "/auth/callback",
-    });
-    if (result.error) toast.error(result.error.message || "Sign in failed");
-  };
 
   const accept = async () => {
     setBusy(true);
