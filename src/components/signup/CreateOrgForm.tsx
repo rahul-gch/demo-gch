@@ -48,6 +48,7 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
   const [type, setType] = useState("");
   const [customType, setCustomType] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const effectiveType = type === "Other" ? customType.trim() : type;
 
@@ -67,10 +68,11 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
     e.preventDefault();
     if (!canSubmit) return;
     setSubmitting(true);
+    setError(null);
     try {
       if (!signedIn) {
         const mail = email.trim().toLowerCase();
-        const { data, error } = await supabase.auth.signUp({
+        const { data, error: signUpErr } = await supabase.auth.signUp({
           email: mail,
           password,
           options: {
@@ -78,8 +80,24 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
             data: { full_name: fullName.trim() },
           },
         });
-        if (error) throw error;
-        if (!data.session) {
+
+        if (signUpErr) {
+          const msg = signUpErr.message.toLowerCase();
+          const alreadyRegistered =
+            msg.includes("already registered") ||
+            msg.includes("already been registered") ||
+            msg.includes("user already exists");
+          if (!alreadyRegistered) throw signUpErr;
+          // Account already exists — sign in with the given password instead.
+          const { error: siErr } = await supabase.auth.signInWithPassword({
+            email: mail,
+            password,
+          });
+          if (siErr)
+            throw new Error(
+              "An account already exists for this email. Sign in with your existing password instead.",
+            );
+        } else if (!data.session) {
           const { error: signInErr } = await supabase.auth.signInWithPassword({
             email: mail,
             password,
@@ -100,11 +118,14 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
       toast.success("Workspace ready — add your details in Settings");
       nav({ to: "/organizations/$id", params: { id: res.id }, replace: true });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create organization");
+      const message = err instanceof Error ? err.message : "Failed to create organization";
+      setError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
   };
+
 
   return (
     <form onSubmit={submit} className="space-y-5">
@@ -201,6 +222,17 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
         That's all we need. Country, logo, website, description, certifications, materials and
         operations details can be added any time from your organization's Settings page.
       </p>
+
+      {error && (
+        <div
+          role="alert"
+          className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        >
+          {error}
+        </div>
+      )}
+
+
 
       <Button type="submit" disabled={!canSubmit} className="w-full" size="lg">
         {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

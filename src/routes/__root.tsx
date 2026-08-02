@@ -13,7 +13,9 @@ import {
 import { useEffect, useRef } from "react";
 
 
+import { Toaster } from "@/components/ui/sonner";
 import appCss from "../styles.css?url";
+
 
 function NotFoundComponent() {
   return (
@@ -151,9 +153,11 @@ function RootComponent() {
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
       </RegistryGate>
+      <Toaster richColors closeButton position="top-center" />
     </QueryClientProvider>
   );
 }
+
 
 /** Hydrates the client-side organization registry before routes render. */
 function RegistryGate({ children }: { children: React.ReactNode }) {
