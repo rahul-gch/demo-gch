@@ -13,7 +13,7 @@ const createOrgSchema = z.object({
     .max(64)
     .regex(/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/, "Slug must be lowercase letters, numbers, hyphens"),
   type: z.string().trim().min(2).max(80),
-  country: z.string().trim().min(2).max(80),
+  country: z.string().trim().max(80).optional().nullable(),
   website: z.string().trim().url().max(255).optional().or(z.literal("")).nullable(),
   description: z.string().trim().max(2000).optional().nullable(),
   size: z.string().trim().max(40).optional().nullable(),
