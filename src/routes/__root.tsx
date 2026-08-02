@@ -77,18 +77,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     await ensureRegistry(context.queryClient);
   },
   head: () => ({
-
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Global Chain Hub" },
+      { name: "description", content: "Sustainability-first supply chain collaboration platform for brands, manufacturers, auditors, and NGOs." },
+      { property: "og:title", content: "Global Chain Hub" },
+      { property: "og:description", content: "Sustainability-first supply chain collaboration platform." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
