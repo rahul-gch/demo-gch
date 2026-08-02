@@ -223,6 +223,17 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
         operations details can be added any time from your organization's Settings page.
       </p>
 
+      {error && (
+        <div
+          role="alert"
+          className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        >
+          {error}
+        </div>
+      )}
+
+
+
       <Button type="submit" disabled={!canSubmit} className="w-full" size="lg">
         {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         {submitting
