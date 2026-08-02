@@ -1,31 +1,72 @@
-## Problem (verified in code)
+# Connect globalchainhub.io: Landing page (apex) + App (subdomain)
 
-1. **Everyone lands on the admin console.** `src/routes/_authenticated.index.tsx` (route `/`) renders the "Global Chain Hub · Admin" Platform Operations Center with no admin check at all. The only admin check (`amIPlatformAdmin`) is used in `/admin/organizations` and to show one extra sidebar link. `AppSidebar` also hardcodes the subtitle "Admin Console" and shows Platform Dashboard / Organizations / Map / Matchmaking to every user.
-2. **Signup is two disconnected steps.** `/signup` first makes the user create an account, then a long multi-step `CreateOrgForm` (type, country, certifications, materials, capabilities, product categories, logo…) before they can get in. Onboarding invites route to the same form.
-3. **Org settings don't persist.** `/organizations/$id/settings` writes to a local in-browser override store, not the database, so "fill details later in settings" isn't actually possible yet.
+Two Lovable projects, two hostnames on one domain:
 
-## Plan
+```
+globalchainhub.io  ─────────────►  Landing page project (Fashion Connect Hub)
+www.globalchainhub.io ──────────►  Landing page project (Fashion Connect Hub)
+app.globalchainhub.io ──────────►  THIS app project (Global Chain Hub)
+```
 
-### 1. Gate the admin console
-- Add a shared `useIsPlatformAdmin()` hook wrapping the existing `amIPlatformAdmin` server fn.
-- In `/` (`_authenticated.index.tsx`): if the user is a platform admin, render the current ops console. If not, redirect them to their organization dashboard (`/organizations/$id`) using their first membership; if they have no org yet, send them to the org-setup screen.
-- `AppSidebar`: split navigation into an admin set (Platform Dashboard, Activity Feed, Organizations, Map, Matchmaking, Admin console) and a member set (My organization, Messages, Meetings, Settings). Header subtitle becomes "Admin Console" only for admins, otherwise the org name.
-- Keep server-side authority as-is: admin server functions already call `assertAdmin`, so this is presentation gating on top of enforced backend checks.
+Landing page keeps its current design. Its single "Sign up" button (and "Sign in" link) point to `https://app.globalchainhub.io/signup` and `https://app.globalchainhub.io/auth`. Everything else (org dashboards, messaging, meetings, matchmaking, admin) lives on the app subdomain.
 
-### 2. One-step signup
-- `/signup` becomes a single screen: create account (Google or email) → immediately create the organization with just **name, type, country**.
-- Remove the multi-step wizard from the signup path; `CreateOrgForm` is reduced to those three fields plus an optional logo. All remaining fields (description, website, size, certifications, materials, capabilities, product types, MOQ, lead time, capacity) move to Settings.
-- After creation, refresh the registry (existing `refreshRegistry`) and land straight on the new org dashboard.
-- If a signed-in user has no org, `/` sends them to this same short setup screen instead of a 404 or the admin console.
-- Onboarding invite links (`/onboarding/$token`) keep working and feed into the same short setup.
+---
 
-### 3. Make Settings the real profile editor
-- Rewrite `/organizations/$id/settings` "Profile" tab to load from and save to the database via an `updateOrg` server function (extending the existing one in `src/lib/orgs.functions.ts`), replacing the local override store for org-owned fields.
-- Fields: name, type, country, region, city, website, description, size, logo, certifications, materials, capabilities, product categories/types, MOQ, lead time, capacity, on-time rate.
-- Show a small "complete your profile" prompt on the org dashboard linking here, so new orgs know where to fill data.
-- Only owners/admins of that org can save (enforced in the server function).
+## Track A — Landing page project (Fashion Connect Hub)
+*Done inside that project — I cannot write to it from this session, so open it and apply these edits, then publish + connect the apex domain there.*
 
-### Technical notes
-- No schema changes needed — `orgs` already has every column the form writes.
-- Admin identity stays the existing `is_platform_admin` RPC (globalchainhub.io emails); no client-side role storage.
-- Redirects use TanStack `redirect()` in `beforeLoad` so no admin content flashes before the redirect.
+The landing page currently uses a waitlist email form (writes to `waitlist_signups`) and "Join Waitlist" scroll buttons. Replace them with a single "Sign up" button that links off-domain to the app.
+
+**1. `src/components/landing/LandingHeader.tsx`**
+- Desktop: change `<Link to="/login">Sign In</Link>` → `<a href="https://app.globalchainhub.io/auth">Sign In</a>`
+- Desktop + mobile: change `<a href="/#pricing">Join Waitlist</a>` → `<a href="https://app.globalchainhub.io/signup">Sign Up</a>` (rename label "Join Waitlist" → "Sign Up")
+- Mobile sheet: same two changes (Sign In link + Sign Up button)
+
+**2. `src/components/landing/HeroSection.tsx`**
+- Replace the "Join Waitlist" button's `onClick` (scrolls to #pricing) with a plain link to `https://app.globalchainhub.io/signup` and rename it "Sign Up". Keep the "Learn More" button as-is.
+
+**3. `src/components/landing/CTASection.tsx`**
+- Remove the waitlist form + `waitlist_signups` insert. Replace the whole form block with one button linking to `https://app.globalchainhub.io/signup` (label "Sign Up"). Drop the now-unused `useState` and `supabase` import.
+
+**4. Check the Pricing section** (search for any other `Join Waitlist` / `waitlist_signups` references) and apply the same single-button redirect.
+
+**5. Publish** the Fashion Connect Hub project (it is already published/public — republish after the CTA edits).
+
+**6. Connect the apex domain** in that project: Project Settings → Project → Domains → Connect Domain → enter `globalchainhub.io`, then add `www.globalchainhub.io` separately. Follow the on-screen DNS records (A → 185.158.133.1 for `@` and `www`, plus the `_lovable` TXT). Set `globalchainhub.io` as Primary so `www` redirects to it. If the domain sits behind Cloudflare, expand Advanced and enable "Domain uses Cloudflare or a similar proxy".
+
+---
+
+## Track B — This app project (Global Chain Hub)  ← done here
+
+**1. Verify the app behaves correctly as the subdomain target (no code change needed — confirm only):**
+- `/` (`_authenticated.index.tsx`) already redirects: platform admins → ops console; other users → their org dashboard; users with no org → `/signup`. The `_authenticated` gate sends logged-out visitors to `/auth`. So `app.globalchainhub.io/` lands people on sign-in, their dashboard, or signup — exactly right.
+- `/signup` and `/auth` are public routes and work standalone.
+
+**2. Publish this app** so a `.lovable.app` subdomain exists (required before a custom domain can connect). I'll run the publish here on approval. (Optional: set the Lovable slug to something clean like `gch-app`.)
+
+**3. Connect the subdomain** in this project: Project Settings → Project → Domains → Connect Domain → enter `app.globalchainhub.io`. Follow the on-screen record (a CNAME or A record for `app` — use exactly what the setup flow shows; if Cloudflare-proxied, enable proxy mode in Advanced). Wait for verification + SSL ("Active").
+
+**4. Sanity-check:** open `https://app.globalchainhub.io/signup` — the Create-org / Join-invite form loads; open `https://app.globalchainhub.io/auth` — sign-in works with the Google + email flows already wired.
+
+---
+
+## DNS summary (at your registrar / DNS provider)
+```
+@    A     185.158.133.1        (landing page)
+www  A     185.158.133.1        (landing page, redirects to apex)
+_lovable TXT  lovable_verify=…   (landing project verification)
+app  <record from app setup flow>  (this app — follow the connect flow)
+```
+Use the exact values Lovable shows in each project's domain setup; don't guess. Allow up to 72h propagation (usually minutes).
+
+---
+
+## Things to know
+- **Two separate backends:** the landing page project has its own Supabase (waitlist + its own dead `/login`). This app uses Lovable Cloud. Pointing all CTAs to `app.globalchainhub.io` means auth and data all live on the app side; the landing page's own `/login` / `/signup` routes become unused — that's expected and fine.
+- **One primary per project:** each project owns different hostnames, so there's no apex conflict.
+- **No routing changes in this app are required** — it already routes visitors to sign-in / signup / dashboard correctly.
+
+## What I will execute (on approval, build mode)
+- Publish this app project (creates its `.lovable.app` URL so the custom subdomain can attach).
+- Provide the ready-to-paste patched versions of the three landing-page component files for you to drop into the Fashion Connect Hub project (I cannot write them there directly).
+- Walk you through the two domain-connection flows.
