@@ -127,6 +127,15 @@ function RootComponent() {
     void import("@/integrations/supabase/client").then(({ supabase }) => {
       if (!mounted) return;
       const { data } = supabase.auth.onAuthStateChange((event) => {
+        if (event === "INITIAL_SESSION") {
+          // The root loader may have cached an empty registry during SSR (no
+          // bearer). Invalidate just the entities query so it refetches with
+          // the now-available client-side session. This is a single targeted
+          // invalidation per page load — not a router.invalidate or full cache
+          // flush — so it does not cause thrashing.
+          queryClient.invalidateQueries({ queryKey: ["entities", "registry"] });
+          return;
+        }
         if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
         router.invalidate();
         if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
