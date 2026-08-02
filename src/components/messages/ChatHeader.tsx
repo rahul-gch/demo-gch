@@ -42,7 +42,7 @@ export function ChatHeader({
       </div>
       <div className="flex shrink-0 items-center gap-1">
         <Button asChild variant="ghost" size="sm" className="hidden 2xl:inline-flex">
-          <Link to="/organizations/$id" params={{ id: entity.id }}>
+          <Link to="/directory/$id" params={{ id: entity.id }}>
             <User className="mr-1.5 h-3.5 w-3.5" /> Profile
           </Link>
         </Button>
@@ -68,7 +68,7 @@ export function ChatHeader({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
-              <Link to="/organizations/$id" params={{ id: entity.id }}>
+              <Link to="/directory/$id" params={{ id: entity.id }}>
                 <User className="mr-2 h-3.5 w-3.5" /> View profile
               </Link>
             </DropdownMenuItem>

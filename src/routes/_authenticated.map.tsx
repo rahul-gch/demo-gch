@@ -142,7 +142,7 @@ function MapPage() {
                   <Block label="Capabilities" items={selected.capabilities} />
                   <Block label="Certifications" items={selected.certifications} />
                   <Button asChild className="w-full">
-                    <Link to="/organizations/$id" params={{ id: selected.id }}>
+                    <Link to="/directory/$id" params={{ id: selected.id }}>
                       View full profile
                     </Link>
                   </Button>

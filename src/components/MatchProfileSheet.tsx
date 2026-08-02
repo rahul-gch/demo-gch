@@ -326,7 +326,7 @@ export function MatchProfileSheet({
                   Send message
                 </Button>
                 <Button asChild size="sm" variant="ghost">
-                  <Link to="/organizations/$id" params={{ id: e.id }} onClick={() => onOpenChange(false)}>
+                  <Link to="/directory/$id" params={{ id: e.id }} onClick={() => onOpenChange(false)}>
                     Open full profile <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
                   </Link>
                 </Button>

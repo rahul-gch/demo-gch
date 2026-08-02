@@ -22,7 +22,7 @@ export function EcosystemConnections({ connections }: { connections: EcosystemCo
               {items.map((c) => (
                 <Link
                   key={c.entity.id}
-                  to="/organizations/$id"
+                  to="/directory/$id"
                   params={{ id: c.entity.id }}
                   className="group block rounded-md border p-3 transition hover:bg-accent"
                 >

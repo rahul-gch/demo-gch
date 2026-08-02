@@ -59,7 +59,7 @@ export function OrgInfoSidebar({
             </div>
             <div className="grid gap-1.5">
               <Button asChild variant="outline" size="sm" className="justify-start">
-                <Link to="/organizations/$id" params={{ id: entity.id }}>
+                <Link to="/directory/$id" params={{ id: entity.id }}>
                   <User className="mr-2 h-3.5 w-3.5" /> View profile
                 </Link>
               </Button>

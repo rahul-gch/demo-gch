@@ -737,7 +737,7 @@ function NetworkDirectoryCard({
                       ))}
                       <TableCell className="text-right">
                         <Button asChild size="sm" variant="ghost">
-                          <Link to="/organizations/$id" params={{ id: e.id }}>
+                          <Link to="/directory/$id" params={{ id: e.id }}>
                             Open <ArrowUpRight className="ml-1 h-3 w-3" />
                           </Link>
                         </Button>
@@ -873,7 +873,7 @@ function ResultsSection({
                     <TableCell className="text-right">
                       {r.id ? (
                         <Button asChild size="sm" variant="ghost">
-                          <Link to="/organizations/$id" params={{ id: r.id }}>
+                          <Link to="/directory/$id" params={{ id: r.id }}>
                             Open <ArrowUpRight className="ml-1 h-3 w-3" />
                           </Link>
                         </Button>
