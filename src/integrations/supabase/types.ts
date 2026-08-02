@@ -344,6 +344,7 @@ export type Database = {
           contacts: Json
           country: string | null
           created_at: string
+          created_by: string | null
           delivery_timeframe_days: number | null
           description: string | null
           entity_type: string | null
@@ -402,6 +403,7 @@ export type Database = {
           contacts?: Json
           country?: string | null
           created_at?: string
+          created_by?: string | null
           delivery_timeframe_days?: number | null
           description?: string | null
           entity_type?: string | null
@@ -460,6 +462,7 @@ export type Database = {
           contacts?: Json
           country?: string | null
           created_at?: string
+          created_by?: string | null
           delivery_timeframe_days?: number | null
           description?: string | null
           entity_type?: string | null
