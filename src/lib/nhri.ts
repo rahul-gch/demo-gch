@@ -3,6 +3,7 @@
 // This is the signature "credit score" of Global Chain Hub.
 import type { Entity } from "@/seed/types";
 import { ALL_ENTITIES, onRegistryHydrated } from "@/seed/all-entities";
+import { isSeededOrg } from "@/seed/showcase";
 
 export type NhriBand = "Excellent" | "Strong" | "Developing" | "At Risk";
 
