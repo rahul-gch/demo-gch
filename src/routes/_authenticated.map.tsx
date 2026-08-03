@@ -38,7 +38,10 @@ function MapPage() {
   const [selected, setSelected] = useState<Entity | null>(null);
 
   const countries = useMemo(
-    () => Array.from(new Set(ENTITIES.map((e) => e.country))).sort(),
+    () =>
+      Array.from(
+        new Set(ENTITIES.map((e) => (typeof e.country === "string" ? e.country.trim() : "")).filter(Boolean)),
+      ).sort(),
     [],
   );
 
@@ -204,8 +207,9 @@ function Filter({
         <SelectContent>
           <SelectItem value={ALL}>All</SelectItem>
           {options.map((o) => {
-            const v = typeof o === "string" ? o : o.value;
+            const v = (typeof o === "string" ? o : o.value)?.trim();
             const l = typeof o === "string" ? o : o.label;
+            if (!v) return null;
             return (
               <SelectItem key={v} value={v}>
                 {l}

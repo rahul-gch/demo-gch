@@ -57,8 +57,10 @@ export const Route = createFileRoute("/_authenticated/organizations/")({
 
 const ALL = "__all";
 
-function uniq(arr: string[]) {
-  return Array.from(new Set(arr)).sort();
+function uniq(arr: (string | null | undefined)[]) {
+  return Array.from(
+    new Set(arr.map((v) => (typeof v === "string" ? v.trim() : "")).filter(Boolean)),
+  ).sort();
 }
 
 function OrganizationsPage() {
@@ -285,8 +287,9 @@ function FilterSelect({
         <SelectContent>
           <SelectItem value={ALL}>All</SelectItem>
           {options.map((o) => {
-            const v = typeof o === "string" ? o : o.value;
+            const v = (typeof o === "string" ? o : o.value)?.trim();
             const l = typeof o === "string" ? o : o.label;
+            if (!v) return null;
             return (
               <SelectItem key={v} value={v}>
                 {l}
