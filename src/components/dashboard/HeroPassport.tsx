@@ -3,7 +3,7 @@ import type { Entity } from "@/seed/types";
 import { Badge } from "@/components/ui/badge";
 import { VerificationBadge } from "@/components/StatusBadge";
 import { bandBadgeClasses, computeNhri } from "@/lib/nhri";
-import { getEcosystemConnections } from "@/seed/showcase";
+import { getEcosystemConnections, isSeededOrg } from "@/seed/showcase";
 import { MapPin, Users2, FolderKanban, Network as NetworkIcon, ShieldCheck, Star } from "lucide-react";
 import { HeroBackground, deriveDomain, entityInitials } from "./OrgBanner";
 
@@ -25,11 +25,12 @@ function Stat({ label, value, icon: Icon }: { label: string; value: string | num
 
 export function HeroPassport({ entity: e }: { entity: Entity }) {
   const nhri = computeNhri(e);
+  const seeded = isSeededOrg(e);
   const conns = getEcosystemConnections(e);
-  const partners = conns.length + 48;
-  const members = e.contacts.length + 12;
-  const projects = 6 + (conns.length % 6);
-  const stars = Math.max(1, Math.min(5, Math.round(nhri.score / 20)));
+  const partners = seeded ? conns.length + 48 : conns.length;
+  const members = seeded ? e.contacts.length + 12 : e.contacts.length;
+  const projects = seeded ? 6 + (conns.length % 6) : 0;
+  const stars = Math.max(0, Math.min(5, Math.round(nhri.score / 20)));
 
   const [logoFailed, setLogoFailed] = useState(false);
   const token = import.meta.env.VITE_LOVABLE_CONNECTOR_LOGO_DEV_API_KEY as string | undefined;
@@ -95,7 +96,7 @@ export function HeroPassport({ entity: e }: { entity: Entity }) {
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             <Stat label="NHRI Score" value={nhri.score} />
             <Stat label="Profile" value={`${e.profileCompleteness}%`} />
-            <Stat label="Global Rank" value={`#${nhri.globalRank}`} />
+            <Stat label="Global Rank" value={seeded ? `#${nhri.globalRank}` : "—"} />
             <Stat label="Members" value={members} icon={Users2} />
             <Stat label="Projects" value={projects} icon={FolderKanban} />
             <Stat label="Partners" value={partners} icon={NetworkIcon} />
@@ -110,18 +111,33 @@ export function HeroPassport({ entity: e }: { entity: Entity }) {
             <Badge className={`border-transparent ${bandBadgeClasses(nhri.bandTone)}`}>{nhri.band}</Badge>
           </div>
           <div className="mt-3 space-y-2 text-sm">
-            <div className="flex items-start gap-2">
-              <ShieldCheck className="mt-0.5 h-3.5 w-3.5 text-amber-300" />
-              <span>1 certificate expires within 30 days</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <NetworkIcon className="mt-0.5 h-3.5 w-3.5 text-emerald-300" />
-              <span>2 new partner matches at 85%+ fit</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <FolderKanban className="mt-0.5 h-3.5 w-3.5 text-sky-300" />
-              <span>Supply chain risk increased in {e.country}</span>
-            </div>
+            {seeded ? (
+              <>
+                <div className="flex items-start gap-2">
+                  <ShieldCheck className="mt-0.5 h-3.5 w-3.5 text-amber-300" />
+                  <span>1 certificate expires within 30 days</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <NetworkIcon className="mt-0.5 h-3.5 w-3.5 text-emerald-300" />
+                  <span>2 new partner matches at 85%+ fit</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <FolderKanban className="mt-0.5 h-3.5 w-3.5 text-sky-300" />
+                  <span>Supply chain risk increased in {e.country}</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-start gap-2">
+                  <ShieldCheck className="mt-0.5 h-3.5 w-3.5 text-sky-300" />
+                  <span>No verified data yet — your score starts at 0.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <NetworkIcon className="mt-0.5 h-3.5 w-3.5 text-emerald-300" />
+                  <span>Complete your profile to unlock matchmaking and insights.</span>
+                </div>
+              </>
+            )}
           </div>
           <div className="mt-4 rounded-md bg-black/40 p-3 text-xs text-slate-100">
             Suggested action · complete profile to unlock full matchmaking.

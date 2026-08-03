@@ -2,12 +2,14 @@ import type { Entity } from "@/seed/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { bandBadgeClasses, bandBarClasses, computeNhri, healthBars } from "@/lib/nhri";
+import { isSeededOrg } from "@/seed/showcase";
 import { TrendingUp, TrendingDown } from "lucide-react";
 
 export function HealthScoreCard({ entity }: { entity: Entity }) {
   const nhri = computeNhri(entity);
   const bars = healthBars(nhri);
   const delta = nhri.deltaVsPeers;
+  const seeded = isSeededOrg(entity);
 
   return (
     <Card className="shadow-sm">
@@ -24,6 +26,11 @@ export function HealthScoreCard({ entity }: { entity: Entity }) {
             <Badge variant="outline" className={bandBadgeClasses(nhri.bandTone)}>
               {nhri.band}
             </Badge>
+            {!seeded ? (
+              <div className="text-xs text-muted-foreground">
+                No benchmark yet — complete your profile to start scoring.
+              </div>
+            ) : (
             <div className="inline-flex items-center gap-1 text-xs text-muted-foreground">
               {delta >= 0 ? (
                 <TrendingUp className="h-3.5 w-3.5 text-emerald-600" />
@@ -33,6 +40,7 @@ export function HealthScoreCard({ entity }: { entity: Entity }) {
               {delta >= 0 ? "+" : ""}
               {delta} vs {entity.entityType} peers · Rank #{nhri.globalRank} of {nhri.totalRanked}
             </div>
+            )}
           </div>
 
           <div className="min-w-0 space-y-3">

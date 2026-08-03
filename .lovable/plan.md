@@ -1,37 +1,28 @@
-## Problem
+## Goal
 
-Every link to another organization (Research Database "Open", Matchmaking, Map, Ecosystem cards) goes to `/organizations/:id`, which renders the full owner workspace: dashboard, projects, supply chain, compliance, requests, settings. Nothing checks whether the signed-in user is actually a member of that org, so an owner of "Rahul-ug Garments" gets an insider view of ACL IMPEX.
+New organizations should start truly empty: no invented numbers, no "Rahul", and a health/AI score of 0 that only grows as they fill in real data.
 
-## What to build
+## What changes
 
-**1. Public organization profile route** — `/directory/:id`
+### 1. Greeting uses the real signed-in user
+`AICommandCenter` hardcodes "Rahul" in two places (heading and AI summary). Replace with the signed-in user's name from the auth session (user metadata full name, else the email prefix), falling back to a neutral greeting ("Welcome back") when unknown. Same source that `UserMenu` already uses.
 
-A new, read-only page with its own light shell (no org workspace sidebar; it renders inside the user's own context with a back link). Shows only public registry data:
+### 2. Health / readiness score starts at 0 for new orgs
+`computeNhri` currently adds baseline and pseudo-random values that give a brand-new org a non-zero score:
+- `projectActivity` = 40 + random 0-55
+- `freshness` = 55 + random 0-40
+- `supplyChain` adds a flat +10/+15/+20 tier bonus
+- `certifications` adds a flat +10
+- `compliance` uses a 0.5 default verified ratio when no certificates exist
 
-- Header: logo, name, GCH number, entity type, tier, location, verification status badge
-- About / description, website, region
-- Capabilities, materials, product categories, specializations
-- Certifications list (name + status only — no uploaded documents, no expiry evidence files)
-- Public operations summary where reported: MOQ, lead time, capacity, on-time rate (shown as "Not reported" when empty)
-- Actions: **Send message** and **Request meeting** (reusing the existing message/meeting flows, acting as the user's own org)
+For organizations that are not seeded showcase orgs, all pillars will be computed only from data the org actually provided — no random values, no flat bonuses, no default ratios — so an empty profile scores 0 and each completed section visibly lifts the score. Seeded showcase orgs keep their current behaviour.
 
-Explicitly NOT shown: NHRI internals and readiness breakdown, missing-data lists, AI command center, projects, requests, documents/compliance uploads, supply chain, members, activity, settings.
+Consequences handled in the same pass: peer delta and "Rank #x of y" are hidden for new orgs (nothing to compare yet), and the AI summary/health card show a "Start by completing your profile" state instead of score commentary.
 
-**2. Point all outward links at the public profile**
+### 3. Sweep the dashboard for remaining invented data
+Audit every dashboard/tab panel for values that appear without real input for a new org, and replace with explicit empty states ("Not reported yet" / "No data yet") plus the relevant action link. Panels to check: HeroPassport, HealthScoreCard bars, CriticalActionsStrip, PassportCards, OperationsCard, KpiInteractiveGrid, EcosystemSummary, SupplyChainSnapshot, ReadinessBreakdown, ActivityTimeline, OpportunitiesPanel, MissingDataGamified, and the Insights / Network / Performance / Compliance / Supply Chain / AI tabs.
 
-Update "Open"/profile links in `ResearchWorkspace`, `MatchmakingPanel` / `MatchProfileSheet`, `EcosystemConnections`, `SupplyChainSnapshot` / `RecommendedChain`, the map popups, and `organizations.index` (for non-admins) to `/directory/:id`.
+## Notes
 
-**3. Guard the workspace route**
-
-In `src/routes/_authenticated.organizations.$id.tsx`, the loader checks the user's memberships (`myOrgMemberships`) plus platform-admin status:
-- member or platform admin → current workspace, unchanged
-- otherwise → redirect to `/directory/:id`
-
-This closes the hole for anyone typing the URL directly, and keeps admin behaviour as today.
-
-## Technical notes
-
-- Membership check runs server-side via the existing `myOrgMemberships` server function, cached through React Query so it doesn't refetch per navigation.
-- Route file: `src/routes/_authenticated.directory.$id.tsx` (stays under the auth gate — the directory is not anonymous), component in `src/components/directory/PublicOrgProfile.tsx`.
-- Data comes from the already-hydrated in-memory registry (`getEntity`) with the same `refreshRegistry` fallback the workspace route uses, so no new backend queries are needed.
-- Row-level security on `orgs` already limits reads to authenticated users; this change is about what the UI exposes, so no migration is required. If you also want field-level restriction at the database layer later, that's a separate follow-up.
+- Frontend/derivation-layer only; no database or schema changes.
+- Existing seeded demo organizations are untouched so the showcase still demos well.

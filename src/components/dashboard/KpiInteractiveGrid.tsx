@@ -10,11 +10,11 @@ export function KpiInteractiveGrid({ entity }: { entity: Entity }) {
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       {kpis.map((k, i) => {
         const trend = ((i * 7) % 9) - 3; // deterministic-ish trend %
-        const target = Math.min(100, Math.round(k.value + 10 + (i % 3) * 4));
+        const target = k.reported ? Math.min(100, Math.round(k.value + 10 + (i % 3) * 4)) : null;
         const status = k.reported
-          ? k.value >= target - 2
+          ? k.value >= (target ?? 0) - 2
             ? "On track"
-            : k.value >= target - 10
+            : k.value >= (target ?? 0) - 10
               ? "Watch"
               : "Behind"
           : "No data";
@@ -55,13 +55,13 @@ export function KpiInteractiveGrid({ entity }: { entity: Entity }) {
               </div>
               <div className="mt-3 space-y-1">
                 <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                  <span>Target {target}</span>
+                  <span>{target === null ? "No target set" : `Target ${target}`}</span>
                   <span>{k.confidence}% conf.</span>
                 </div>
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
                   <div
                     className="h-full bg-slate-800"
-                    style={{ width: `${Math.min(100, (k.value / Math.max(1, target)) * 100)}%` }}
+                    style={{ width: `${target === null ? 0 : Math.min(100, (k.value / Math.max(1, target)) * 100)}%` }}
                   />
                 </div>
               </div>
