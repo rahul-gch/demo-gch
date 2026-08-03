@@ -38,7 +38,10 @@ function MapPage() {
   const [selected, setSelected] = useState<Entity | null>(null);
 
   const countries = useMemo(
-    () => Array.from(new Set(ENTITIES.map((e) => e.country))).sort(),
+    () =>
+      Array.from(
+        new Set(ENTITIES.map((e) => (typeof e.country === "string" ? e.country.trim() : "")).filter(Boolean)),
+      ).sort(),
     [],
   );
 
