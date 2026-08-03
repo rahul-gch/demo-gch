@@ -1,4 +1,4 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute, notFound, useLocation } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -43,6 +43,7 @@ const parseCsv = (v: string) =>
 function OrgSettingsPage() {
   const { entity: e } = Route.useLoaderData();
   const queryClient = useQueryClient();
+  const hash = useLocation({ select: (l) => l.hash });
   const saveProfile = useServerFn(updateOrgProfile);
 
   const [name, setName] = useState(e.name);
@@ -120,7 +121,7 @@ function OrgSettingsPage() {
         </p>
       </header>
 
-      <Tabs defaultValue="profile" className="space-y-6">
+      <Tabs defaultValue={hash === "members" ? "members" : "profile"} className="space-y-6">
         <TabsList>
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="members">Members & invites</TabsTrigger>
