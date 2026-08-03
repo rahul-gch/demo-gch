@@ -57,8 +57,10 @@ export const Route = createFileRoute("/_authenticated/organizations/")({
 
 const ALL = "__all";
 
-function uniq(arr: string[]) {
-  return Array.from(new Set(arr)).sort();
+function uniq(arr: (string | null | undefined)[]) {
+  return Array.from(
+    new Set(arr.map((v) => (typeof v === "string" ? v.trim() : "")).filter(Boolean)),
+  ).sort();
 }
 
 function OrganizationsPage() {
