@@ -55,24 +55,33 @@ function seed(id: string) {
 }
 
 function pillarValues(e: Entity) {
+  const seeded = isSeededOrg(e);
   const profile = clamp(e.profileCompleteness);
   const verifiedRatio =
     e.certificationDetails.length > 0
       ? e.verifiedCertCount / Math.max(1, e.certificationDetails.length)
-      : 0.5;
+      : seeded
+        ? 0.5
+        : 0;
   const expiredPenalty = Math.min(30, e.expiredCertCount * 10);
   const compliance = clamp(verifiedRatio * 100 - expiredPenalty + (e.verificationStatus === "Verified" ? 10 : 0));
-  const supplyChain = clamp(
-    e.traceabilityReadiness * 0.7 + (e.actorType === "Tier 0" ? 20 : e.actorType === "Tier 1" ? 15 : 10),
-  );
+  const tierBonus = seeded ? (e.actorType === "Tier 0" ? 20 : e.actorType === "Tier 1" ? 15 : 10) : 0;
+  const supplyChain = clamp(e.traceabilityReadiness * 0.7 + tierBonus);
   const connectivity = clamp(e.matchmakingReadiness);
-  const certifications = clamp(Math.min(100, e.certifications.length * 18 + 10));
+  const certifications = clamp(
+    Math.min(100, e.certifications.length * 18 + (seeded || e.certifications.length ? 10 : 0)),
+  );
   const rand = seed(e.id);
-  const projectActivity = clamp(40 + Math.round(rand() * 55));
+  // New organizations earn every point from data they actually provide —
+  // no baseline, no simulated activity.
+  const projectActivity = seeded ? clamp(40 + Math.round(rand() * 55)) : 0;
   const aiConfidence = clamp(e.confidenceScore);
-  const freshness = clamp(55 + Math.round(rand() * 40) - expiredPenalty);
+  const freshness = seeded
+    ? clamp(55 + Math.round(rand() * 40) - expiredPenalty)
+    : clamp(e.profileCompleteness > 0 ? e.profileCompleteness - expiredPenalty : 0);
   return { profile, compliance, supplyChain, connectivity, certifications, projectActivity, aiConfidence, freshness };
 }
+
 
 export function computeNhri(e: Entity): NhriResult {
   const v = pillarValues(e);
