@@ -2,7 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function NavHistoryButtons({ className }: { className?: string }) {
   const href = useRouterState({ select: (s) => s.location.href });
@@ -45,6 +50,7 @@ export function NavHistoryButtons({ className }: { className?: string }) {
   };
 
   return (
+    <TooltipProvider delayDuration={300}>
     <div className={`flex items-center gap-0.5 ${className ?? ""}`}>
       <Tooltip>
         <TooltipTrigger asChild>
@@ -77,5 +83,6 @@ export function NavHistoryButtons({ className }: { className?: string }) {
         <TooltipContent>Forward</TooltipContent>
       </Tooltip>
     </div>
+    </TooltipProvider>
   );
 }
