@@ -12,9 +12,9 @@ export function KpiInteractiveGrid({ entity }: { entity: Entity }) {
         const trend = ((i * 7) % 9) - 3; // deterministic-ish trend %
         const target = k.reported ? Math.min(100, Math.round(k.value + 10 + (i % 3) * 4)) : null;
         const status = k.reported
-          ? k.value >= target - 2
+          ? k.value >= (target ?? 0) - 2
             ? "On track"
-            : k.value >= target - 10
+            : k.value >= (target ?? 0) - 10
               ? "Watch"
               : "Behind"
           : "No data";
