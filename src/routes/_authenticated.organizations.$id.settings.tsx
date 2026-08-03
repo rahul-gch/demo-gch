@@ -43,6 +43,7 @@ const parseCsv = (v: string) =>
 function OrgSettingsPage() {
   const { entity: e } = Route.useLoaderData();
   const queryClient = useQueryClient();
+  const hash = useLocation({ select: (l) => l.hash });
   const saveProfile = useServerFn(updateOrgProfile);
 
   const [name, setName] = useState(e.name);
