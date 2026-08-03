@@ -287,8 +287,9 @@ function FilterSelect({
         <SelectContent>
           <SelectItem value={ALL}>All</SelectItem>
           {options.map((o) => {
-            const v = typeof o === "string" ? o : o.value;
+            const v = (typeof o === "string" ? o : o.value)?.trim();
             const l = typeof o === "string" ? o : o.label;
+            if (!v) return null;
             return (
               <SelectItem key={v} value={v}>
                 {l}
