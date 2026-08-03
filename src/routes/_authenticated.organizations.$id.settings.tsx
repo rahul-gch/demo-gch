@@ -120,7 +120,7 @@ function OrgSettingsPage() {
         </p>
       </header>
 
-      <Tabs defaultValue="profile" className="space-y-6">
+      <Tabs defaultValue={hash === "members" ? "members" : "profile"} className="space-y-6">
         <TabsList>
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="members">Members & invites</TabsTrigger>
