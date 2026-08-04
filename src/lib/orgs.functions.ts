@@ -1,6 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getProfileDef, type ProfileAnswers } from "./entity-profiles";
+import { computeProfileScore } from "./profile-score";
+
+
 
 const orgRoleValues = ["owner", "admin", "editor", "viewer"] as const;
 
