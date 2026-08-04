@@ -34,6 +34,7 @@ import { Route as AuthenticatedOrganizationsIdSettingsRouteImport } from './rout
 import { Route as AuthenticatedOrganizationsIdResearchRouteImport } from './routes/_authenticated.organizations.$id.research'
 import { Route as AuthenticatedOrganizationsIdRequestsRouteImport } from './routes/_authenticated.organizations.$id.requests'
 import { Route as AuthenticatedOrganizationsIdProjectsRouteImport } from './routes/_authenticated.organizations.$id.projects'
+import { Route as AuthenticatedOrganizationsIdProfileSetupRouteImport } from './routes/_authenticated.organizations.$id.profile-setup'
 import { Route as AuthenticatedOrganizationsIdMessagesRouteImport } from './routes/_authenticated.organizations.$id.messages'
 import { Route as AuthenticatedOrganizationsIdMeetingsRouteImport } from './routes/_authenticated.organizations.$id.meetings'
 import { Route as AuthenticatedOrganizationsIdMatchmakingRouteImport } from './routes/_authenticated.organizations.$id.matchmaking'
@@ -186,6 +187,12 @@ const AuthenticatedOrganizationsIdProjectsRoute =
     path: '/projects',
     getParentRoute: () => AuthenticatedOrganizationsIdRoute,
   } as any)
+const AuthenticatedOrganizationsIdProfileSetupRoute =
+  AuthenticatedOrganizationsIdProfileSetupRouteImport.update({
+    id: '/profile-setup',
+    path: '/profile-setup',
+    getParentRoute: () => AuthenticatedOrganizationsIdRoute,
+  } as any)
 const AuthenticatedOrganizationsIdMessagesRoute =
   AuthenticatedOrganizationsIdMessagesRouteImport.update({
     id: '/messages',
@@ -301,6 +308,7 @@ export interface FileRoutesByFullPath {
   '/organizations/$id/matchmaking': typeof AuthenticatedOrganizationsIdMatchmakingRoute
   '/organizations/$id/meetings': typeof AuthenticatedOrganizationsIdMeetingsRoute
   '/organizations/$id/messages': typeof AuthenticatedOrganizationsIdMessagesRoute
+  '/organizations/$id/profile-setup': typeof AuthenticatedOrganizationsIdProfileSetupRoute
   '/organizations/$id/projects': typeof AuthenticatedOrganizationsIdProjectsRouteWithChildren
   '/organizations/$id/requests': typeof AuthenticatedOrganizationsIdRequestsRoute
   '/organizations/$id/research': typeof AuthenticatedOrganizationsIdResearchRoute
@@ -340,6 +348,7 @@ export interface FileRoutesByTo {
   '/organizations/$id/matchmaking': typeof AuthenticatedOrganizationsIdMatchmakingRoute
   '/organizations/$id/meetings': typeof AuthenticatedOrganizationsIdMeetingsRoute
   '/organizations/$id/messages': typeof AuthenticatedOrganizationsIdMessagesRoute
+  '/organizations/$id/profile-setup': typeof AuthenticatedOrganizationsIdProfileSetupRoute
   '/organizations/$id/requests': typeof AuthenticatedOrganizationsIdRequestsRoute
   '/organizations/$id/research': typeof AuthenticatedOrganizationsIdResearchRoute
   '/organizations/$id/settings': typeof AuthenticatedOrganizationsIdSettingsRoute
@@ -381,6 +390,7 @@ export interface FileRoutesById {
   '/_authenticated/organizations/$id/matchmaking': typeof AuthenticatedOrganizationsIdMatchmakingRoute
   '/_authenticated/organizations/$id/meetings': typeof AuthenticatedOrganizationsIdMeetingsRoute
   '/_authenticated/organizations/$id/messages': typeof AuthenticatedOrganizationsIdMessagesRoute
+  '/_authenticated/organizations/$id/profile-setup': typeof AuthenticatedOrganizationsIdProfileSetupRoute
   '/_authenticated/organizations/$id/projects': typeof AuthenticatedOrganizationsIdProjectsRouteWithChildren
   '/_authenticated/organizations/$id/requests': typeof AuthenticatedOrganizationsIdRequestsRoute
   '/_authenticated/organizations/$id/research': typeof AuthenticatedOrganizationsIdResearchRoute
@@ -424,6 +434,7 @@ export interface FileRouteTypes {
     | '/organizations/$id/matchmaking'
     | '/organizations/$id/meetings'
     | '/organizations/$id/messages'
+    | '/organizations/$id/profile-setup'
     | '/organizations/$id/projects'
     | '/organizations/$id/requests'
     | '/organizations/$id/research'
@@ -463,6 +474,7 @@ export interface FileRouteTypes {
     | '/organizations/$id/matchmaking'
     | '/organizations/$id/meetings'
     | '/organizations/$id/messages'
+    | '/organizations/$id/profile-setup'
     | '/organizations/$id/requests'
     | '/organizations/$id/research'
     | '/organizations/$id/settings'
@@ -503,6 +515,7 @@ export interface FileRouteTypes {
     | '/_authenticated/organizations/$id/matchmaking'
     | '/_authenticated/organizations/$id/meetings'
     | '/_authenticated/organizations/$id/messages'
+    | '/_authenticated/organizations/$id/profile-setup'
     | '/_authenticated/organizations/$id/projects'
     | '/_authenticated/organizations/$id/requests'
     | '/_authenticated/organizations/$id/research'
@@ -707,6 +720,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrganizationsIdProjectsRouteImport
       parentRoute: typeof AuthenticatedOrganizationsIdRoute
     }
+    '/_authenticated/organizations/$id/profile-setup': {
+      id: '/_authenticated/organizations/$id/profile-setup'
+      path: '/profile-setup'
+      fullPath: '/organizations/$id/profile-setup'
+      preLoaderRoute: typeof AuthenticatedOrganizationsIdProfileSetupRouteImport
+      parentRoute: typeof AuthenticatedOrganizationsIdRoute
+    }
     '/_authenticated/organizations/$id/messages': {
       id: '/_authenticated/organizations/$id/messages'
       path: '/messages'
@@ -875,6 +895,7 @@ interface AuthenticatedOrganizationsIdRouteChildren {
   AuthenticatedOrganizationsIdMatchmakingRoute: typeof AuthenticatedOrganizationsIdMatchmakingRoute
   AuthenticatedOrganizationsIdMeetingsRoute: typeof AuthenticatedOrganizationsIdMeetingsRoute
   AuthenticatedOrganizationsIdMessagesRoute: typeof AuthenticatedOrganizationsIdMessagesRoute
+  AuthenticatedOrganizationsIdProfileSetupRoute: typeof AuthenticatedOrganizationsIdProfileSetupRoute
   AuthenticatedOrganizationsIdProjectsRoute: typeof AuthenticatedOrganizationsIdProjectsRouteWithChildren
   AuthenticatedOrganizationsIdRequestsRoute: typeof AuthenticatedOrganizationsIdRequestsRoute
   AuthenticatedOrganizationsIdResearchRoute: typeof AuthenticatedOrganizationsIdResearchRoute
@@ -895,6 +916,8 @@ const AuthenticatedOrganizationsIdRouteChildren: AuthenticatedOrganizationsIdRou
       AuthenticatedOrganizationsIdMeetingsRoute,
     AuthenticatedOrganizationsIdMessagesRoute:
       AuthenticatedOrganizationsIdMessagesRoute,
+    AuthenticatedOrganizationsIdProfileSetupRoute:
+      AuthenticatedOrganizationsIdProfileSetupRoute,
     AuthenticatedOrganizationsIdProjectsRoute:
       AuthenticatedOrganizationsIdProjectsRouteWithChildren,
     AuthenticatedOrganizationsIdRequestsRoute:
