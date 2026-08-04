@@ -139,20 +139,42 @@ export const checkSlugAvailable = createServerFn({ method: "GET" })
     return { available: !row };
   });
 
-export const myOrgMemberships = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
-      .from("org_members")
-      .select("org_id, role, orgs(name)")
-      .eq("user_id", context.userId);
-    if (error) throw new Error(error.message);
-    return (data ?? []).map((r) => ({
-      org_id: r.org_id as string,
-      role: r.role as string,
-      org_name: ((r as { orgs?: { name?: string } | null }).orgs?.name ?? "Organization") as string,
-    }));
-  });
+/**
+ * Memberships for the signed-in user. Returns [] instead of throwing when the
+ * request has no bearer token (signed-out / auth page), so callers never crash.
+ */
+export const myOrgMemberships = createServerFn({ method: "GET" }).handler(async () => {
+  const empty: { org_id: string; role: string; org_name: string }[] = [];
+  const { getRequest } = await import("@tanstack/react-start/server");
+  const authHeader = getRequest()?.headers?.get("authorization") ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (!token) return empty;
+
+  const { createClient } = await import("@supabase/supabase-js");
+  const supabase = createClient(
+    process.env["SUPABASE_URL"]!,
+    process.env["SUPABASE_PUBLISHABLE_KEY"]!,
+    {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+      auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+    },
+  );
+
+  const { data: claims } = await supabase.auth.getClaims(token);
+  const userId = claims?.claims?.sub;
+  if (!userId) return empty;
+
+  const { data, error } = await supabase
+    .from("org_members")
+    .select("org_id, role, orgs(name)")
+    .eq("user_id", userId);
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((r) => ({
+    org_id: r.org_id as string,
+    role: r.role as string,
+    org_name: ((r as { orgs?: { name?: string } | null }).orgs?.name ?? "Organization") as string,
+  }));
+});
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const _rolesUnused: readonly string[] = orgRoleValues;
