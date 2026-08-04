@@ -370,7 +370,9 @@ export type Database = {
           preferred_channel: string | null
           product_categories: string[]
           product_types: string[]
+          profile_answers: Json
           profile_completeness: number
+          profile_score: number
           rating: number | null
           raw_entity_type: string | null
           recommended_next_action: string | null
@@ -429,7 +431,9 @@ export type Database = {
           preferred_channel?: string | null
           product_categories?: string[]
           product_types?: string[]
+          profile_answers?: Json
           profile_completeness?: number
+          profile_score?: number
           rating?: number | null
           raw_entity_type?: string | null
           recommended_next_action?: string | null
@@ -488,7 +492,9 @@ export type Database = {
           preferred_channel?: string | null
           product_categories?: string[]
           product_types?: string[]
+          profile_answers?: Json
           profile_completeness?: number
+          profile_score?: number
           rating?: number | null
           raw_entity_type?: string | null
           recommended_next_action?: string | null
