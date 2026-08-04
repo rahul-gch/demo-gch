@@ -42,7 +42,7 @@ export function AICommandCenter({ entity }: { entity: Entity }) {
 
         <div className="mt-5 flex flex-wrap gap-2">
           <Button size="sm" asChild>
-            <Link to="/organizations/$id/settings" params={{ id: orgId }} hash="profile">
+            <Link to="/organizations/$id/settings" params={{ id: orgId }} hash="entity">
               <Wand2 className="mr-1.5 h-3.5 w-3.5" /> Complete missing data
             </Link>
           </Button>
