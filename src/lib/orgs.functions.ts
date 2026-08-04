@@ -266,3 +266,125 @@ export const updateOrgProfile = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+const answersSchema = z.object({
+  orgId: z.string().uuid(),
+  answers: z.record(
+    z.string().max(80),
+    z.union([z.string().max(4000), z.number(), z.array(z.string().max(120)).max(60), z.null()]),
+  ),
+});
+
+/**
+ * Persists the entity-specific onboarding questionnaire. Answers mapped to a
+ * real `orgs` column are mirrored there (so directory, search and matchmaking
+ * keep working); everything else is stored in `profile_answers`. The weighted
+ * profile score is recomputed server-side on every save.
+ */
+export const saveOrgProfileAnswers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => answersSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: canEdit, error: roleErr } = await supabase.rpc("user_can_edit", {
+      _user: userId,
+      _org: data.orgId,
+    });
+    if (roleErr) throw new Error(roleErr.message);
+    if (!canEdit) throw new Error("You don't have permission to edit this organization.");
+
+    const { data: org, error: orgErr } = await supabase
+      .from("orgs")
+      .select("id, type, entity_type, description, website, city, country, logo_url, profile_answers")
+      .eq("id", data.orgId)
+      .single();
+    if (orgErr) throw new Error(orgErr.message);
+
+    const existing = ((org as { profile_answers?: unknown }).profile_answers ?? {}) as ProfileAnswers;
+    const merged: ProfileAnswers = { ...existing, ...(data.answers as ProfileAnswers) };
+
+    const entityType = (org.entity_type as string | null) || (org.type as string | null) || "";
+    const def = getProfileDef(entityType);
+
+    const columnMap: Record<string, string> = {
+      materials: "materials",
+      capabilities: "capabilities",
+      certifications: "certifications",
+      productCategories: "product_categories",
+      productTypes: "product_types",
+      specializations: "specializations",
+      capacity: "capacity",
+      moq: "moq",
+      leadTimeDays: "lead_time_days",
+    };
+    const arrayColumns = new Set([
+      "materials",
+      "capabilities",
+      "certifications",
+      "product_categories",
+      "product_types",
+      "specializations",
+    ]);
+
+    const patch: Record<string, unknown> = {};
+    for (const field of def.fields) {
+      if (!field.column) continue;
+      const value = merged[field.id];
+      if (value === undefined) continue;
+      const column = columnMap[field.column];
+      if (!column) continue;
+      if (arrayColumns.has(column)) {
+        const next = Array.isArray(value) ? value : value ? [String(value)] : [];
+        const prev = (patch[column] as string[] | undefined) ?? [];
+        patch[column] = Array.from(new Set([...prev, ...next]));
+      } else if (column === "lead_time_days") {
+        const n = typeof value === "number" ? value : Number(value);
+        patch[column] = Number.isFinite(n) && n > 0 ? Math.round(n) : null;
+      } else {
+        patch[column] = value === null || value === "" ? null : String(value);
+      }
+    }
+
+    const result = computeProfileScore(entityType, merged, {
+      description: (org.description as string | null) ?? undefined,
+      website: (org.website as string | null) ?? undefined,
+      city: (org.city as string | null) ?? undefined,
+      country: (org.country as string | null) ?? undefined,
+      logoUrl: (org.logo_url as string | null) ?? undefined,
+    });
+
+    patch.profile_answers = merged;
+    patch.profile_score = result.score;
+    patch.profile_completeness = result.score;
+
+    const { error } = await supabase.from("orgs").update(patch as never).eq("id", data.orgId);
+    if (error) throw new Error(error.message);
+    return { ok: true, score: result.score };
+  });
+
+/** Reads the stored questionnaire answers plus the core fields used for scoring. */
+export const getOrgProfileAnswers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ orgId: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { data: org, error } = await context.supabase
+      .from("orgs")
+      .select("id, name, type, entity_type, description, website, city, country, logo_url, profile_answers, profile_score")
+      .eq("id", data.orgId)
+      .single();
+    if (error) throw new Error(error.message);
+    return {
+      orgId: org.id as string,
+      name: (org.name as string) ?? "",
+      entityType: ((org.entity_type as string | null) || (org.type as string | null) || "") as string,
+      answers: (((org as { profile_answers?: unknown }).profile_answers ?? {}) as ProfileAnswers),
+      score: (((org as { profile_score?: number }).profile_score ?? 0) as number),
+      core: {
+        description: (org.description as string | null) ?? "",
+        website: (org.website as string | null) ?? "",
+        city: (org.city as string | null) ?? "",
+        country: (org.country as string | null) ?? "",
+        logoUrl: (org.logo_url as string | null) ?? "",
+      },
+    };
+  });
