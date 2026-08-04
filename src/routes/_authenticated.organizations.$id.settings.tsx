@@ -20,6 +20,8 @@ import { getEntity } from "@/seed/all-entities";
 import { updateOrgProfile } from "@/lib/orgs.functions";
 import { refreshRegistry } from "@/lib/registry";
 import { MembersPanel } from "@/components/settings/MembersPanel";
+import { EntityProfilePanel } from "@/components/settings/EntityProfilePanel";
+
 import { ORG_TYPES } from "@/lib/org-types";
 
 const SIZE_OPTIONS = ["1-10", "11-50", "51-200", "201-1000", "1000+"];
