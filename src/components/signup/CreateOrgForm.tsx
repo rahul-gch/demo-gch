@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { ORG_TYPES } from "@/lib/org-types";
+import { ENTITY_TYPES } from "@/lib/entity-profiles";
 
 function slugify(s: string): string {
   return s
@@ -29,39 +29,45 @@ function slugify(s: string): string {
 }
 
 /**
- * Single-step onboarding: create the account and the organization in one go.
- * When the visitor is already signed in, only the organization fields show.
- * Everything else (logo, country, website, certifications, operations…) is
- * filled in later from Organization settings.
+ * Step 1 of onboarding — deliberately short. Only identity and location are
+ * collected here; every entity-specific business question is asked afterwards
+ * in the profile wizard at /organizations/:id/profile-setup.
  */
 export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
   const nav = useNavigate();
   const createOrgFn = useServerFn(createOrg);
   const queryClient = useQueryClient();
 
-  const [fullName, setFullName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
 
   const [name, setName] = useState("");
   const [type, setType] = useState("");
-  const [customType, setCustomType] = useState("");
+  const [country, setCountry] = useState("");
+  const [city, setCity] = useState("");
+  const [website, setWebsite] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const effectiveType = type === "Other" ? customType.trim() : type;
-
   const accountReady = signedIn
     ? true
-    : fullName.trim().length >= 2 &&
+    : firstName.trim().length >= 2 &&
+      lastName.trim().length >= 1 &&
       /\S+@\S+\.\S+/.test(email.trim()) &&
       password.length >= 8 &&
       password === confirm;
 
   const canSubmit = useMemo(
-    () => accountReady && name.trim().length >= 2 && effectiveType.length >= 2 && !submitting,
-    [accountReady, name, effectiveType, submitting],
+    () =>
+      accountReady &&
+      name.trim().length >= 2 &&
+      type.length >= 2 &&
+      country.trim().length >= 2 &&
+      !submitting,
+    [accountReady, name, type, country, submitting],
   );
 
   const submit = async (e: React.FormEvent) => {
@@ -72,12 +78,17 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
     try {
       if (!signedIn) {
         const mail = email.trim().toLowerCase();
+        const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
         const { data, error: signUpErr } = await supabase.auth.signUp({
           email: mail,
           password,
           options: {
             emailRedirectTo: window.location.origin + "/auth/callback",
-            data: { full_name: fullName.trim() },
+            data: {
+              full_name: fullName,
+              first_name: firstName.trim(),
+              last_name: lastName.trim(),
+            },
           },
         });
 
@@ -88,7 +99,6 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
             msg.includes("already been registered") ||
             msg.includes("user already exists");
           if (!alreadyRegistered) throw signUpErr;
-          // Account already exists — sign in with the given password instead.
           const { error: siErr } = await supabase.auth.signInWithPassword({
             email: mail,
             password,
@@ -106,17 +116,21 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
         }
       }
 
+      const site = website.trim();
       const res = await createOrgFn({
         data: {
           name: name.trim(),
           slug: slugify(name) || "org",
-          type: effectiveType,
+          type,
+          country: country.trim() || null,
+          city: city.trim() || null,
+          website: site ? (/^https?:\/\//i.test(site) ? site : `https://${site}`) : null,
         },
       });
 
       await refreshRegistry(queryClient);
-      toast.success("Workspace ready — add your details in Settings");
-      nav({ to: "/organizations/$id", params: { id: res.id }, replace: true });
+      toast.success("Account created — let's complete your profile");
+      nav({ to: "/organizations/$id/profile-setup", params: { id: res.id }, replace: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to create organization";
       setError(message);
@@ -126,20 +140,31 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
     }
   };
 
-
   return (
     <form onSubmit={submit} className="space-y-5">
       {!signedIn && (
         <div className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="ob-name">Your name *</Label>
-            <Input
-              id="ob-name"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="Jane Doe"
-              autoComplete="name"
-            />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="ob-first">First name *</Label>
+              <Input
+                id="ob-first"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="Jane"
+                autoComplete="given-name"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="ob-last">Last name *</Label>
+              <Input
+                id="ob-last"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder="Doe"
+                autoComplete="family-name"
+              />
+            </div>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="ob-email">Work email *</Label>
@@ -194,33 +219,53 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
           />
         </div>
         <div className="space-y-1.5 sm:col-span-2">
-          <Label>Organization type *</Label>
+          <Label>Entity type *</Label>
           <Select value={type} onValueChange={setType}>
             <SelectTrigger>
-              <SelectValue placeholder="Select type" />
+              <SelectValue placeholder="Select entity type" />
             </SelectTrigger>
             <SelectContent className="max-h-72">
-              {ORG_TYPES.map((t) => (
+              {ENTITY_TYPES.map((t) => (
                 <SelectItem key={t} value={t}>
                   {t}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          {type === "Other" && (
-            <Input
-              value={customType}
-              onChange={(e) => setCustomType(e.target.value)}
-              placeholder="Describe your organization type"
-              className="mt-2"
-            />
-          )}
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="org-country">Country *</Label>
+          <Input
+            id="org-country"
+            value={country}
+            onChange={(e) => setCountry(e.target.value)}
+            placeholder="India"
+            autoComplete="country-name"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="org-city">City / region</Label>
+          <Input
+            id="org-city"
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            placeholder="Coimbatore, Tamil Nadu"
+          />
+        </div>
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label htmlFor="org-website">Website (optional)</Label>
+          <Input
+            id="org-website"
+            value={website}
+            onChange={(e) => setWebsite(e.target.value)}
+            placeholder="www.acmecotton.com"
+          />
         </div>
       </div>
 
       <p className="text-xs text-muted-foreground">
-        That's all we need. Country, logo, website, description, certifications, materials and
-        operations details can be added any time from your organization's Settings page.
+        Next you'll answer a few questions tailored to your entity type — you can skip any of them
+        and finish later from Settings.
       </p>
 
       {error && (
@@ -232,15 +277,13 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
         </div>
       )}
 
-
-
       <Button type="submit" disabled={!canSubmit} className="w-full" size="lg">
         {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         {submitting
           ? "Setting up your workspace…"
           : signedIn
             ? "Create organization"
-            : "Create account & workspace"}
+            : "Create account & continue"}
       </Button>
     </form>
   );
