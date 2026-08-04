@@ -81,6 +81,8 @@ export const createOrg = createServerFn({ method: "POST" })
         slug,
         type: data.type,
         country: data.country || null,
+        city: data.city || null,
+
         website: data.website || null,
         description: data.description || null,
         size: data.size || null,
