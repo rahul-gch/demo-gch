@@ -121,15 +121,24 @@ function OrgSettingsPage() {
         </p>
       </header>
 
-      <Tabs defaultValue={hash === "members" ? "members" : "profile"} className="space-y-6">
+      <Tabs
+        defaultValue={hash === "members" ? "members" : hash === "entity" ? "entity" : "profile"}
+        className="space-y-6"
+      >
         <TabsList>
           <TabsTrigger value="profile">Profile</TabsTrigger>
+          <TabsTrigger value="entity">Entity profile</TabsTrigger>
           <TabsTrigger value="members">Members & invites</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="entity" className="space-y-6">
+          <EntityProfilePanel orgId={orgUuid || e.id} />
+        </TabsContent>
 
         <TabsContent value="members" className="space-y-6">
           <MembersPanel orgId={orgUuid || e.id} />
         </TabsContent>
+
 
         <TabsContent value="profile" className="space-y-6">
           <Card className="shadow-sm">
