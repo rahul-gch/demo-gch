@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
@@ -93,7 +93,7 @@ function PrivacyCenter() {
   const download = async () => {
     setBusy("export");
     try {
-      const payload = await runExport({ data: undefined as never });
+      const payload = await runExport({} as never);
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -317,5 +317,3 @@ function humanAction(action: string): string {
   };
   return map[action] ?? action;
 }
-
-export { Link };
