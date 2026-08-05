@@ -60,7 +60,7 @@ export async function logSecurityEvent(
       action,
       target_type: opts.targetType ?? null,
       target_id: opts.targetId ?? null,
-      detail: scrub(opts.detail ?? {}),
+      detail: scrub(opts.detail ?? {}) as never,
     });
   } catch {
     /* logging is best-effort */
