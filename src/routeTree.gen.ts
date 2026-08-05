@@ -15,9 +15,12 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated.index'
 import { Route as OnboardingTokenRouteImport } from './routes/onboarding.$token'
+import { Route as LegalTermsRouteImport } from './routes/legal.terms'
+import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated.settings'
+import { Route as AuthenticatedPrivacyRouteImport } from './routes/_authenticated.privacy'
 import { Route as AuthenticatedOrganizationsRouteImport } from './routes/_authenticated.organizations'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated.messages'
 import { Route as AuthenticatedMeetingsRouteImport } from './routes/_authenticated.meetings'
@@ -80,6 +83,16 @@ const OnboardingTokenRoute = OnboardingTokenRouteImport.update({
   path: '/onboarding/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LegalTermsRoute = LegalTermsRouteImport.update({
+  id: '/legal/terms',
+  path: '/legal/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalPrivacyRoute = LegalPrivacyRouteImport.update({
+  id: '/legal/privacy',
+  path: '/legal/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InviteTokenRoute = InviteTokenRouteImport.update({
   id: '/invite/$token',
   path: '/invite/$token',
@@ -93,6 +106,11 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedPrivacyRoute = AuthenticatedPrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedOrganizationsRoute =
@@ -295,9 +313,12 @@ export interface FileRoutesByFullPath {
   '/meetings': typeof AuthenticatedMeetingsRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/organizations': typeof AuthenticatedOrganizationsRouteWithChildren
+  '/privacy': typeof AuthenticatedPrivacyRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/legal/privacy': typeof LegalPrivacyRoute
+  '/legal/terms': typeof LegalTermsRoute
   '/onboarding/$token': typeof OnboardingTokenRoute
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/directory/$id': typeof AuthenticatedDirectoryIdRoute
@@ -335,9 +356,12 @@ export interface FileRoutesByTo {
   '/matchmaking': typeof AuthenticatedMatchmakingRoute
   '/meetings': typeof AuthenticatedMeetingsRoute
   '/messages': typeof AuthenticatedMessagesRoute
+  '/privacy': typeof AuthenticatedPrivacyRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/legal/privacy': typeof LegalPrivacyRoute
+  '/legal/terms': typeof LegalTermsRoute
   '/onboarding/$token': typeof OnboardingTokenRoute
   '/': typeof AuthenticatedIndexRoute
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
@@ -376,9 +400,12 @@ export interface FileRoutesById {
   '/_authenticated/meetings': typeof AuthenticatedMeetingsRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/organizations': typeof AuthenticatedOrganizationsRouteWithChildren
+  '/_authenticated/privacy': typeof AuthenticatedPrivacyRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/legal/privacy': typeof LegalPrivacyRoute
+  '/legal/terms': typeof LegalTermsRoute
   '/onboarding/$token': typeof OnboardingTokenRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
@@ -421,9 +448,12 @@ export interface FileRouteTypes {
     | '/meetings'
     | '/messages'
     | '/organizations'
+    | '/privacy'
     | '/settings'
     | '/auth/callback'
     | '/invite/$token'
+    | '/legal/privacy'
+    | '/legal/terms'
     | '/onboarding/$token'
     | '/admin/organizations'
     | '/directory/$id'
@@ -461,9 +491,12 @@ export interface FileRouteTypes {
     | '/matchmaking'
     | '/meetings'
     | '/messages'
+    | '/privacy'
     | '/settings'
     | '/auth/callback'
     | '/invite/$token'
+    | '/legal/privacy'
+    | '/legal/terms'
     | '/onboarding/$token'
     | '/'
     | '/admin/organizations'
@@ -501,9 +534,12 @@ export interface FileRouteTypes {
     | '/_authenticated/meetings'
     | '/_authenticated/messages'
     | '/_authenticated/organizations'
+    | '/_authenticated/privacy'
     | '/_authenticated/settings'
     | '/auth/callback'
     | '/invite/$token'
+    | '/legal/privacy'
+    | '/legal/terms'
     | '/onboarding/$token'
     | '/_authenticated/'
     | '/_authenticated/admin/organizations'
@@ -540,6 +576,8 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   InviteTokenRoute: typeof InviteTokenRoute
+  LegalPrivacyRoute: typeof LegalPrivacyRoute
+  LegalTermsRoute: typeof LegalTermsRoute
   OnboardingTokenRoute: typeof OnboardingTokenRoute
 }
 
@@ -587,6 +625,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/legal/terms': {
+      id: '/legal/terms'
+      path: '/legal/terms'
+      fullPath: '/legal/terms'
+      preLoaderRoute: typeof LegalTermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/privacy': {
+      id: '/legal/privacy'
+      path: '/legal/privacy'
+      fullPath: '/legal/privacy'
+      preLoaderRoute: typeof LegalPrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/invite/$token': {
       id: '/invite/$token'
       path: '/invite/$token'
@@ -606,6 +658,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/privacy': {
+      id: '/_authenticated/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof AuthenticatedPrivacyRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/organizations': {
@@ -961,6 +1020,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedMeetingsRoute: typeof AuthenticatedMeetingsRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedOrganizationsRoute: typeof AuthenticatedOrganizationsRouteWithChildren
+  AuthenticatedPrivacyRoute: typeof AuthenticatedPrivacyRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedAdminOrganizationsRoute: typeof AuthenticatedAdminOrganizationsRoute
@@ -974,6 +1034,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedMeetingsRoute: AuthenticatedMeetingsRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedOrganizationsRoute: AuthenticatedOrganizationsRouteWithChildren,
+  AuthenticatedPrivacyRoute: AuthenticatedPrivacyRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedAdminOrganizationsRoute: AuthenticatedAdminOrganizationsRoute,
@@ -1000,6 +1061,8 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   InviteTokenRoute: InviteTokenRoute,
+  LegalPrivacyRoute: LegalPrivacyRoute,
+  LegalTermsRoute: LegalTermsRoute,
   OnboardingTokenRoute: OnboardingTokenRoute,
 }
 export const routeTree = rootRouteImport

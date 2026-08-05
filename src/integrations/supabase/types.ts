@@ -48,6 +48,13 @@ export type Database = {
             foreignKeyName: "conversation_participants_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "org_public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_participants_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "orgs"
             referencedColumns: ["id"]
           },
@@ -74,6 +81,42 @@ export type Database = {
           id?: string
           last_message_at?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      data_requests: {
+        Row: {
+          created_at: string
+          handled_at: string | null
+          handled_by: string | null
+          id: string
+          note: string | null
+          request_type: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          note?: string | null
+          request_type: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          note?: string | null
+          request_type?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -122,7 +165,21 @@ export type Database = {
             foreignKeyName: "meeting_requests_recipient_org_id_fkey"
             columns: ["recipient_org_id"]
             isOneToOne: false
+            referencedRelation: "org_public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_requests_recipient_org_id_fkey"
+            columns: ["recipient_org_id"]
+            isOneToOne: false
             referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_requests_requester_org_id_fkey"
+            columns: ["requester_org_id"]
+            isOneToOne: false
+            referencedRelation: "org_public_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -177,6 +234,13 @@ export type Database = {
             foreignKeyName: "messages_sender_org_id_fkey"
             columns: ["sender_org_id"]
             isOneToOne: false
+            referencedRelation: "org_public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_org_id_fkey"
+            columns: ["sender_org_id"]
+            isOneToOne: false
             referencedRelation: "orgs"
             referencedColumns: ["id"]
           },
@@ -220,6 +284,13 @@ export type Database = {
           uploaded_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "org_documents_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_public_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "org_documents_org_id_fkey"
             columns: ["org_id"]
@@ -280,6 +351,13 @@ export type Database = {
             foreignKeyName: "org_invites_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "org_public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_invites_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "orgs"
             referencedColumns: ["id"]
           },
@@ -320,6 +398,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "org_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_public_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "org_members_org_id_fkey"
             columns: ["org_id"]
@@ -572,6 +657,13 @@ export type Database = {
             foreignKeyName: "platform_invites_target_org_id_fkey"
             columns: ["target_org_id"]
             isOneToOne: false
+            referencedRelation: "org_public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_invites_target_org_id_fkey"
+            columns: ["target_org_id"]
+            isOneToOne: false
             referencedRelation: "orgs"
             referencedColumns: ["id"]
           },
@@ -606,6 +698,13 @@ export type Database = {
           type?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "project_activity_actor_org_id_fkey"
+            columns: ["actor_org_id"]
+            isOneToOne: false
+            referencedRelation: "org_public_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "project_activity_actor_org_id_fkey"
             columns: ["actor_org_id"]
@@ -669,6 +768,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "project_discussions_author_org_id_fkey"
+            columns: ["author_org_id"]
+            isOneToOne: false
+            referencedRelation: "org_public_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "project_discussions_author_org_id_fkey"
             columns: ["author_org_id"]
@@ -740,6 +846,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_documents_uploaded_by_org_id_fkey"
+            columns: ["uploaded_by_org_id"]
+            isOneToOne: false
+            referencedRelation: "org_public_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -843,6 +956,13 @@ export type Database = {
             foreignKeyName: "project_partners_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "org_public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_partners_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "orgs"
             referencedColumns: ["id"]
           },
@@ -909,6 +1029,13 @@ export type Database = {
             foreignKeyName: "project_requests_assigned_org_id_fkey"
             columns: ["assigned_org_id"]
             isOneToOne: false
+            referencedRelation: "org_public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_requests_assigned_org_id_fkey"
+            columns: ["assigned_org_id"]
+            isOneToOne: false
             referencedRelation: "orgs"
             referencedColumns: ["id"]
           },
@@ -917,6 +1044,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_requests_requested_by_org_id_fkey"
+            columns: ["requested_by_org_id"]
+            isOneToOne: false
+            referencedRelation: "org_public_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -988,14 +1122,167 @@ export type Database = {
             foreignKeyName: "projects_owner_org_id_fkey"
             columns: ["owner_org_id"]
             isOneToOne: false
+            referencedRelation: "org_public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_owner_org_id_fkey"
+            columns: ["owner_org_id"]
+            isOneToOne: false
             referencedRelation: "orgs"
             referencedColumns: ["id"]
           },
         ]
       }
+      security_events: {
+        Row: {
+          action: string
+          created_at: string
+          detail: Json
+          id: string
+          org_id: string | null
+          target_id: string | null
+          target_type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          detail?: Json
+          id?: string
+          org_id?: string | null
+          target_id?: string | null
+          target_type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          detail?: Json
+          id?: string
+          org_id?: string | null
+          target_id?: string | null
+          target_type?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_events_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "security_events_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_consents: {
+        Row: {
+          accepted: boolean
+          accepted_at: string
+          created_at: string
+          id: string
+          policy_type: string
+          policy_version: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accepted?: boolean
+          accepted_at?: string
+          created_at?: string
+          id?: string
+          policy_type: string
+          policy_version: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accepted?: boolean
+          accepted_at?: string
+          created_at?: string
+          id?: string
+          policy_type?: string
+          policy_version?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      org_public_profiles: {
+        Row: {
+          capabilities: string[] | null
+          certifications: string[] | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          description: string | null
+          entity_type: string | null
+          id: string | null
+          logo_url: string | null
+          materials: string[] | null
+          name: string | null
+          product_categories: string[] | null
+          product_types: string[] | null
+          region: string | null
+          slug: string | null
+          specializations: string[] | null
+          type: string | null
+          verification_status: string | null
+          website: string | null
+        }
+        Insert: {
+          capabilities?: string[] | null
+          certifications?: string[] | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          description?: string | null
+          entity_type?: string | null
+          id?: string | null
+          logo_url?: string | null
+          materials?: string[] | null
+          name?: string | null
+          product_categories?: string[] | null
+          product_types?: string[] | null
+          region?: string | null
+          slug?: string | null
+          specializations?: string[] | null
+          type?: string | null
+          verification_status?: string | null
+          website?: string | null
+        }
+        Update: {
+          capabilities?: string[] | null
+          certifications?: string[] | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          description?: string | null
+          entity_type?: string | null
+          id?: string | null
+          logo_url?: string | null
+          materials?: string[] | null
+          name?: string | null
+          product_categories?: string[] | null
+          product_types?: string[] | null
+          region?: string | null
+          slug?: string | null
+          specializations?: string[] | null
+          type?: string | null
+          verification_status?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       accept_invite: {

@@ -3,8 +3,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Loader2, MailCheck } from "lucide-react";
+import {
+  MARKETING_CONSENT_VERSION,
+  PASSWORD_RULES,
+  PRIVACY_VERSION,
+  TERMS_VERSION,
+  passwordStrength,
+  validatePassword,
+} from "@/lib/policies";
+import { logSecurityEvent } from "@/lib/security-log";
 
 type Mode = "signin" | "signup";
 
@@ -24,18 +34,10 @@ export function EmailAuthForm({
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+  const [acceptPolicies, setAcceptPolicies] = useState(false);
+  const [marketing, setMarketing] = useState(false);
 
-  const strength = (() => {
-    if (password.length < 8) return { label: "Too short", tone: "text-destructive" };
-    const score =
-      Number(/[a-z]/.test(password)) +
-      Number(/[A-Z]/.test(password)) +
-      Number(/\d/.test(password)) +
-      Number(/[^A-Za-z0-9]/.test(password));
-    if (score <= 2) return { label: "Weak", tone: "text-amber-600" };
-    if (score === 3) return { label: "Good", tone: "text-emerald-600" };
-    return { label: "Strong", tone: "text-emerald-700" };
-  })();
+  const strength = passwordStrength(password);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,8 +50,13 @@ export function EmailAuthForm({
     setBusy(true);
     try {
       if (mode === "signup") {
-        if (password.length < 8) {
-          toast.error("Password must be at least 8 characters");
+        const weak = validatePassword(password);
+        if (weak) {
+          toast.error(weak);
+          return;
+        }
+        if (!acceptPolicies) {
+          toast.error("Please accept the Terms & Conditions and Privacy Policy to continue");
           return;
         }
         if (password !== confirm) {
@@ -65,14 +72,17 @@ export function EmailAuthForm({
           },
         });
         if (error) throw error;
+        await recordConsents(data.user?.id ?? null, marketing);
         if (!data.session) {
           setSent(true);
           return;
         }
+        void logSecurityEvent("auth.sign_up");
         onSignedIn?.();
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email: mail, password });
         if (error) throw error;
+        void logSecurityEvent("auth.sign_in");
         onSignedIn?.();
       }
     } catch (err) {
@@ -92,7 +102,10 @@ export function EmailAuthForm({
       redirectTo: window.location.origin + "/reset-password",
     });
     if (error) toast.error(error.message);
-    else toast.success("Password reset link sent — check your inbox");
+    else {
+      void logSecurityEvent("auth.password_reset_requested");
+      toast.success("Password reset link sent — check your inbox");
+    }
   };
 
   if (sent) {
@@ -149,14 +162,24 @@ export function EmailAuthForm({
           required
         />
         {mode === "signup" && (
-          password.length > 0 ? (
-            <p className={`text-xs ${strength.tone}`}>Password strength: {strength.label}</p>
-          ) : (
-            <p className="text-xs text-muted-foreground">
-              Use 8+ characters with a mix of letters, numbers and symbols. Common or breached
-              passwords are rejected.
-            </p>
-          )
+          <>
+            {password.length > 0 && (
+              <div className="space-y-1">
+                <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-current transition-all"
+                    style={{ width: `${strength.pct}%` }}
+                  />
+                </div>
+                <p className={`text-xs ${strength.tone}`}>Password strength: {strength.label}</p>
+              </div>
+            )}
+            <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">
+              {PASSWORD_RULES.map((rule) => (
+                <li key={rule}>• {rule}</li>
+              ))}
+            </ul>
+          </>
         )}
       </div>
       {mode === "signup" && (
@@ -173,7 +196,37 @@ export function EmailAuthForm({
           />
         </div>
       )}
-      <Button type="submit" className="w-full" disabled={busy}>
+      {mode === "signup" && (
+        <div className="space-y-2.5 rounded-md border bg-muted/30 p-3">
+          <label className="flex items-start gap-2.5 text-xs leading-relaxed">
+            <Checkbox
+              checked={acceptPolicies}
+              onCheckedChange={(v) => setAcceptPolicies(v === true)}
+              className="mt-0.5"
+            />
+            <span>
+              I accept the{" "}
+              <a href="/legal/terms" target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                Terms &amp; Conditions
+              </a>{" "}
+              and the{" "}
+              <a href="/legal/privacy" target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                Privacy Policy
+              </a>
+              .
+            </span>
+          </label>
+          <label className="flex items-start gap-2.5 text-xs leading-relaxed text-muted-foreground">
+            <Checkbox
+              checked={marketing}
+              onCheckedChange={(v) => setMarketing(v === true)}
+              className="mt-0.5"
+            />
+            <span>Optional: send me product news and network updates. You can opt out anytime.</span>
+          </label>
+        </div>
+      )}
+      <Button type="submit" className="w-full" disabled={busy || (mode === "signup" && !acceptPolicies)}>
         {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         {mode === "signup" ? "Create account" : "Sign in"}
       </Button>
@@ -193,4 +246,32 @@ export function EmailAuthForm({
       </div>
     </form>
   );
+}
+
+/**
+ * Records the policy versions the user accepted at signup. Best-effort: an
+ * email-confirmation signup has no session yet, in which case the consent is
+ * re-recorded on first sign-in from the privacy centre.
+ */
+async function recordConsents(userId: string | null, marketing: boolean) {
+  if (!userId) return;
+  try {
+    const now = new Date().toISOString();
+    await supabase.from("user_consents").upsert(
+      [
+        { user_id: userId, policy_type: "terms", policy_version: TERMS_VERSION, accepted: true, accepted_at: now },
+        { user_id: userId, policy_type: "privacy", policy_version: PRIVACY_VERSION, accepted: true, accepted_at: now },
+        {
+          user_id: userId,
+          policy_type: "marketing",
+          policy_version: MARKETING_CONSENT_VERSION,
+          accepted: marketing,
+          accepted_at: now,
+        },
+      ],
+      { onConflict: "user_id,policy_type,policy_version" },
+    );
+  } catch {
+    /* consent capture must not block account creation */
+  }
 }
