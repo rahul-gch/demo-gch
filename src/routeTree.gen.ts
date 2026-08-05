@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated.index'
 import { Route as OnboardingTokenRouteImport } from './routes/onboarding.$token'
+import { Route as LegalTermsRouteImport } from './routes/legal.terms'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated.settings'
@@ -78,6 +79,11 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
 const OnboardingTokenRoute = OnboardingTokenRouteImport.update({
   id: '/onboarding/$token',
   path: '/onboarding/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalTermsRoute = LegalTermsRouteImport.update({
+  id: '/legal/terms',
+  path: '/legal/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InviteTokenRoute = InviteTokenRouteImport.update({
@@ -298,6 +304,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/legal/terms': typeof LegalTermsRoute
   '/onboarding/$token': typeof OnboardingTokenRoute
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/directory/$id': typeof AuthenticatedDirectoryIdRoute
@@ -338,6 +345,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/legal/terms': typeof LegalTermsRoute
   '/onboarding/$token': typeof OnboardingTokenRoute
   '/': typeof AuthenticatedIndexRoute
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
@@ -379,6 +387,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/legal/terms': typeof LegalTermsRoute
   '/onboarding/$token': typeof OnboardingTokenRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
@@ -424,6 +433,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/auth/callback'
     | '/invite/$token'
+    | '/legal/terms'
     | '/onboarding/$token'
     | '/admin/organizations'
     | '/directory/$id'
@@ -464,6 +474,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/auth/callback'
     | '/invite/$token'
+    | '/legal/terms'
     | '/onboarding/$token'
     | '/'
     | '/admin/organizations'
@@ -504,6 +515,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/auth/callback'
     | '/invite/$token'
+    | '/legal/terms'
     | '/onboarding/$token'
     | '/_authenticated/'
     | '/_authenticated/admin/organizations'
@@ -540,6 +552,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   InviteTokenRoute: typeof InviteTokenRoute
+  LegalTermsRoute: typeof LegalTermsRoute
   OnboardingTokenRoute: typeof OnboardingTokenRoute
 }
 
@@ -585,6 +598,13 @@ declare module '@tanstack/react-router' {
       path: '/onboarding/$token'
       fullPath: '/onboarding/$token'
       preLoaderRoute: typeof OnboardingTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/terms': {
+      id: '/legal/terms'
+      path: '/legal/terms'
+      fullPath: '/legal/terms'
+      preLoaderRoute: typeof LegalTermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/invite/$token': {
@@ -1000,18 +1020,9 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   InviteTokenRoute: InviteTokenRoute,
+  LegalTermsRoute: LegalTermsRoute,
   OnboardingTokenRoute: OnboardingTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
