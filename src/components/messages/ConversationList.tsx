@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Search } from "lucide-react";
 import type { Entity } from "@/seed/types";
 import type { ConversationView } from "@/lib/use-comms";
-import { OrgAvatar, isOnline } from "./shared";
+import { OrgAvatar } from "./shared";
 import { cn } from "@/lib/utils";
 
 function relTime(iso?: string): string {
