@@ -8,7 +8,7 @@ import {
 import { MoreHorizontal, CalendarPlus, FileText, User, PanelRightClose, PanelRightOpen } from "lucide-react";
 import type { Entity } from "@/seed/types";
 import { Link } from "@tanstack/react-router";
-import { OrgAvatar, StatusText } from "./shared";
+import { OrgAvatar } from "./shared";
 import { VerificationBadge } from "@/components/StatusBadge";
 
 export function ChatHeader({
