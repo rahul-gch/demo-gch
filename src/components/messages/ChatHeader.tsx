@@ -76,13 +76,13 @@ export function ChatHeader({
                 <CalendarPlus className="mr-2 h-3.5 w-3.5" /> Schedule meeting
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <FileText className="mr-2 h-3.5 w-3.5" /> Shared documents
+            <DropdownMenuItem asChild>
+              <Link to="/organizations/$id/projects" params={{ id: entity.id }}>
+                <FolderPlus className="mr-2 h-3.5 w-3.5" /> Shared projects
+              </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem>Mute conversation</DropdownMenuItem>
-            <DropdownMenuItem>Mark as unread</DropdownMenuItem>
-            <DropdownMenuItem>Archive</DropdownMenuItem>
           </DropdownMenuContent>
+
         </DropdownMenu>
       </div>
     </div>
