@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { OrgSidebar } from "./OrgSidebar";
 import { UserMenu } from "./UserMenu";
+import { NotificationBell } from "./NotificationBell";
 import { NavHistoryButtons } from "./NavHistoryButtons";
 import type { Entity } from "@/seed/types";
 
@@ -26,6 +27,7 @@ export function OrgShell({
                 · {entity.gchNumber}
               </span>
             </div>
+            <NotificationBell />
             <UserMenu />
           </header>
           <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 sm:py-8">{children}</main>

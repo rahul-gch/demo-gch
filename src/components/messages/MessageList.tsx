@@ -3,7 +3,7 @@ import type { Entity } from "@/seed/types";
 import type { ThreadMessage } from "@/lib/comms-types";
 import { OrgAvatar, formatDayLabel } from "./shared";
 import { cn } from "@/lib/utils";
-import { Reply, Copy, Smile, MoreHorizontal } from "lucide-react";
+import { Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 function DateSeparator({ label }: { label: string }) {
@@ -82,16 +82,8 @@ function MessageRow({
           >
             <Copy className="h-3 w-3" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="Reply">
-            <Reply className="h-3 w-3" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="React">
-            <Smile className="h-3 w-3" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="More">
-            <MoreHorizontal className="h-3 w-3" />
-          </Button>
         </div>
+
       </div>
     </div>
   );

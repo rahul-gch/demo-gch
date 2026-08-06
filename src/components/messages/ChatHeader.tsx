@@ -5,10 +5,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, CalendarPlus, FileText, User, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { MoreHorizontal, CalendarPlus, FolderPlus, User, PanelRightClose, PanelRightOpen } from "lucide-react";
 import type { Entity } from "@/seed/types";
 import { Link } from "@tanstack/react-router";
-import { OrgAvatar, StatusText } from "./shared";
+import { OrgAvatar } from "./shared";
 import { VerificationBadge } from "@/components/StatusBadge";
 
 export function ChatHeader({
@@ -31,13 +31,12 @@ export function ChatHeader({
               <VerificationBadge status={entity.verificationStatus} />
             </span>
           </div>
-          <div className="mt-0.5 grid min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-2 text-xs text-muted-foreground sm:inline-flex sm:max-w-full">
-            <span className="min-w-0 truncate">
+          <div className="mt-0.5 min-w-0 text-xs text-muted-foreground">
+            <span className="block truncate">
               {entity.entityType} · {entity.country}
             </span>
-            <span className="shrink-0 text-muted-foreground/40">•</span>
-            <StatusText id={entity.id} />
           </div>
+
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-1">
@@ -77,13 +76,13 @@ export function ChatHeader({
                 <CalendarPlus className="mr-2 h-3.5 w-3.5" /> Schedule meeting
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <FileText className="mr-2 h-3.5 w-3.5" /> Shared documents
+            <DropdownMenuItem asChild>
+              <Link to="/organizations/$id/projects" params={{ id: entity.id }}>
+                <FolderPlus className="mr-2 h-3.5 w-3.5" /> Shared projects
+              </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem>Mute conversation</DropdownMenuItem>
-            <DropdownMenuItem>Mark as unread</DropdownMenuItem>
-            <DropdownMenuItem>Archive</DropdownMenuItem>
           </DropdownMenuContent>
+
         </DropdownMenu>
       </div>
     </div>
