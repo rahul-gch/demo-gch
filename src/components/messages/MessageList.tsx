@@ -82,16 +82,8 @@ function MessageRow({
           >
             <Copy className="h-3 w-3" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="Reply">
-            <Reply className="h-3 w-3" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="React">
-            <Smile className="h-3 w-3" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="More">
-            <MoreHorizontal className="h-3 w-3" />
-          </Button>
         </div>
+
       </div>
     </div>
   );
