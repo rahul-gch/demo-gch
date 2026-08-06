@@ -3,7 +3,7 @@ import type { Entity } from "@/seed/types";
 import type { ThreadMessage } from "@/lib/comms-types";
 import { OrgAvatar, formatDayLabel } from "./shared";
 import { cn } from "@/lib/utils";
-import { Reply, Copy, Smile, MoreHorizontal } from "lucide-react";
+import { Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 function DateSeparator({ label }: { label: string }) {
