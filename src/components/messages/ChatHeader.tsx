@@ -5,7 +5,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, CalendarPlus, FileText, User, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { MoreHorizontal, CalendarPlus, FolderPlus, User, PanelRightClose, PanelRightOpen } from "lucide-react";
 import type { Entity } from "@/seed/types";
 import { Link } from "@tanstack/react-router";
 import { OrgAvatar } from "./shared";
