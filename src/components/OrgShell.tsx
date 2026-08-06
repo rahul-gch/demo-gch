@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { OrgSidebar } from "./OrgSidebar";
 import { UserMenu } from "./UserMenu";
+import { NotificationBell } from "./NotificationBell";
 import { NavHistoryButtons } from "./NavHistoryButtons";
 import type { Entity } from "@/seed/types";
 
