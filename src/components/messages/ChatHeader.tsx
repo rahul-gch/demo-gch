@@ -31,13 +31,12 @@ export function ChatHeader({
               <VerificationBadge status={entity.verificationStatus} />
             </span>
           </div>
-          <div className="mt-0.5 grid min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-2 text-xs text-muted-foreground sm:inline-flex sm:max-w-full">
-            <span className="min-w-0 truncate">
+          <div className="mt-0.5 min-w-0 text-xs text-muted-foreground">
+            <span className="block truncate">
               {entity.entityType} · {entity.country}
             </span>
-            <span className="shrink-0 text-muted-foreground/40">•</span>
-            <StatusText id={entity.id} />
           </div>
+
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-1">
