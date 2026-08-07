@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -54,6 +55,11 @@ import { Route as AuthenticatedOrganizationsIdProjectsProjectIdDocumentsRouteImp
 import { Route as AuthenticatedOrganizationsIdProjectsProjectIdDiscussionsRouteImport } from './routes/_authenticated.organizations.$id.projects.$projectId.discussions'
 import { Route as AuthenticatedOrganizationsIdProjectsProjectIdActivityRouteImport } from './routes/_authenticated.organizations.$id.projects.$projectId.activity'
 
+const WelcomeRoute = WelcomeRouteImport.update({
+  id: '/welcome',
+  path: '/welcome',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -307,6 +313,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/welcome': typeof WelcomeRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/map': typeof AuthenticatedMapRoute
   '/matchmaking': typeof AuthenticatedMatchmakingRoute
@@ -351,6 +358,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/welcome': typeof WelcomeRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/map': typeof AuthenticatedMapRoute
   '/matchmaking': typeof AuthenticatedMatchmakingRoute
@@ -394,6 +402,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/welcome': typeof WelcomeRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
   '/_authenticated/map': typeof AuthenticatedMapRoute
   '/_authenticated/matchmaking': typeof AuthenticatedMatchmakingRoute
@@ -442,6 +451,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/signup'
+    | '/welcome'
     | '/feed'
     | '/map'
     | '/matchmaking'
@@ -486,6 +496,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/signup'
+    | '/welcome'
     | '/feed'
     | '/map'
     | '/matchmaking'
@@ -528,6 +539,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/signup'
+    | '/welcome'
     | '/_authenticated/feed'
     | '/_authenticated/map'
     | '/_authenticated/matchmaking'
@@ -575,6 +587,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  WelcomeRoute: typeof WelcomeRoute
   InviteTokenRoute: typeof InviteTokenRoute
   LegalPrivacyRoute: typeof LegalPrivacyRoute
   LegalTermsRoute: typeof LegalTermsRoute
@@ -583,6 +596,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/welcome': {
+      id: '/welcome'
+      path: '/welcome'
+      fullPath: '/welcome'
+      preLoaderRoute: typeof WelcomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signup': {
       id: '/signup'
       path: '/signup'
@@ -1060,6 +1080,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  WelcomeRoute: WelcomeRoute,
   InviteTokenRoute: InviteTokenRoute,
   LegalPrivacyRoute: LegalPrivacyRoute,
   LegalTermsRoute: LegalTermsRoute,
@@ -1068,13 +1089,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

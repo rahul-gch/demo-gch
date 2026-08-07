@@ -58,7 +58,7 @@ export const Route = createFileRoute("/_authenticated/")({
         replace: true,
       });
     }
-    throw redirect({ to: "/signup", search: { tab: "create" as const }, replace: true });
+    throw redirect({ to: "/welcome", replace: true });
   },
 
   head: () => ({

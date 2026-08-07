@@ -57,7 +57,7 @@ function OnboardingPage() {
         nav({ to: "/organizations/$id", params: { id: res.orgId }, replace: true });
       } else {
         toast.success("Invitation accepted — create your organization");
-        nav({ to: "/signup", search: { tab: "create" as const }, replace: true });
+        nav({ to: "/welcome", replace: true });
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message.replace(/^.*: /, "") : "Could not accept invite");
