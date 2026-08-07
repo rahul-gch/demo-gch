@@ -1,6 +1,8 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureRegistry } from "@/lib/registry";
+import { myOrgMemberships } from "@/lib/orgs.functions";
+import { amIPlatformAdmin } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -12,9 +14,28 @@ export const Route = createFileRoute("/_authenticated")({
         search: { next: location.href },
       });
     }
+
+    // Users without any organization must first create or join one.
+    const [memberships, admin] = await Promise.all([
+      context.queryClient.ensureQueryData({
+        queryKey: ["my-org-memberships-gate", data.user.id],
+        queryFn: () => myOrgMemberships().catch(() => [] as { org_id: string }[]),
+        staleTime: 30_000,
+      }),
+      context.queryClient.ensureQueryData({
+        queryKey: ["am-i-platform-admin", data.user.id],
+        queryFn: () => amIPlatformAdmin().catch(() => ({ isAdmin: false })),
+        staleTime: 60_000,
+      }),
+    ]);
+    if (!admin?.isAdmin && (memberships?.length ?? 0) === 0) {
+      throw redirect({ to: "/welcome", replace: true });
+    }
+
     // Organization registry must be loaded before child loaders resolve entities.
     await ensureRegistry(context.queryClient);
     return { user: data.user };
   },
   component: () => <Outlet />,
 });
+
