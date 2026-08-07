@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Entity } from "@/seed/types";
 
 const ORG_COLUMNS = `
@@ -88,22 +87,40 @@ export function rowToEntity(row: OrgRow): Entity {
  * only available to authenticated members — the orgs SELECT policy is scoped to
  * the authenticated role and the `contacts` field must never be exposed to anon.
  */
-export const listEntities = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<Entity[]> => {
-    const supabase = context.supabase;
-    const all: Entity[] = [];
-    const pageSize = 1000;
-    for (let page = 0; page < 10; page++) {
-      const { data, error } = await supabase
-        .from("orgs")
-        .select(ORG_COLUMNS)
-        .order("name", { ascending: true })
-        .range(page * pageSize, page * pageSize + pageSize - 1);
-      if (error) throw new Error(error.message);
-      const rows = (data ?? []) as OrgRow[];
-      all.push(...rows.map(rowToEntity));
-      if (rows.length < pageSize) break;
-    }
-    return all;
-  });
+export const listEntities = createServerFn({ method: "GET" }).handler(async (): Promise<Entity[]> => {
+  const { getRequest } = await import("@tanstack/react-start/server");
+  const authHeader = getRequest()?.headers?.get("authorization") ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  // Signed-out / SSR requests (auth page, public routes) get an empty registry
+  // instead of a thrown 401 that would blank the app.
+  if (!token) return [];
+
+  const { createClient } = await import("@supabase/supabase-js");
+  const supabase = createClient(
+    process.env["SUPABASE_URL"]!,
+    process.env["SUPABASE_PUBLISHABLE_KEY"]!,
+    {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+      auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+    },
+  );
+
+  const { data: claims } = await supabase.auth.getClaims(token);
+  if (!claims?.claims?.sub) return [];
+
+  const all: Entity[] = [];
+  const pageSize = 1000;
+  for (let page = 0; page < 10; page++) {
+    const { data, error } = await supabase
+      .from("orgs")
+      .select(ORG_COLUMNS)
+      .order("name", { ascending: true })
+      .range(page * pageSize, page * pageSize + pageSize - 1);
+    if (error) throw new Error(error.message);
+    const rows = (data ?? []) as OrgRow[];
+    all.push(...rows.map(rowToEntity));
+    if (rows.length < pageSize) break;
+  }
+  return all;
+});
+
