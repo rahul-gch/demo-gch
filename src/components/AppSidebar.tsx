@@ -117,7 +117,7 @@ export function AppSidebar() {
               {(admin || myOrgs.length === 0) && (
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="New organization">
-                    <Link to="/signup" className="flex items-center gap-2">
+                    <Link to="/welcome" className="flex items-center gap-2">
                       <Plus className="h-4 w-4" />
                       <span className="flex-1">New organization</span>
                     </Link>

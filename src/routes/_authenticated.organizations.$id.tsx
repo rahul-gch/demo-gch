@@ -75,7 +75,7 @@ function Shell({ title, body }: { title: string; body: string }) {
             <Link to="/organizations">All organizations</Link>
           </Button>
           <Button asChild variant="outline">
-            <Link to="/signup">Create an organization</Link>
+            <Link to="/welcome">Create an organization</Link>
           </Button>
         </div>
       </div>

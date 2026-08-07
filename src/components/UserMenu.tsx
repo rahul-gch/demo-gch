@@ -60,7 +60,7 @@ export function UserMenu() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild className="cursor-pointer">
-          <Link to="/signup">
+          <Link to="/welcome">
             <Plus className="mr-2 h-4 w-4" />
             Create new organization
           </Link>
