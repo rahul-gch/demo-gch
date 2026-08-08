@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { refreshRegistry } from "@/lib/registry";
-import { supabase } from "@/integrations/supabase/client";
+
 import { useServerFn } from "@tanstack/react-start";
 import { createOrg } from "@/lib/orgs.functions";
 import { Button } from "@/components/ui/button";
