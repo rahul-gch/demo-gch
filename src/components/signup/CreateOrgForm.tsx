@@ -33,16 +33,10 @@ function slugify(s: string): string {
  * collected here; every entity-specific business question is asked afterwards
  * in the profile wizard at /organizations/:id/profile-setup.
  */
-export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
+export function CreateOrgForm(_props: { signedIn?: boolean } = {}) {
   const nav = useNavigate();
   const createOrgFn = useServerFn(createOrg);
   const queryClient = useQueryClient();
-
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
 
   const [name, setName] = useState("");
   const [type, setType] = useState("");
