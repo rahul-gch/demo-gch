@@ -46,22 +46,13 @@ export function CreateOrgForm(_props: { signedIn?: boolean } = {}) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const accountReady = signedIn
-    ? true
-    : firstName.trim().length >= 2 &&
-      lastName.trim().length >= 1 &&
-      /\S+@\S+\.\S+/.test(email.trim()) &&
-      password.length >= 8 &&
-      password === confirm;
-
   const canSubmit = useMemo(
     () =>
-      accountReady &&
       name.trim().length >= 2 &&
       type.length >= 2 &&
       country.trim().length >= 2 &&
       !submitting,
-    [accountReady, name, type, country, submitting],
+    [name, type, country, submitting],
   );
 
   const submit = async (e: React.FormEvent) => {
