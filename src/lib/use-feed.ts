@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Entity } from "@/seed/types";
-import { seedFeedForOrg, type FeedPost, type FeedComment } from "@/seed/feed";
+import type { FeedPost, FeedComment } from "@/lib/feed-types";
 
 const KEY = "gch.feed.v1";
 
