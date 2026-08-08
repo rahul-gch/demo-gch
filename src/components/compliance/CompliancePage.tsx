@@ -406,6 +406,12 @@ export function CompliancePage({ entity }: { entity: Entity }) {
           </Button>
         </CardHeader>
         <CardContent className="p-0">
+          {tcs.length === 0 ? (
+            <div className="px-5 py-6 text-sm text-muted-foreground">
+              No transaction certificates recorded yet. Upload a TC to link shipments to certified
+              inputs.
+            </div>
+          ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-xs uppercase text-slate-500">
