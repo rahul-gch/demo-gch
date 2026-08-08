@@ -45,8 +45,7 @@ function notify() {
 function ensureLoaded(entity: Entity): FeedPost[] {
   const store = getStore();
   if (!store[entity.id]) {
-    store[entity.id] = seedFeedForOrg(entity);
-    persist();
+    store[entity.id] = [];
   }
   return store[entity.id];
 }
