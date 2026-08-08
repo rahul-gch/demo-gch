@@ -21,7 +21,7 @@ import {
   Play,
 } from "lucide-react";
 import type { Entity } from "@/seed/types";
-import type { FeedKind, FeedMedia, FeedPost } from "@/seed/feed";
+import type { FeedKind, FeedMedia, FeedPost } from "@/lib/feed-types";
 import { useFeed, addPost, toggleLike, toggleRsvp, addComment } from "@/lib/use-feed";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

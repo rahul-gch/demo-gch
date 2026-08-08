@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Entity } from "@/seed/types";
-import { seedFeedForOrg, type FeedPost, type FeedComment } from "@/seed/feed";
+import type { FeedPost, FeedComment } from "@/lib/feed-types";
 
 const KEY = "gch.feed.v1";
 
@@ -45,8 +45,7 @@ function notify() {
 function ensureLoaded(entity: Entity): FeedPost[] {
   const store = getStore();
   if (!store[entity.id]) {
-    store[entity.id] = seedFeedForOrg(entity);
-    persist();
+    store[entity.id] = [];
   }
   return store[entity.id];
 }

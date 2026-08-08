@@ -878,9 +878,7 @@ function ResultsSection({
                           </Link>
                         </Button>
                       ) : (
-                        <Button size="sm" variant="outline" onClick={() => toast.info(`Invite "${r.name}" — coming soon`)}>
-                          Invite
-                        </Button>
+                        <span className="text-xs text-muted-foreground">Not on the platform</span>
                       )}
                     </TableCell>
                   </TableRow>

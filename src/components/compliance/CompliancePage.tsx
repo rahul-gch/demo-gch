@@ -7,6 +7,7 @@ import {
   Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle,
 } from "@/components/ui/sheet";
 import { ReportUploader } from "@/components/ReportUploader";
+import { isSeededOrg } from "@/seed/showcase";
 import {
   getMockSocialAudits,
   getMockTransactionCerts,
@@ -237,8 +238,9 @@ export function CompliancePage({ entity }: { entity: Entity }) {
   const uploaderRef = useRef<HTMLDivElement | null>(null);
   const scrollToUpload = () => uploaderRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
-  const audits = getMockSocialAudits(entity);
-  const tcs = getMockTransactionCerts(entity);
+  const seeded = isSeededOrg(entity);
+  const audits = seeded ? getMockSocialAudits(entity) : [];
+  const tcs = seeded ? getMockTransactionCerts(entity) : [];
   const certs = entity.certificationDetails ?? [];
 
   const [activeAudit, setActiveAudit] = useState<SocialAudit | null>(null);
@@ -281,6 +283,11 @@ export function CompliancePage({ entity }: { entity: Entity }) {
           </Button>
         </CardHeader>
         <CardContent className="p-0">
+          {audits.length === 0 ? (
+            <div className="px-5 py-6 text-sm text-muted-foreground">
+              No social audits recorded yet. Upload an audit report to get started.
+            </div>
+          ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-xs uppercase text-slate-500">
@@ -318,6 +325,7 @@ export function CompliancePage({ entity }: { entity: Entity }) {
               </tbody>
             </table>
           </div>
+          )}
         </CardContent>
       </Card>
 
@@ -398,6 +406,12 @@ export function CompliancePage({ entity }: { entity: Entity }) {
           </Button>
         </CardHeader>
         <CardContent className="p-0">
+          {tcs.length === 0 ? (
+            <div className="px-5 py-6 text-sm text-muted-foreground">
+              No transaction certificates recorded yet. Upload a TC to link shipments to certified
+              inputs.
+            </div>
+          ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-xs uppercase text-slate-500">
@@ -432,6 +446,7 @@ export function CompliancePage({ entity }: { entity: Entity }) {
               </tbody>
             </table>
           </div>
+          )}
         </CardContent>
       </Card>
 

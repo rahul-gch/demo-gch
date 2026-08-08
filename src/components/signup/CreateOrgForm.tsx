@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { refreshRegistry } from "@/lib/registry";
-import { supabase } from "@/integrations/supabase/client";
+
 import { useServerFn } from "@tanstack/react-start";
 import { createOrg } from "@/lib/orgs.functions";
 import { Button } from "@/components/ui/button";
@@ -33,16 +33,10 @@ function slugify(s: string): string {
  * collected here; every entity-specific business question is asked afterwards
  * in the profile wizard at /organizations/:id/profile-setup.
  */
-export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
+export function CreateOrgForm(_props: { signedIn?: boolean } = {}) {
   const nav = useNavigate();
   const createOrgFn = useServerFn(createOrg);
   const queryClient = useQueryClient();
-
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
 
   const [name, setName] = useState("");
   const [type, setType] = useState("");
@@ -52,22 +46,13 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const accountReady = signedIn
-    ? true
-    : firstName.trim().length >= 2 &&
-      lastName.trim().length >= 1 &&
-      /\S+@\S+\.\S+/.test(email.trim()) &&
-      password.length >= 8 &&
-      password === confirm;
-
   const canSubmit = useMemo(
     () =>
-      accountReady &&
       name.trim().length >= 2 &&
       type.length >= 2 &&
       country.trim().length >= 2 &&
       !submitting,
-    [accountReady, name, type, country, submitting],
+    [name, type, country, submitting],
   );
 
   const submit = async (e: React.FormEvent) => {
@@ -76,45 +61,7 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
     setSubmitting(true);
     setError(null);
     try {
-      if (!signedIn) {
-        const mail = email.trim().toLowerCase();
-        const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
-        const { data, error: signUpErr } = await supabase.auth.signUp({
-          email: mail,
-          password,
-          options: {
-            emailRedirectTo: window.location.origin + "/auth/callback",
-            data: {
-              full_name: fullName,
-              first_name: firstName.trim(),
-              last_name: lastName.trim(),
-            },
-          },
-        });
 
-        if (signUpErr) {
-          const msg = signUpErr.message.toLowerCase();
-          const alreadyRegistered =
-            msg.includes("already registered") ||
-            msg.includes("already been registered") ||
-            msg.includes("user already exists");
-          if (!alreadyRegistered) throw signUpErr;
-          const { error: siErr } = await supabase.auth.signInWithPassword({
-            email: mail,
-            password,
-          });
-          if (siErr)
-            throw new Error(
-              "An account already exists for this email. Sign in with your existing password instead.",
-            );
-        } else if (!data.session) {
-          const { error: signInErr } = await supabase.auth.signInWithPassword({
-            email: mail,
-            password,
-          });
-          if (signInErr) throw signInErr;
-        }
-      }
 
       const site = website.trim();
       const res = await createOrgFn({
@@ -129,7 +76,7 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
       });
 
       await refreshRegistry(queryClient);
-      toast.success("Account created — let's complete your profile");
+      toast.success("Organization created — let's complete your profile");
       nav({ to: "/organizations/$id/profile-setup", params: { id: res.id }, replace: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to create organization";
@@ -142,71 +89,7 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
 
   return (
     <form onSubmit={submit} className="space-y-5">
-      {!signedIn && (
-        <div className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="ob-first">First name *</Label>
-              <Input
-                id="ob-first"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                placeholder="Jane"
-                autoComplete="given-name"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="ob-last">Last name *</Label>
-              <Input
-                id="ob-last"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                placeholder="Doe"
-                autoComplete="family-name"
-              />
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="ob-email">Work email *</Label>
-            <Input
-              id="ob-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@company.com"
-              autoComplete="email"
-            />
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="ob-password">Password *</Label>
-              <Input
-                id="ob-password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                autoComplete="new-password"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="ob-confirm">Confirm password *</Label>
-              <Input
-                id="ob-confirm"
-                type="password"
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                placeholder="••••••••"
-                autoComplete="new-password"
-              />
-            </div>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Use 8+ characters with a mix of letters, numbers and symbols. Common or breached
-            passwords are rejected.
-          </p>
-        </div>
-      )}
+
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5 sm:col-span-2">
@@ -279,11 +162,7 @@ export function CreateOrgForm({ signedIn }: { signedIn: boolean }) {
 
       <Button type="submit" disabled={!canSubmit} className="w-full" size="lg">
         {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        {submitting
-          ? "Setting up your workspace…"
-          : signedIn
-            ? "Create organization"
-            : "Create account & continue"}
+        {submitting ? "Setting up your workspace…" : "Create organization"}
       </Button>
     </form>
   );

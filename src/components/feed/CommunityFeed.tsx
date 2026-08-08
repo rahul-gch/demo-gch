@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ALL_ENTITIES } from "@/seed/all-entities";
-import type { FeedKind, FeedMedia, FeedPost } from "@/seed/feed";
+import type { FeedKind, FeedMedia, FeedPost } from "@/lib/feed-types";
 import { getFeed, toggleLike } from "@/lib/use-feed";
 import { formatRelative } from "@/lib/admin-feed";
 
