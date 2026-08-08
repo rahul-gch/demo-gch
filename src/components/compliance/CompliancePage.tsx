@@ -446,6 +446,7 @@ export function CompliancePage({ entity }: { entity: Entity }) {
               </tbody>
             </table>
           </div>
+          )}
         </CardContent>
       </Card>
 
