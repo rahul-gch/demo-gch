@@ -283,6 +283,11 @@ export function CompliancePage({ entity }: { entity: Entity }) {
           </Button>
         </CardHeader>
         <CardContent className="p-0">
+          {audits.length === 0 ? (
+            <div className="px-5 py-6 text-sm text-muted-foreground">
+              No social audits recorded yet. Upload an audit report to get started.
+            </div>
+          ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-xs uppercase text-slate-500">
