@@ -127,71 +127,7 @@ export function CreateOrgForm(_props: { signedIn?: boolean } = {}) {
 
   return (
     <form onSubmit={submit} className="space-y-5">
-      {!signedIn && (
-        <div className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="ob-first">First name *</Label>
-              <Input
-                id="ob-first"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                placeholder="Jane"
-                autoComplete="given-name"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="ob-last">Last name *</Label>
-              <Input
-                id="ob-last"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                placeholder="Doe"
-                autoComplete="family-name"
-              />
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="ob-email">Work email *</Label>
-            <Input
-              id="ob-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@company.com"
-              autoComplete="email"
-            />
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="ob-password">Password *</Label>
-              <Input
-                id="ob-password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                autoComplete="new-password"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="ob-confirm">Confirm password *</Label>
-              <Input
-                id="ob-confirm"
-                type="password"
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                placeholder="••••••••"
-                autoComplete="new-password"
-              />
-            </div>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Use 8+ characters with a mix of letters, numbers and symbols. Common or breached
-            passwords are rejected.
-          </p>
-        </div>
-      )}
+
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5 sm:col-span-2">
