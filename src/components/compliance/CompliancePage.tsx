@@ -237,8 +237,9 @@ export function CompliancePage({ entity }: { entity: Entity }) {
   const uploaderRef = useRef<HTMLDivElement | null>(null);
   const scrollToUpload = () => uploaderRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
-  const audits = getMockSocialAudits(entity);
-  const tcs = getMockTransactionCerts(entity);
+  const seeded = isSeededOrg(entity);
+  const audits = seeded ? getMockSocialAudits(entity) : [];
+  const tcs = seeded ? getMockTransactionCerts(entity) : [];
   const certs = entity.certificationDetails ?? [];
 
   const [activeAudit, setActiveAudit] = useState<SocialAudit | null>(null);
