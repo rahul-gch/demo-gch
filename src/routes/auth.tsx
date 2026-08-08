@@ -63,7 +63,9 @@ function AuthPage() {
           />
           <p className="text-center text-xs text-muted-foreground">
             Setting up a new organization?{" "}
-            <a href="/signup" className="text-primary hover:underline">Create an organization</a>
+            <Link to="/signup" className="text-primary hover:underline">
+              Create an account
+            </Link>
           </p>
         </CardContent>
       </Card>
