@@ -76,7 +76,7 @@ export function CreateOrgForm(_props: { signedIn?: boolean } = {}) {
       });
 
       await refreshRegistry(queryClient);
-      toast.success("Account created — let's complete your profile");
+      toast.success("Organization created — let's complete your profile");
       nav({ to: "/organizations/$id/profile-setup", params: { id: res.id }, replace: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to create organization";
