@@ -7,6 +7,7 @@ import {
   Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle,
 } from "@/components/ui/sheet";
 import { ReportUploader } from "@/components/ReportUploader";
+import { isSeededOrg } from "@/seed/showcase";
 import {
   getMockSocialAudits,
   getMockTransactionCerts,
