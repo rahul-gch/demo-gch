@@ -61,45 +61,7 @@ export function CreateOrgForm(_props: { signedIn?: boolean } = {}) {
     setSubmitting(true);
     setError(null);
     try {
-      if (!signedIn) {
-        const mail = email.trim().toLowerCase();
-        const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
-        const { data, error: signUpErr } = await supabase.auth.signUp({
-          email: mail,
-          password,
-          options: {
-            emailRedirectTo: window.location.origin + "/auth/callback",
-            data: {
-              full_name: fullName,
-              first_name: firstName.trim(),
-              last_name: lastName.trim(),
-            },
-          },
-        });
 
-        if (signUpErr) {
-          const msg = signUpErr.message.toLowerCase();
-          const alreadyRegistered =
-            msg.includes("already registered") ||
-            msg.includes("already been registered") ||
-            msg.includes("user already exists");
-          if (!alreadyRegistered) throw signUpErr;
-          const { error: siErr } = await supabase.auth.signInWithPassword({
-            email: mail,
-            password,
-          });
-          if (siErr)
-            throw new Error(
-              "An account already exists for this email. Sign in with your existing password instead.",
-            );
-        } else if (!data.session) {
-          const { error: signInErr } = await supabase.auth.signInWithPassword({
-            email: mail,
-            password,
-          });
-          if (signInErr) throw signInErr;
-        }
-      }
 
       const site = website.trim();
       const res = await createOrgFn({
