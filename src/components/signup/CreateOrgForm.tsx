@@ -162,11 +162,7 @@ export function CreateOrgForm(_props: { signedIn?: boolean } = {}) {
 
       <Button type="submit" disabled={!canSubmit} className="w-full" size="lg">
         {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        {submitting
-          ? "Setting up your workspace…"
-          : signedIn
-            ? "Create organization"
-            : "Create account & continue"}
+        {submitting ? "Setting up your workspace…" : "Create organization"}
       </Button>
     </form>
   );
