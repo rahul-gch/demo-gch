@@ -1,9 +1,8 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getEntity } from "@/seed/all-entities";
-import { useActingOrgId, useMeetings, useSetMeetingStatus } from "@/lib/use-comms";
-import { MeetingCard, bucketMeetings } from "@/components/meetings/MeetingCard";
+import { useActingOrgId, useMeetings } from "@/lib/use-comms";
+import { MeetingsWorkspace } from "@/components/meetings/MeetingsWorkspace";
+
 
 export const Route = createFileRoute("/_authenticated/organizations/$id/meetings")({
   loader: ({ params }) => {
