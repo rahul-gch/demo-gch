@@ -2,10 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { ActingOrgSwitcher } from "@/components/messages/ActingOrgSwitcher";
 import { AppShell } from "@/components/AppShell";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { useActingOrgId, useMeetings, useSetMeetingStatus } from "@/lib/use-comms";
-import { MeetingCard, bucketMeetings } from "@/components/meetings/MeetingCard";
+import { useActingOrgId, useMeetings } from "@/lib/use-comms";
+import { MeetingsWorkspace } from "@/components/meetings/MeetingsWorkspace";
+
 
 export const Route = createFileRoute("/_authenticated/meetings")({
   head: () => ({
