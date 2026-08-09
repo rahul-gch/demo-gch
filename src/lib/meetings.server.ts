@@ -11,30 +11,42 @@ type Row = {
   agenda: string;
   status: string;
   created_at: string;
-  requester?: { name: string } | null;
-  recipient?: { name: string } | null;
+  requester?: { name: string } | { name: string }[] | null;
+  recipient?: { name: string } | { name: string }[] | null;
 };
 
 function label(status: string, proposedFor: string): MeetingStatus {
   const past = new Date(proposedFor).getTime() < Date.now();
-  if (status === "declined" || status === "cancelled") return "Declined";
+  if (status === "cancelled") return "Withdrawn";
+  if (status === "declined") return "Declined";
   if (status === "confirmed") return past ? "Past" : "Confirmed";
   return past ? "Past" : "Pending";
 }
 
+function name(v: Row["requester"]): string {
+  const o = Array.isArray(v) ? v[0] : v;
+  return o?.name ?? "Organization";
+}
+
 export function toMeetingRequest(row: Row, viewerOrgId: string): MeetingRequest {
   const iAmRequester = row.requester_org_id === viewerOrgId;
-  const counterId = iAmRequester ? row.recipient_org_id : row.requester_org_id;
-  const counterName = (iAmRequester ? row.recipient?.name : row.requester?.name) ?? "Organization";
+  const requesterName = name(row.requester);
+  const recipientName = name(row.recipient);
   return {
     id: row.id,
-    orgId: counterId,
-    orgName: counterName,
+    orgId: iAmRequester ? row.recipient_org_id : row.requester_org_id,
+    orgName: iAmRequester ? recipientName : requesterName,
     proposedFor: row.proposed_for,
     durationMin: row.duration_min,
     agenda: row.agenda,
     status: label(row.status, row.proposed_for),
     createdAt: row.created_at,
     viewerOrgId: row.requester_org_id,
+    requesterOrgId: row.requester_org_id,
+    recipientOrgId: row.recipient_org_id,
+    requesterName,
+    recipientName,
+    direction: iAmRequester ? "Sent" : "Received",
+    rawStatus: row.status,
   };
 }
