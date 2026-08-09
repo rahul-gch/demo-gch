@@ -23,16 +23,22 @@ export function useNotifications(orgId: string | null) {
 
   useEffect(() => {
     if (!orgId) return;
+    const invalidate = () =>
+      queryClient.invalidateQueries({ queryKey: ["notifications", orgId] });
     const channel = supabase
       .channel(`notifications-${orgId}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => {
-        queryClient.invalidateQueries({ queryKey: ["notifications", orgId] });
-      })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, invalidate)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "meeting_requests" },
+        invalidate,
+      )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
   }, [orgId, queryClient]);
+
 
   return { items: query.data ?? [], isLoading: query.isLoading };
 }

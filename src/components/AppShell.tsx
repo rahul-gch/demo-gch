@@ -4,12 +4,15 @@ import { AppSidebar } from "./AppSidebar";
 import { UserMenu } from "./UserMenu";
 import { NotificationBell } from "./NotificationBell";
 import { NavHistoryButtons } from "./NavHistoryButtons";
+import { useActingOrgId, useRealtimeComms } from "@/lib/use-comms";
 
 export function AppShell({ children }: { children: ReactNode }) {
+  useRealtimeComms(useActingOrgId());
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar />
+
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur">
             <SidebarTrigger />
