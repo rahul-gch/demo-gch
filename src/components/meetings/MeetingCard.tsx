@@ -2,11 +2,11 @@ import { Link } from "@tanstack/react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, CheckCircle2, X, Users } from "lucide-react";
+import { Calendar, Clock, CheckCircle2, X, Users, Undo2, Info } from "lucide-react";
 import { OrgAvatar } from "@/components/messages/shared";
 import { cn } from "@/lib/utils";
 import { getEntity } from "@/seed/all-entities";
-import type { MeetingRequest } from "@/lib/comms-types";
+import type { MeetingDirection, MeetingRequest } from "@/lib/comms-types";
 
 export function statusTone(s: MeetingRequest["status"]) {
   switch (s) {
@@ -14,6 +14,8 @@ export function statusTone(s: MeetingRequest["status"]) {
       return "border-emerald-200 bg-emerald-50 text-emerald-700";
     case "Declined":
       return "border-red-200 bg-red-50 text-red-700";
+    case "Withdrawn":
+      return "border-slate-200 bg-slate-50 text-slate-600";
     case "Past":
       return "border-muted bg-muted text-muted-foreground";
     default:
@@ -23,19 +25,21 @@ export function statusTone(s: MeetingRequest["status"]) {
 
 export function MeetingCard({
   m,
-  viewerOrgId,
   onRespond,
+  onWithdraw,
+  onOpenDetails,
   busy,
 }: {
   m: MeetingRequest;
-  viewerOrgId: string | null;
   onRespond: (id: string, status: "confirmed" | "declined") => void;
+  onWithdraw: (id: string) => void;
+  onOpenDetails: (m: MeetingRequest) => void;
   busy?: boolean;
 }) {
   const dt = new Date(m.proposedFor);
   const entity = getEntity(m.orgId);
-  const direction = m.viewerOrgId === viewerOrgId ? "Sent" : "Received";
-  const canRespond = m.status === "Pending" && direction === "Received";
+  const canRespond = m.status === "Pending" && m.direction === "Received";
+  const canWithdraw = m.status === "Pending" && m.direction === "Sent";
 
   return (
     <Card className="rounded-2xl shadow-sm transition-shadow hover:shadow-md">
@@ -61,7 +65,7 @@ export function MeetingCard({
                 {m.status}
               </Badge>
               <Badge variant="outline" className="shrink-0 text-[10px]">
-                {direction}
+                {m.direction === "Sent" ? "Outbound" : "Inbound"}
               </Badge>
             </div>
             {entity && (
@@ -79,34 +83,51 @@ export function MeetingCard({
                 {m.durationMin}m
               </span>
             </div>
-            <p className="mt-3 text-sm text-foreground/80">{m.agenda}</p>
+            <p className="mt-3 line-clamp-2 text-sm text-foreground/80">{m.agenda}</p>
           </div>
         </div>
 
-        {canRespond && (
-          <div className="flex shrink-0 gap-2 sm:flex-col">
-            <Button size="sm" disabled={busy} onClick={() => onRespond(m.id, "confirmed")}>
-              <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Confirm
+        <div className="flex shrink-0 flex-wrap gap-2 sm:flex-col">
+          <Button size="sm" variant="ghost" onClick={() => onOpenDetails(m)}>
+            <Info className="mr-1 h-3.5 w-3.5" /> Details
+          </Button>
+          {canRespond && (
+            <>
+              <Button size="sm" disabled={busy} onClick={() => onRespond(m.id, "confirmed")}>
+                <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Confirm
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={busy}
+                onClick={() => onRespond(m.id, "declined")}
+              >
+                <X className="mr-1 h-3.5 w-3.5" /> Decline
+              </Button>
+            </>
+          )}
+          {canWithdraw && (
+            <Button size="sm" variant="outline" disabled={busy} onClick={() => onWithdraw(m.id)}>
+              <Undo2 className="mr-1 h-3.5 w-3.5" /> Withdraw
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={busy}
-              onClick={() => onRespond(m.id, "declined")}
-            >
-              <X className="mr-1 h-3.5 w-3.5" /> Decline
-            </Button>
-          </div>
-        )}
+          )}
+        </div>
       </CardContent>
     </Card>
   );
 }
 
-export function bucketMeetings(all: MeetingRequest[]) {
+export const MEETING_BUCKETS = ["Pending", "Confirmed", "Closed"] as const;
+export type MeetingBucket = (typeof MEETING_BUCKETS)[number];
+
+/** Group by direction (Inbound / Outbound) and status bucket. */
+export function groupMeetings(all: MeetingRequest[], direction: MeetingDirection) {
+  const mine = all.filter((m) => m.direction === direction);
   return {
-    Pending: all.filter((m) => m.status === "Pending"),
-    Confirmed: all.filter((m) => m.status === "Confirmed"),
-    Past: all.filter((m) => m.status === "Past" || m.status === "Declined"),
-  };
+    Pending: mine.filter((m) => m.status === "Pending"),
+    Confirmed: mine.filter((m) => m.status === "Confirmed"),
+    Closed: mine.filter(
+      (m) => m.status === "Past" || m.status === "Declined" || m.status === "Withdrawn",
+    ),
+  } satisfies Record<MeetingBucket, MeetingRequest[]>;
 }

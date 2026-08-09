@@ -1,7 +1,9 @@
 import { useEffect, useId, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { myOrgMemberships } from "@/lib/orgs.functions";
+
 import {
   listConversations,
   listMessages,
@@ -134,6 +136,7 @@ export function useSendMessage(orgId: string | null) {
     onSuccess: (row) => {
       queryClient.invalidateQueries({ queryKey: ["conversations", orgId] });
       queryClient.invalidateQueries({ queryKey: ["thread", row.conversation_id] });
+      queryClient.invalidateQueries({ queryKey: ["notifications", orgId] });
     },
   });
 }
@@ -141,11 +144,29 @@ export function useSendMessage(orgId: string | null) {
 // ---------------- meetings ----------------
 
 export function useMeetings(orgId: string | null) {
+  const queryClient = useQueryClient();
+  const instanceId = useId();
+
   const query = useQuery({
     queryKey: ["meetings", orgId],
     enabled: !!orgId,
     queryFn: () => listMeetings({ data: { orgId: orgId! } }),
   });
+
+  useEffect(() => {
+    if (!orgId) return;
+    const channel = supabase
+      .channel(`meetings-${orgId}-${instanceId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "meeting_requests" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["meetings"] });
+        queryClient.invalidateQueries({ queryKey: ["notifications", orgId] });
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [orgId, queryClient, instanceId]);
+
   return { meetings: (query.data ?? []) as MeetingRequest[], isLoading: query.isLoading };
 }
 
@@ -162,12 +183,15 @@ export function useCreateMeeting(orgId: string | null) {
   });
 }
 
-export function useSetMeetingStatus() {
+export function useSetMeetingStatus(actingOrgId?: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (vars: { id: string; status: "confirmed" | "declined" | "cancelled" }) =>
-      setMeetingStatus({ data: vars }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["meetings"] }),
+      setMeetingStatus({ data: { ...vars, actingOrgId: actingOrgId ?? undefined } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["meetings"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications", actingOrgId] });
+    },
   });
 }
 
@@ -180,3 +204,56 @@ export function usePendingMeetingCount(orgId: string | null) {
   const { meetings } = useMeetings(orgId);
   return meetings.filter((m) => m.status === "Pending").length;
 }
+
+/**
+ * Mounted once per shell: keeps message + meeting caches fresh app-wide and
+ * surfaces a toast for incoming activity while the user is on another page.
+ */
+export function useRealtimeComms(orgId: string | null) {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!orgId) return;
+    const channel = supabase
+      .channel(`comms-shell-${orgId}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages" },
+        (payload) => {
+          const row = payload.new as { conversation_id?: string; sender_org_id?: string; author_name?: string; body?: string };
+          queryClient.invalidateQueries({ queryKey: ["conversations", orgId] });
+          queryClient.invalidateQueries({ queryKey: ["notifications", orgId] });
+          if (row.conversation_id)
+            queryClient.invalidateQueries({ queryKey: ["thread", row.conversation_id] });
+          if (row.sender_org_id && row.sender_org_id !== orgId) {
+            toast.message(`New message from ${row.author_name ?? "a partner"}`, {
+              description: row.body?.slice(0, 100),
+            });
+          }
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "meeting_requests" },
+        (payload) => {
+          const row = payload.new as { recipient_org_id?: string };
+          queryClient.invalidateQueries({ queryKey: ["meetings"] });
+          queryClient.invalidateQueries({ queryKey: ["notifications", orgId] });
+          if (row.recipient_org_id === orgId) toast.message("New meeting request received");
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "meeting_requests" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["meetings"] });
+          queryClient.invalidateQueries({ queryKey: ["notifications", orgId] });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [orgId, queryClient]);
+}
+

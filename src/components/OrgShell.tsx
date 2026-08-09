@@ -5,6 +5,7 @@ import { UserMenu } from "./UserMenu";
 import { NotificationBell } from "./NotificationBell";
 import { NavHistoryButtons } from "./NavHistoryButtons";
 import type { Entity } from "@/seed/types";
+import { useActingOrgId, useRealtimeComms } from "@/lib/use-comms";
 
 export function OrgShell({
   entity,
@@ -13,8 +14,10 @@ export function OrgShell({
   entity: Entity;
   children: ReactNode;
 }) {
+  useRealtimeComms(useActingOrgId(entity.orgUuid ?? null));
   return (
     <SidebarProvider>
+
       <div className="flex min-h-screen w-full bg-background">
         <OrgSidebar entity={entity} />
         <div className="flex min-w-0 flex-1 flex-col">

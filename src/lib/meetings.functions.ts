@@ -52,10 +52,29 @@ export const setMeetingStatus = createServerFn({ method: "POST" })
       .object({
         id: z.string().uuid(),
         status: z.enum(DB_STATUSES),
+        /** Org the caller is acting as; required for withdraw. */
+        actingOrgId: z.string().uuid().optional(),
       })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
+    const { data: row, error: readErr } = await context.supabase
+      .from("meeting_requests")
+      .select("id, status, requester_org_id, recipient_org_id")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (readErr) throw new Error(readErr.message);
+    if (!row) throw new Error("Meeting request not found");
+    if (row.status !== "pending") throw new Error("This request has already been answered");
+
+    if (data.status === "cancelled") {
+      if (!data.actingOrgId || data.actingOrgId !== row.requester_org_id) {
+        throw new Error("Only the organization that sent the request can withdraw it");
+      }
+    } else if (data.actingOrgId && data.actingOrgId !== row.recipient_org_id) {
+      throw new Error("Only the invited organization can answer this request");
+    }
+
     const { error } = await context.supabase
       .from("meeting_requests")
       .update({ status: data.status })
@@ -63,3 +82,4 @@ export const setMeetingStatus = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true } as { ok: true; status?: MeetingStatus };
   });
+

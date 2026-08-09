@@ -10,7 +10,9 @@ export interface ThreadMessage {
   read?: boolean;
 }
 
-export type MeetingStatus = "Pending" | "Confirmed" | "Declined" | "Past";
+export type MeetingStatus = "Pending" | "Confirmed" | "Declined" | "Withdrawn" | "Past";
+
+export type MeetingDirection = "Sent" | "Received";
 
 export interface MeetingRequest {
   id: string;
@@ -24,7 +26,15 @@ export interface MeetingRequest {
   createdAt: string;
   /** UUID of the org that initiated the request. */
   viewerOrgId?: string;
+  requesterOrgId: string;
+  recipientOrgId: string;
+  requesterName: string;
+  recipientName: string;
+  direction: MeetingDirection;
+  /** Raw database status, before past-date labelling. */
+  rawStatus: string;
 }
+
 
 export interface ConversationCounterpart {
   id: string;
