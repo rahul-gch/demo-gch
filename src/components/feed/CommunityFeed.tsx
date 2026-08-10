@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
 import {
@@ -24,7 +24,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ALL_ENTITIES } from "@/seed/all-entities";
 import type { FeedKind, FeedMedia, FeedPost } from "@/lib/feed-types";
-import { getFeed, toggleLike } from "@/lib/use-feed";
+import { useCommunityFeed, useFeedActions } from "@/lib/use-feed";
 import { formatRelative } from "@/lib/admin-feed";
 
 const KIND_META: Record<FeedKind, { label: string; icon: typeof Rss; className: string }> = {
@@ -41,17 +41,6 @@ const KIND_META: Record<FeedKind, { label: string; icon: typeof Rss; className: 
 
 type Row = FeedPost & { orgCountry: string; orgType: string };
 
-function aggregate(): Row[] {
-  const rows: Row[] = [];
-  for (const e of ALL_ENTITIES) {
-    for (const p of getFeed(e)) {
-      rows.push({ ...p, orgCountry: e.country, orgType: e.entityType });
-    }
-  }
-  rows.sort((a, b) => (a.at < b.at ? 1 : -1));
-  return rows;
-}
-
 const KIND_FILTERS: { value: "all" | FeedKind; label: string }[] = [
   { value: "all", label: "All" },
   { value: "update", label: "Updates" },
@@ -66,19 +55,19 @@ const KIND_FILTERS: { value: "all" | FeedKind; label: string }[] = [
 ];
 
 export function CommunityFeed() {
-  // Trigger re-render on like/rsvp changes via a version counter.
-  const [, setVersion] = useState(0);
-  useEffect(() => {
-    const handler = () => setVersion((v) => v + 1);
-    window.addEventListener("storage", handler);
-    return () => window.removeEventListener("storage", handler);
-  }, []);
-
+  const { posts, isLoading } = useCommunityFeed();
   const [kind, setKind] = useState<"all" | FeedKind>("all");
   const [org, setOrg] = useState<string>("all");
   const [limit, setLimit] = useState(30);
 
-  const rows = useMemo(() => aggregate(), []);
+  const rows = useMemo<Row[]>(
+    () =>
+      posts.map((p) => {
+        const e = ALL_ENTITIES.find((x) => x.id === p.orgId || x.orgUuid === p.orgUuid);
+        return { ...p, orgCountry: e?.country ?? "—", orgType: e?.entityType ?? "Organization" };
+      }),
+    [posts],
+  );
   const filtered = useMemo(
     () =>
       rows.filter(
@@ -129,11 +118,11 @@ export function CommunityFeed() {
       {visible.length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center text-sm text-muted-foreground">
-            No posts match the current filters.
+            {isLoading ? "Loading community feed…" : "No posts yet."}
           </CardContent>
         </Card>
       ) : (
-        visible.map((p) => <PostRow key={p.id} post={p} onChange={() => setVersion((v) => v + 1)} />)
+        visible.map((p) => <PostRow key={p.id} post={p} />)
       )}
 
       {limit < filtered.length && (
@@ -147,7 +136,8 @@ export function CommunityFeed() {
   );
 }
 
-function PostRow({ post, onChange }: { post: Row; onChange: () => void }) {
+function PostRow({ post }: { post: Row }) {
+  const { toggleLike } = useFeedActions(post.orgUuid);
   const meta = KIND_META[post.kind];
   const Icon = meta.icon;
   const initials = post.authorOrg
@@ -157,12 +147,7 @@ function PostRow({ post, onChange }: { post: Row; onChange: () => void }) {
     .slice(0, 2)
     .toUpperCase();
 
-  const like = () => {
-    const entity = ALL_ENTITIES.find((e) => e.id === post.orgId);
-    if (!entity) return;
-    toggleLike(entity, post.id);
-    onChange();
-  };
+  const like = () => toggleLike(post.id);
 
   const share = () => {
     try {
@@ -222,7 +207,6 @@ function PostRow({ post, onChange }: { post: Row; onChange: () => void }) {
               <Calendar className="h-3.5 w-3.5" />
               {post.eventAt ? new Date(post.eventAt).toLocaleString() : "Date TBA"}
             </span>
-            <span>{post.rsvpCount ?? 0} attending</span>
           </div>
         )}
 

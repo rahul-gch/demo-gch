@@ -1,137 +1,119 @@
-import { useEffect, useState } from "react";
+import { useCallback } from "react";
+import { useEffect } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import type { Entity } from "@/seed/types";
-import type { FeedPost, FeedComment } from "@/lib/feed-types";
+import type { FeedKind, FeedMedia, FeedPost } from "@/lib/feed-types";
+import {
+  addFeedComment,
+  createFeedPost,
+  deleteFeedPost,
+  listFeedPosts,
+  toggleFeedLike,
+} from "@/lib/feed.functions";
 
-const KEY = "gch.feed.v1";
+const EMPTY: FeedPost[] = [];
 
-type Store = Record<string, FeedPost[]>;
-
-const isBrowser = () => typeof window !== "undefined";
-
-// Module-level cache: stable references per orgId so React can bail out of
-// rerenders. This is the source of truth in memory; localStorage is a mirror.
-let cache: Store | null = null;
-
-function loadFromStorage(): Store {
-  if (!isBrowser()) return {};
-  try {
-    const raw = window.localStorage.getItem(KEY);
-    return raw ? (JSON.parse(raw) as Store) : {};
-  } catch {
-    return {};
-  }
+function key(orgUuid: string | null) {
+  return ["feed", orgUuid ?? "all"] as const;
 }
 
-function getStore(): Store {
-  if (cache) return cache;
-  cache = loadFromStorage();
-  return cache;
-}
-
-function persist() {
-  if (!isBrowser() || !cache) return;
-  try {
-    window.localStorage.setItem(KEY, JSON.stringify(cache));
-  } catch {
-    /* ignore quota */
-  }
-}
-
-const listeners = new Set<() => void>();
-function notify() {
-  listeners.forEach((l) => l());
-}
-
-function ensureLoaded(entity: Entity): FeedPost[] {
-  const store = getStore();
-  if (!store[entity.id]) {
-    store[entity.id] = [];
-  }
-  return store[entity.id];
-}
-
-export function getFeed(entity: Entity): FeedPost[] {
-  return ensureLoaded(entity);
-}
-
-function replace(entity: Entity, next: FeedPost[]) {
-  const store = getStore();
-  store[entity.id] = next;
-  persist();
-  notify();
-}
-
-export function addPost(
-  entity: Entity,
-  post: Pick<FeedPost, "kind" | "title" | "body" | "media" | "eventAt"> &
-    Partial<Pick<FeedPost, "authorName" | "authorRole" | "authorOrg">>,
-) {
-  const list = ensureLoaded(entity);
-  const next: FeedPost = {
-    id: `${entity.id}-user-${Date.now()}`,
-    orgId: entity.id,
-    authorName: post.authorName ?? "You",
-    authorRole: post.authorRole ?? `${entity.actorType} · Owner`,
-    authorOrg: post.authorOrg ?? entity.name,
-    kind: post.kind,
-    title: post.title,
-    body: post.body,
-    at: new Date().toISOString(),
-    media: post.media,
-    likes: 0,
-    likedByMe: false,
-    comments: [],
-    rsvpCount: post.kind === "event" ? 1 : undefined,
-    rsvpByMe: post.kind === "event" ? true : undefined,
-    eventAt: post.eventAt,
-  };
-  replace(entity, [next, ...list]);
-  return next;
-}
-
-function updatePost(entity: Entity, id: string, updater: (p: FeedPost) => FeedPost) {
-  const list = ensureLoaded(entity);
-  replace(entity, list.map((p) => (p.id === id ? updater(p) : p)));
-}
-
-export function toggleLike(entity: Entity, id: string) {
-  updatePost(entity, id, (p) => ({
-    ...p,
-    likedByMe: !p.likedByMe,
-    likes: p.likedByMe ? Math.max(0, p.likes - 1) : p.likes + 1,
-  }));
-}
-
-export function toggleRsvp(entity: Entity, id: string) {
-  updatePost(entity, id, (p) => ({
-    ...p,
-    rsvpByMe: !p.rsvpByMe,
-    rsvpCount: (p.rsvpCount ?? 0) + (p.rsvpByMe ? -1 : 1),
-  }));
-}
-
-export function addComment(entity: Entity, id: string, body: string) {
-  const c: FeedComment = {
-    id: `c-${Date.now()}`,
-    author: "You",
-    role: `${entity.actorType} · Owner`,
-    body,
-    at: new Date().toISOString(),
-  };
-  updatePost(entity, id, (p) => ({ ...p, comments: [...p.comments, c] }));
-}
-
-export function useFeed(entity: Entity): FeedPost[] {
-  const [posts, setPosts] = useState<FeedPost[]>(() => ensureLoaded(entity));
-
+/** Live subscription so posts, likes and comments appear without a refresh. */
+function useFeedRealtime(orgUuid: string | null) {
+  const queryClient = useQueryClient();
   useEffect(() => {
-    setPosts(ensureLoaded(entity));
-    const fn = () => setPosts(ensureLoaded(entity));
-    listeners.add(fn);
+    const channel = supabase
+      .channel(`feed-${orgUuid ?? "all"}-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "feed_posts" }, () => {
+        void queryClient.invalidateQueries({ queryKey: ["feed"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "feed_likes" }, () => {
+        void queryClient.invalidateQueries({ queryKey: ["feed"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "feed_comments" }, () => {
+        void queryClient.invalidateQueries({ queryKey: ["feed"] });
+      })
+      .subscribe();
     return () => {
-      listeners.delete(fn);
+      void supabase.removeChannel(channel);
     };
-  }, [entity]);
+  }, [orgUuid, queryClient]);
+}
 
-  return posts;
+/** Posts for one organization. */
+export function useFeed(entity: Entity): { posts: FeedPost[]; isLoading: boolean } {
+  const orgUuid = entity.orgUuid ?? null;
+  useFeedRealtime(orgUuid);
+  const { data, isLoading } = useQuery({
+    queryKey: key(orgUuid),
+    queryFn: () => listFeedPosts({ data: { orgId: orgUuid } }),
+    enabled: !!orgUuid,
+    staleTime: 15_000,
+  });
+  return { posts: data ?? EMPTY, isLoading: orgUuid ? isLoading : false };
+}
+
+/** Platform-wide community feed. */
+export function useCommunityFeed(): { posts: FeedPost[]; isLoading: boolean } {
+  useFeedRealtime(null);
+  const { data, isLoading } = useQuery({
+    queryKey: key(null),
+    queryFn: () => listFeedPosts({ data: { orgId: null, limit: 200 } }),
+    staleTime: 15_000,
+  });
+  return { posts: data ?? EMPTY, isLoading };
+}
+
+export interface NewPost {
+  kind: FeedKind;
+  title?: string;
+  body: string;
+  media?: FeedMedia[];
+  eventAt?: string;
+}
+
+export function useFeedActions(orgUuid?: string | null) {
+  const queryClient = useQueryClient();
+  const refresh = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: ["feed"] });
+  }, [queryClient]);
+
+  const post = useMutation({
+    mutationFn: (input: NewPost) => {
+      if (!orgUuid) throw new Error("No organization selected");
+      return createFeedPost({ data: { orgId: orgUuid, ...input } });
+    },
+    onSuccess: refresh,
+    onError: (e: Error) => toast.error(e.message || "Could not publish the post"),
+  });
+
+  const like = useMutation({
+    mutationFn: (postId: string) => toggleFeedLike({ data: { postId } }),
+    onSuccess: refresh,
+    onError: (e: Error) => toast.error(e.message || "Could not update the like"),
+  });
+
+  const comment = useMutation({
+    mutationFn: (v: { postId: string; body: string }) => addFeedComment({ data: v }),
+    onSuccess: refresh,
+    onError: (e: Error) => toast.error(e.message || "Could not add the comment"),
+  });
+
+  const remove = useMutation({
+    mutationFn: (postId: string) => deleteFeedPost({ data: { postId } }),
+    onSuccess: () => {
+      refresh();
+      toast.success("Post deleted");
+    },
+    onError: (e: Error) => toast.error(e.message || "Could not delete the post"),
+  });
+
+  return {
+    addPost: post.mutateAsync,
+    posting: post.isPending,
+    toggleLike: like.mutate,
+    addComment: comment.mutateAsync,
+    deletePost: remove.mutate,
+  };
 }

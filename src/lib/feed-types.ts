@@ -1,5 +1,5 @@
-// Types for the community feed. Posts are created by users only — no seeded
-// or generated content.
+// Types for the community feed. Posts are stored in the database and created
+// by real users only — no seeded or generated content.
 export type FeedKind =
   | "update"
   | "regulation"
@@ -29,7 +29,10 @@ export interface FeedComment {
 
 export interface FeedPost {
   id: string;
+  /** Route id of the authoring organization (legacy id when present). */
   orgId: string;
+  /** Database uuid of the authoring organization. */
+  orgUuid: string;
   authorName: string;
   authorRole: string;
   authorOrg: string;
@@ -41,7 +44,5 @@ export interface FeedPost {
   likes: number;
   likedByMe?: boolean;
   comments: FeedComment[];
-  rsvpCount?: number;
-  rsvpByMe?: boolean;
   eventAt?: string; // ISO for event kind
 }
