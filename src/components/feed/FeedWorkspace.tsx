@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import type { Entity } from "@/seed/types";
 import type { FeedKind, FeedMedia, FeedPost } from "@/lib/feed-types";
-import { useFeed, addPost, toggleLike, toggleRsvp, addComment } from "@/lib/use-feed";
+import { useFeed, useFeedActions } from "@/lib/use-feed";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -61,7 +61,7 @@ const FILTERS: { value: "all" | FeedKind; label: string }[] = [
 type ComposerMode = "post" | "project" | "event";
 
 export function FeedWorkspace({ entity }: { entity: Entity }) {
-  const posts = useFeed(entity);
+  const { posts, isLoading } = useFeed(entity);
   const [filter, setFilter] = useState<"all" | FeedKind>("all");
 
   const filtered = useMemo(
@@ -92,7 +92,7 @@ export function FeedWorkspace({ entity }: { entity: Entity }) {
           {filtered.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center text-sm text-muted-foreground">
-                No posts in this filter yet.
+                {isLoading ? "Loading feed…" : "No posts yet. Share the first update."}
               </CardContent>
             </Card>
           ) : (
@@ -106,7 +106,7 @@ export function FeedWorkspace({ entity }: { entity: Entity }) {
   );
 }
 
-const MAX_UPLOAD_BYTES = 3_500_000; // ~3.5MB — safe for localStorage
+const MAX_UPLOAD_BYTES = 1_500_000; // ~1.5MB — inlined into the post record
 
 function readAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -118,6 +118,7 @@ function readAsDataUrl(file: File): Promise<string> {
 }
 
 function Composer({ entity }: { entity: Entity }) {
+  const { addPost, posting } = useFeedActions(entity.orgUuid ?? null);
   const [mode, setMode] = useState<ComposerMode>("post");
   const [body, setBody] = useState("");
   const [title, setTitle] = useState("");
@@ -128,7 +129,7 @@ function Composer({ entity }: { entity: Entity }) {
   const videoInput = useRef<HTMLInputElement | null>(null);
   const docInput = useRef<HTMLInputElement | null>(null);
 
-  const submit = () => {
+  const submit = async () => {
     const trimmed = body.trim();
     if (!trimmed && !title.trim() && media.length === 0) {
       toast.error("Write something or attach a file.");
@@ -139,7 +140,11 @@ function Composer({ entity }: { entity: Entity }) {
     if (mode === "event") kind = "event";
     if (mode === "post" && media[0]) kind = media[0].type;
 
-    addPost(entity, {
+    if (!entity.orgUuid) {
+      toast.error("This organization is not available for posting.");
+      return;
+    }
+    await addPost({
       kind,
       title: title.trim() || undefined,
       body: trimmed || title.trim(),
@@ -285,7 +290,7 @@ function Composer({ entity }: { entity: Entity }) {
               <FileText className="h-4 w-4" /> Document
             </Button>
           </div>
-          <Button onClick={submit}>
+          <Button onClick={() => void submit()} disabled={posting}>
             <Send className="h-4 w-4" />
             {mode === "event" ? "Publish event" : mode === "project" ? "Post project" : "Post"}
           </Button>
@@ -365,6 +370,7 @@ function MediaFallback({
 
 
 function PostCard({ entity, post }: { entity: Entity; post: FeedPost }) {
+  const { toggleLike, addComment } = useFeedActions(entity.orgUuid ?? null);
   const meta = KIND_META[post.kind];
   const Icon = meta.icon;
   const [showComments, setShowComments] = useState(false);
@@ -431,21 +437,11 @@ function PostCard({ entity, post }: { entity: Entity; post: FeedPost }) {
               <Calendar className="h-3.5 w-3.5" />
               {post.eventAt ? new Date(post.eventAt).toLocaleString() : "Date TBA"}
             </span>
-            <div className="flex items-center gap-2">
-              <span>{post.rsvpCount ?? 0} attending</span>
-              <Button
-                size="sm"
-                variant={post.rsvpByMe ? "default" : "outline"}
-                onClick={() => toggleRsvp(entity, post.id)}
-              >
-                {post.rsvpByMe ? "Going" : "RSVP"}
-              </Button>
-            </div>
           </div>
         )}
 
         <div className="flex items-center gap-1 border-t pt-2 text-sm">
-          <Button variant="ghost" size="sm" onClick={() => toggleLike(entity, post.id)}>
+          <Button variant="ghost" size="sm" onClick={() => toggleLike(post.id)}>
             <Heart className={`h-4 w-4 ${post.likedByMe ? "fill-rose-500 text-rose-500" : ""}`} />
             {post.likes}
           </Button>
@@ -483,7 +479,7 @@ function PostCard({ entity, post }: { entity: Entity; post: FeedPost }) {
                 placeholder="Write a comment…"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && draft.trim()) {
-                    addComment(entity, post.id, draft.trim());
+                    void addComment({ postId: post.id, body: draft.trim() });
                     setDraft("");
                   }
                 }}
@@ -492,7 +488,7 @@ function PostCard({ entity, post }: { entity: Entity; post: FeedPost }) {
                 size="sm"
                 onClick={() => {
                   if (!draft.trim()) return;
-                  addComment(entity, post.id, draft.trim());
+                  void addComment({ postId: post.id, body: draft.trim() });
                   setDraft("");
                 }}
               >
