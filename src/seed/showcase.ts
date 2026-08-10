@@ -142,20 +142,8 @@ export interface MockActivity {
   at: string;
 }
 
-export function getMockActivity(e: Entity): MockActivity[] {
-  if (!isSeededOrg(e)) return [];
-  return [
-    { id: "a1", kind: "score", text: `Confidence score updated to ${e.confidenceScore}%`, at: "2 days ago" },
-    {
-      id: "a2",
-      kind: "upload",
-      text: `${e.certifications[0] || "Certificate"} document uploaded`,
-      at: "4 days ago",
-    },
-    { id: "a3", kind: "review", text: "Profile reviewed by GCH admin", at: "1 week ago" },
-    { id: "a4", kind: "edit", text: "Contact details updated", at: "2 weeks ago" },
-    { id: "a5", kind: "message", text: "New message thread opened", at: "3 weeks ago" },
-  ];
+export function getMockActivity(_e: Entity): MockActivity[] {
+  return [];
 }
 
 export interface MockDocument {

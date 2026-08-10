@@ -21,7 +21,6 @@ import {
   Rss,
 } from "lucide-react";
 import {
-  getAdminFeedEvents,
   formatRelative,
   KIND_META,
   type FeedEventKind,
@@ -29,6 +28,8 @@ import {
   type AdminFeedEvent,
 } from "@/lib/admin-feed";
 import { CommunityFeed } from "@/components/feed/CommunityFeed";
+import { useQuery } from "@tanstack/react-query";
+import { listPlatformActivity } from "@/lib/activity.functions";
 
 export const Route = createFileRoute("/_authenticated/feed")({
   head: () => ({
@@ -142,7 +143,12 @@ function FeedPage() {
 }
 
 function ActivityStream() {
-  const all = useMemo(() => getAdminFeedEvents(), []);
+  const { data: allData } = useQuery({
+    queryKey: ["platform-activity"],
+    queryFn: () => listPlatformActivity(),
+    staleTime: 30_000,
+  });
+  const all = useMemo(() => allData ?? [], [allData]);
   const [kinds, setKinds] = useState<Set<FeedEventKind>>(new Set());
   const [severities, setSeverities] = useState<Set<FeedSeverity>>(new Set());
   const [range, setRange] = useState<Range>("7d");
