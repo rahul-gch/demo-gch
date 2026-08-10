@@ -120,6 +120,133 @@ export type Database = {
         }
         Relationships: []
       }
+      feed_comments: {
+        Row: {
+          author_name: string
+          author_role: string | null
+          author_user_id: string | null
+          body: string
+          created_at: string
+          id: string
+          post_id: string
+        }
+        Insert: {
+          author_name?: string
+          author_role?: string | null
+          author_user_id?: string | null
+          body: string
+          created_at?: string
+          id?: string
+          post_id: string
+        }
+        Update: {
+          author_name?: string
+          author_role?: string | null
+          author_user_id?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feed_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "feed_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feed_likes: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feed_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "feed_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feed_posts: {
+        Row: {
+          author_name: string
+          author_role: string | null
+          author_user_id: string | null
+          body: string
+          created_at: string
+          event_at: string | null
+          id: string
+          kind: string
+          media: Json
+          org_id: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          author_name?: string
+          author_role?: string | null
+          author_user_id?: string | null
+          body?: string
+          created_at?: string
+          event_at?: string | null
+          id?: string
+          kind?: string
+          media?: Json
+          org_id: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          author_name?: string
+          author_role?: string | null
+          author_user_id?: string | null
+          body?: string
+          created_at?: string
+          event_at?: string | null
+          id?: string
+          kind?: string
+          media?: Json
+          org_id?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feed_posts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feed_posts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meeting_requests: {
         Row: {
           agenda: string
