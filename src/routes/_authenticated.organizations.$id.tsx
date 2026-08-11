@@ -18,28 +18,46 @@ export const Route = createFileRoute("/_authenticated/organizations/$id")({
 
     // Only members of this organization (and platform admins) get the internal
     // workspace. Everyone else sees the read-only public network profile.
+    // Caches are scoped to the signed-in user (same keys as the auth gate) so a
+    // pre-session empty result can never decide this check.
+    const userId = (context as { user?: { id?: string } }).user?.id ?? "anon";
     const [memberships, admin] = await Promise.all([
       context.queryClient
         .ensureQueryData({
-          queryKey: ["my-org-memberships"],
+          queryKey: ["my-org-memberships-gate", userId],
           queryFn: () => myOrgMemberships(),
-          staleTime: 5 * 60_000,
+          staleTime: 30_000,
         })
         .catch(() => [] as { org_id: string }[]),
       context.queryClient
         .ensureQueryData({
-          queryKey: ["platform-admin"],
+          queryKey: ["am-i-platform-admin", userId],
           queryFn: () => amIPlatformAdmin(),
-          staleTime: 5 * 60_000,
+          staleTime: 60_000,
         })
         .catch(() => ({ isAdmin: false })),
     ]);
 
-    const myOrgIds = new Set((memberships ?? []).map((m) => m.org_id));
-    const isMember = myOrgIds.has(entity.orgUuid ?? "") || myOrgIds.has(entity.id);
+    const belongs = (list: { org_id: string }[] | undefined | null) => {
+      const ids = new Set((list ?? []).map((m) => m.org_id));
+      return ids.has(entity!.orgUuid ?? "") || ids.has(entity!.id);
+    };
+
+    let isMember = belongs(memberships);
+    if (!isMember && !admin?.isAdmin) {
+      // An empty list can also mean "the session token wasn't attached yet".
+      // Re-check once with a fresh call before sending the owner to the public
+      // profile of their own organization.
+      const fresh = await myOrgMemberships().catch(() => null);
+      if (fresh) {
+        context.queryClient.setQueryData(["my-org-memberships-gate", userId], fresh);
+        isMember = belongs(fresh);
+      }
+    }
     if (!isMember && !admin?.isAdmin) {
       throw redirect({ to: "/directory/$id", params: { id: params.id } });
     }
+
 
     return { entity };
   },
