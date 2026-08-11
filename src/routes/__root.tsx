@@ -133,11 +133,18 @@ function RootComponent() {
           // invalidation per page load — not a router.invalidate or full cache
           // flush — so it does not cause thrashing.
           queryClient.invalidateQueries({ queryKey: ["entities", "registry"] });
+          // Membership/admin answers fetched before the bearer was attached
+          // must not survive into the signed-in session.
+          queryClient.removeQueries({ queryKey: ["my-org-memberships-gate"] });
+          queryClient.removeQueries({ queryKey: ["am-i-platform-admin"] });
           return;
         }
         if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+        queryClient.removeQueries({ queryKey: ["my-org-memberships-gate"] });
+        queryClient.removeQueries({ queryKey: ["am-i-platform-admin"] });
         router.invalidate();
         if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
+
       });
       subRef.current = data.subscription;
     });
