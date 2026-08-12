@@ -18,7 +18,6 @@ import { PassportCards } from "@/components/dashboard/PassportCards";
 import { OperationsCard } from "@/components/dashboard/OperationsCard";
 import { KpiTable } from "@/components/KpiTable";
 import { BenchmarkChart } from "@/components/BenchmarkChart";
-import { DocumentsList } from "@/components/DocumentsList";
 import { ReportUploader } from "@/components/ReportUploader";
 import type { Entity } from "@/seed/types";
 
@@ -135,7 +134,6 @@ function OrgDashboardPage() {
 
         <TabsContent value="documents" className="space-y-6">
           <ReportUploader entity={e} />
-          <DocumentsList entity={e} />
         </TabsContent>
 
         <TabsContent value="activity">
