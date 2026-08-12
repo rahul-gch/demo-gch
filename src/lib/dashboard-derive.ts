@@ -2,13 +2,8 @@ import type { Entity } from "@/seed/types";
 import { ALL_ENTITIES } from "@/seed/all-entities";
 import { getEcosystemConnections, getMatchSuggestions, isSeededOrg } from "@/seed/showcase";
 
-export function greetingForNow(): { greet: string; icon: "sun" | "moon" | "sunset" } {
-  const h = new Date().getHours();
-  if (h < 5) return { greet: "Good evening", icon: "moon" };
-  if (h < 12) return { greet: "Good morning", icon: "sun" };
-  if (h < 18) return { greet: "Good afternoon", icon: "sun" };
-  return { greet: "Good evening", icon: "sunset" };
-}
+
+
 
 export interface AiSummary {
   missingDocs: number;
