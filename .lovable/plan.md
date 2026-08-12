@@ -1,32 +1,36 @@
-# Add george@globalchainhub.io as admin + working password reset
+# Cleanups: greetings, documents, org branding
 
-## 1. Admin account for george@globalchainhub.io
+## 1. Remove time-of-day greetings
 
-That address does not exist yet (only rahul@ and maria@ do). Platform-admin rights are automatic for any confirmed `globalchainhub.io` address, so the only missing piece is the account itself.
+The AI Command Center briefing text is built in `src/lib/dashboard-derive.ts` and still starts with "Good morning, ..." / "Good afternoon, ..." for both the new-org and the scored-org paragraph.
 
-- Create the account with a temporary password and a pre-confirmed email, so it counts as a platform admin immediately.
-- Share the temporary password so George can sign in, and let him change it via the password-reset flow below.
+- Delete the `greetingForNow()` helper and drop the greeting + name prefix from both summary strings, so the briefing opens directly with the organization statement (e.g. "Abou Madawy's Network Health score is 62. ...").
+- Remove now-unused imports/usages of the helper and the sun/moon icon anywhere it is referenced.
 
-## 2. Password reset, end to end
+## 2. Documents: one real store instead of two mock ones
 
-The pieces exist (a "Forgot password?" action on the sign-in form and a `/reset-password` page), but the flow has gaps:
+Today there are two unrelated "Documents" surfaces:
 
-- **Recovery link handling.** The reset page only checks for an existing session. Depending on the link format the email uses (`?code=`, `#access_token`, or `?token_hash=&type=recovery`), the session may never be established and the user sees "Open this page from the password reset link in your email." Handle all three link formats explicitly: exchange the code, read hash tokens, or verify the recovery token, and show a clear "link expired — request a new one" state with a resend button when it fails.
-- **Consistent password rules.** The reset page currently requires only 8 characters while signup enforces stronger rules. Apply the same strength requirements and inline feedback here.
-- **Clear request feedback.** After requesting a reset, show a confirmation panel ("Check your inbox for the reset link, it expires in 60 minutes") with a resend option, instead of only a toast.
-- **After success.** Sign the user into their workspace and land them on their dashboard, with a confirmation message.
+- Dashboard > Documents tab: `ReportUploader` + `DocumentsList`, which renders `getMockDocuments()` from `src/seed/showcase.ts` — sample rows that only exist for seeded demo orgs and show nothing for real orgs.
+- Compliance page: certificate/transaction-certificate sheets with hardcoded sample attachments whose Download button shows "Sample document — download disabled in preview".
 
-## 3. Verification
+Plan:
 
-Run the full flow against the live app: request a reset for a test account, open the emailed link, set a new password, and confirm sign-in with the new password works and the old one is rejected.
+- Make the dashboard Documents tab the single real document library for the organization: files uploaded through the existing secure storage flow, listed with name, type, size, uploader and date, with download via a signed URL and delete for org members.
+- Retire `getMockDocuments` and the demo attachment lists in the compliance sheets; the compliance sheets link to the org document library instead of fake files.
+- Empty state for a new org: a clear "No documents yet — upload your first certificate or report" panel, no fabricated rows.
 
-## Note on email branding
+## 3. Logo and banner upload in organization settings
 
-Reset emails currently send from a default Lovable sender address, not from globalchainhub.io. They work as-is. If you want them to come from your own domain (and be styled with your brand), that needs a one-time sender-domain setup for globalchainhub.io — say the word and I'll add it as a follow-up.
+`orgs` stores `logo_url` (set only at signup) and has no banner field; the settings Profile tab has no image controls. `OrgBanner` currently picks stock Unsplash photos by entity type.
 
-## Technical details
+- Add a "Branding" card at the top of Settings > Profile with:
+  - Logo upload (square, preview, replace/remove) saved to the existing `org-logos` storage bucket and written to `orgs.logo_url`.
+  - Banner images upload (up to 4, drag order, remove) saved to a new `org-banners` bucket and written to a new `orgs.banner_urls` column.
+- `OrgBanner` uses the uploaded banners when present and falls back to the current stock images only when the org has uploaded none; `HeroPassport`/sidebar logo medallion uses the uploaded logo.
 
-- Create the user through the Auth Admin API from a server function (email confirmed, temp password); no schema change needed since `is_platform_admin` already covers the domain.
-- Rework `src/routes/reset-password.tsx`: handle `code` (exchangeCodeForSession), hash `access_token`/`refresh_token` (setSession), and `token_hash` + `type=recovery` (verifyOtp); add expired/invalid and resend states.
-- Reuse the signup password-strength helper in the reset form.
-- Keep `redirectTo` at `${window.location.origin}/reset-password` in `src/components/auth/EmailAuthForm.tsx` and add the request-sent panel there.
+## Technical notes
+
+- Migration: add `banner_urls text[]` to `public.orgs`; create a public-read `org-banners` storage bucket with insert/update/delete policies restricted to members of the owning org (path prefixed by org id). Extend `updateOrgProfile` input with `logoUrl` and `bannerUrls`.
+- Uploads go through the browser Supabase client to storage, then the returned paths are saved via the existing `updateOrgProfile` server function; client-side validation for type (jpg/png/webp) and size (logo 2 MB, banner 5 MB).
+- Document library: reuse the existing report upload storage path and add list/delete server functions plus signed-URL download, keeping RLS scoped to org members.
