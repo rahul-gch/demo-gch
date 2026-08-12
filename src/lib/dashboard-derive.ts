@@ -13,7 +13,7 @@ export interface AiSummary {
   paragraph: string;
 }
 
-export function buildAiSummary(e: Entity, healthScore: number, userName = "there"): AiSummary {
+export function buildAiSummary(e: Entity, healthScore: number, _userName = "there"): AiSummary {
   if (!isSeededOrg(e)) {
     const missing = buildMissingFields(e).length;
     return {
@@ -22,7 +22,7 @@ export function buildAiSummary(e: Entity, healthScore: number, userName = "there
       attentionProjects: 0,
       updatedCerts: e.verifiedCertCount,
       paragraph:
-        `${greetingForNow().greet}, ${userName}. ${e.name} is a new organization on Global Chain Hub. ` +
+        `${e.name} is a new organization on Global Chain Hub. ` +
         `Complete your profile${missing ? ` — ${missing} field${missing === 1 ? "" : "s"} still missing` : ""} ` +
         `to unlock matchmaking, readiness scoring and partner discovery.`,
     };
@@ -34,7 +34,7 @@ export function buildAiSummary(e: Entity, healthScore: number, userName = "there
   const updatedCerts = e.verifiedCertCount;
 
   const paragraph =
-    `${greetingForNow().greet}, ${userName}. ${e.name}'s Network Health score is ${healthScore}. ` +
+    `${e.name}'s Network Health score is ${healthScore}. ` +
     `Today the platform surfaced ${missingDocs} missing data ${missingDocs === 1 ? "point" : "points"}, ` +
     `${matches} fresh partner ${matches === 1 ? "match" : "matches"}, ${attentionProjects} project ${
       attentionProjects === 1 ? "signal" : "signals"
