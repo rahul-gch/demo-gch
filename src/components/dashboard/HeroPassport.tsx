@@ -6,6 +6,7 @@ import { bandBadgeClasses, computeNhri } from "@/lib/nhri";
 import { getEcosystemConnections, isSeededOrg } from "@/seed/showcase";
 import { MapPin, Users2, FolderKanban, Network as NetworkIcon, ShieldCheck, Star } from "lucide-react";
 import { HeroBackground, deriveDomain, entityInitials } from "./OrgBanner";
+import { useResolvedImage } from "@/lib/use-org-images";
 
 function Stat({ label, value, icon: Icon }: { label: string; value: string | number; icon?: React.ComponentType<{ className?: string }> }) {
   return (
@@ -35,7 +36,10 @@ export function HeroPassport({ entity: e }: { entity: Entity }) {
   const [logoFailed, setLogoFailed] = useState(false);
   const token = import.meta.env.VITE_LOVABLE_CONNECTOR_LOGO_DEV_API_KEY as string | undefined;
   const domain = deriveDomain(e);
-  const logoUrl = token ? `https://img.logo.dev/${domain}?token=${token}&size=200&format=png` : null;
+  const uploadedLogo = useResolvedImage(e.logoUrl ?? null);
+  const logoUrl =
+    uploadedLogo ??
+    (token ? `https://img.logo.dev/${domain}?token=${token}&size=200&format=png` : null);
 
   return (
     <section className="relative overflow-hidden rounded-2xl border border-white/10 p-6 text-slate-100 shadow-lg">

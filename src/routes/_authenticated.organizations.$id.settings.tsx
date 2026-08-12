@@ -21,6 +21,7 @@ import { updateOrgProfile } from "@/lib/orgs.functions";
 import { refreshRegistry } from "@/lib/registry";
 import { MembersPanel } from "@/components/settings/MembersPanel";
 import { EntityProfilePanel } from "@/components/settings/EntityProfilePanel";
+import { BrandingPanel } from "@/components/settings/BrandingPanel";
 
 import { ORG_TYPES } from "@/lib/org-types";
 
@@ -143,6 +144,7 @@ function OrgSettingsPage() {
 
 
         <TabsContent value="profile" className="space-y-6">
+          <BrandingPanel orgId={orgUuid} logo={e.logoUrl ?? null} banners={e.bannerUrls ?? []} />
           <Card className="shadow-sm">
             <CardHeader>
               <CardTitle className="text-base font-semibold">Identity</CardTitle>

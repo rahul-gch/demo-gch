@@ -21,7 +21,7 @@ import {
   type TransactionCert,
   type Severity,
 } from "@/seed/compliance";
-import { ShieldCheck, AlertTriangle, Clock, ClipboardCheck, Upload, ExternalLink, FileText, Download } from "lucide-react";
+import { ShieldCheck, AlertTriangle, Clock, ClipboardCheck, Upload, ExternalLink, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -163,21 +163,13 @@ function AuditDetailSheet({
           </div>
         </div>
 
-        <div className="mt-6">
-          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Attached documents</div>
-          <div className="mt-3 space-y-2">
-            {audit.documents.map((d) => (
-              <div key={d.name} className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
-                <div className="flex items-center gap-2 min-w-0">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  <span className="truncate">{d.name}</span>
-                  <span className="text-xs text-muted-foreground">· {d.size}</span>
-                </div>
-                <Button size="sm" variant="ghost" onClick={() => toast.info("Sample document — download disabled in preview")}>
-                  <Download className="mr-1 h-3.5 w-3.5" /> Download
-                </Button>
-              </div>
-            ))}
+        <div className="mt-6 rounded-md border border-dashed px-4 py-4 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            <span>
+              Attachments live in your organization&rsquo;s document library — upload audit reports and
+              certificates below.
+            </span>
           </div>
         </div>
       </SheetContent>
@@ -203,21 +195,13 @@ function TcDetailSheet({
           <MiniStat label="Weight" value={`${tc.weightKg.toLocaleString()} kg`} />
           <MiniStat label="Products" value={tc.products} />
         </div>
-        <div className="mt-6">
-          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Documents</div>
-          <div className="mt-3 space-y-2">
-            {tc.documents.map((d) => (
-              <div key={d.name} className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
-                <div className="flex items-center gap-2 min-w-0">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  <span className="truncate">{d.name}</span>
-                  <span className="text-xs text-muted-foreground">· {d.size}</span>
-                </div>
-                <Button size="sm" variant="ghost" onClick={() => toast.info("Sample document — download disabled in preview")}>
-                  <Download className="mr-1 h-3.5 w-3.5" /> Download
-                </Button>
-              </div>
-            ))}
+        <div className="mt-6 rounded-md border border-dashed px-4 py-4 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            <span>
+              Attachments live in your organization&rsquo;s document library — upload audit reports and
+              certificates below.
+            </span>
           </div>
         </div>
       </SheetContent>
