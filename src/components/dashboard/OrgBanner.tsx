@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Entity, EntityType } from "@/seed/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useResolvedImages } from "@/lib/use-org-images";
 
 const IMG = (id: string) =>
   `https://images.unsplash.com/${id}?auto=format&fit=crop&w=1600&q=70`;
@@ -69,8 +70,9 @@ const POOLS: Record<EntityType, string[]> = {
 };
 
 export function HeroBackground({ entity }: { entity: Entity }) {
+  const uploaded = useResolvedImages(entity.bannerUrls ?? []);
   const pool = POOLS[entity.entityType] ?? POOLS.Brand;
-  const slides = pool.map(IMG);
+  const slides = uploaded.length > 0 ? uploaded : pool.map(IMG);
   const [index, setIndex] = useState(0);
   const pausedRef = useRef(false);
 

@@ -21,7 +21,7 @@ import {
   type TransactionCert,
   type Severity,
 } from "@/seed/compliance";
-import { ShieldCheck, AlertTriangle, Clock, ClipboardCheck, Upload, ExternalLink, FileText, Download } from "lucide-react";
+import { ShieldCheck, AlertTriangle, Clock, ClipboardCheck, Upload, ExternalLink, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
