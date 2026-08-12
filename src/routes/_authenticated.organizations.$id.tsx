@@ -5,6 +5,7 @@ import { refreshRegistry } from "@/lib/registry";
 import { myOrgMemberships } from "@/lib/orgs.functions";
 import { amIPlatformAdmin } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
+import { errorMessage } from "@/components/RouteErrorFallback";
 
 export const Route = createFileRoute("/_authenticated/organizations/$id")({
   loader: async ({ params, context }) => {
@@ -110,6 +111,6 @@ function OrgNotFound() {
   );
 }
 
-function OrgError({ error }: { error: Error }) {
-  return <Shell title="Couldn't load this organization" body={error.message} />;
+function OrgError({ error }: { error?: unknown }) {
+  return <Shell title="Couldn't load this organization" body={errorMessage(error)} />;
 }
