@@ -81,19 +81,32 @@ export function platformAlerts(): AlertItem[] {
 export interface QuickAction {
   id: string;
   label: string;
-  icon: "plus" | "shield" | "folder" | "handshake" | "userplus" | "megaphone" | "upload";
-  to?: string;
+  icon: "plus" | "userplus" | "building" | "handshake" | "message" | "megaphone";
+  to: string;
+  search?: Record<string, string>;
 }
 
 export const QUICK_ACTIONS: QuickAction[] = [
-  { id: "add-org", label: "Add Organization", icon: "plus", to: "/organizations" },
-  { id: "verify", label: "Verify Organization", icon: "shield", to: "/organizations" },
-  { id: "create-project", label: "Create Project", icon: "folder" },
-  { id: "approve", label: "Approve Partnership", icon: "handshake", to: "/matchmaking" },
-  { id: "invite", label: "Invite User", icon: "userplus" },
-  { id: "broadcast", label: "Send Broadcast", icon: "megaphone", to: "/messages" },
-  { id: "upload", label: "Upload Dataset", icon: "upload" },
+  {
+    id: "add-org",
+    label: "Add organization",
+    icon: "plus",
+    to: "/admin/organizations",
+    search: { tab: "add" },
+  },
+  {
+    id: "invite",
+    label: "Onboarding links",
+    icon: "userplus",
+    to: "/admin/organizations",
+    search: { tab: "invites" },
+  },
+  { id: "orgs", label: "Organizations", icon: "building", to: "/organizations" },
+  { id: "match", label: "Matchmaking", icon: "handshake", to: "/matchmaking" },
+  { id: "messages", label: "Messages", icon: "message", to: "/messages" },
+  { id: "feed", label: "Community feed", icon: "megaphone", to: "/feed" },
 ];
+
 
 export type ApprovalKind =
   | "Verification"

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/AppShell";
@@ -28,7 +28,14 @@ import {
 import { toast } from "sonner";
 import { Copy, Loader2, ShieldAlert } from "lucide-react";
 
+const TABS = ["signups", "invites", "add"] as const;
+type TabId = (typeof TABS)[number];
+
 export const Route = createFileRoute("/_authenticated/admin/organizations")({
+  validateSearch: (search: Record<string, unknown>): { tab?: TabId } => {
+    const t = String(search.tab ?? "");
+    return TABS.includes(t as TabId) ? { tab: t as TabId } : {};
+  },
   head: () => ({
     meta: [
       { title: "Organization onboarding — Global Chain Hub Admin" },
@@ -46,6 +53,8 @@ export const Route = createFileRoute("/_authenticated/admin/organizations")({
 });
 
 function AdminOrganizationsPage() {
+  const { tab } = useSearch({ from: "/_authenticated/admin/organizations" });
+  const navigate = useNavigate({ from: "/admin/organizations" });
   const admin = useQuery({ queryKey: ["platform-admin"], queryFn: () => amIPlatformAdmin() });
 
   return (
@@ -77,7 +86,10 @@ function AdminOrganizationsPage() {
         )}
 
         {admin.data?.isAdmin && (
-          <Tabs defaultValue="signups">
+          <Tabs
+            value={tab ?? "signups"}
+            onValueChange={(v) => navigate({ search: { tab: v as TabId }, replace: true })}
+          >
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="signups">Recent signups</TabsTrigger>
               <TabsTrigger value="invites">Onboarding links</TabsTrigger>
