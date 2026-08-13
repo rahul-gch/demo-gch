@@ -128,10 +128,19 @@ export function ProjectsIndex({ entity }: { entity: Entity }) {
             className="group"
           >
             <Card className="overflow-hidden transition-shadow group-hover:shadow-md">
-              <div
-                className="h-32 w-full bg-cover bg-center"
-                style={{ backgroundImage: `url(${p.image})` }}
-              />
+              {p.image ? (
+                <div
+                  className="h-32 w-full bg-cover bg-center"
+                  style={{ backgroundImage: `url(${p.image})` }}
+                />
+              ) : (
+                <div className="flex h-32 w-full items-center justify-center bg-gradient-to-br from-slate-900 via-slate-700 to-slate-500">
+                  <span className="px-4 text-center text-sm font-medium text-white/90 line-clamp-2">
+                    {p.name}
+                  </span>
+                </div>
+              )}
+
               <CardContent className="space-y-3 p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
