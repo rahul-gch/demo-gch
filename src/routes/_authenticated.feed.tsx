@@ -32,6 +32,10 @@ import { useQuery } from "@tanstack/react-query";
 import { listPlatformActivity } from "@/lib/activity.functions";
 
 export const Route = createFileRoute("/_authenticated/feed")({
+  validateSearch: (search: Record<string, unknown>): { tab?: "activity" | "community" } =>
+    search.tab === "community" || search.tab === "activity"
+      ? { tab: search.tab }
+      : {},
   head: () => ({
     meta: [
       { title: "Activity Feed — Global Chain Hub Admin" },
