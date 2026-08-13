@@ -104,7 +104,7 @@ export const QUICK_ACTIONS: QuickAction[] = [
   { id: "orgs", label: "Organizations", icon: "building", to: "/organizations" },
   { id: "match", label: "Matchmaking", icon: "handshake", to: "/matchmaking" },
   { id: "messages", label: "Messages", icon: "message", to: "/messages" },
-  { id: "feed", label: "Community feed", icon: "megaphone", to: "/feed" },
+  { id: "feed", label: "Community feed", icon: "megaphone", to: "/feed", search: { tab: "community" } },
 ];
 
 
