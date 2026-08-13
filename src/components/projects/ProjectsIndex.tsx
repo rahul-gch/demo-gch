@@ -192,11 +192,25 @@ export function ProjectsIndex({ entity }: { entity: Entity }) {
 
       {filtered.length === 0 && (
         <Card>
-          <CardContent className="p-10 text-center text-sm text-muted-foreground">
-            No projects match “{q}”.
+          <CardContent className="space-y-3 p-10 text-center">
+            {projects.length === 0 ? (
+              <>
+                <div className="text-sm font-medium">No projects yet</div>
+                <p className="mx-auto max-w-md text-sm text-muted-foreground">
+                  Create a project to start a shared workspace with your partners — requests,
+                  documents, discussions and meetings all live inside it.
+                </p>
+                <Button onClick={() => setOpen(true)}>
+                  <Plus className="h-4 w-4" /> New project
+                </Button>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">No projects match “{q}”.</p>
+            )}
           </CardContent>
         </Card>
       )}
+
     </div>
   );
 }
