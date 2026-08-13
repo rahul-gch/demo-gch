@@ -162,8 +162,8 @@ export const createProjectFn = createServerFn({ method: "POST" })
         progress: 0,
         industry: "Sustainability",
         country: org?.country ?? "",
-        image:
-          "https://images.unsplash.com/photo-1497436072909-60f360e1d4b1?auto=format&fit=crop&w=1200&q=70",
+        image: "",
+
       } as never)
       .select("id")
       .single();
