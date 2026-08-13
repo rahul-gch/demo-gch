@@ -112,7 +112,11 @@ function groupByDay(events: AdminFeedEvent[]): { label: string; items: AdminFeed
 }
 
 function FeedPage() {
-  const [tab, setTab] = useState<"activity" | "community">("activity");
+  const { tab: tabParam } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const tab = tabParam ?? "activity";
+  const setTab = (v: "activity" | "community") =>
+    navigate({ search: { tab: v }, replace: true });
   return (
     <AppShell>
       <div className="mx-auto max-w-6xl space-y-6">
