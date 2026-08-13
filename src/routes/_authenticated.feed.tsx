@@ -32,6 +32,10 @@ import { useQuery } from "@tanstack/react-query";
 import { listPlatformActivity } from "@/lib/activity.functions";
 
 export const Route = createFileRoute("/_authenticated/feed")({
+  validateSearch: (search: Record<string, unknown>): { tab?: "activity" | "community" } =>
+    search.tab === "community" || search.tab === "activity"
+      ? { tab: search.tab }
+      : {},
   head: () => ({
     meta: [
       { title: "Activity Feed — Global Chain Hub Admin" },
@@ -108,7 +112,11 @@ function groupByDay(events: AdminFeedEvent[]): { label: string; items: AdminFeed
 }
 
 function FeedPage() {
-  const [tab, setTab] = useState<"activity" | "community">("activity");
+  const { tab: tabParam } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const tab = tabParam ?? "activity";
+  const setTab = (v: "activity" | "community") =>
+    navigate({ search: { tab: v }, replace: true });
   return (
     <AppShell>
       <div className="mx-auto max-w-6xl space-y-6">
