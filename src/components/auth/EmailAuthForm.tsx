@@ -285,8 +285,13 @@ export function EmailAuthForm({
           {mode === "signup" ? "I already have an account" : "Create an account"}
         </button>
         {mode === "signin" && (
-          <button type="button" className="text-muted-foreground hover:underline" onClick={forgot}>
-            Forgot password?
+          <button
+            type="button"
+            className="text-muted-foreground hover:underline disabled:opacity-50"
+            onClick={forgot}
+            disabled={resetCooldown > 0}
+          >
+            {resetCooldown > 0 ? `Forgot password? (${resetCooldown}s)` : "Forgot password?"}
           </button>
         )}
       </div>
