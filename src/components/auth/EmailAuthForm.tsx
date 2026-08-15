@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,14 @@ export function EmailAuthForm({
   const [sent, setSent] = useState(false);
   const [acceptPolicies, setAcceptPolicies] = useState(false);
   const [marketing, setMarketing] = useState(false);
+  const [duplicate, setDuplicate] = useState(false);
+  const [resetCooldown, setResetCooldown] = useState(0);
+
+  useEffect(() => {
+    if (resetCooldown <= 0) return;
+    const t = setTimeout(() => setResetCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resetCooldown]);
 
   const strength = passwordStrength(password);
 
@@ -72,6 +80,13 @@ export function EmailAuthForm({
           },
         });
         if (error) throw error;
+        // Supabase obfuscates existing accounts: no error, but an empty
+        // identities array. Treat both shapes as "already registered".
+        if ((data.user?.identities?.length ?? 1) === 0) {
+          setDuplicate(true);
+          toast.error("This email already has an account — sign in instead");
+          return;
+        }
         await recordConsents(data.user?.id ?? null, marketing);
         if (!data.session) {
           setSent(true);
@@ -86,7 +101,15 @@ export function EmailAuthForm({
         onSignedIn?.();
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Something went wrong");
+      const msg = err instanceof Error ? err.message : "Something went wrong";
+      if (/already registered|already exists|User already/i.test(msg)) {
+        setDuplicate(true);
+        toast.error("This email already has an account — sign in instead");
+      } else if (/rate|limit|seconds/i.test(msg)) {
+        toast.error("Too many attempts — please wait a minute and try again.");
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setBusy(false);
     }
@@ -98,14 +121,21 @@ export function EmailAuthForm({
       toast.error("Enter your email first");
       return;
     }
+    if (resetCooldown > 0) return;
     const { error } = await supabase.auth.resetPasswordForEmail(mail, {
       redirectTo: window.location.origin + "/reset-password",
     });
-    if (error) toast.error(error.message);
-    else {
-      void logSecurityEvent("auth.password_reset_requested");
-      toast.success("Password reset link sent — check your inbox");
+    if (error) {
+      toast.error(
+        /rate|limit|seconds/i.test(error.message)
+          ? "Too many requests — please wait a minute before trying again."
+          : error.message,
+      );
+      return;
     }
+    setResetCooldown(60);
+    void logSecurityEvent("auth.password_reset_requested");
+    toast.success("Password reset link sent — check your inbox");
   };
 
   if (sent) {
@@ -226,6 +256,22 @@ export function EmailAuthForm({
           </label>
         </div>
       )}
+      {duplicate && mode === "signup" && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+          This email already has an account.{" "}
+          <button
+            type="button"
+            className="font-medium underline"
+            onClick={() => {
+              setDuplicate(false);
+              setMode("signin");
+            }}
+          >
+            Sign in instead
+          </button>{" "}
+          or use “Forgot password?” to recover it.
+        </div>
+      )}
       <Button type="submit" className="w-full" disabled={busy || (mode === "signup" && !acceptPolicies)}>
         {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         {mode === "signup" ? "Create account" : "Sign in"}
@@ -239,8 +285,13 @@ export function EmailAuthForm({
           {mode === "signup" ? "I already have an account" : "Create an account"}
         </button>
         {mode === "signin" && (
-          <button type="button" className="text-muted-foreground hover:underline" onClick={forgot}>
-            Forgot password?
+          <button
+            type="button"
+            className="text-muted-foreground hover:underline disabled:opacity-50"
+            onClick={forgot}
+            disabled={resetCooldown > 0}
+          >
+            {resetCooldown > 0 ? `Forgot password? (${resetCooldown}s)` : "Forgot password?"}
           </button>
         )}
       </div>

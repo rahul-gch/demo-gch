@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/auth/callback")({
+  ssr: false,
   head: () => ({ meta: [{ title: "Signing in…" }] }),
   component: AuthCallback,
 });

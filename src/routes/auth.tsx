@@ -9,6 +9,9 @@ import { EmailAuthForm } from "@/components/auth/EmailAuthForm";
 const searchSchema = z.object({ next: z.string().optional() });
 
 export const Route = createFileRoute("/auth")({
+  // Session state lives in localStorage, so this page is client-only —
+  // server-rendering it produces a hydration mismatch.
+  ssr: false,
   validateSearch: searchSchema,
   head: () => ({
     meta: [
@@ -38,10 +41,15 @@ function AuthPage() {
   const [, setChecked] = useState(false);
 
   useEffect(() => {
+    let alive = true;
     supabase.auth.getSession().then(({ data }) => {
+      if (!alive) return;
       if (data.session) nav({ to: sanitizeNext(next), replace: true });
       setChecked(true);
     });
+    return () => {
+      alive = false;
+    };
   }, [nav, next]);
 
   return (
