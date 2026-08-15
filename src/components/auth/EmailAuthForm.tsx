@@ -80,6 +80,13 @@ export function EmailAuthForm({
           },
         });
         if (error) throw error;
+        // Supabase obfuscates existing accounts: no error, but an empty
+        // identities array. Treat both shapes as "already registered".
+        if ((data.user?.identities?.length ?? 1) === 0) {
+          setDuplicate(true);
+          toast.error("This email already has an account — sign in instead");
+          return;
+        }
         await recordConsents(data.user?.id ?? null, marketing);
         if (!data.session) {
           setSent(true);
