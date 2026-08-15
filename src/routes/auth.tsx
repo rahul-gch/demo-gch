@@ -41,10 +41,15 @@ function AuthPage() {
   const [, setChecked] = useState(false);
 
   useEffect(() => {
+    let alive = true;
     supabase.auth.getSession().then(({ data }) => {
+      if (!alive) return;
       if (data.session) nav({ to: sanitizeNext(next), replace: true });
       setChecked(true);
     });
+    return () => {
+      alive = false;
+    };
   }, [nav, next]);
 
   return (
