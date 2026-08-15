@@ -101,7 +101,15 @@ export function EmailAuthForm({
         onSignedIn?.();
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Something went wrong");
+      const msg = err instanceof Error ? err.message : "Something went wrong";
+      if (/already registered|already exists|User already/i.test(msg)) {
+        setDuplicate(true);
+        toast.error("This email already has an account — sign in instead");
+      } else if (/rate|limit|seconds/i.test(msg)) {
+        toast.error("Too many attempts — please wait a minute and try again.");
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setBusy(false);
     }
@@ -113,14 +121,21 @@ export function EmailAuthForm({
       toast.error("Enter your email first");
       return;
     }
+    if (resetCooldown > 0) return;
     const { error } = await supabase.auth.resetPasswordForEmail(mail, {
       redirectTo: window.location.origin + "/reset-password",
     });
-    if (error) toast.error(error.message);
-    else {
-      void logSecurityEvent("auth.password_reset_requested");
-      toast.success("Password reset link sent — check your inbox");
+    if (error) {
+      toast.error(
+        /rate|limit|seconds/i.test(error.message)
+          ? "Too many requests — please wait a minute before trying again."
+          : error.message,
+      );
+      return;
     }
+    setResetCooldown(60);
+    void logSecurityEvent("auth.password_reset_requested");
+    toast.success("Password reset link sent — check your inbox");
   };
 
   if (sent) {
