@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,14 @@ export function EmailAuthForm({
   const [sent, setSent] = useState(false);
   const [acceptPolicies, setAcceptPolicies] = useState(false);
   const [marketing, setMarketing] = useState(false);
+  const [duplicate, setDuplicate] = useState(false);
+  const [resetCooldown, setResetCooldown] = useState(0);
+
+  useEffect(() => {
+    if (resetCooldown <= 0) return;
+    const t = setTimeout(() => setResetCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resetCooldown]);
 
   const strength = passwordStrength(password);
 
