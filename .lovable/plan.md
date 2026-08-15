@@ -1,46 +1,48 @@
-# End-to-end audit: signup, organizations, core flows
+# End-to-end check: signup, sign-in and onboarding
 
-I walked through the auth/onboarding code, the organization access rules and the live database policies. Four real issues came out of it; everything else in those flows checks out.
+Scope is the account and onboarding flows only. Organization creation stays open to any signed-in user, as it is today. Here is what I found and what I'll fix.
 
-## 1. Anyone can still create an organization (should be admin-only)
+## 1. Sign-in page throws a hydration error
 
-You asked earlier that only platform admins create organizations. That was never fully applied:
+`/auth` is server-rendered but immediately does browser-only session work, which is producing the hydration error currently in the logs (visible flash / occasional blank render). `/auth/callback` and `/reset-password` have the same shape.
 
-- The user menu still shows "Create new organization".
-- The welcome screen still offers "Create a new organization" as one of two options.
-- The `createOrg` backend function has no admin check.
-- The database rule for inserting organizations currently allows **any signed-in user** (verified in the live policy list).
+Fix: mark all three client-only, matching how `/signup` and `/welcome` already work.
 
-Fix:
-- Remove the create option from the user menu; the welcome screen becomes invite-only, with a clear line explaining that organizations are set up by the Global Chain Hub team and how to request one.
-- Add a platform-admin check inside `createOrg` so the API rejects non-admins.
-- Replace the permissive insert rule with an admin-only one (admins keep full access through the existing admin org tools).
+## 2. Password reset accepts weak passwords
 
-## 2. Sign-in page crashes hydration (blank-flash risk)
+Signup enforces the full rule set (length, upper/lower case, number, symbol) but the reset page only requires 8 characters — so a reset can silently downgrade an account's password.
 
-`/auth` is server-rendered but immediately does browser-only session work, which produces the hydration error currently in the logs. `/auth/callback` and `/reset-password` have the same shape. All three get marked client-only, matching `/signup` and `/welcome`.
+Fix: reuse the same validation, strength meter and rule list on the reset page.
 
-## 3. Password reset accepts weak passwords
+## 3. Dead-end on an expired or directly-opened reset link
 
-The reset page only requires 8 characters, while signup enforces the full rule set (length, upper/lower, number, symbol). The reset page will use the same `validatePassword` rules and show the same strength meter and rule list, so a reset can't downgrade an account's password.
+Right now the page just says "open this from the email link" with no way forward.
 
-## 4. Reset link edge cases
+Fix: add an email field and a "Send me a new link" action on that state, so the user can recover without leaving the page.
 
-If the reset link is expired or opened directly, the page shows only a static sentence. It will instead offer a "Send me a new link" action, and after a successful reset it will route to the workspace only when the user has an organization (otherwise to the invite screen), so no one lands on a dead page.
+## 4. Where reset lands you
+
+After a successful reset the app sends everyone to `/`, which bounces users with no organization through an extra redirect.
+
+Fix: route to the workspace when the user has an organization, otherwise straight to the get-started screen.
+
+## 5. Smaller edge cases in the same flows
+
+- Signing up with an email that already exists currently shows the raw backend message; it will show a clear "This email already has an account — sign in instead" with a link.
+- Repeated forgot-password clicks can hit the email rate limit; the button gets a cooldown and a friendly message instead of a raw error.
+- Invite join: valid, expired, revoked, already-used and malformed tokens each get a specific message (mostly already handled — I'll verify each one rather than change it blindly).
 
 ## Verification pass
 
-After the fixes I'll drive the app in a headless browser and confirm:
-- Signup with a new email → lands on the invite-only welcome screen, no create option anywhere.
-- Non-admin attempting the create API directly is rejected.
-- Admin can still add organizations from the admin tools.
-- Invite join flow with valid, expired, revoked and garbage tokens shows the right message each time.
-- Sign in, sign out, forgot-password, reset-password.
-- Opening another organization's profile as a non-member still shows the public directory view, and a member lands in their own workspace.
-- Console clean of hydration and runtime errors on each of those pages.
+After the fixes I'll drive the app headlessly and confirm, with the console clean of hydration and runtime errors:
+- New signup → confirmation state → welcome screen with both create and join options.
+- Sign in, sign out, sign in again.
+- Forgot password → reset link → new password → correct landing page.
+- Reset page opened directly and with an expired link.
+- Duplicate-email signup, weak-password signup, mismatched confirm password.
+- Invite join with valid, expired, revoked and garbage tokens.
 
 ## Technical notes
 
-- Files: `src/components/UserMenu.tsx`, `src/routes/welcome.tsx`, `src/routes/auth.tsx`, `src/routes/auth.callback.tsx`, `src/routes/reset-password.tsx`, `src/lib/orgs.functions.ts`.
-- One migration: drop `orgs insert by authenticated`, add an insert policy gated on `is_platform_admin(auth.uid())`. The existing owner-bootstrap rule on `org_members` still works because admin-created orgs record `created_by`.
-- No navigation or page-structure changes beyond removing the create-organization entry points.
+- Files touched: `src/routes/auth.tsx`, `src/routes/auth.callback.tsx`, `src/routes/reset-password.tsx`, `src/components/auth/EmailAuthForm.tsx`.
+- No database migration and no navigation or page-structure changes.
