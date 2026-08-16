@@ -82,14 +82,21 @@ export function ReportUploader({ entity }: { entity: Entity }) {
   };
 
   const onDelete = async (name: string) => {
-    const { error } = await supabase.storage.from("reports").remove([`${folder}/${name}`]);
-    if (error) toast.error(error.message);
-    else {
-      toast.success("File removed");
-      void logSecurityEvent("document.deleted", { orgId: entity.id, targetType: "reports", targetId: `${folder}/${name}` });
-      list();
+    const { data, error } = await supabase.storage.from("reports").remove([`${folder}/${name}`]);
+    if (error) {
+      toast.error(error.message);
+      return;
     }
+    // Storage returns an empty array (no error) when RLS blocks the delete.
+    if (!data || data.length === 0) {
+      toast.error("You are not authorised to delete this file. Only the person who uploaded it can remove it.");
+      return;
+    }
+    toast.success("File removed");
+    void logSecurityEvent("document.deleted", { orgId: entity.id, targetType: "reports", targetId: `${folder}/${name}` });
+    list();
   };
+
 
   /**
    * Private bucket: never expose a public URL. Authorisation is re-checked by
