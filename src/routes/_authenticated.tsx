@@ -19,7 +19,11 @@ export const Route = createFileRoute("/_authenticated")({
     const [memberships, admin] = await Promise.all([
       context.queryClient.ensureQueryData({
         queryKey: ["my-org-memberships-gate", data.user.id],
-        queryFn: () => myOrgMemberships().catch(() => [] as { org_id: string }[]),
+        queryFn: () =>
+          myOrgMemberships().catch(
+            () => [] as Awaited<ReturnType<typeof myOrgMemberships>>,
+          ),
+
         staleTime: 30_000,
       }),
       context.queryClient.ensureQueryData({
@@ -31,6 +35,20 @@ export const Route = createFileRoute("/_authenticated")({
     if (!admin?.isAdmin && (memberships?.length ?? 0) === 0) {
       throw redirect({ to: "/welcome", replace: true });
     }
+
+    // Organization setup is a separate full-screen flow outside the app shell.
+    // Users whose every organization is still mid-setup stay inside it.
+    if (!admin?.isAdmin && (memberships?.length ?? 0) > 0) {
+      const pending = memberships.filter((m) => !m.onboarding_completed_at);
+      if (pending.length === memberships.length) {
+        throw redirect({
+          to: "/onboarding/org/$id",
+          params: { id: pending[0]!.org_id },
+          replace: true,
+        });
+      }
+    }
+
 
     // Organization registry must be loaded before child loaders resolve entities.
     await ensureRegistry(context.queryClient);

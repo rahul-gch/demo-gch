@@ -110,7 +110,11 @@ function AdminOrganizationsPage() {
                   </p>
                 </CardHeader>
                 <CardContent>
-                  <CreateOrgForm signedIn />
+                  <CreateOrgForm
+                    signedIn
+                    onCreated={(id) => navigate({ to: "/organizations/$id", params: { id } })}
+                  />
+
                 </CardContent>
               </Card>
             </TabsContent>

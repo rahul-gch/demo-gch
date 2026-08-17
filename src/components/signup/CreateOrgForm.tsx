@@ -31,9 +31,11 @@ function slugify(s: string): string {
 /**
  * Step 1 of onboarding — deliberately short. Only identity and location are
  * collected here; every entity-specific business question is asked afterwards
- * in the profile wizard at /organizations/:id/profile-setup.
+ * in the onboarding profile steps.
  */
-export function CreateOrgForm(_props: { signedIn?: boolean } = {}) {
+export function CreateOrgForm({
+  onCreated,
+}: { signedIn?: boolean; onCreated?: (orgId: string) => void } = {}) {
   const nav = useNavigate();
   const createOrgFn = useServerFn(createOrg);
   const queryClient = useQueryClient();
@@ -45,6 +47,7 @@ export function CreateOrgForm(_props: { signedIn?: boolean } = {}) {
   const [website, setWebsite] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
 
   const canSubmit = useMemo(
     () =>
@@ -77,8 +80,13 @@ export function CreateOrgForm(_props: { signedIn?: boolean } = {}) {
 
       await refreshRegistry(queryClient);
       toast.success("Organization created — let's complete your profile");
-      nav({ to: "/organizations/$id/profile-setup", params: { id: res.id }, replace: true });
+      if (onCreated) {
+        onCreated(res.id);
+      } else {
+        nav({ to: "/onboarding/org/$id", params: { id: res.id }, replace: true });
+      }
     } catch (err) {
+
       const message = err instanceof Error ? err.message : "Failed to create organization";
       setError(message);
       toast.error(message);
