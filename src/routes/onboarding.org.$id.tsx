@@ -204,11 +204,12 @@ function OnboardingProfilePage() {
       }
     >
       <div className="space-y-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <Badge variant="outline" className="gap-1">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+          <Badge variant="outline" className="w-fit gap-1">
             <Sparkles className="h-3 w-3" /> {normalizeEntityType(entityType)}
           </Badge>
           <div className="min-w-40 flex-1">
+
             <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
               <span>Profile completeness</span>
               <span className="font-semibold text-foreground">{score.score}%</span>
