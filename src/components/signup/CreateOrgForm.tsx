@@ -80,8 +80,13 @@ export function CreateOrgForm({
 
       await refreshRegistry(queryClient);
       toast.success("Organization created — let's complete your profile");
-      nav({ to: "/organizations/$id/profile-setup", params: { id: res.id }, replace: true });
+      if (onCreated) {
+        onCreated(res.id);
+      } else {
+        nav({ to: "/onboarding/org/$id", params: { id: res.id }, replace: true });
+      }
     } catch (err) {
+
       const message = err instanceof Error ? err.message : "Failed to create organization";
       setError(message);
       toast.error(message);
