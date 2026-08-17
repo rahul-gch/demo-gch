@@ -19,7 +19,11 @@ export const Route = createFileRoute("/_authenticated")({
     const [memberships, admin] = await Promise.all([
       context.queryClient.ensureQueryData({
         queryKey: ["my-org-memberships-gate", data.user.id],
-        queryFn: () => myOrgMemberships().catch(() => [] as { org_id: string }[]),
+        queryFn: () =>
+          myOrgMemberships().catch(
+            () => [] as Awaited<ReturnType<typeof myOrgMemberships>>,
+          ),
+
         staleTime: 30_000,
       }),
       context.queryClient.ensureQueryData({

@@ -102,7 +102,7 @@ function WelcomePage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <button
                   type="button"
-                  onClick={() => setStep("create")}
+                  onClick={() => nav({ to: "/onboarding" })}
                   className="group rounded-xl border bg-card p-5 text-left transition hover:border-primary hover:shadow-md"
                 >
                   <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -127,11 +127,10 @@ function WelcomePage() {
                   </p>
                 </button>
               </div>
-            ) : step === "create" ? (
-              <CreateOrgForm signedIn />
             ) : (
               <JoinWithInviteForm />
             )}
+
 
             {step !== "choose" && (
               <Button variant="ghost" size="sm" onClick={() => setStep("choose")}>
