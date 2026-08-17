@@ -578,6 +578,7 @@ export type Database = {
           moq: string | null
           name: string
           on_time_rate: number | null
+          onboarding_completed_at: string | null
           organization_type: string | null
           preferred_channel: string | null
           product_categories: string[]
@@ -639,6 +640,7 @@ export type Database = {
           moq?: string | null
           name: string
           on_time_rate?: number | null
+          onboarding_completed_at?: string | null
           organization_type?: string | null
           preferred_channel?: string | null
           product_categories?: string[]
@@ -700,6 +702,7 @@ export type Database = {
           moq?: string | null
           name?: string
           on_time_rate?: number | null
+          onboarding_completed_at?: string | null
           organization_type?: string | null
           preferred_channel?: string | null
           product_categories?: string[]
