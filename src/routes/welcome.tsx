@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Building2, Globe2, Loader2, Mail, Plus } from "lucide-react";
-import { CreateOrgForm } from "@/components/signup/CreateOrgForm";
 import { JoinWithInviteForm } from "@/components/signup/JoinWithInviteForm";
 
 export const Route = createFileRoute("/welcome")({
