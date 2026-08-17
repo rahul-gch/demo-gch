@@ -30,6 +30,7 @@ import { Route as AuthenticatedMatchmakingRouteImport } from './routes/_authenti
 import { Route as AuthenticatedMapRouteImport } from './routes/_authenticated.map'
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated.feed'
 import { Route as AuthenticatedOrganizationsIndexRouteImport } from './routes/_authenticated.organizations.index'
+import { Route as OnboardingOrgIdRouteImport } from './routes/onboarding.org.$id'
 import { Route as AuthenticatedOrganizationsIdRouteImport } from './routes/_authenticated.organizations.$id'
 import { Route as AuthenticatedDirectoryIdRouteImport } from './routes/_authenticated.directory.$id'
 import { Route as AuthenticatedAdminOrganizationsRouteImport } from './routes/_authenticated.admin.organizations'
@@ -163,6 +164,11 @@ const AuthenticatedOrganizationsIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedOrganizationsRoute,
   } as any)
+const OnboardingOrgIdRoute = OnboardingOrgIdRouteImport.update({
+  id: '/onboarding/org/$id',
+  path: '/onboarding/org/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedOrganizationsIdRoute =
   AuthenticatedOrganizationsIdRouteImport.update({
     id: '/$id',
@@ -337,6 +343,7 @@ export interface FileRoutesByFullPath {
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/directory/$id': typeof AuthenticatedDirectoryIdRoute
   '/organizations/$id': typeof AuthenticatedOrganizationsIdRouteWithChildren
+  '/onboarding/org/$id': typeof OnboardingOrgIdRoute
   '/organizations/': typeof AuthenticatedOrganizationsIndexRoute
   '/organizations/$id/compliance': typeof AuthenticatedOrganizationsIdComplianceRoute
   '/organizations/$id/feed': typeof AuthenticatedOrganizationsIdFeedRoute
@@ -382,6 +389,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingIndexRoute
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/directory/$id': typeof AuthenticatedDirectoryIdRoute
+  '/onboarding/org/$id': typeof OnboardingOrgIdRoute
   '/organizations': typeof AuthenticatedOrganizationsIndexRoute
   '/organizations/$id/compliance': typeof AuthenticatedOrganizationsIdComplianceRoute
   '/organizations/$id/feed': typeof AuthenticatedOrganizationsIdFeedRoute
@@ -429,6 +437,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/_authenticated/directory/$id': typeof AuthenticatedDirectoryIdRoute
   '/_authenticated/organizations/$id': typeof AuthenticatedOrganizationsIdRouteWithChildren
+  '/onboarding/org/$id': typeof OnboardingOrgIdRoute
   '/_authenticated/organizations/': typeof AuthenticatedOrganizationsIndexRoute
   '/_authenticated/organizations/$id/compliance': typeof AuthenticatedOrganizationsIdComplianceRoute
   '/_authenticated/organizations/$id/feed': typeof AuthenticatedOrganizationsIdFeedRoute
@@ -478,6 +487,7 @@ export interface FileRouteTypes {
     | '/admin/organizations'
     | '/directory/$id'
     | '/organizations/$id'
+    | '/onboarding/org/$id'
     | '/organizations/'
     | '/organizations/$id/compliance'
     | '/organizations/$id/feed'
@@ -523,6 +533,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/admin/organizations'
     | '/directory/$id'
+    | '/onboarding/org/$id'
     | '/organizations'
     | '/organizations/$id/compliance'
     | '/organizations/$id/feed'
@@ -569,6 +580,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/organizations'
     | '/_authenticated/directory/$id'
     | '/_authenticated/organizations/$id'
+    | '/onboarding/org/$id'
     | '/_authenticated/organizations/'
     | '/_authenticated/organizations/$id/compliance'
     | '/_authenticated/organizations/$id/feed'
@@ -605,6 +617,7 @@ export interface RootRouteChildren {
   LegalTermsRoute: typeof LegalTermsRoute
   OnboardingTokenRoute: typeof OnboardingTokenRoute
   OnboardingIndexRoute: typeof OnboardingIndexRoute
+  OnboardingOrgIdRoute: typeof OnboardingOrgIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -755,6 +768,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/organizations/'
       preLoaderRoute: typeof AuthenticatedOrganizationsIndexRouteImport
       parentRoute: typeof AuthenticatedOrganizationsRoute
+    }
+    '/onboarding/org/$id': {
+      id: '/onboarding/org/$id'
+      path: '/onboarding/org/$id'
+      fullPath: '/onboarding/org/$id'
+      preLoaderRoute: typeof OnboardingOrgIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/organizations/$id': {
       id: '/_authenticated/organizations/$id'
@@ -1106,6 +1126,7 @@ const rootRouteChildren: RootRouteChildren = {
   LegalTermsRoute: LegalTermsRoute,
   OnboardingTokenRoute: OnboardingTokenRoute,
   OnboardingIndexRoute: OnboardingIndexRoute,
+  OnboardingOrgIdRoute: OnboardingOrgIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
