@@ -144,7 +144,12 @@ export const checkSlugAvailable = createServerFn({ method: "GET" })
  * request has no bearer token (signed-out / auth page), so callers never crash.
  */
 export const myOrgMemberships = createServerFn({ method: "GET" }).handler(async () => {
-  const empty: { org_id: string; role: string; org_name: string }[] = [];
+  const empty: {
+    org_id: string;
+    role: string;
+    org_name: string;
+    onboarding_completed_at: string | null;
+  }[] = [];
   const { getRequest } = await import("@tanstack/react-start/server");
   const authHeader = getRequest()?.headers?.get("authorization") ?? "";
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
@@ -166,15 +171,42 @@ export const myOrgMemberships = createServerFn({ method: "GET" }).handler(async 
 
   const { data, error } = await supabase
     .from("org_members")
-    .select("org_id, role, orgs(name)")
+    .select("org_id, role, orgs(name, onboarding_completed_at)")
     .eq("user_id", userId);
   if (error) throw new Error(error.message);
-  return (data ?? []).map((r) => ({
-    org_id: r.org_id as string,
-    role: r.role as string,
-    org_name: ((r as { orgs?: { name?: string } | null }).orgs?.name ?? "Organization") as string,
-  }));
+  return (data ?? []).map((r) => {
+    const org = (r as { orgs?: { name?: string; onboarding_completed_at?: string | null } | null })
+      .orgs;
+    return {
+      org_id: r.org_id as string,
+      role: r.role as string,
+      org_name: (org?.name ?? "Organization") as string,
+      onboarding_completed_at: (org?.onboarding_completed_at ?? null) as string | null,
+    };
+  });
 });
+
+/** Marks an organization's setup flow as finished. */
+export const completeOnboarding = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ orgId: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: canEdit, error: roleErr } = await supabase.rpc("user_can_edit", {
+      _user: userId,
+      _org: data.orgId,
+    });
+    if (roleErr) throw new Error(roleErr.message);
+    if (!canEdit) throw new Error("You don't have permission to edit this organization.");
+
+    const { error } = await supabase
+      .from("orgs")
+      .update({ onboarding_completed_at: new Date().toISOString() } as never)
+      .eq("id", data.orgId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const _rolesUnused: readonly string[] = orgRoleValues;
