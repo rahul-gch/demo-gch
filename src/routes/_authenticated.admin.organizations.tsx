@@ -112,7 +112,7 @@ function AdminOrganizationsPage() {
                 <CardContent>
                   <CreateOrgForm
                     signedIn
-                    onCreated={(id) => nav({ to: "/organizations/$id", params: { id } })}
+                    onCreated={(id) => navigate({ to: "/organizations/$id", params: { id } })}
                   />
 
                 </CardContent>
