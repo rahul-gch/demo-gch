@@ -14,6 +14,7 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as OnboardingIndexRouteImport } from './routes/onboarding.index'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated.index'
 import { Route as OnboardingTokenRouteImport } from './routes/onboarding.$token'
 import { Route as LegalTermsRouteImport } from './routes/legal.terms'
@@ -77,6 +78,11 @@ const AuthRoute = AuthRouteImport.update({
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingIndexRoute = OnboardingIndexRouteImport.update({
+  id: '/onboarding/',
+  path: '/onboarding/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
@@ -327,6 +333,7 @@ export interface FileRoutesByFullPath {
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/terms': typeof LegalTermsRoute
   '/onboarding/$token': typeof OnboardingTokenRoute
+  '/onboarding/': typeof OnboardingIndexRoute
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/directory/$id': typeof AuthenticatedDirectoryIdRoute
   '/organizations/$id': typeof AuthenticatedOrganizationsIdRouteWithChildren
@@ -372,6 +379,7 @@ export interface FileRoutesByTo {
   '/legal/terms': typeof LegalTermsRoute
   '/onboarding/$token': typeof OnboardingTokenRoute
   '/': typeof AuthenticatedIndexRoute
+  '/onboarding': typeof OnboardingIndexRoute
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/directory/$id': typeof AuthenticatedDirectoryIdRoute
   '/organizations': typeof AuthenticatedOrganizationsIndexRoute
@@ -417,6 +425,7 @@ export interface FileRoutesById {
   '/legal/terms': typeof LegalTermsRoute
   '/onboarding/$token': typeof OnboardingTokenRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/onboarding/': typeof OnboardingIndexRoute
   '/_authenticated/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/_authenticated/directory/$id': typeof AuthenticatedDirectoryIdRoute
   '/_authenticated/organizations/$id': typeof AuthenticatedOrganizationsIdRouteWithChildren
@@ -465,6 +474,7 @@ export interface FileRouteTypes {
     | '/legal/privacy'
     | '/legal/terms'
     | '/onboarding/$token'
+    | '/onboarding/'
     | '/admin/organizations'
     | '/directory/$id'
     | '/organizations/$id'
@@ -510,6 +520,7 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/onboarding/$token'
     | '/'
+    | '/onboarding'
     | '/admin/organizations'
     | '/directory/$id'
     | '/organizations'
@@ -554,6 +565,7 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/onboarding/$token'
     | '/_authenticated/'
+    | '/onboarding/'
     | '/_authenticated/admin/organizations'
     | '/_authenticated/directory/$id'
     | '/_authenticated/organizations/$id'
@@ -592,6 +604,7 @@ export interface RootRouteChildren {
   LegalPrivacyRoute: typeof LegalPrivacyRoute
   LegalTermsRoute: typeof LegalTermsRoute
   OnboardingTokenRoute: typeof OnboardingTokenRoute
+  OnboardingIndexRoute: typeof OnboardingIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -629,6 +642,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding/': {
+      id: '/onboarding/'
+      path: '/onboarding'
+      fullPath: '/onboarding/'
+      preLoaderRoute: typeof OnboardingIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/': {
@@ -1085,6 +1105,7 @@ const rootRouteChildren: RootRouteChildren = {
   LegalPrivacyRoute: LegalPrivacyRoute,
   LegalTermsRoute: LegalTermsRoute,
   OnboardingTokenRoute: OnboardingTokenRoute,
+  OnboardingIndexRoute: OnboardingIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
