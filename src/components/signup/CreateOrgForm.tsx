@@ -31,9 +31,11 @@ function slugify(s: string): string {
 /**
  * Step 1 of onboarding — deliberately short. Only identity and location are
  * collected here; every entity-specific business question is asked afterwards
- * in the profile wizard at /organizations/:id/profile-setup.
+ * in the onboarding profile steps.
  */
-export function CreateOrgForm(_props: { signedIn?: boolean } = {}) {
+export function CreateOrgForm({
+  onCreated,
+}: { signedIn?: boolean; onCreated?: (orgId: string) => void } = {}) {
   const nav = useNavigate();
   const createOrgFn = useServerFn(createOrg);
   const queryClient = useQueryClient();
@@ -45,6 +47,7 @@ export function CreateOrgForm(_props: { signedIn?: boolean } = {}) {
   const [website, setWebsite] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
 
   const canSubmit = useMemo(
     () =>
