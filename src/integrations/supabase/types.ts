@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_errors: {
+        Row: {
+          id: string
+          message: string
+          occurred_at: string
+          org_id: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          route: string | null
+          source: string
+          stack: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          id?: string
+          message: string
+          occurred_at?: string
+          org_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          route?: string | null
+          source?: string
+          stack?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          message?: string
+          occurred_at?: string
+          org_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          route?: string | null
+          source?: string
+          stack?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_errors_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "app_errors_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversation_participants: {
         Row: {
           conversation_id: string
