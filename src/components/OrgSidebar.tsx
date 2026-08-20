@@ -5,7 +5,7 @@ import {
   Search,
   MessageSquare,
   Settings,
-  ArrowLeft,
+  
   Building2,
   Rss,
   FolderKanban,
