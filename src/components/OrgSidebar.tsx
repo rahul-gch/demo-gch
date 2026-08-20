@@ -5,7 +5,7 @@ import {
   Search,
   MessageSquare,
   Settings,
-  ArrowLeft,
+  
   Building2,
   Rss,
   FolderKanban,
@@ -17,7 +17,7 @@ import {
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
+  
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -29,20 +29,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import type { Entity } from "@/seed/types";
 import { usePendingMeetingCount, useUnreadTotal } from "@/lib/use-comms";
-import { useQuery } from "@tanstack/react-query";
-import { amIPlatformAdmin } from "@/lib/admin.functions";
 
 export function OrgSidebar({ entity }: { entity: Entity }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const base = `/organizations/${entity.id}`;
   const orgUuid = entity.orgUuid ?? null;
   const inbox = useUnreadTotal(orgUuid) + usePendingMeetingCount(orgUuid);
-  const adminQuery = useQuery({
-    queryKey: ["platform-admin"],
-    queryFn: () => amIPlatformAdmin(),
-    staleTime: 5 * 60_000,
-  });
-  const isAdmin = !!adminQuery.data?.isAdmin;
+
 
   const items = [
     { title: "Home / Feed", url: `${base}/feed`, icon: Rss },
@@ -109,20 +102,6 @@ export function OrgSidebar({ entity }: { entity: Entity }) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      {isAdmin && (
-        <SidebarFooter>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Back to all organizations">
-                <Link to="/organizations" className="flex items-center gap-2">
-                  <ArrowLeft className="h-4 w-4" />
-                  <span>All organizations</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarFooter>
-      )}
     </Sidebar>
   );
 }
