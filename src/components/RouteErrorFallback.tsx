@@ -10,6 +10,10 @@ export function errorMessage(error: unknown): string {
 }
 
 export function RouteErrorFallback({ error }: { error?: unknown }) {
+  useEffect(() => {
+    reportClientError(error);
+  }, [error]);
+
   return (
     <div className="flex min-h-screen items-center justify-center p-6">
       <div className="w-full max-w-md space-y-4 rounded-xl border bg-card p-6 text-center shadow-sm">
