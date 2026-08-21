@@ -11,6 +11,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
+import { installGlobalErrorReporting, reportClientError } from "@/lib/error-log";
 
 
 import { Toaster } from "@/components/ui/sonner";
