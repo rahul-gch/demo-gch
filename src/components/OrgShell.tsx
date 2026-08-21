@@ -33,23 +33,39 @@ export function OrgShell({
       <div className="flex min-h-screen w-full bg-background">
         <OrgSidebar entity={entity} />
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur">
-            <SidebarTrigger />
-            <NavHistoryButtons className="flex" />
-            {isAdmin && (
-              <Button asChild variant="ghost" size="sm" className="shrink-0 gap-1.5">
-                <Link to="/organizations" aria-label="All organizations">
-                  <ArrowLeft className="h-4 w-4" />
-                  <span className="hidden sm:inline">All organizations</span>
-                </Link>
-              </Button>
-            )}
+          <header className="sticky top-0 z-10 flex h-14 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur">
+            <div className="flex shrink-0 items-center gap-1">
+              <SidebarTrigger />
+              <NavHistoryButtons className="flex" />
+              {isAdmin && (
+                <TooltipProvider delayDuration={300}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="sm"
+                        className="h-7 shrink-0 gap-1.5 rounded-full px-2.5 text-xs"
+                      >
+                        <Link to="/organizations" aria-label="All organizations">
+                          <Building2 className="h-3.5 w-3.5" />
+                          <span className="hidden md:inline">All organizations</span>
+                        </Link>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>All organizations</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
+            <div className="h-5 w-px shrink-0 bg-border" />
             <div className="flex min-w-0 flex-1 items-baseline gap-2 text-sm">
               <span className="truncate font-medium">{entity.name}</span>
               <span className="hidden shrink-0 text-muted-foreground sm:inline">
                 · {entity.gchNumber}
               </span>
             </div>
+
             <NotificationBell />
             <UserMenu />
           </header>
