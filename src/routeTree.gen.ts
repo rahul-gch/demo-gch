@@ -34,6 +34,7 @@ import { Route as OnboardingOrgIdRouteImport } from './routes/onboarding.org.$id
 import { Route as AuthenticatedOrganizationsIdRouteImport } from './routes/_authenticated.organizations.$id'
 import { Route as AuthenticatedDirectoryIdRouteImport } from './routes/_authenticated.directory.$id'
 import { Route as AuthenticatedAdminOrganizationsRouteImport } from './routes/_authenticated.admin.organizations'
+import { Route as AuthenticatedAdminLogsRouteImport } from './routes/_authenticated.admin.logs'
 import { Route as AuthenticatedOrganizationsIdIndexRouteImport } from './routes/_authenticated.organizations.$id.index'
 import { Route as AuthenticatedOrganizationsIdSupplyChainRouteImport } from './routes/_authenticated.organizations.$id.supply-chain'
 import { Route as AuthenticatedOrganizationsIdSettingsRouteImport } from './routes/_authenticated.organizations.$id.settings'
@@ -187,6 +188,11 @@ const AuthenticatedAdminOrganizationsRoute =
     path: '/admin/organizations',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedAdminLogsRoute = AuthenticatedAdminLogsRouteImport.update({
+  id: '/admin/logs',
+  path: '/admin/logs',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedOrganizationsIdIndexRoute =
   AuthenticatedOrganizationsIdIndexRouteImport.update({
     id: '/',
@@ -340,6 +346,7 @@ export interface FileRoutesByFullPath {
   '/legal/terms': typeof LegalTermsRoute
   '/onboarding/$token': typeof OnboardingTokenRoute
   '/onboarding/': typeof OnboardingIndexRoute
+  '/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/directory/$id': typeof AuthenticatedDirectoryIdRoute
   '/organizations/$id': typeof AuthenticatedOrganizationsIdRouteWithChildren
@@ -387,6 +394,7 @@ export interface FileRoutesByTo {
   '/onboarding/$token': typeof OnboardingTokenRoute
   '/': typeof AuthenticatedIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
+  '/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/directory/$id': typeof AuthenticatedDirectoryIdRoute
   '/onboarding/org/$id': typeof OnboardingOrgIdRoute
@@ -434,6 +442,7 @@ export interface FileRoutesById {
   '/onboarding/$token': typeof OnboardingTokenRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
+  '/_authenticated/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/_authenticated/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/_authenticated/directory/$id': typeof AuthenticatedDirectoryIdRoute
   '/_authenticated/organizations/$id': typeof AuthenticatedOrganizationsIdRouteWithChildren
@@ -484,6 +493,7 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/onboarding/$token'
     | '/onboarding/'
+    | '/admin/logs'
     | '/admin/organizations'
     | '/directory/$id'
     | '/organizations/$id'
@@ -531,6 +541,7 @@ export interface FileRouteTypes {
     | '/onboarding/$token'
     | '/'
     | '/onboarding'
+    | '/admin/logs'
     | '/admin/organizations'
     | '/directory/$id'
     | '/onboarding/org/$id'
@@ -577,6 +588,7 @@ export interface FileRouteTypes {
     | '/onboarding/$token'
     | '/_authenticated/'
     | '/onboarding/'
+    | '/_authenticated/admin/logs'
     | '/_authenticated/admin/organizations'
     | '/_authenticated/directory/$id'
     | '/_authenticated/organizations/$id'
@@ -795,6 +807,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/organizations'
       fullPath: '/admin/organizations'
       preLoaderRoute: typeof AuthenticatedAdminOrganizationsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/admin/logs': {
+      id: '/_authenticated/admin/logs'
+      path: '/admin/logs'
+      fullPath: '/admin/logs'
+      preLoaderRoute: typeof AuthenticatedAdminLogsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/organizations/$id/': {
@@ -1083,6 +1102,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedPrivacyRoute: typeof AuthenticatedPrivacyRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedAdminLogsRoute: typeof AuthenticatedAdminLogsRoute
   AuthenticatedAdminOrganizationsRoute: typeof AuthenticatedAdminOrganizationsRoute
   AuthenticatedDirectoryIdRoute: typeof AuthenticatedDirectoryIdRoute
 }
@@ -1097,6 +1117,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedPrivacyRoute: AuthenticatedPrivacyRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedAdminLogsRoute: AuthenticatedAdminLogsRoute,
   AuthenticatedAdminOrganizationsRoute: AuthenticatedAdminOrganizationsRoute,
   AuthenticatedDirectoryIdRoute: AuthenticatedDirectoryIdRoute,
 }

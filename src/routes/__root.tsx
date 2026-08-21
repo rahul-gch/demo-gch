@@ -11,6 +11,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
+import { installGlobalErrorReporting, reportClientError } from "@/lib/error-log";
 
 
 import { Toaster } from "@/components/ui/sonner";
@@ -42,6 +43,9 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
+  useEffect(() => {
+    reportClientError(error);
+  }, [error]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -120,6 +124,8 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
   const subRef = useRef<{ unsubscribe: () => void } | null>(null);
+
+  useEffect(() => installGlobalErrorReporting(), []);
 
   useEffect(() => {
     let mounted = true;

@@ -39,7 +39,12 @@ export const Route = createFileRoute("/_authenticated")({
     // Organization setup is a separate full-screen flow outside the app shell.
     // Users whose every organization is still mid-setup stay inside it.
     if (!admin?.isAdmin && (memberships?.length ?? 0) > 0) {
-      const pending = memberships.filter((m) => !m.onboarding_completed_at);
+      // Only members who can actually edit the organization can finish setup;
+      // viewers would otherwise be trapped in a flow they can never complete.
+      const canSetUp = (role: string) => role === "owner" || role === "admin" || role === "editor";
+      const pending = memberships.filter(
+        (m) => !m.onboarding_completed_at && canSetUp(String(m.role)),
+      );
       if (pending.length === memberships.length) {
         throw redirect({
           to: "/onboarding/org/$id",
