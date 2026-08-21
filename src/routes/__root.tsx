@@ -125,6 +125,8 @@ function RootComponent() {
   const router = useRouter();
   const subRef = useRef<{ unsubscribe: () => void } | null>(null);
 
+  useEffect(() => installGlobalErrorReporting(), []);
+
   useEffect(() => {
     let mounted = true;
     void import("@/integrations/supabase/client").then(({ supabase }) => {
