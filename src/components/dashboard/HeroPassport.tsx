@@ -27,10 +27,7 @@ function Stat({ label, value, icon: Icon }: { label: string; value: string | num
 export function HeroPassport({ entity: e }: { entity: Entity }) {
   const nhri = computeNhri(e);
   const seeded = isSeededOrg(e);
-  const conns = getEcosystemConnections(e);
-  const partners = seeded ? conns.length + 48 : conns.length;
-  const members = seeded ? e.contacts.length + 12 : e.contacts.length;
-  const projects = seeded ? 6 + (conns.length % 6) : 0;
+  const members = e.contacts.length;
   const stars = Math.max(0, Math.min(5, Math.round(nhri.score / 20)));
 
   const [logoFailed, setLogoFailed] = useState(false);
