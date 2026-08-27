@@ -3,20 +3,20 @@ import type { Entity } from "@/seed/types";
 import { Badge } from "@/components/ui/badge";
 import { VerificationBadge } from "@/components/StatusBadge";
 import { bandBadgeClasses, computeNhri } from "@/lib/nhri";
-import { getEcosystemConnections, isSeededOrg } from "@/seed/showcase";
+import { isSeededOrg } from "@/seed/showcase";
 import { MapPin, Users2, FolderKanban, Network as NetworkIcon, ShieldCheck, Star } from "lucide-react";
 import { HeroBackground, deriveDomain, entityInitials } from "./OrgBanner";
 import { useResolvedImage } from "@/lib/use-org-images";
 
 function Stat({ label, value, icon: Icon }: { label: string; value: string | number; icon?: React.ComponentType<{ className?: string }> }) {
   return (
-    <div className="flex flex-col items-start gap-1.5 rounded-lg border border-white/20 bg-white/10 p-3 backdrop-blur">
-      <div className="text-[10px] font-semibold uppercase tracking-wider text-white/75">
+    <div className="flex h-full min-w-0 flex-col justify-between rounded-lg border border-white/20 bg-white/10 p-3 backdrop-blur">
+      <div className="min-h-[2rem] text-[10px] font-semibold uppercase leading-4 tracking-wider text-white/75">
         {label}
       </div>
-      <div className="flex w-full items-center gap-1.5">
+      <div className="mt-1.5 flex w-full min-w-0 items-center gap-1.5">
         {Icon && <Icon className="h-4 w-4 shrink-0 text-sky-300" />}
-        <span className="truncate text-lg font-semibold tabular-nums text-white md:text-xl">
+        <span className="min-w-0 truncate text-lg font-semibold leading-none tabular-nums text-white md:text-xl">
           {value}
         </span>
       </div>
@@ -27,10 +27,7 @@ function Stat({ label, value, icon: Icon }: { label: string; value: string | num
 export function HeroPassport({ entity: e }: { entity: Entity }) {
   const nhri = computeNhri(e);
   const seeded = isSeededOrg(e);
-  const conns = getEcosystemConnections(e);
-  const partners = seeded ? conns.length + 48 : conns.length;
-  const members = seeded ? e.contacts.length + 12 : e.contacts.length;
-  const projects = seeded ? 6 + (conns.length % 6) : 0;
+  const members = e.contacts.length;
   const stars = Math.max(0, Math.min(5, Math.round(nhri.score / 20)));
 
   const [logoFailed, setLogoFailed] = useState(false);
@@ -97,13 +94,11 @@ export function HeroPassport({ entity: e }: { entity: Entity }) {
             </span>
           </div>
 
-          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="mt-6 grid grid-cols-2 items-stretch gap-3 sm:grid-cols-4">
             <Stat label="NHRI Score" value={nhri.score} />
             <Stat label="Profile" value={`${e.profileCompleteness}%`} />
             <Stat label="Global Rank" value={seeded ? `#${nhri.globalRank}` : "—"} />
             <Stat label="Members" value={members} icon={Users2} />
-            <Stat label="Projects" value={projects} icon={FolderKanban} />
-            <Stat label="Partners" value={partners} icon={NetworkIcon} />
           </div>
         </div>
 
