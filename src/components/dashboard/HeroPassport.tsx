@@ -97,13 +97,11 @@ export function HeroPassport({ entity: e }: { entity: Entity }) {
             </span>
           </div>
 
-          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="mt-6 grid grid-cols-2 items-stretch gap-3 sm:grid-cols-4">
             <Stat label="NHRI Score" value={nhri.score} />
             <Stat label="Profile" value={`${e.profileCompleteness}%`} />
             <Stat label="Global Rank" value={seeded ? `#${nhri.globalRank}` : "—"} />
             <Stat label="Members" value={members} icon={Users2} />
-            <Stat label="Projects" value={projects} icon={FolderKanban} />
-            <Stat label="Partners" value={partners} icon={NetworkIcon} />
           </div>
         </div>
 
