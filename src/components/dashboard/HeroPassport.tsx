@@ -3,7 +3,7 @@ import type { Entity } from "@/seed/types";
 import { Badge } from "@/components/ui/badge";
 import { VerificationBadge } from "@/components/StatusBadge";
 import { bandBadgeClasses, computeNhri } from "@/lib/nhri";
-import { getEcosystemConnections, isSeededOrg } from "@/seed/showcase";
+import { isSeededOrg } from "@/seed/showcase";
 import { MapPin, Users2, FolderKanban, Network as NetworkIcon, ShieldCheck, Star } from "lucide-react";
 import { HeroBackground, deriveDomain, entityInitials } from "./OrgBanner";
 import { useResolvedImage } from "@/lib/use-org-images";
