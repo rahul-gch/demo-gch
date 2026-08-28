@@ -1,47 +1,47 @@
-# Showroom + cleaner dashboard overview
+# Dashboard redesign + sample products on manufacturer profiles
 
-## 1. Hide two panels from the org Overview
+## Part 1 — Organization dashboard: information and layout
 
-On the organization dashboard, the Overview tab currently repeats "Ecosystem network" and "Supply chain snapshot". Remove both from Overview only — they stay available on the **Network** tab, so nothing is lost.
+Today the Overview tab is a long vertical stack of full-width cards (hero, AI command center, health score, actions strip, passport, operations, KPIs, missing data, readiness, opportunities, activity). Everything has equal weight, so nothing reads as "what matters now".
 
-## 2. New feature: Showroom
+**New Overview structure**
 
-A product catalogue per organization, with sample ordering.
+```text
++--------------------------------------------------------------+
+|  Banner + logo + org identity + primary actions               |
++--------------------------------------------------------------+
+|  Readiness score ring  |  4 compact stat tiles (members,      |
+|  + band + delta        |  documents, sample orders, messages) |
++--------------------------------------------------------------+
+|  LEFT (2/3)                        |  RIGHT (1/3, sticky)     |
+|  - Action queue (top 3-5 tasks)    |  - Profile completeness  |
+|  - Performance KPI grid            |  - Missing data checklist|
+|  - Showroom strip (products)       |  - Recent activity       |
+|  - Opportunities                   |                          |
++--------------------------------------------------------------+
+```
 
-**Product (minimal fields)**
-- Name, description, images, materials
+Concrete changes:
+- Two-column grid on desktop (`lg:grid-cols-3`, main span 2, sticky right rail), single column on mobile.
+- Merge `HealthScoreCard` + `ReadinessBreakdown` into one compact score card with a ring and three sub-bars, so the score appears once instead of on three tabs.
+- Merge `CriticalActionsStrip` + the AI command center's suggestions into a single **Action queue** list: each row = title, why it matters, one button.
+- Replace the ad-hoc stat rows with one reusable `StatTile` component so numbers, labels, and units align consistently everywhere.
+- Keep every existing tab (Insights, Performance, Network, AI, Documents, Activity) and its contents; only Overview is re-composed. Deduplicated panels stay reachable on their tab.
+- Unify visual language: same card radius/border/shadow, consistent section headers (uppercase label + muted hint), tabular numerals for all figures, no new colors outside existing tokens.
+- Empty states: a non-seeded org shows a short "add this to raise your score" prompt instead of a zeroed chart.
 
-**Who sees what**
-- The owning organization manages its own products (add / edit / delete).
-- Other organizations see the showroom only if they are a **connected partner** — i.e. they already share a conversation or a project with the owning org.
-- Non-connected orgs see the Showroom tab with a short "Connect first" note and a "Send message" action.
+## Part 2 — Sample products in manufacturer profiles
 
-**Sample order flow**
-1. A connected partner opens a product and clicks **Order sample**.
-2. Form: quantity, chosen material, colour/notes, shipping address, needed-by date.
-3. Request is created with status `requested`, and a conversation between the two orgs is auto-created (or reused) with a first message summarising the request, so the discussion lives in Messages.
-4. Seller sees an **Inbound** tab, buyer an **Outbound** tab, with actions: Accept, Decline, Mark shipped, Mark delivered; buyer can Withdraw while still pending.
-5. Both parties get a notification; counts feed the existing Messages/Requests badges.
+Showroom exists as its own page. Manufacturer-type orgs (Fabric Mill, Garment Factory, Spinner, Ginner, Dye House, Farmer) should show their products as part of their profile, not only behind a separate tab.
 
-**Where it lives**
-- New "Showroom" entry in the organization sidebar → `/organizations/$id/showroom`, with two tabs: *Products* and *Sample orders*.
-- New "Showroom" section on the public directory profile (`/directory/$id`) so partners can browse and order from there.
+- **Own dashboard Overview**: a "Showroom" strip — horizontal cards of up to 6 products, an "Add product" button when the viewer can edit, and a link to the full showroom. Hidden entirely for non-manufacturer entity types (Brand, Certification Body, Logistics, Sustainability Partner).
+- **Public directory profile**: the existing showroom section is promoted higher in the page for manufacturers, directly under the capabilities block, with the "Order sample" action on each card (kept behind the existing connected-partner rule).
+- **Onboarding / profile setup**: for manufacturer entity types, add an optional final step "Add your first product" (name, materials, one image) that writes a `showroom_products` row, so new manufacturers do not land on an empty showroom.
+- **Product card fields** stay as-is (name, description, images, materials); no schema change needed.
 
 ## Technical notes
 
-Database (migration, with GRANTs + RLS in the same migration):
-- `showroom_products`: `id`, `org_id`, `name`, `description`, `images jsonb`, `materials text[]`, `is_active`, timestamps.
-- `sample_orders`: `id`, `product_id`, `seller_org_id`, `buyer_org_id`, `requested_by`, `quantity`, `material`, `notes`, `shipping_address`, `needed_by`, `status`, `conversation_id`, timestamps.
-- Helper `public.orgs_are_connected(_org_a uuid, _org_b uuid)` (security definer): true when the two orgs share a `conversation_participants` conversation or a project (owner/partner). Used by RLS.
-- Product SELECT: members of `org_id`, or members of an org connected to it. INSERT/UPDATE/DELETE: `user_can_edit(auth.uid(), org_id)`.
-- Sample order SELECT: members of buyer or seller org. INSERT: member of buyer org and connected. UPDATE: seller for status transitions, buyer for withdraw.
-- Product images uploaded to a new private `showroom` storage bucket, read through signed URLs like the existing branding/report uploads.
-
-Code:
-- `src/lib/showroom.functions.ts` — `listProducts`, `upsertProduct`, `deleteProduct`, `createSampleOrder` (calls `get_or_create_conversation` + `sendMessage` logic), `listSampleOrders`, `updateSampleOrderStatus`; all under `requireSupabaseAuth`.
-- `src/lib/use-showroom.ts` — React Query hooks.
-- `src/components/showroom/` — `ShowroomWorkspace.tsx`, `ProductCard.tsx`, `ProductEditorDialog.tsx`, `SampleOrderDialog.tsx`, `SampleOrdersPanel.tsx`.
-- Route `src/routes/_authenticated.organizations.$id.showroom.tsx`; sidebar item in `OrgSidebar.tsx`; showroom section added to `PublicOrgProfile.tsx`.
-- Overview change: drop `EcosystemSummary` and `SupplyChainSnapshot` from `OverviewMissionControl` in `src/routes/_authenticated.organizations.$id.index.tsx`.
-
-No dummy data is seeded — every showroom starts empty.
+- New: `src/components/dashboard/StatTile.tsx`, `src/components/dashboard/ScoreCard.tsx` (merged score), `src/components/dashboard/ActionQueue.tsx`, `src/components/showroom/ShowroomStrip.tsx`.
+- Edited: `src/routes/_authenticated.organizations.$id.index.tsx` (Overview re-composition only), `HeroPassport.tsx`, `directory/PublicOrgProfile.tsx` (section order), `routes/_authenticated.organizations.$id.profile-setup.tsx` (optional product step).
+- A shared `isManufacturer(entityType)` helper in `src/lib/org-types.ts` gates the product surfaces.
+- No database migration, no changes to showroom RLS or server functions; the strip reuses `useShowroomProducts`.
