@@ -1321,6 +1321,93 @@ export type Database = {
           },
         ]
       }
+      sample_orders: {
+        Row: {
+          buyer_org_id: string
+          conversation_id: string | null
+          created_at: string
+          id: string
+          material: string | null
+          needed_by: string | null
+          notes: string | null
+          product_id: string | null
+          quantity: number
+          requested_by: string | null
+          seller_org_id: string
+          shipping_address: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          buyer_org_id: string
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          material?: string | null
+          needed_by?: string | null
+          notes?: string | null
+          product_id?: string | null
+          quantity?: number
+          requested_by?: string | null
+          seller_org_id: string
+          shipping_address: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          buyer_org_id?: string
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          material?: string | null
+          needed_by?: string | null
+          notes?: string | null
+          product_id?: string | null
+          quantity?: number
+          requested_by?: string | null
+          seller_org_id?: string
+          shipping_address?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sample_orders_buyer_org_id_fkey"
+            columns: ["buyer_org_id"]
+            isOneToOne: false
+            referencedRelation: "org_public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sample_orders_buyer_org_id_fkey"
+            columns: ["buyer_org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sample_orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "showroom_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sample_orders_seller_org_id_fkey"
+            columns: ["seller_org_id"]
+            isOneToOne: false
+            referencedRelation: "org_public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sample_orders_seller_org_id_fkey"
+            columns: ["seller_org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       security_events: {
         Row: {
           action: string
@@ -1362,6 +1449,57 @@ export type Database = {
           },
           {
             foreignKeyName: "security_events_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      showroom_products: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          images: string[]
+          is_active: boolean
+          materials: string[]
+          name: string
+          org_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          images?: string[]
+          is_active?: boolean
+          materials?: string[]
+          name: string
+          org_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          images?: string[]
+          is_active?: boolean
+          materials?: string[]
+          name?: string
+          org_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "showroom_products_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "showroom_products_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "orgs"
@@ -1520,6 +1658,10 @@ export type Database = {
       }
       is_project_partner: {
         Args: { _project: string; _user: string }
+        Returns: boolean
+      }
+      orgs_are_connected: {
+        Args: { _org_a: string; _org_b: string }
         Returns: boolean
       }
       platform_admin_domains: { Args: never; Returns: string[] }
