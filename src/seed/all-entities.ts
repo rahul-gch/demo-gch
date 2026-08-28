@@ -73,7 +73,9 @@ export function hydrateEntities(entities: Entity[]) {
   summaryMetrics.incomplete = entities.filter((e) => e.verificationStatus === "Incomplete").length;
   summaryMetrics.flagged = entities.filter((e) => e.verificationStatus === "Flagged").length;
   summaryMetrics.highRisk = entities.filter((e) => e.riskLevel === "High").length;
-  summaryMetrics.avgConfidence = Math.round(entities.reduce((s, e) => s + e.confidenceScore, 0) / n);
+  summaryMetrics.avgConfidence = Math.round(
+    entities.reduce((s, e) => s + e.confidenceScore, 0) / n,
+  );
   summaryMetrics.avgCompleteness = Math.round(
     entities.reduce((s, e) => s + e.profileCompleteness, 0) / n,
   );
@@ -84,7 +86,9 @@ export function hydrateEntities(entities: Entity[]) {
   const map = new Map<string, number>();
   for (const e of entities) map.set(e.entityType, (map.get(e.entityType) || 0) + 1);
   ENTITY_TYPE_BREAKDOWN.length = 0;
-  ENTITY_TYPE_BREAKDOWN.push(...Array.from(map.entries()).map(([type, count]) => ({ type, count })));
+  ENTITY_TYPE_BREAKDOWN.push(
+    ...Array.from(map.entries()).map(([type, count]) => ({ type, count })),
+  );
 
   for (const fn of hydrationListeners) fn();
 }

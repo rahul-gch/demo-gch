@@ -69,7 +69,6 @@ const WEIGHTS = [
   { name: "Evidence strength", weight: 5 },
 ];
 
-
 function SettingsPage() {
   return (
     <AppShell>
@@ -88,7 +87,12 @@ function SettingsPage() {
           <CardContent className="grid gap-4 md:grid-cols-3">
             <Field id="threshold" label="Confidence threshold" defaultValue="70" suffix="%" />
             <Field id="verified-min" label="Verified score (min)" defaultValue="85" suffix="%" />
-            <Field id="low-warning" label="Low confidence warning below" defaultValue="60" suffix="%" />
+            <Field
+              id="low-warning"
+              label="Low confidence warning below"
+              defaultValue="60"
+              suffix="%"
+            />
           </CardContent>
         </Card>
 
@@ -100,13 +104,17 @@ function SettingsPage() {
             </p>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Field id="target-delivery" label="Target delivery timeframe" defaultValue="30" suffix="days" />
+            <Field
+              id="target-delivery"
+              label="Target delivery timeframe"
+              defaultValue="30"
+              suffix="days"
+            />
             <Field id="max-delay" label="Max acceptable delay" defaultValue="5" suffix="days" />
             <Field id="min-ontime" label="Min on-time delivery rate" defaultValue="85" suffix="%" />
             <Field id="delay-penalty" label="Delay penalty weight" defaultValue="10" suffix="%" />
           </CardContent>
         </Card>
-
 
         <Card className="shadow-sm">
           <CardHeader>

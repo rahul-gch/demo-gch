@@ -129,10 +129,10 @@ function OrgMessagesPage() {
         {infoOpen && activeEntity && (
           <div className="hidden min-h-0 min-w-0 xl:block">
             <OrgInfoSidebar
-                entity={activeEntity}
-                myOrgId={orgId}
-                counterpartOrgId={active?.counterpartOrgId ?? null}
-              />
+              entity={activeEntity}
+              myOrgId={orgId}
+              counterpartOrgId={active?.counterpartOrgId ?? null}
+            />
           </div>
         )}
       </div>
@@ -145,10 +145,10 @@ function OrgMessagesPage() {
               Profile, shared documents, and actions for the selected organization.
             </SheetDescription>
             <OrgInfoSidebar
-                entity={activeEntity}
-                myOrgId={orgId}
-                counterpartOrgId={active?.counterpartOrgId ?? null}
-              />
+              entity={activeEntity}
+              myOrgId={orgId}
+              counterpartOrgId={active?.counterpartOrgId ?? null}
+            />
           </SheetContent>
         </Sheet>
       )}

@@ -78,11 +78,21 @@ export function MeetingRequestDialog({
           <div className="grid grid-cols-3 gap-3">
             <div className="col-span-1">
               <Label htmlFor="mr-date">Date</Label>
-              <Input id="mr-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+              <Input
+                id="mr-date"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+              />
             </div>
             <div className="col-span-1">
               <Label htmlFor="mr-time">Time</Label>
-              <Input id="mr-time" type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+              <Input
+                id="mr-time"
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+              />
             </div>
             <div className="col-span-1">
               <Label htmlFor="mr-dur">Duration (min)</Label>
@@ -107,7 +117,9 @@ export function MeetingRequestDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
           <Button onClick={submit} disabled={createMeeting.isPending}>
             {createMeeting.isPending ? "Sending…" : "Send request"}
           </Button>

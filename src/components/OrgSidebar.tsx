@@ -5,19 +5,16 @@ import {
   Search,
   MessageSquare,
   Settings,
-  
   Building2,
   Rss,
   FolderKanban,
   Network,
   ShieldCheck,
-  
   Inbox,
 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
-  
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -36,7 +33,6 @@ export function OrgSidebar({ entity }: { entity: Entity }) {
   const orgUuid = entity.orgUuid ?? null;
   const inbox = useUnreadTotal(orgUuid) + usePendingMeetingCount(orgUuid);
 
-
   const items = [
     { title: "Home / Feed", url: `${base}/feed`, icon: Rss },
     { title: "Dashboard", url: base, icon: LayoutDashboard, exact: true },
@@ -51,7 +47,7 @@ export function OrgSidebar({ entity }: { entity: Entity }) {
       badge: inbox,
     },
     { title: "Compliance", url: `${base}/compliance`, icon: ShieldCheck },
-    
+
     { title: "Requests", url: `${base}/requests`, icon: Inbox },
     { title: "Settings", url: `${base}/settings`, icon: Settings },
   ];

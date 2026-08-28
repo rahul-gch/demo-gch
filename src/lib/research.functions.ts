@@ -65,9 +65,18 @@ Return concise, structured candidates with a one-sentence rationale per candidat
       const message = err instanceof Error ? err.message : String(err);
       const lower = message.toLowerCase();
       if (!process.env.LOVABLE_API_KEY || lower.includes("missing lovable_api_key")) {
-        throw new Error("AI suggestions disabled — Lovable AI is not configured for this workspace.");
+        throw new Error(
+          "AI suggestions disabled — Lovable AI is not configured for this workspace.",
+        );
       }
-      if (lower.includes("402") || lower.includes("payment required") || lower.includes("insufficient") || lower.includes("credits") || lower.includes("quota") || lower.includes("balance")) {
+      if (
+        lower.includes("402") ||
+        lower.includes("payment required") ||
+        lower.includes("insufficient") ||
+        lower.includes("credits") ||
+        lower.includes("quota") ||
+        lower.includes("balance")
+      ) {
         throw new Error("AI credits exhausted — top up Lovable AI to enable external suggestions.");
       }
       if (lower.includes("429") || lower.includes("rate")) {

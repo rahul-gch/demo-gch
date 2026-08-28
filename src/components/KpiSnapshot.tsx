@@ -14,9 +14,7 @@ export function KpiSnapshot({ entity }: { entity: Entity }) {
               {k.kpi.id} · {k.kpi.category}
             </div>
             <div className="mt-1 text-sm font-medium leading-tight">{k.kpi.name}</div>
-            <div className="mt-2 text-2xl font-semibold tabular-nums">
-              {k.displayValue}
-            </div>
+            <div className="mt-2 text-2xl font-semibold tabular-nums">{k.displayValue}</div>
             <div className="mt-2 flex items-center justify-between">
               <Badge variant="outline" className={`text-[10px] ${confidenceClasses(k.band.tone)}`}>
                 {k.reported ? `${k.band.label} · ${k.confidence}%` : "Not reported"}

@@ -71,7 +71,11 @@ export function PassportCards({ entity }: { entity: Entity }) {
         entity={entity}
         href="/organizations/$id"
         title="Identity"
-        stripe={<><Globe2 className="h-3 w-3" /> Passport</>}
+        stripe={
+          <>
+            <Globe2 className="h-3 w-3" /> Passport
+          </>
+        }
         tone="bg-slate-900"
         metric={entity.actorType.replace("Tier ", "T")}
         metricLabel={entity.country}
@@ -85,7 +89,11 @@ export function PassportCards({ entity }: { entity: Entity }) {
         entity={entity}
         href="/organizations/$id/supply-chain"
         title="Supply chain"
-        stripe={<><Globe2 className="h-3 w-3" /> Network</>}
+        stripe={
+          <>
+            <Globe2 className="h-3 w-3" /> Network
+          </>
+        }
         tone="bg-sky-700"
         metric={String(sc.suppliers)}
         metricLabel="suppliers"
@@ -99,7 +107,11 @@ export function PassportCards({ entity }: { entity: Entity }) {
         entity={entity}
         href="/organizations/$id/compliance"
         title="Compliance"
-        stripe={<><ShieldCheck className="h-3 w-3" /> Trust</>}
+        stripe={
+          <>
+            <ShieldCheck className="h-3 w-3" /> Trust
+          </>
+        }
         tone="bg-emerald-700"
         metric={`${compliance}%`}
         metricLabel="verified"
@@ -113,7 +125,11 @@ export function PassportCards({ entity }: { entity: Entity }) {
         entity={entity}
         href="/organizations/$id"
         title="AI Health"
-        stripe={<><Sparkles className="h-3 w-3" /> NHRI</>}
+        stripe={
+          <>
+            <Sparkles className="h-3 w-3" /> NHRI
+          </>
+        }
         tone="bg-amber-600"
         metric={String(nhri.score)}
         metricLabel={nhri.band}

@@ -48,13 +48,8 @@ export function CreateOrgForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-
   const canSubmit = useMemo(
-    () =>
-      name.trim().length >= 2 &&
-      type.length >= 2 &&
-      country.trim().length >= 2 &&
-      !submitting,
+    () => name.trim().length >= 2 && type.length >= 2 && country.trim().length >= 2 && !submitting,
     [name, type, country, submitting],
   );
 
@@ -64,8 +59,6 @@ export function CreateOrgForm({
     setSubmitting(true);
     setError(null);
     try {
-
-
       const site = website.trim();
       const res = await createOrgFn({
         data: {
@@ -86,7 +79,6 @@ export function CreateOrgForm({
         nav({ to: "/onboarding/org/$id", params: { id: res.id }, replace: true });
       }
     } catch (err) {
-
       const message = err instanceof Error ? err.message : "Failed to create organization";
       setError(message);
       toast.error(message);
@@ -97,8 +89,6 @@ export function CreateOrgForm({
 
   return (
     <form onSubmit={submit} className="space-y-5">
-
-
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5 sm:col-span-2">
           <Label htmlFor="org-name">Organization name *</Label>

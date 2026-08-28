@@ -31,15 +31,15 @@ export function HealthScoreCard({ entity }: { entity: Entity }) {
                 No benchmark yet — complete your profile to start scoring.
               </div>
             ) : (
-            <div className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-              {delta >= 0 ? (
-                <TrendingUp className="h-3.5 w-3.5 text-emerald-600" />
-              ) : (
-                <TrendingDown className="h-3.5 w-3.5 text-red-600" />
-              )}
-              {delta >= 0 ? "+" : ""}
-              {delta} vs {entity.entityType} peers · Rank #{nhri.globalRank} of {nhri.totalRanked}
-            </div>
+              <div className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                {delta >= 0 ? (
+                  <TrendingUp className="h-3.5 w-3.5 text-emerald-600" />
+                ) : (
+                  <TrendingDown className="h-3.5 w-3.5 text-red-600" />
+                )}
+                {delta >= 0 ? "+" : ""}
+                {delta} vs {entity.entityType} peers · Rank #{nhri.globalRank} of {nhri.totalRanked}
+              </div>
             )}
           </div>
 

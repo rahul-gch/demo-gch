@@ -17,7 +17,6 @@ interface FileEntry {
   updated_at?: string;
 }
 
-
 export function ReportUploader({ entity }: { entity: Entity }) {
   const [session, setSession] = useState<unknown | null>(null);
   const [files, setFiles] = useState<FileEntry[]>([]);
@@ -63,7 +62,8 @@ export function ReportUploader({ entity }: { entity: Entity }) {
     setUploading(true);
     const path = `${folder}/${Date.now()}-${safeFileName(file.name)}`;
     const { error } = await supabase.storage.from("reports").upload(path, file, {
-      cacheControl: "3600", upsert: false,
+      cacheControl: "3600",
+      upsert: false,
     });
     setUploading(false);
     e.target.value = "";
@@ -89,14 +89,19 @@ export function ReportUploader({ entity }: { entity: Entity }) {
     }
     // Storage returns an empty array (no error) when RLS blocks the delete.
     if (!data || data.length === 0) {
-      toast.error("You are not authorised to delete this file. Only the person who uploaded it can remove it.");
+      toast.error(
+        "You are not authorised to delete this file. Only the person who uploaded it can remove it.",
+      );
       return;
     }
     toast.success("File removed");
-    void logSecurityEvent("document.deleted", { orgId: entity.id, targetType: "reports", targetId: `${folder}/${name}` });
+    void logSecurityEvent("document.deleted", {
+      orgId: entity.id,
+      targetType: "reports",
+      targetId: `${folder}/${name}`,
+    });
     list();
   };
-
 
   /**
    * Private bucket: never expose a public URL. Authorisation is re-checked by
@@ -110,7 +115,11 @@ export function ReportUploader({ entity }: { entity: Entity }) {
       toast.error(error?.message ?? "You are not authorised to download this file");
       return;
     }
-    void logSecurityEvent("document.downloaded", { orgId: entity.id, targetType: "reports", targetId: `${folder}/${name}` });
+    void logSecurityEvent("document.downloaded", {
+      orgId: entity.id,
+      targetType: "reports",
+      targetId: `${folder}/${name}`,
+    });
     window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   };
 
@@ -120,14 +129,18 @@ export function ReportUploader({ entity }: { entity: Entity }) {
         <div>
           <CardTitle className="text-base font-semibold">Uploaded reports</CardTitle>
           <p className="mt-1 text-xs text-muted-foreground">
-            Sustainability reports, audits and certificates. Stored privately — only members of
-            this organization can open them, through short-lived signed links. Max 20&nbsp;MB
-            ({ALLOWED_DOCUMENT_EXTENSIONS.join(", ")}).
+            Sustainability reports, audits and certificates. Stored privately — only members of this
+            organization can open them, through short-lived signed links. Max 20&nbsp;MB (
+            {ALLOWED_DOCUMENT_EXTENSIONS.join(", ")}).
           </p>
         </div>
         {session ? (
           <label className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800">
-            {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+            {uploading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Upload className="h-3.5 w-3.5" />
+            )}
             {uploading ? "Uploading…" : "Upload report"}
             <input
               type="file"
@@ -147,7 +160,9 @@ export function ReportUploader({ entity }: { entity: Entity }) {
         {loading && <div className="px-5 py-3 text-xs text-muted-foreground">Loading…</div>}
         {!loading && files.length === 0 && (
           <div className="px-5 py-6 text-sm text-muted-foreground">
-            {session ? "No reports uploaded yet." : "Sign in to upload sustainability reports for this organization."}
+            {session
+              ? "No reports uploaded yet."
+              : "Sign in to upload sustainability reports for this organization."}
           </div>
         )}
         {files.length > 0 && (
@@ -160,16 +175,32 @@ export function ReportUploader({ entity }: { entity: Entity }) {
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-medium">{f.name.replace(/^\d+-/, "")}</div>
                   <div className="text-xs text-muted-foreground">
-                    {Math.max(1, Math.round((f.metadata?.size || 0) / 1024))} KB · uploaded {(f.created_at || "").slice(0, 10)}
+                    {Math.max(1, Math.round((f.metadata?.size || 0) / 1024))} KB · uploaded{" "}
+                    {(f.created_at || "").slice(0, 10)}
                   </div>
                 </div>
-                <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
+                <Badge
+                  variant="outline"
+                  className="border-emerald-200 bg-emerald-50 text-emerald-700"
+                >
                   Stored
                 </Badge>
-                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onDownload(f.name)} title="Download">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7"
+                  onClick={() => onDownload(f.name)}
+                  title="Download"
+                >
                   <Download className="h-3.5 w-3.5" />
                 </Button>
-                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onDelete(f.name)} title="Delete">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7"
+                  onClick={() => onDelete(f.name)}
+                  title="Delete"
+                >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </li>

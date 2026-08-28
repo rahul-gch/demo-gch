@@ -2,12 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function NavHistoryButtons({ className }: { className?: string }) {
   const href = useRouterState({ select: (s) => s.location.href });
@@ -51,38 +46,38 @@ export function NavHistoryButtons({ className }: { className?: string }) {
 
   return (
     <TooltipProvider delayDuration={300}>
-    <div className={`flex items-center gap-0.5 ${className ?? ""}`}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            aria-label="Back"
-            disabled={!canBack}
-            onClick={goBack}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>Back</TooltipContent>
-      </Tooltip>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            aria-label="Forward"
-            disabled={!canForward}
-            onClick={goForward}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>Forward</TooltipContent>
-      </Tooltip>
-    </div>
+      <div className={`flex items-center gap-0.5 ${className ?? ""}`}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              aria-label="Back"
+              disabled={!canBack}
+              onClick={goBack}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Back</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              aria-label="Forward"
+              disabled={!canForward}
+              onClick={goForward}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Forward</TooltipContent>
+        </Tooltip>
+      </div>
     </TooltipProvider>
   );
 }

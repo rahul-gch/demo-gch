@@ -71,14 +71,54 @@ const TC_ISSUERS = ["Control Union", "CU Inspections", "Ecocert", "ICEA"];
 const BUYERS = ["Nike Inc.", "H&M Group", "Primark", "Marks & Spencer", "Zalando", "Puma"];
 
 const FINDING_TEMPLATES = [
-  { title: "Overtime records incomplete", area: "Working hours", severity: "Minor" as Severity, action: "Implement daily digital timekeeping." },
-  { title: "Fire extinguisher inspection overdue", area: "Health & safety", severity: "Major" as Severity, action: "Complete inspection and monthly log." },
-  { title: "PPE not consistently worn in dye area", area: "Health & safety", severity: "Minor" as Severity, action: "Reinforce PPE policy with supervisor spot-checks." },
-  { title: "Wage payment slips missing signatures", area: "Wages & benefits", severity: "Minor" as Severity, action: "Digitize slip acknowledgement." },
-  { title: "Grievance mechanism not clearly communicated", area: "Worker voice", severity: "Info" as Severity, action: "Post multi-lingual grievance posters." },
-  { title: "Chemical inventory MSDS gaps", area: "Chemicals", severity: "Major" as Severity, action: "Update MSDS binder; retrain staff." },
-  { title: "Emergency exit partially blocked", area: "Fire safety", severity: "Critical" as Severity, action: "Immediate clearance and daily inspection." },
-  { title: "Waste segregation inconsistent", area: "Environment", severity: "Minor" as Severity, action: "Add color-coded bins and signage." },
+  {
+    title: "Overtime records incomplete",
+    area: "Working hours",
+    severity: "Minor" as Severity,
+    action: "Implement daily digital timekeeping.",
+  },
+  {
+    title: "Fire extinguisher inspection overdue",
+    area: "Health & safety",
+    severity: "Major" as Severity,
+    action: "Complete inspection and monthly log.",
+  },
+  {
+    title: "PPE not consistently worn in dye area",
+    area: "Health & safety",
+    severity: "Minor" as Severity,
+    action: "Reinforce PPE policy with supervisor spot-checks.",
+  },
+  {
+    title: "Wage payment slips missing signatures",
+    area: "Wages & benefits",
+    severity: "Minor" as Severity,
+    action: "Digitize slip acknowledgement.",
+  },
+  {
+    title: "Grievance mechanism not clearly communicated",
+    area: "Worker voice",
+    severity: "Info" as Severity,
+    action: "Post multi-lingual grievance posters.",
+  },
+  {
+    title: "Chemical inventory MSDS gaps",
+    area: "Chemicals",
+    severity: "Major" as Severity,
+    action: "Update MSDS binder; retrain staff.",
+  },
+  {
+    title: "Emergency exit partially blocked",
+    area: "Fire safety",
+    severity: "Critical" as Severity,
+    action: "Immediate clearance and daily inspection.",
+  },
+  {
+    title: "Waste segregation inconsistent",
+    area: "Environment",
+    severity: "Minor" as Severity,
+    action: "Add color-coded bins and signage.",
+  },
 ];
 
 function pick<T>(rng: () => number, arr: T[]): T {
@@ -101,14 +141,26 @@ export function getMockSocialAudits(e: Entity): SocialAudit[] {
     const nextDue = `${nextYear}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
     const r = rand();
     const status: AuditStatus =
-      r > 0.8 ? "Major NC" : r > 0.6 ? "Minor NC" : new Date(nextDue) < new Date() ? "Expired" : "Passed";
-    const baseScore = status === "Passed" ? 85 + Math.floor(rand() * 13) : status === "Minor NC" ? 65 + Math.floor(rand() * 15) : 45 + Math.floor(rand() * 20);
+      r > 0.8
+        ? "Major NC"
+        : r > 0.6
+          ? "Minor NC"
+          : new Date(nextDue) < new Date()
+            ? "Expired"
+            : "Passed";
+    const baseScore =
+      status === "Passed"
+        ? 85 + Math.floor(rand() * 13)
+        : status === "Minor NC"
+          ? 65 + Math.floor(rand() * 15)
+          : 45 + Math.floor(rand() * 20);
 
     const nFindings = 2 + Math.floor(rand() * 4);
     const findings: AuditFinding[] = [];
     for (let f = 0; f < nFindings; f++) {
       const t = pick(rand, FINDING_TEMPLATES);
-      const sev: Severity = status === "Major NC" && f === 0 ? "Major" : status === "Minor NC" ? "Minor" : t.severity;
+      const sev: Severity =
+        status === "Major NC" && f === 0 ? "Major" : status === "Minor NC" ? "Minor" : t.severity;
       const dueM = 1 + Math.floor(rand() * 12);
       const dueD = 1 + Math.floor(rand() * 27);
       findings.push({
@@ -134,8 +186,18 @@ export function getMockSocialAudits(e: Entity): SocialAudit[] {
       score: baseScore,
       findings,
       documents: [
-        { name: `${src.standard.replace(/\s+/g, "_")}_Report_${auditDate}.pdf`, type: "PDF", size: `${(0.8 + rand() * 3).toFixed(1)} MB`, uploadedAt: auditDate },
-        { name: `Corrective_Action_Plan_${auditDate}.xlsx`, type: "XLSX", size: `${(0.1 + rand() * 0.4).toFixed(2)} MB`, uploadedAt: auditDate },
+        {
+          name: `${src.standard.replace(/\s+/g, "_")}_Report_${auditDate}.pdf`,
+          type: "PDF",
+          size: `${(0.8 + rand() * 3).toFixed(1)} MB`,
+          uploadedAt: auditDate,
+        },
+        {
+          name: `Corrective_Action_Plan_${auditDate}.xlsx`,
+          type: "XLSX",
+          size: `${(0.1 + rand() * 0.4).toFixed(2)} MB`,
+          uploadedAt: auditDate,
+        },
       ],
     });
   }
@@ -170,7 +232,12 @@ export function getMockTransactionCerts(e: Entity): TransactionCert[] {
       status,
       weightKg: Math.round(1000 + rand() * 20000),
       documents: [
-        { name: `${num}.pdf`, type: "PDF", size: `${(0.2 + rand() * 1).toFixed(2)} MB`, uploadedAt: issueDate },
+        {
+          name: `${num}.pdf`,
+          type: "PDF",
+          size: `${(0.2 + rand() * 1).toFixed(2)} MB`,
+          uploadedAt: issueDate,
+        },
       ],
     });
   }

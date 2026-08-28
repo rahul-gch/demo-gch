@@ -4,7 +4,7 @@ Three cleanups you asked for, plus an end-to-end check of the signup → organiz
 
 ## 1. Purge remaining mock data
 
-Seeded showcase orgs (the demo brands) keep their data. Everything generated for *real* organizations gets removed:
+Seeded showcase orgs (the demo brands) keep their data. Everything generated for _real_ organizations gets removed:
 
 - Community feed: today every organization gets 12 fabricated posts (site tours, fake webinars, stock photos/videos) written into browser storage on first visit. New organizations will start with an empty feed and a "Share the first update" prompt; posts users actually write are kept.
 - Compliance page: fake social audits and transaction certificates are replaced with empty states for non-seeded organizations.
@@ -15,7 +15,7 @@ Seeded showcase orgs (the demo brands) keep their data. Everything generated for
 
 Today pasting an invite guesses the type from the URL text, so a bare platform-invite token is looked up in the wrong place and reports "not valid".
 
-New behaviour: paste a link *or* a bare token, we check the organization invite first, then the platform invite, and route to whichever matches. If neither matches, a clear message says whether it is expired, already used, revoked, or unknown.
+New behaviour: paste a link _or_ a bare token, we check the organization invite first, then the platform invite, and route to whichever matches. If neither matches, a clear message says whether it is expired, already used, revoked, or unknown.
 
 ## 3. Delete the dead account-creation branch
 

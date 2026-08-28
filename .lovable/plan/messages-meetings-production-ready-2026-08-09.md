@@ -4,7 +4,7 @@
 
 - Your meeting request exists in the database: "test org" → "rahul gmbh", still pending, scheduled 11 Aug. So it was saved correctly.
 - The Meetings page has **no Sent/Received split at all** — it only buckets by Pending / Confirmed / Past, with no direction filter, no withdraw action and no details view. A request you sent shows up in "Pending" with no controls, which is why it feels missing from an outbound box.
-- Both accounts involved are separate users, and the page always acts as your *first* organization, so if you are signed in as an account with more than one organization the request can also land under the other one.
+- Both accounts involved are separate users, and the page always acts as your _first_ organization, so if you are signed in as an account with more than one organization the request can also land under the other one.
 - Live updates: only `messages` and `conversations` are published for realtime. `meeting_requests` is not, so meeting activity never updates without a refresh. Notifications only re-poll once a minute for meetings/requests.
 
 ## 1. Meetings section rebuild

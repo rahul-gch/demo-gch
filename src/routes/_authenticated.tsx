@@ -20,9 +20,7 @@ export const Route = createFileRoute("/_authenticated")({
       context.queryClient.ensureQueryData({
         queryKey: ["my-org-memberships-gate", data.user.id],
         queryFn: () =>
-          myOrgMemberships().catch(
-            () => [] as Awaited<ReturnType<typeof myOrgMemberships>>,
-          ),
+          myOrgMemberships().catch(() => [] as Awaited<ReturnType<typeof myOrgMemberships>>),
 
         staleTime: 30_000,
       }),
@@ -54,11 +52,9 @@ export const Route = createFileRoute("/_authenticated")({
       }
     }
 
-
     // Organization registry must be loaded before child loaders resolve entities.
     await ensureRegistry(context.queryClient);
     return { user: data.user };
   },
   component: () => <Outlet />,
 });
-

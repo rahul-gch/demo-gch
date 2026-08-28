@@ -99,9 +99,7 @@ export const listNotifications = createServerFn({ method: "POST" })
         id: `meet-${m.id}`,
         kind: "meeting",
         title: `Meeting request from ${requester?.name ?? "an organization"}`,
-        body: m.agenda?.trim()
-          ? m.agenda.slice(0, 120)
-          : new Date(m.proposed_for).toLocaleString(),
+        body: m.agenda?.trim() ? m.agenda.slice(0, 120) : new Date(m.proposed_for).toLocaleString(),
         at: m.created_at,
         to: "/meetings",
       });
@@ -149,7 +147,8 @@ export const listNotifications = createServerFn({ method: "POST" })
       id: string;
       created_at: string;
       project_id: string;
-      projects: { name: string; owner_org_id: string } | { name: string; owner_org_id: string }[] | null;
+      projects:
+        { name: string; owner_org_id: string } | { name: string; owner_org_id: string }[] | null;
     }>) {
       const project = Array.isArray(p.projects) ? p.projects[0] : p.projects;
       items.push({

@@ -43,11 +43,7 @@ export function MembersPanel({ orgId }: { orgId: string }) {
   const [linkMaxUses, setLinkMaxUses] = useState<number>(10);
 
   const createMut = useMutation({
-    mutationFn: async (payload: {
-      email: string | null;
-      role: Role;
-      maxUses: number;
-    }) =>
+    mutationFn: async (payload: { email: string | null; role: Role; maxUses: number }) =>
       createInvite({
         data: {
           orgId,
@@ -173,7 +169,9 @@ export function MembersPanel({ orgId }: { orgId: string }) {
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Max uses</Label>
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+              Max uses
+            </Label>
             <Input
               type="number"
               min={1}
@@ -208,26 +206,20 @@ export function MembersPanel({ orgId }: { orgId: string }) {
           ) : invites.data && invites.data.length > 0 ? (
             <ul className="divide-y">
               {invites.data.map((inv) => {
-                const status =
-                  inv.revoked_at
-                    ? "revoked"
-                    : new Date(inv.expires_at) < new Date()
-                      ? "expired"
-                      : inv.uses >= inv.max_uses
-                        ? "used"
-                        : "active";
+                const status = inv.revoked_at
+                  ? "revoked"
+                  : new Date(inv.expires_at) < new Date()
+                    ? "expired"
+                    : inv.uses >= inv.max_uses
+                      ? "used"
+                      : "active";
                 return (
-                  <li
-                    key={inv.id}
-                    className="flex flex-wrap items-center gap-3 py-3 text-sm"
-                  >
+                  <li key={inv.id} className="flex flex-wrap items-center gap-3 py-3 text-sm">
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">
-                        {inv.email ?? "Shareable link"}
-                      </p>
+                      <p className="truncate font-medium">{inv.email ?? "Shareable link"}</p>
                       <p className="text-xs text-muted-foreground">
-                        Role: <span className="capitalize">{inv.role}</span> ·{" "}
-                        {inv.uses}/{inv.max_uses} used · expires{" "}
+                        Role: <span className="capitalize">{inv.role}</span> · {inv.uses}/
+                        {inv.max_uses} used · expires{" "}
                         {new Date(inv.expires_at).toLocaleDateString()}
                       </p>
                     </div>

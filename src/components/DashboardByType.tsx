@@ -38,28 +38,64 @@ function reliabilityOf(e: Entity) {
 }
 
 const SOUTHERN = new Set([
-  "Australia", "Argentina", "Brazil", "Peru", "Chile", "South Africa", "Zambia", "Zimbabwe",
-  "Tanzania", "Uruguay", "Paraguay", "New Zealand", "Mozambique", "Madagascar",
+  "Australia",
+  "Argentina",
+  "Brazil",
+  "Peru",
+  "Chile",
+  "South Africa",
+  "Zambia",
+  "Zimbabwe",
+  "Tanzania",
+  "Uruguay",
+  "Paraguay",
+  "New Zealand",
+  "Mozambique",
+  "Madagascar",
 ]);
 function harvestWindow(country?: string) {
   if (country && SOUTHERN.has(country)) return "Mar–Jul";
   return "Sep–Jan";
 }
 const WATER_STRESS = new Set([
-  "Egypt", "Pakistan", "India", "Türkiye", "Turkey", "Uzbekistan", "Syria", "Iran", "Morocco",
+  "Egypt",
+  "Pakistan",
+  "India",
+  "Türkiye",
+  "Turkey",
+  "Uzbekistan",
+  "Syria",
+  "Iran",
+  "Morocco",
 ]);
 
 const TIER_MAP: Record<EntityType, { tier: string; upstream: string[]; downstream: string[] }> = {
-  "Brand": { tier: "Tier 0", upstream: ["Garment Factory"], downstream: ["Retail / DTC"] },
-  "Farmer": { tier: "Tier 4", upstream: ["Seed & inputs"], downstream: ["Ginner"] },
-  "Ginner": { tier: "Tier 3", upstream: ["Farmer"], downstream: ["Spinner"] },
-  "Spinner": { tier: "Tier 3", upstream: ["Ginner"], downstream: ["Fabric Mill"] },
-  "Fabric Mill": { tier: "Tier 2", upstream: ["Spinner"], downstream: ["Dye House", "Garment Factory"] },
+  Brand: { tier: "Tier 0", upstream: ["Garment Factory"], downstream: ["Retail / DTC"] },
+  Farmer: { tier: "Tier 4", upstream: ["Seed & inputs"], downstream: ["Ginner"] },
+  Ginner: { tier: "Tier 3", upstream: ["Farmer"], downstream: ["Spinner"] },
+  Spinner: { tier: "Tier 3", upstream: ["Ginner"], downstream: ["Fabric Mill"] },
+  "Fabric Mill": {
+    tier: "Tier 2",
+    upstream: ["Spinner"],
+    downstream: ["Dye House", "Garment Factory"],
+  },
   "Dye House": { tier: "Tier 2", upstream: ["Fabric Mill"], downstream: ["Garment Factory"] },
-  "Garment Factory": { tier: "Tier 1", upstream: ["Fabric Mill", "Dye House", "Trims"], downstream: ["Brand"] },
+  "Garment Factory": {
+    tier: "Tier 1",
+    upstream: ["Fabric Mill", "Dye House", "Trims"],
+    downstream: ["Brand"],
+  },
   "Logistics Provider": { tier: "Cross-tier", upstream: ["Any tier"], downstream: ["Any tier"] },
-  "Certification Body": { tier: "Independent", upstream: ["Auditees"], downstream: ["Brands · Buyers"] },
-  "Sustainability Partner": { tier: "Advisory", upstream: ["Engagements"], downstream: ["Brands · Suppliers"] },
+  "Certification Body": {
+    tier: "Independent",
+    upstream: ["Auditees"],
+    downstream: ["Brands · Buyers"],
+  },
+  "Sustainability Partner": {
+    tier: "Advisory",
+    upstream: ["Engagements"],
+    downstream: ["Brands · Suppliers"],
+  },
 };
 
 function matches(list: string[] | undefined, re: RegExp) {
@@ -105,8 +141,16 @@ function ReliabilityCard({ e }: { e: Entity }) {
         <CardTitle className="text-base font-semibold">Delivery & reliability</CardTitle>
       </CardHeader>
       <CardContent className="grid gap-4 sm:grid-cols-4">
-        <StatTile icon={<Clock className="h-3.5 w-3.5" />} label="Lead time" value={`${e.leadTimeDays || r.timeframe} d`} />
-        <StatTile icon={<Truck className="h-3.5 w-3.5" />} label="Delivery timeframe" value={`${r.timeframe} d`} />
+        <StatTile
+          icon={<Clock className="h-3.5 w-3.5" />}
+          label="Lead time"
+          value={`${e.leadTimeDays || r.timeframe} d`}
+        />
+        <StatTile
+          icon={<Truck className="h-3.5 w-3.5" />}
+          label="Delivery timeframe"
+          value={`${r.timeframe} d`}
+        />
         <StatTile
           icon={<CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />}
           label="On-time rate"
@@ -159,18 +203,39 @@ function ReadinessCard({ e }: { e: Entity }) {
 
 function RiskCard({ e }: { e: Entity }) {
   const riskTone =
-    e.riskLevel === "High" ? "text-red-600" :
-    e.riskLevel === "Medium" ? "text-amber-600" : "text-emerald-600";
+    e.riskLevel === "High"
+      ? "text-red-600"
+      : e.riskLevel === "Medium"
+        ? "text-amber-600"
+        : "text-emerald-600";
   return (
     <Card className="shadow-sm">
       <CardHeader>
         <CardTitle className="text-base font-semibold">Risk & evidence</CardTitle>
       </CardHeader>
       <CardContent className="grid gap-4 sm:grid-cols-4">
-        <StatTile icon={<Gauge className="h-3.5 w-3.5" />} label="Confidence" value={`${e.confidenceScore}%`} hint={<Progress value={e.confidenceScore} className="h-1.5" />} />
-        <StatTile icon={<ShieldAlert className={`h-3.5 w-3.5 ${riskTone}`} />} label="Risk level" value={<span className={riskTone}>{e.riskLevel}</span>} />
-        <StatTile icon={<ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />} label="Verified certs" value={e.verifiedCertCount} hint={e.expiredCertCount ? `${e.expiredCertCount} expired` : "All current"} />
-        <StatTile icon={<FileCheck2 className="h-3.5 w-3.5" />} label="Evidence on file" value={e.evidenceCount} />
+        <StatTile
+          icon={<Gauge className="h-3.5 w-3.5" />}
+          label="Confidence"
+          value={`${e.confidenceScore}%`}
+          hint={<Progress value={e.confidenceScore} className="h-1.5" />}
+        />
+        <StatTile
+          icon={<ShieldAlert className={`h-3.5 w-3.5 ${riskTone}`} />}
+          label="Risk level"
+          value={<span className={riskTone}>{e.riskLevel}</span>}
+        />
+        <StatTile
+          icon={<ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />}
+          label="Verified certs"
+          value={e.verifiedCertCount}
+          hint={e.expiredCertCount ? `${e.expiredCertCount} expired` : "All current"}
+        />
+        <StatTile
+          icon={<FileCheck2 className="h-3.5 w-3.5" />}
+          label="Evidence on file"
+          value={e.evidenceCount}
+        />
       </CardContent>
     </Card>
   );
@@ -184,7 +249,9 @@ function RelationshipsCard({ e }: { e: Entity }) {
       <CardHeader>
         <CardTitle className="text-base font-semibold flex items-center gap-2">
           <Link2 className="h-4 w-4" /> Supply-chain position
-          <Badge variant="outline" className="ml-2 font-normal">{t.tier}</Badge>
+          <Badge variant="outline" className="ml-2 font-normal">
+            {t.tier}
+          </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="grid gap-4 sm:grid-cols-2">
@@ -193,7 +260,11 @@ function RelationshipsCard({ e }: { e: Entity }) {
             <ArrowDownToLine className="h-3.5 w-3.5" /> Sources from
           </div>
           <div className="mt-2 flex flex-wrap gap-1.5">
-            {t.upstream.map((x) => <Badge key={x} variant="outline" className="font-normal">{x}</Badge>)}
+            {t.upstream.map((x) => (
+              <Badge key={x} variant="outline" className="font-normal">
+                {x}
+              </Badge>
+            ))}
           </div>
         </div>
         <div>
@@ -201,7 +272,11 @@ function RelationshipsCard({ e }: { e: Entity }) {
             <ArrowUpFromLine className="h-3.5 w-3.5" /> Sells to
           </div>
           <div className="mt-2 flex flex-wrap gap-1.5">
-            {t.downstream.map((x) => <Badge key={x} variant="secondary" className="font-normal">{x}</Badge>)}
+            {t.downstream.map((x) => (
+              <Badge key={x} variant="secondary" className="font-normal">
+                {x}
+              </Badge>
+            ))}
           </div>
         </div>
       </CardContent>
@@ -209,7 +284,15 @@ function RelationshipsCard({ e }: { e: Entity }) {
   );
 }
 
-function ChipsCard({ e, title, source }: { e: Entity; title: string; source: "materials" | "capabilities" | "certifications" }) {
+function ChipsCard({
+  e,
+  title,
+  source,
+}: {
+  e: Entity;
+  title: string;
+  source: "materials" | "capabilities" | "certifications";
+}) {
   const items = e[source];
   if (!items || !items.length) return null;
   return (
@@ -219,7 +302,11 @@ function ChipsCard({ e, title, source }: { e: Entity; title: string; source: "ma
       </CardHeader>
       <CardContent className="flex flex-wrap gap-1.5">
         {items.map((m) => (
-          <Badge key={m} variant={source === "capabilities" ? "secondary" : "outline"} className="font-normal">
+          <Badge
+            key={m}
+            variant={source === "capabilities" ? "secondary" : "outline"}
+            className="font-normal"
+          >
             {m}
           </Badge>
         ))}
@@ -239,11 +326,27 @@ function FarmerDashboard({ e }: { e: Entity }) {
   return (
     <Shell>
       <KpiRow>
-        <StatTile icon={<Sprout className="h-3.5 w-3.5 text-emerald-600" />} label="Primary crop" value={e.materials[0] || "—"} hint={e.materials.slice(1, 3).join(" · ") || undefined} />
-        <StatTile icon={<Package className="h-3.5 w-3.5" />} label="Annual capacity" value={e.capacity || "—"} />
-        <StatTile icon={<Leaf className="h-3.5 w-3.5 text-emerald-600" />} label="Harvest window" value={harvestWindow(e.country)} hint={e.region || e.country} />
         <StatTile
-          icon={<Droplet className={`h-3.5 w-3.5 ${waterStress ? "text-amber-600" : "text-sky-600"}`} />}
+          icon={<Sprout className="h-3.5 w-3.5 text-emerald-600" />}
+          label="Primary crop"
+          value={e.materials[0] || "—"}
+          hint={e.materials.slice(1, 3).join(" · ") || undefined}
+        />
+        <StatTile
+          icon={<Package className="h-3.5 w-3.5" />}
+          label="Annual capacity"
+          value={e.capacity || "—"}
+        />
+        <StatTile
+          icon={<Leaf className="h-3.5 w-3.5 text-emerald-600" />}
+          label="Harvest window"
+          value={harvestWindow(e.country)}
+          hint={e.region || e.country}
+        />
+        <StatTile
+          icon={
+            <Droplet className={`h-3.5 w-3.5 ${waterStress ? "text-amber-600" : "text-sky-600"}`} />
+          }
           label="Water stress"
           value={waterStress ? "Elevated" : "Moderate"}
           hint={waterStress ? "Monitor irrigation" : "Within norms"}
@@ -265,11 +368,23 @@ function GinnerDashboard({ e }: { e: Entity }) {
   return (
     <Shell>
       <KpiRow>
-        <StatTile icon={<Boxes className="h-3.5 w-3.5" />} label="Bale capacity" value={e.capacity || "—"} />
-        <StatTile icon={<Package className="h-3.5 w-3.5" />} label="MOQ" value={e.moq || "—"} />
-        <StatTile icon={<Clock className="h-3.5 w-3.5" />} label="Throughput lead" value={`${e.leadTimeDays || 14} d`} />
         <StatTile
-          icon={<ShieldCheck className={`h-3.5 w-3.5 ${testing ? "text-emerald-600" : "text-muted-foreground"}`} />}
+          icon={<Boxes className="h-3.5 w-3.5" />}
+          label="Bale capacity"
+          value={e.capacity || "—"}
+        />
+        <StatTile icon={<Package className="h-3.5 w-3.5" />} label="MOQ" value={e.moq || "—"} />
+        <StatTile
+          icon={<Clock className="h-3.5 w-3.5" />}
+          label="Throughput lead"
+          value={`${e.leadTimeDays || 14} d`}
+        />
+        <StatTile
+          icon={
+            <ShieldCheck
+              className={`h-3.5 w-3.5 ${testing ? "text-emerald-600" : "text-muted-foreground"}`}
+            />
+          }
           label="Fiber testing"
           value={testing ? "USTER / HVI" : "Not declared"}
           hint={`${e.verifiedCertCount} verified certs`}
@@ -291,10 +406,23 @@ function SpinnerDashboard({ e }: { e: Entity }) {
   return (
     <Shell>
       <KpiRow>
-        <StatTile icon={<Factory className="h-3.5 w-3.5" />} label="Spindle capacity" value={e.capacity || "—"} />
+        <StatTile
+          icon={<Factory className="h-3.5 w-3.5" />}
+          label="Spindle capacity"
+          value={e.capacity || "—"}
+        />
         <StatTile icon={<Package className="h-3.5 w-3.5" />} label="MOQ" value={e.moq || "—"} />
-        <StatTile icon={<Clock className="h-3.5 w-3.5" />} label="Lead time" value={`${e.leadTimeDays || 30} d`} />
-        <StatTile icon={<Award className="h-3.5 w-3.5" />} label="Yarn counts" value={e.capabilities[0] || "Ne 20–60"} hint={spinTypes.slice(0, 2).join(" · ") || undefined} />
+        <StatTile
+          icon={<Clock className="h-3.5 w-3.5" />}
+          label="Lead time"
+          value={`${e.leadTimeDays || 30} d`}
+        />
+        <StatTile
+          icon={<Award className="h-3.5 w-3.5" />}
+          label="Yarn counts"
+          value={e.capabilities[0] || "Ne 20–60"}
+          hint={spinTypes.slice(0, 2).join(" · ") || undefined}
+        />
       </KpiRow>
       <ReliabilityCard e={e} />
       <ReadinessCard e={e} />
@@ -313,10 +441,24 @@ function FabricMillDashboard({ e }: { e: Entity }) {
   return (
     <Shell>
       <KpiRow>
-        <StatTile icon={<Factory className="h-3.5 w-3.5" />} label="Monthly capacity" value={e.capacity || "—"} hint="meters / month" />
+        <StatTile
+          icon={<Factory className="h-3.5 w-3.5" />}
+          label="Monthly capacity"
+          value={e.capacity || "—"}
+          hint="meters / month"
+        />
         <StatTile icon={<Package className="h-3.5 w-3.5" />} label="MOQ" value={e.moq || "—"} />
-        <StatTile icon={<Clock className="h-3.5 w-3.5" />} label="Lead time" value={`${e.leadTimeDays || 35} d`} />
-        <StatTile icon={<Award className="h-3.5 w-3.5" />} label="GSM / construction" value={gsm || "—"} hint={constructions.slice(0, 2).join(" · ") || undefined} />
+        <StatTile
+          icon={<Clock className="h-3.5 w-3.5" />}
+          label="Lead time"
+          value={`${e.leadTimeDays || 35} d`}
+        />
+        <StatTile
+          icon={<Award className="h-3.5 w-3.5" />}
+          label="GSM / construction"
+          value={gsm || "—"}
+          hint={constructions.slice(0, 2).join(" · ") || undefined}
+        />
       </KpiRow>
       <ReliabilityCard e={e} />
       <ReadinessCard e={e} />
@@ -336,11 +478,29 @@ function DyeHouseDashboard({ e }: { e: Entity }) {
   return (
     <Shell>
       <KpiRow>
-        <StatTile icon={<Droplet className="h-3.5 w-3.5 text-sky-600" />} label="Daily capacity" value={e.capacity || "—"} hint="kg / day" />
-        <StatTile icon={<Recycle className="h-3.5 w-3.5 text-emerald-600" />} label="Water reuse" value={`${waterReuse}%`} hint={<Progress value={waterReuse} className="h-1.5" />} />
-        <StatTile icon={<Clock className="h-3.5 w-3.5" />} label="Lead time" value={`${e.leadTimeDays || 18} d`} />
         <StatTile
-          icon={<ShieldCheck className={`h-3.5 w-3.5 ${zdhc ? "text-emerald-600" : "text-muted-foreground"}`} />}
+          icon={<Droplet className="h-3.5 w-3.5 text-sky-600" />}
+          label="Daily capacity"
+          value={e.capacity || "—"}
+          hint="kg / day"
+        />
+        <StatTile
+          icon={<Recycle className="h-3.5 w-3.5 text-emerald-600" />}
+          label="Water reuse"
+          value={`${waterReuse}%`}
+          hint={<Progress value={waterReuse} className="h-1.5" />}
+        />
+        <StatTile
+          icon={<Clock className="h-3.5 w-3.5" />}
+          label="Lead time"
+          value={`${e.leadTimeDays || 18} d`}
+        />
+        <StatTile
+          icon={
+            <ShieldCheck
+              className={`h-3.5 w-3.5 ${zdhc ? "text-emerald-600" : "text-muted-foreground"}`}
+            />
+          }
           label="Chemistry"
           value={zdhc ? "ZDHC / bluesign" : "Not declared"}
           hint={processes.slice(0, 2).join(" · ") || undefined}
@@ -362,11 +522,23 @@ function GarmentFactoryDashboard({ e }: { e: Entity }) {
   return (
     <Shell>
       <KpiRow>
-        <StatTile icon={<Shirt className="h-3.5 w-3.5" />} label="Monthly units" value={e.capacity || "—"} />
-        <StatTile icon={<Package className="h-3.5 w-3.5" />} label="MOQ" value={e.moq || "—"} />
-        <StatTile icon={<Clock className="h-3.5 w-3.5" />} label="Lead time" value={`${e.leadTimeDays || 45} d`} />
         <StatTile
-          icon={<ShieldCheck className={`h-3.5 w-3.5 ${audits ? "text-emerald-600" : "text-amber-600"}`} />}
+          icon={<Shirt className="h-3.5 w-3.5" />}
+          label="Monthly units"
+          value={e.capacity || "—"}
+        />
+        <StatTile icon={<Package className="h-3.5 w-3.5" />} label="MOQ" value={e.moq || "—"} />
+        <StatTile
+          icon={<Clock className="h-3.5 w-3.5" />}
+          label="Lead time"
+          value={`${e.leadTimeDays || 45} d`}
+        />
+        <StatTile
+          icon={
+            <ShieldCheck
+              className={`h-3.5 w-3.5 ${audits ? "text-emerald-600" : "text-amber-600"}`}
+            />
+          }
           label="Social audits"
           value={audits || "—"}
           hint={audits ? "SA8000 · WRAP · BSCI" : "None on file"}
@@ -377,7 +549,8 @@ function GarmentFactoryDashboard({ e }: { e: Entity }) {
         <Card className="shadow-sm border-amber-300/50">
           <CardContent className="p-4 flex items-center gap-2 text-sm text-amber-700">
             <AlertTriangle className="h-4 w-4" />
-            {e.expiredCertCount} compliance certificate{e.expiredCertCount === 1 ? "" : "s"} expired — request renewal.
+            {e.expiredCertCount} compliance certificate{e.expiredCertCount === 1 ? "" : "s"} expired
+            — request renewal.
           </CardContent>
         </Card>
       )}
@@ -397,10 +570,27 @@ function LogisticsDashboard({ e }: { e: Entity }) {
   return (
     <Shell>
       <KpiRow>
-        <StatTile icon={<Globe2 className="h-3.5 w-3.5" />} label="Coverage" value={e.region || e.country} />
-        <StatTile icon={<Truck className="h-3.5 w-3.5" />} label="Modes" value={modes.slice(0, 3).join(" · ") || "Sea · Air · Road"} />
-        <StatTile icon={<Clock className="h-3.5 w-3.5" />} label="Avg transit" value={`${e.leadTimeDays || 12} d`} />
-        <StatTile icon={<CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />} label="On-time rate" value={`${e.onTimeRate ?? 92}%`} hint={accreds.length ? accreds.slice(0, 2).join(" · ") : undefined} />
+        <StatTile
+          icon={<Globe2 className="h-3.5 w-3.5" />}
+          label="Coverage"
+          value={e.region || e.country}
+        />
+        <StatTile
+          icon={<Truck className="h-3.5 w-3.5" />}
+          label="Modes"
+          value={modes.slice(0, 3).join(" · ") || "Sea · Air · Road"}
+        />
+        <StatTile
+          icon={<Clock className="h-3.5 w-3.5" />}
+          label="Avg transit"
+          value={`${e.leadTimeDays || 12} d`}
+        />
+        <StatTile
+          icon={<CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />}
+          label="On-time rate"
+          value={`${e.onTimeRate ?? 92}%`}
+          hint={accreds.length ? accreds.slice(0, 2).join(" · ") : undefined}
+        />
       </KpiRow>
       <ReliabilityCard e={e} />
       <ReadinessCard e={e} />
@@ -416,10 +606,27 @@ function CertificationBodyDashboard({ e }: { e: Entity }) {
   return (
     <Shell>
       <KpiRow>
-        <StatTile icon={<Award className="h-3.5 w-3.5" />} label="Schemes audited" value={e.certifications.length} />
-        <StatTile icon={<Globe2 className="h-3.5 w-3.5" />} label="Region coverage" value={e.region || e.country} />
-        <StatTile icon={<Clock className="h-3.5 w-3.5" />} label="Avg turnaround" value={`${e.leadTimeDays || 21} d`} />
-        <StatTile icon={<ShieldCheck className="h-3.5 w-3.5" />} label="Active audits" value={e.evidenceCount} hint={`${e.confidenceScore}% avg confidence`} />
+        <StatTile
+          icon={<Award className="h-3.5 w-3.5" />}
+          label="Schemes audited"
+          value={e.certifications.length}
+        />
+        <StatTile
+          icon={<Globe2 className="h-3.5 w-3.5" />}
+          label="Region coverage"
+          value={e.region || e.country}
+        />
+        <StatTile
+          icon={<Clock className="h-3.5 w-3.5" />}
+          label="Avg turnaround"
+          value={`${e.leadTimeDays || 21} d`}
+        />
+        <StatTile
+          icon={<ShieldCheck className="h-3.5 w-3.5" />}
+          label="Active audits"
+          value={e.evidenceCount}
+          hint={`${e.confidenceScore}% avg confidence`}
+        />
       </KpiRow>
       <ReliabilityCard e={e} />
       <ReadinessCard e={e} />
@@ -435,10 +642,29 @@ function SustainabilityPartnerDashboard({ e }: { e: Entity }) {
   return (
     <Shell>
       <KpiRow>
-        <StatTile icon={<Leaf className="h-3.5 w-3.5 text-emerald-600" />} label="Service areas" value={e.capabilities.length} hint="LCA · CFV · Training" />
-        <StatTile icon={<GraduationCap className="h-3.5 w-3.5" />} label="Frameworks" value={e.certifications.length} hint="GRI · SBTi · CDP" />
-        <StatTile icon={<Clock className="h-3.5 w-3.5" />} label="Avg engagement" value={`${e.leadTimeDays || 30} d`} />
-        <StatTile icon={<CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />} label="Profile completeness" value={`${e.profileCompleteness}%`} hint={<Progress value={e.profileCompleteness} className="h-1.5" />} />
+        <StatTile
+          icon={<Leaf className="h-3.5 w-3.5 text-emerald-600" />}
+          label="Service areas"
+          value={e.capabilities.length}
+          hint="LCA · CFV · Training"
+        />
+        <StatTile
+          icon={<GraduationCap className="h-3.5 w-3.5" />}
+          label="Frameworks"
+          value={e.certifications.length}
+          hint="GRI · SBTi · CDP"
+        />
+        <StatTile
+          icon={<Clock className="h-3.5 w-3.5" />}
+          label="Avg engagement"
+          value={`${e.leadTimeDays || 30} d`}
+        />
+        <StatTile
+          icon={<CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />}
+          label="Profile completeness"
+          value={`${e.profileCompleteness}%`}
+          hint={<Progress value={e.profileCompleteness} className="h-1.5" />}
+        />
       </KpiRow>
       <ReliabilityCard e={e} />
       <ReadinessCard e={e} />
@@ -448,8 +674,12 @@ function SustainabilityPartnerDashboard({ e }: { e: Entity }) {
       <ChipsCard e={e} title="Frameworks" source="certifications" />
       {e.recommendedNextAction && (
         <Card className="shadow-sm">
-          <CardHeader><CardTitle className="text-base font-semibold">Recommended next engagement</CardTitle></CardHeader>
-          <CardContent className="text-sm text-muted-foreground">{e.recommendedNextAction}</CardContent>
+          <CardHeader>
+            <CardTitle className="text-base font-semibold">Recommended next engagement</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground">
+            {e.recommendedNextAction}
+          </CardContent>
         </Card>
       )}
     </Shell>
@@ -460,10 +690,28 @@ function BrandDashboard({ e }: { e: Entity }) {
   return (
     <Shell>
       <KpiRow>
-        <StatTile icon={<Boxes className="h-3.5 w-3.5" />} label="Sourcing tiers covered" value={e.materials.length || "—"} hint={e.materials.slice(0, 2).join(" · ") || undefined} />
-        <StatTile icon={<Gauge className="h-3.5 w-3.5" />} label="Tier 2+ visibility" value={`${e.traceabilityReadiness}%`} hint={<Progress value={e.traceabilityReadiness} className="h-1.5" />} />
-        <StatTile icon={<Package className="h-3.5 w-3.5" />} label="Sourcing volume" value={e.capacity || "—"} />
-        <StatTile icon={<Clock className="h-3.5 w-3.5" />} label="Lead time SLA" value={`${e.leadTimeDays || 60} d`} />
+        <StatTile
+          icon={<Boxes className="h-3.5 w-3.5" />}
+          label="Sourcing tiers covered"
+          value={e.materials.length || "—"}
+          hint={e.materials.slice(0, 2).join(" · ") || undefined}
+        />
+        <StatTile
+          icon={<Gauge className="h-3.5 w-3.5" />}
+          label="Tier 2+ visibility"
+          value={`${e.traceabilityReadiness}%`}
+          hint={<Progress value={e.traceabilityReadiness} className="h-1.5" />}
+        />
+        <StatTile
+          icon={<Package className="h-3.5 w-3.5" />}
+          label="Sourcing volume"
+          value={e.capacity || "—"}
+        />
+        <StatTile
+          icon={<Clock className="h-3.5 w-3.5" />}
+          label="Lead time SLA"
+          value={`${e.leadTimeDays || 60} d`}
+        />
       </KpiRow>
       <MiniDashboard entity={e} />
       <ReliabilityCard e={e} />
@@ -482,10 +730,28 @@ function GenericEntityDashboard({ e }: { e: Entity }) {
   return (
     <Shell>
       <KpiRow>
-        <StatTile icon={<Factory className="h-3.5 w-3.5" />} label="Entity type" value={e.entityType} hint={e.actorType} />
-        <StatTile icon={<Globe2 className="h-3.5 w-3.5" />} label="Location" value={location || "—"} />
-        <StatTile icon={<Package className="h-3.5 w-3.5" />} label="Capacity" value={e.capacity || "—"} hint={e.moq ? `MOQ ${e.moq}` : undefined} />
-        <StatTile icon={<Clock className="h-3.5 w-3.5" />} label="Lead time" value={e.leadTimeDays ? `${e.leadTimeDays} d` : "—"} />
+        <StatTile
+          icon={<Factory className="h-3.5 w-3.5" />}
+          label="Entity type"
+          value={e.entityType}
+          hint={e.actorType}
+        />
+        <StatTile
+          icon={<Globe2 className="h-3.5 w-3.5" />}
+          label="Location"
+          value={location || "—"}
+        />
+        <StatTile
+          icon={<Package className="h-3.5 w-3.5" />}
+          label="Capacity"
+          value={e.capacity || "—"}
+          hint={e.moq ? `MOQ ${e.moq}` : undefined}
+        />
+        <StatTile
+          icon={<Clock className="h-3.5 w-3.5" />}
+          label="Lead time"
+          value={e.leadTimeDays ? `${e.leadTimeDays} d` : "—"}
+        />
       </KpiRow>
       <ReliabilityCard e={e} />
       <ReadinessCard e={e} />

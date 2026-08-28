@@ -4,8 +4,6 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getProfileDef, type ProfileAnswers } from "./entity-profiles";
 import { computeProfileScore } from "./profile-score";
 
-
-
 const orgRoleValues = ["owner", "admin", "editor", "viewer"] as const;
 
 const createOrgSchema = z.object({
@@ -39,12 +37,14 @@ const createOrgSchema = z.object({
 });
 
 function slugify(input: string): string {
-  return input
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 64) || "org";
+  return (
+    input
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 64) || "org"
+  );
 }
 
 export const createOrg = createServerFn({ method: "POST" })
@@ -104,7 +104,8 @@ export const createOrg = createServerFn({ method: "POST" })
       .single();
     if (insErr) throw new Error(insErr.message);
 
-    const meta = (claims as { user_metadata?: Record<string, unknown>; email?: string } | undefined) ?? {};
+    const meta =
+      (claims as { user_metadata?: Record<string, unknown>; email?: string } | undefined) ?? {};
     const userMeta = (meta.user_metadata as Record<string, unknown> | undefined) ?? {};
     const displayName =
       (userMeta.full_name as string | undefined) ||
@@ -207,7 +208,6 @@ export const completeOnboarding = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const _rolesUnused: readonly string[] = orgRoleValues;
 
@@ -243,7 +243,10 @@ export const updateOrgOperations = createServerFn({ method: "POST" })
     if (data.capabilities !== undefined) patch.capabilities = data.capabilities ?? [];
     if (data.specializations !== undefined) patch.specializations = data.specializations ?? [];
 
-    const { error } = await supabase.from("orgs").update(patch as never).eq("id", data.orgId);
+    const { error } = await supabase
+      .from("orgs")
+      .update(patch as never)
+      .eq("id", data.orgId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -318,7 +321,10 @@ export const updateOrgProfile = createServerFn({ method: "POST" })
     }
     if (Object.keys(patch).length === 0) return { ok: true };
 
-    const { error } = await supabase.from("orgs").update(patch as never).eq("id", data.orgId);
+    const { error } = await supabase
+      .from("orgs")
+      .update(patch as never)
+      .eq("id", data.orgId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -351,12 +357,15 @@ export const saveOrgProfileAnswers = createServerFn({ method: "POST" })
 
     const { data: org, error: orgErr } = await supabase
       .from("orgs")
-      .select("id, type, entity_type, description, website, city, country, logo_url, profile_answers")
+      .select(
+        "id, type, entity_type, description, website, city, country, logo_url, profile_answers",
+      )
       .eq("id", data.orgId)
       .single();
     if (orgErr) throw new Error(orgErr.message);
 
-    const existing = ((org as { profile_answers?: unknown }).profile_answers ?? {}) as ProfileAnswers;
+    const existing = ((org as { profile_answers?: unknown }).profile_answers ??
+      {}) as ProfileAnswers;
     const merged: ProfileAnswers = { ...existing, ...(data.answers as ProfileAnswers) };
 
     const entityType = (org.entity_type as string | null) || (org.type as string | null) || "";
@@ -413,7 +422,10 @@ export const saveOrgProfileAnswers = createServerFn({ method: "POST" })
     patch.profile_score = result.score;
     patch.profile_completeness = result.score;
 
-    const { error } = await supabase.from("orgs").update(patch as never).eq("id", data.orgId);
+    const { error } = await supabase
+      .from("orgs")
+      .update(patch as never)
+      .eq("id", data.orgId);
     if (error) throw new Error(error.message);
     return { ok: true, score: result.score };
   });
@@ -425,16 +437,20 @@ export const getOrgProfileAnswers = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     const { data: org, error } = await context.supabase
       .from("orgs")
-      .select("id, name, type, entity_type, description, website, city, country, logo_url, profile_answers, profile_score")
+      .select(
+        "id, name, type, entity_type, description, website, city, country, logo_url, profile_answers, profile_score",
+      )
       .eq("id", data.orgId)
       .single();
     if (error) throw new Error(error.message);
     return {
       orgId: org.id as string,
       name: (org.name as string) ?? "",
-      entityType: ((org.entity_type as string | null) || (org.type as string | null) || "") as string,
-      answers: (((org as { profile_answers?: unknown }).profile_answers ?? {}) as ProfileAnswers),
-      score: (((org as { profile_score?: number }).profile_score ?? 0) as number),
+      entityType: ((org.entity_type as string | null) ||
+        (org.type as string | null) ||
+        "") as string,
+      answers: ((org as { profile_answers?: unknown }).profile_answers ?? {}) as ProfileAnswers,
+      score: ((org as { profile_score?: number }).profile_score ?? 0) as number,
       core: {
         description: (org.description as string | null) ?? "",
         website: (org.website as string | null) ?? "",

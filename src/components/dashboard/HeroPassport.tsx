@@ -4,11 +4,26 @@ import { Badge } from "@/components/ui/badge";
 import { VerificationBadge } from "@/components/StatusBadge";
 import { bandBadgeClasses, computeNhri } from "@/lib/nhri";
 import { isSeededOrg } from "@/seed/showcase";
-import { MapPin, Users2, FolderKanban, Network as NetworkIcon, ShieldCheck, Star } from "lucide-react";
+import {
+  MapPin,
+  Users2,
+  FolderKanban,
+  Network as NetworkIcon,
+  ShieldCheck,
+  Star,
+} from "lucide-react";
 import { HeroBackground, deriveDomain, entityInitials } from "./OrgBanner";
 import { useResolvedImage } from "@/lib/use-org-images";
 
-function Stat({ label, value, icon: Icon }: { label: string; value: string | number; icon?: React.ComponentType<{ className?: string }> }) {
+function Stat({
+  label,
+  value,
+  icon: Icon,
+}: {
+  label: string;
+  value: string | number;
+  icon?: React.ComponentType<{ className?: string }>;
+}) {
   return (
     <div className="flex h-full min-w-0 flex-col justify-between rounded-lg border border-white/20 bg-white/10 p-3 backdrop-blur">
       <div className="min-h-[2rem] text-[10px] font-semibold uppercase leading-4 tracking-wider text-white/75">
@@ -69,7 +84,9 @@ export function HeroPassport({ entity: e }: { entity: Entity }) {
               <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-300">
                 {e.gchNumber} · {e.organizationType}
               </div>
-              <h1 className="mt-1 truncate text-2xl font-semibold tracking-tight md:text-3xl">{e.name}</h1>
+              <h1 className="mt-1 truncate text-2xl font-semibold tracking-tight md:text-3xl">
+                {e.name}
+              </h1>
             </div>
           </div>
 
@@ -89,7 +106,10 @@ export function HeroPassport({ entity: e }: { entity: Entity }) {
             </span>
             <span className="inline-flex items-center gap-0.5 text-amber-300">
               {Array.from({ length: 5 }).map((_, i) => (
-                <Star key={i} className={`h-3.5 w-3.5 ${i < stars ? "fill-amber-300" : "opacity-30"}`} />
+                <Star
+                  key={i}
+                  className={`h-3.5 w-3.5 ${i < stars ? "fill-amber-300" : "opacity-30"}`}
+                />
               ))}
             </span>
           </div>
@@ -107,7 +127,9 @@ export function HeroPassport({ entity: e }: { entity: Entity }) {
             <div className="text-[11px] font-semibold uppercase tracking-wider text-sky-300">
               AI says
             </div>
-            <Badge className={`border-transparent ${bandBadgeClasses(nhri.bandTone)}`}>{nhri.band}</Badge>
+            <Badge className={`border-transparent ${bandBadgeClasses(nhri.bandTone)}`}>
+              {nhri.band}
+            </Badge>
           </div>
           <div className="mt-3 space-y-2 text-sm">
             {seeded ? (

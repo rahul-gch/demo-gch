@@ -13,10 +13,8 @@ import {
 import { useEffect, useRef } from "react";
 import { installGlobalErrorReporting, reportClientError } from "@/lib/error-log";
 
-
 import { Toaster } from "@/components/ui/sonner";
 import appCss from "../styles.css?url";
-
 
 function NotFoundComponent() {
   return (
@@ -87,9 +85,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Global Chain Hub" },
-      { name: "description", content: "Sustainability-first supply chain collaboration platform for brands, manufacturers, auditors, and NGOs." },
+      {
+        name: "description",
+        content:
+          "Sustainability-first supply chain collaboration platform for brands, manufacturers, auditors, and NGOs.",
+      },
       { property: "og:title", content: "Global Chain Hub" },
-      { property: "og:description", content: "Sustainability-first supply chain collaboration platform." },
+      {
+        property: "og:description",
+        content: "Sustainability-first supply chain collaboration platform.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -150,7 +155,6 @@ function RootComponent() {
         queryClient.removeQueries({ queryKey: ["am-i-platform-admin"] });
         router.invalidate();
         if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
-
       });
       subRef.current = data.subscription;
     });
@@ -171,13 +175,9 @@ function RootComponent() {
   );
 }
 
-
 /** Hydrates the client-side organization registry before routes render. */
 function RegistryGate({ children }: { children: React.ReactNode }) {
   const { data } = useSuspenseQuery(entitiesQueryOptions);
   if (data && !isRegistryHydrated()) hydrateEntities(data);
   return <>{children}</>;
 }
-
-
-

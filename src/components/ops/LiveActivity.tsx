@@ -65,7 +65,10 @@ export function LiveActivity() {
                       <span className="text-slate-600">{r.text}</span>
                     </span>
                   </div>
-                  <Badge variant="outline" className="shrink-0 whitespace-nowrap text-[10px] tabular-nums">
+                  <Badge
+                    variant="outline"
+                    className="shrink-0 whitespace-nowrap text-[10px] tabular-nums"
+                  >
                     {r.time}
                   </Badge>
                 </div>

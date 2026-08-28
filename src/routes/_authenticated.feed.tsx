@@ -33,9 +33,7 @@ import { listPlatformActivity } from "@/lib/activity.functions";
 
 export const Route = createFileRoute("/_authenticated/feed")({
   validateSearch: (search: Record<string, unknown>): { tab?: "activity" | "community" } =>
-    search.tab === "community" || search.tab === "activity"
-      ? { tab: search.tab }
-      : {},
+    search.tab === "community" || search.tab === "activity" ? { tab: search.tab } : {},
   head: () => ({
     meta: [
       { title: "Activity Feed — Global Chain Hub Admin" },
@@ -115,8 +113,7 @@ function FeedPage() {
   const { tab: tabParam } = Route.useSearch();
   const navigate = Route.useNavigate();
   const tab = tabParam ?? "activity";
-  const setTab = (v: "activity" | "community") =>
-    navigate({ search: { tab: v }, replace: true });
+  const setTab = (v: "activity" | "community") => navigate({ search: { tab: v }, replace: true });
   return (
     <AppShell>
       <div className="mx-auto max-w-6xl space-y-6">
@@ -192,166 +189,164 @@ function ActivityStream() {
 
   return (
     <div className="space-y-6">
-        {/* summary + search */}
-        <Card className="shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-wrap gap-2">
-                {(["critical", "warning", "info", "success"] as FeedSeverity[]).map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => toggle(severities, s, setSeverities)}
-                    className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition ${
-                      severities.has(s)
-                        ? "border-slate-900 bg-slate-900 text-white"
-                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                    }`}
-                  >
-                    <span className={`h-2 w-2 rounded-full ${SEV_DOT[s]}`} />
-                    <span className="capitalize">{s}</span>
-                    <span className="tabular-nums opacity-70">{counts[s]}</span>
-                  </button>
-                ))}
-              </div>
-              <div className="flex flex-1 items-center gap-2 sm:max-w-sm">
-                <div className="relative flex-1">
-                  <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search organization, country, event…"
-                    className="h-9 pl-8"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              {(Object.keys(KIND_META) as FeedEventKind[]).map((k) => {
-                const Icon = ICONS[k];
-                const active = kinds.has(k);
-                return (
-                  <button
-                    key={k}
-                    type="button"
-                    onClick={() => toggle(kinds, k, setKinds)}
-                    className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition ${
-                      active
-                        ? "border-sky-500 bg-sky-50 text-sky-700"
-                        : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                    }`}
-                  >
-                    <Icon className="h-3 w-3" />
-                    {KIND_META[k].label}
-                  </button>
-                );
-              })}
-              {(kinds.size > 0 || severities.size > 0 || query) && (
+      {/* summary + search */}
+      <Card className="shadow-sm">
+        <CardContent className="p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap gap-2">
+              {(["critical", "warning", "info", "success"] as FeedSeverity[]).map((s) => (
                 <button
+                  key={s}
                   type="button"
-                  onClick={() => {
-                    setKinds(new Set());
-                    setSeverities(new Set());
-                    setQuery("");
-                  }}
-                  className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+                  onClick={() => toggle(severities, s, setSeverities)}
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition ${
+                    severities.has(s)
+                      ? "border-slate-900 bg-slate-900 text-white"
+                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                  }`}
                 >
-                  Reset
+                  <span className={`h-2 w-2 rounded-full ${SEV_DOT[s]}`} />
+                  <span className="capitalize">{s}</span>
+                  <span className="tabular-nums opacity-70">{counts[s]}</span>
                 </button>
-              )}
-              <div className="ml-auto flex items-center gap-1">
-                {(Object.keys(RANGE_LABEL) as Range[]).map((r) => (
-                  <button
-                    key={r}
-                    type="button"
-                    onClick={() => setRange(r)}
-                    className={`rounded-md border px-2 py-1 text-[11px] transition ${
-                      range === r
-                        ? "border-slate-900 bg-slate-900 text-white"
-                        : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                    }`}
-                  >
-                    {RANGE_LABEL[r]}
-                  </button>
-                ))}
+              ))}
+            </div>
+            <div className="flex flex-1 items-center gap-2 sm:max-w-sm">
+              <div className="relative flex-1">
+                <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search organization, country, event…"
+                  className="h-9 pl-8"
+                />
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* feed */}
-        <Card className="shadow-sm">
-          <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base font-semibold">
-              {filtered.length.toLocaleString()} events
-            </CardTitle>
-            <span className="text-xs text-muted-foreground">Showing {visible.length}</span>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {grouped.map((g) => (
-              <section key={g.label}>
-                <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                  {g.label}
-                </div>
-                <ul className="space-y-2">
-                  {g.items.map((e) => {
-                    const Icon = ICONS[e.kind];
-                    return (
-                      <li
-                        key={e.id}
-                        className="flex items-start gap-3 rounded-md border bg-white p-3 transition hover:border-slate-300"
-                      >
-                        <div className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-md bg-slate-100 text-slate-600">
-                          <Icon className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Badge variant="outline" className={`shrink-0 ${SEV_TONE[e.severity]}`}>
-                              {e.severity}
-                            </Badge>
-                            <Link
-                              to="/organizations/$id"
-                              params={{ id: e.orgId }}
-                              title={e.title}
-                              className="min-w-0 flex-1 truncate text-sm font-medium hover:underline"
-                            >
-                              {e.title}
-                            </Link>
-                          </div>
-                          <div className="mt-0.5 text-xs text-muted-foreground">
-                            {e.detail}
-                          </div>
-                          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
-                            <span className="truncate">{e.orgName}</span>
-                            <span aria-hidden>·</span>
-                            <span>{e.entityType}</span>
-                            <span aria-hidden>·</span>
-                            <span>{e.country}</span>
-                            <span aria-hidden>·</span>
-                            <span>{formatRelative(e.at)}</span>
-                          </div>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </section>
-            ))}
-            {filtered.length === 0 && (
-              <div className="py-10 text-center text-sm text-muted-foreground">
-                No events match the current filters.
-              </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {(Object.keys(KIND_META) as FeedEventKind[]).map((k) => {
+              const Icon = ICONS[k];
+              const active = kinds.has(k);
+              return (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => toggle(kinds, k, setKinds)}
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition ${
+                    active
+                      ? "border-sky-500 bg-sky-50 text-sky-700"
+                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  <Icon className="h-3 w-3" />
+                  {KIND_META[k].label}
+                </button>
+              );
+            })}
+            {(kinds.size > 0 || severities.size > 0 || query) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setKinds(new Set());
+                  setSeverities(new Set());
+                  setQuery("");
+                }}
+                className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+              >
+                Reset
+              </button>
             )}
-            {limit < filtered.length && (
-              <div className="pt-2 text-center">
-                <Button variant="outline" size="sm" onClick={() => setLimit((n) => n + 60)}>
-                  Load more
-                </Button>
+            <div className="ml-auto flex items-center gap-1">
+              {(Object.keys(RANGE_LABEL) as Range[]).map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setRange(r)}
+                  className={`rounded-md border px-2 py-1 text-[11px] transition ${
+                    range === r
+                      ? "border-slate-900 bg-slate-900 text-white"
+                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  {RANGE_LABEL[r]}
+                </button>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* feed */}
+      <Card className="shadow-sm">
+        <CardHeader className="flex-row items-center justify-between space-y-0">
+          <CardTitle className="text-base font-semibold">
+            {filtered.length.toLocaleString()} events
+          </CardTitle>
+          <span className="text-xs text-muted-foreground">Showing {visible.length}</span>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {grouped.map((g) => (
+            <section key={g.label}>
+              <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                {g.label}
               </div>
-            )}
-          </CardContent>
-        </Card>
+              <ul className="space-y-2">
+                {g.items.map((e) => {
+                  const Icon = ICONS[e.kind];
+                  return (
+                    <li
+                      key={e.id}
+                      className="flex items-start gap-3 rounded-md border bg-white p-3 transition hover:border-slate-300"
+                    >
+                      <div className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-md bg-slate-100 text-slate-600">
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="outline" className={`shrink-0 ${SEV_TONE[e.severity]}`}>
+                            {e.severity}
+                          </Badge>
+                          <Link
+                            to="/organizations/$id"
+                            params={{ id: e.orgId }}
+                            title={e.title}
+                            className="min-w-0 flex-1 truncate text-sm font-medium hover:underline"
+                          >
+                            {e.title}
+                          </Link>
+                        </div>
+                        <div className="mt-0.5 text-xs text-muted-foreground">{e.detail}</div>
+                        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
+                          <span className="truncate">{e.orgName}</span>
+                          <span aria-hidden>·</span>
+                          <span>{e.entityType}</span>
+                          <span aria-hidden>·</span>
+                          <span>{e.country}</span>
+                          <span aria-hidden>·</span>
+                          <span>{formatRelative(e.at)}</span>
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ))}
+          {filtered.length === 0 && (
+            <div className="py-10 text-center text-sm text-muted-foreground">
+              No events match the current filters.
+            </div>
+          )}
+          {limit < filtered.length && (
+            <div className="pt-2 text-center">
+              <Button variant="outline" size="sm" onClick={() => setLimit((n) => n + 60)}>
+                Load more
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

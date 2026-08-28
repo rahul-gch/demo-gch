@@ -58,9 +58,7 @@ export function OnboardingLayout({
           <div className="border-b px-5 py-5 sm:px-8 sm:py-6">
             <OnboardingProgress step={step} total={total} onSelect={onStepSelect} />
             <h1 className="mt-4 text-xl font-semibold tracking-tight sm:text-2xl">{title}</h1>
-            {description && (
-              <p className="mt-1.5 text-sm text-muted-foreground">{description}</p>
-            )}
+            {description && <p className="mt-1.5 text-sm text-muted-foreground">{description}</p>}
             {stepLabel && (
               <p className="mt-1 text-xs uppercase tracking-wide text-muted-foreground">
                 {stepLabel}

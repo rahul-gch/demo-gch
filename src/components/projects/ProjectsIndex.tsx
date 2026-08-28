@@ -42,8 +42,8 @@ export function ProjectsIndex({ entity }: { entity: Entity }) {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Projects</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Cross-organization collaboration workspaces. Every project is a shared, permissioned
-            hub for requests, documents, discussions and meetings.
+            Cross-organization collaboration workspaces. Every project is a shared, permissioned hub
+            for requests, documents, discussions and meetings.
           </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
@@ -210,7 +210,6 @@ export function ProjectsIndex({ entity }: { entity: Entity }) {
           </CardContent>
         </Card>
       )}
-
     </div>
   );
 }

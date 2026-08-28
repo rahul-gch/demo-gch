@@ -4,7 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle,
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
 } from "@/components/ui/sheet";
 import { ReportUploader } from "@/components/ReportUploader";
 import { isSeededOrg } from "@/seed/showcase";
@@ -21,7 +25,15 @@ import {
   type TransactionCert,
   type Severity,
 } from "@/seed/compliance";
-import { ShieldCheck, AlertTriangle, Clock, ClipboardCheck, Upload, ExternalLink, FileText } from "lucide-react";
+import {
+  ShieldCheck,
+  AlertTriangle,
+  Clock,
+  ClipboardCheck,
+  Upload,
+  ExternalLink,
+  FileText,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -69,20 +81,33 @@ function severityBadge(s: Severity) {
 function scorePill(score: number) {
   const t = scoreTone(score);
   const cls =
-    t === "ok" ? "bg-emerald-100 text-emerald-800"
-    : t === "amber" ? "bg-amber-100 text-amber-900"
-    : "bg-red-100 text-red-800";
+    t === "ok"
+      ? "bg-emerald-100 text-emerald-800"
+      : t === "amber"
+        ? "bg-amber-100 text-amber-900"
+        : "bg-red-100 text-red-800";
   return (
-    <span className={cn("inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold tabular-nums", cls)}>
+    <span
+      className={cn(
+        "inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold tabular-nums",
+        cls,
+      )}
+    >
       {score}/100
     </span>
   );
 }
 
 function Kpi({
-  label, value, icon: Icon, tone,
+  label,
+  value,
+  icon: Icon,
+  tone,
 }: {
-  label: string; value: number | string; icon: React.ComponentType<{ className?: string }>; tone: "ok" | "amber" | "red" | "slate";
+  label: string;
+  value: number | string;
+  icon: React.ComponentType<{ className?: string }>;
+  tone: "ok" | "amber" | "red" | "slate";
 }) {
   const toneMap = {
     ok: "text-emerald-700 bg-emerald-50",
@@ -106,8 +131,14 @@ function Kpi({
 }
 
 function AuditDetailSheet({
-  audit, open, onOpenChange,
-}: { audit: SocialAudit | null; open: boolean; onOpenChange: (v: boolean) => void }) {
+  audit,
+  open,
+  onOpenChange,
+}: {
+  audit: SocialAudit | null;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) {
   if (!audit) return null;
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -116,7 +147,9 @@ function AuditDetailSheet({
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
               <SheetTitle className="text-xl">{audit.standard}</SheetTitle>
-              <SheetDescription>Audited by {audit.auditor} · {audit.scope}</SheetDescription>
+              <SheetDescription>
+                Audited by {audit.auditor} · {audit.scope}
+              </SheetDescription>
             </div>
             {scorePill(audit.score)}
           </div>
@@ -130,7 +163,9 @@ function AuditDetailSheet({
         </div>
 
         <div className="mt-6">
-          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Findings & corrective actions</div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Findings & corrective actions
+          </div>
           <div className="mt-3 overflow-x-auto rounded-md border">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-xs uppercase text-slate-500">
@@ -147,14 +182,18 @@ function AuditDetailSheet({
                 {audit.findings.map((f) => (
                   <tr key={f.id}>
                     <td className="px-3 py-2">
-                      <Badge variant="outline" className={severityBadge(f.severity)}>{f.severity}</Badge>
+                      <Badge variant="outline" className={severityBadge(f.severity)}>
+                        {f.severity}
+                      </Badge>
                     </td>
                     <td className="px-3 py-2 text-muted-foreground">{f.area}</td>
                     <td className="px-3 py-2 font-medium">{f.title}</td>
                     <td className="px-3 py-2 text-muted-foreground">{f.correctiveAction}</td>
                     <td className="px-3 py-2">{f.dueDate}</td>
                     <td className="px-3 py-2">
-                      <Badge variant="outline" className="text-[10px]">{f.status}</Badge>
+                      <Badge variant="outline" className="text-[10px]">
+                        {f.status}
+                      </Badge>
                     </td>
                   </tr>
                 ))}
@@ -167,8 +206,8 @@ function AuditDetailSheet({
           <div className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
             <span>
-              Attachments live in your organization&rsquo;s document library — upload audit reports and
-              certificates below.
+              Attachments live in your organization&rsquo;s document library — upload audit reports
+              and certificates below.
             </span>
           </div>
         </div>
@@ -178,15 +217,23 @@ function AuditDetailSheet({
 }
 
 function TcDetailSheet({
-  tc, open, onOpenChange,
-}: { tc: TransactionCert | null; open: boolean; onOpenChange: (v: boolean) => void }) {
+  tc,
+  open,
+  onOpenChange,
+}: {
+  tc: TransactionCert | null;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) {
   if (!tc) return null;
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
         <SheetHeader>
           <SheetTitle className="font-mono text-lg">{tc.number}</SheetTitle>
-          <SheetDescription>{tc.standard} · issued by {tc.issuedBy}</SheetDescription>
+          <SheetDescription>
+            {tc.standard} · issued by {tc.issuedBy}
+          </SheetDescription>
         </SheetHeader>
         <div className="mt-5 grid grid-cols-2 gap-3">
           <MiniStat label="Issue date" value={tc.issueDate} />
@@ -199,8 +246,8 @@ function TcDetailSheet({
           <div className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
             <span>
-              Attachments live in your organization&rsquo;s document library — upload audit reports and
-              certificates below.
+              Attachments live in your organization&rsquo;s document library — upload audit reports
+              and certificates below.
             </span>
           </div>
         </div>
@@ -220,7 +267,8 @@ function MiniStat({ label, value }: { label: string; value: string }) {
 
 export function CompliancePage({ entity }: { entity: Entity }) {
   const uploaderRef = useRef<HTMLDivElement | null>(null);
-  const scrollToUpload = () => uploaderRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const scrollToUpload = () =>
+    uploaderRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   const seeded = isSeededOrg(entity);
   const audits = seeded ? getMockSocialAudits(entity) : [];
@@ -232,21 +280,36 @@ export function CompliancePage({ entity }: { entity: Entity }) {
   const [auditOpen, setAuditOpen] = useState(false);
   const [tcOpen, setTcOpen] = useState(false);
 
-  const validCount = certs.filter((c) => c.status === "Verified" && daysUntil(c.expiryDate) >= 0).length;
+  const validCount = certs.filter(
+    (c) => c.status === "Verified" && daysUntil(c.expiryDate) >= 0,
+  ).length;
   const expiringSoon = certs.filter((c) => expiryTone(c.expiryDate) === "soon").length;
-  const expired = certs.filter((c) => expiryTone(c.expiryDate) === "expired" || c.status === "Expired").length;
-  const pendingAudits = audits.filter((a) => a.status === "Minor NC" || a.status === "Major NC").length;
-  const avgAuditScore = audits.length ? Math.round(audits.reduce((s, a) => s + a.score, 0) / audits.length) : 0;
+  const expired = certs.filter(
+    (c) => expiryTone(c.expiryDate) === "expired" || c.status === "Expired",
+  ).length;
+  const pendingAudits = audits.filter(
+    (a) => a.status === "Minor NC" || a.status === "Major NC",
+  ).length;
+  const avgAuditScore = audits.length
+    ? Math.round(audits.reduce((s, a) => s + a.score, 0) / audits.length)
+    : 0;
 
-  const openAudit = (a: SocialAudit) => { setActiveAudit(a); setAuditOpen(true); };
-  const openTc = (t: TransactionCert) => { setActiveTc(t); setTcOpen(true); };
+  const openAudit = (a: SocialAudit) => {
+    setActiveAudit(a);
+    setAuditOpen(true);
+  };
+  const openTc = (t: TransactionCert) => {
+    setActiveTc(t);
+    setTcOpen(true);
+  };
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Compliance</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Social audits, product certifications, transaction certificates and compliance uploads. Click any row for full details.
+          Social audits, product certifications, transaction certificates and compliance uploads.
+          Click any row for full details.
         </p>
       </div>
 
@@ -254,8 +317,18 @@ export function CompliancePage({ entity }: { entity: Entity }) {
         <Kpi label="Valid certificates" value={validCount} icon={ShieldCheck} tone="ok" />
         <Kpi label="Expiring in 90 days" value={expiringSoon} icon={Clock} tone="amber" />
         <Kpi label="Expired" value={expired} icon={AlertTriangle} tone="red" />
-        <Kpi label="Audit non-conformities" value={pendingAudits} icon={ClipboardCheck} tone="slate" />
-        <Kpi label="Avg audit score" value={avgAuditScore || "—"} icon={ShieldCheck} tone={avgAuditScore >= 85 ? "ok" : avgAuditScore >= 65 ? "amber" : "red"} />
+        <Kpi
+          label="Audit non-conformities"
+          value={pendingAudits}
+          icon={ClipboardCheck}
+          tone="slate"
+        />
+        <Kpi
+          label="Avg audit score"
+          value={avgAuditScore || "—"}
+          icon={ShieldCheck}
+          tone={avgAuditScore >= 85 ? "ok" : avgAuditScore >= 65 ? "amber" : "red"}
+        />
       </div>
 
       {/* Social audits */}
@@ -272,43 +345,52 @@ export function CompliancePage({ entity }: { entity: Entity }) {
               No social audits recorded yet. Upload an audit report to get started.
             </div>
           ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-                <tr>
-                  <th className="px-4 py-2 text-left font-medium">Standard</th>
-                  <th className="px-4 py-2 text-left font-medium">Auditor</th>
-                  <th className="px-4 py-2 text-left font-medium">Scope</th>
-                  <th className="px-4 py-2 text-left font-medium">Audit date</th>
-                  <th className="px-4 py-2 text-left font-medium">Next due</th>
-                  <th className="px-4 py-2 text-left font-medium">Score</th>
-                  <th className="px-4 py-2 text-left font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {audits.map((a) => (
-                  <tr key={a.id} className="cursor-pointer hover:bg-muted/40" onClick={() => openAudit(a)}>
-                    <td className="px-4 py-3 font-medium">{a.standard}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{a.auditor}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{a.scope}</td>
-                    <td className="px-4 py-3">{a.auditDate}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <span>{a.nextDue}</span>
-                        <Badge variant="outline" className={cn("text-[10px]", toneClass(expiryTone(a.nextDue)))}>
-                          {toneLabel(a.nextDue)}
-                        </Badge>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">{scorePill(a.score)}</td>
-                    <td className="px-4 py-3">
-                      <Badge variant="outline" className={auditBadge(a.status)}>{a.status}</Badge>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+                  <tr>
+                    <th className="px-4 py-2 text-left font-medium">Standard</th>
+                    <th className="px-4 py-2 text-left font-medium">Auditor</th>
+                    <th className="px-4 py-2 text-left font-medium">Scope</th>
+                    <th className="px-4 py-2 text-left font-medium">Audit date</th>
+                    <th className="px-4 py-2 text-left font-medium">Next due</th>
+                    <th className="px-4 py-2 text-left font-medium">Score</th>
+                    <th className="px-4 py-2 text-left font-medium">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y">
+                  {audits.map((a) => (
+                    <tr
+                      key={a.id}
+                      className="cursor-pointer hover:bg-muted/40"
+                      onClick={() => openAudit(a)}
+                    >
+                      <td className="px-4 py-3 font-medium">{a.standard}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{a.auditor}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{a.scope}</td>
+                      <td className="px-4 py-3">{a.auditDate}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <span>{a.nextDue}</span>
+                          <Badge
+                            variant="outline"
+                            className={cn("text-[10px]", toneClass(expiryTone(a.nextDue)))}
+                          >
+                            {toneLabel(a.nextDue)}
+                          </Badge>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">{scorePill(a.score)}</td>
+                      <td className="px-4 py-3">
+                        <Badge variant="outline" className={auditBadge(a.status)}>
+                          {a.status}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -323,7 +405,9 @@ export function CompliancePage({ entity }: { entity: Entity }) {
         </CardHeader>
         <CardContent className="p-0">
           {certs.length === 0 ? (
-            <div className="px-5 py-6 text-sm text-muted-foreground">No certifications recorded for this organization.</div>
+            <div className="px-5 py-6 text-sm text-muted-foreground">
+              No certifications recorded for this organization.
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -340,7 +424,16 @@ export function CompliancePage({ entity }: { entity: Entity }) {
                   {certs.map((c, i) => {
                     const tone = expiryTone(c.expiryDate);
                     return (
-                      <tr key={i} className={tone === "expired" ? "bg-red-50/40" : tone === "soon" ? "bg-amber-50/40" : ""}>
+                      <tr
+                        key={i}
+                        className={
+                          tone === "expired"
+                            ? "bg-red-50/40"
+                            : tone === "soon"
+                              ? "bg-amber-50/40"
+                              : ""
+                        }
+                      >
                         <td className="px-4 py-3 font-medium">{c.name}</td>
                         <td className="px-4 py-3 text-muted-foreground">{c.category}</td>
                         <td className="px-4 py-3">{c.lastVerified}</td>
@@ -380,9 +473,12 @@ export function CompliancePage({ entity }: { entity: Entity }) {
       <Card className="shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <div>
-            <CardTitle className="text-base font-semibold">Transaction certificates (TCs)</CardTitle>
+            <CardTitle className="text-base font-semibold">
+              Transaction certificates (TCs)
+            </CardTitle>
             <p className="mt-1 text-xs text-muted-foreground">
-              Shipment-level certificates linking specific orders to certified inputs. Click a row for details.
+              Shipment-level certificates linking specific orders to certified inputs. Click a row
+              for details.
             </p>
           </div>
           <Button size="sm" variant="outline" onClick={scrollToUpload}>
@@ -396,40 +492,46 @@ export function CompliancePage({ entity }: { entity: Entity }) {
               inputs.
             </div>
           ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-                <tr>
-                  <th className="px-4 py-2 text-left font-medium">TC number</th>
-                  <th className="px-4 py-2 text-left font-medium">Standard</th>
-                  <th className="px-4 py-2 text-left font-medium">Issued by</th>
-                  <th className="px-4 py-2 text-left font-medium">Issue date</th>
-                  <th className="px-4 py-2 text-left font-medium">Products</th>
-                  <th className="px-4 py-2 text-left font-medium">Buyer</th>
-                  <th className="px-4 py-2 text-left font-medium">Status</th>
-                  <th className="px-4 py-2 text-right font-medium" />
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {tcs.map((t) => (
-                  <tr key={t.id} className="cursor-pointer hover:bg-muted/40" onClick={() => openTc(t)}>
-                    <td className="px-4 py-3 font-mono text-xs">{t.number}</td>
-                    <td className="px-4 py-3">{t.standard}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{t.issuedBy}</td>
-                    <td className="px-4 py-3">{t.issueDate}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{t.products}</td>
-                    <td className="px-4 py-3">{t.buyer}</td>
-                    <td className="px-4 py-3">
-                      <Badge variant="outline" className={tcBadge(t.status)}>{t.status}</Badge>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <ExternalLink className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+                  <tr>
+                    <th className="px-4 py-2 text-left font-medium">TC number</th>
+                    <th className="px-4 py-2 text-left font-medium">Standard</th>
+                    <th className="px-4 py-2 text-left font-medium">Issued by</th>
+                    <th className="px-4 py-2 text-left font-medium">Issue date</th>
+                    <th className="px-4 py-2 text-left font-medium">Products</th>
+                    <th className="px-4 py-2 text-left font-medium">Buyer</th>
+                    <th className="px-4 py-2 text-left font-medium">Status</th>
+                    <th className="px-4 py-2 text-right font-medium" />
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y">
+                  {tcs.map((t) => (
+                    <tr
+                      key={t.id}
+                      className="cursor-pointer hover:bg-muted/40"
+                      onClick={() => openTc(t)}
+                    >
+                      <td className="px-4 py-3 font-mono text-xs">{t.number}</td>
+                      <td className="px-4 py-3">{t.standard}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{t.issuedBy}</td>
+                      <td className="px-4 py-3">{t.issueDate}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{t.products}</td>
+                      <td className="px-4 py-3">{t.buyer}</td>
+                      <td className="px-4 py-3">
+                        <Badge variant="outline" className={tcBadge(t.status)}>
+                          {t.status}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <ExternalLink className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </CardContent>
       </Card>

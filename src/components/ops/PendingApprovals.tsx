@@ -70,7 +70,6 @@ export function PendingApprovals() {
               </Badge>
             </div>
             <div className="mt-2 flex flex-wrap justify-end gap-1">
-
               <Button size="sm" variant="outline" className="h-7 px-2 text-xs">
                 Review
               </Button>

@@ -17,7 +17,8 @@ export function MatchScoreInfo() {
       <PopoverContent className="w-80 text-xs">
         <div className="mb-2 text-sm font-semibold">How partners are matched</div>
         <p className="mb-3 text-muted-foreground">
-          Each pair is scored 0–100 by combining these signals. We use the score to rank partners — you don't need to read it directly.
+          Each pair is scored 0–100 by combining these signals. We use the score to rank partners —
+          you don't need to read it directly.
         </p>
         <div className="space-y-2">
           {MATCH_WEIGHTS.map((w) => (

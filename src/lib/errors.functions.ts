@@ -29,7 +29,9 @@ export const listAppErrors = createServerFn({ method: "GET" })
 
     let query = context.supabase
       .from("app_errors")
-      .select("id, occurred_at, source, message, stack, route, user_id, org_id, user_agent, resolved_at")
+      .select(
+        "id, occurred_at, source, message, stack, route, user_id, org_id, user_agent, resolved_at",
+      )
       .gte("occurred_at", since)
       .order("occurred_at", { ascending: false })
       .limit(data.limit);

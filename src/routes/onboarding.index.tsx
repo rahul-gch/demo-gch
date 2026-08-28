@@ -78,9 +78,7 @@ function OnboardingStart() {
       <div className="mx-auto w-full max-w-2xl">
         <CreateOrgForm
           signedIn
-          onCreated={(id) =>
-            nav({ to: "/onboarding/org/$id", params: { id }, replace: true })
-          }
+          onCreated={(id) => nav({ to: "/onboarding/org/$id", params: { id }, replace: true })}
         />
       </div>
     </OnboardingLayout>

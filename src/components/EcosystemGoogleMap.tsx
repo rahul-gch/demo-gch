@@ -14,8 +14,16 @@ const DARK_STYLE: any[] = [
   { elementType: "labels.text.stroke", stylers: [{ color: "#0b1220" }] },
   { elementType: "labels.text.fill", stylers: [{ color: "#6b7a90" }] },
   { featureType: "administrative", elementType: "geometry", stylers: [{ color: "#1b2638" }] },
-  { featureType: "administrative.country", elementType: "geometry.stroke", stylers: [{ color: "#2a3a55" }] },
-  { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#8aa0bd" }] },
+  {
+    featureType: "administrative.country",
+    elementType: "geometry.stroke",
+    stylers: [{ color: "#2a3a55" }],
+  },
+  {
+    featureType: "administrative.locality",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#8aa0bd" }],
+  },
   { featureType: "landscape", elementType: "geometry", stylers: [{ color: "#101a2c" }] },
   { featureType: "poi", stylers: [{ visibility: "off" }] },
   { featureType: "road", stylers: [{ visibility: "off" }] },
@@ -168,7 +176,10 @@ export function EcosystemGoogleMap({
   }, [ready, entities, selectedId, onSelect, compact, center, zoom]);
 
   return (
-    <div className="relative overflow-hidden rounded-lg border border-slate-800 bg-[#070d1a]" style={{ height }}>
+    <div
+      className="relative overflow-hidden rounded-lg border border-slate-800 bg-[#070d1a]"
+      style={{ height }}
+    >
       <div ref={ref} className="h-full w-full" />
       {!ready && !error && (
         <div className="absolute inset-0 flex items-center justify-center text-xs text-slate-400">

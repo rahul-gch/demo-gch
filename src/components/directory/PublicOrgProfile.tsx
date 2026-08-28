@@ -112,7 +112,11 @@ export function PublicOrgProfile({ entity: e }: { entity: Entity }) {
               <div className="flex min-w-0 items-start gap-4">
                 <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-muted">
                   {e.logoUrl ? (
-                    <img src={e.logoUrl} alt={`${e.name} logo`} className="h-full w-full object-cover" />
+                    <img
+                      src={e.logoUrl}
+                      alt={`${e.name} logo`}
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
                     <Building2 className="h-6 w-6 text-muted-foreground" />
                   )}
@@ -145,7 +149,9 @@ export function PublicOrgProfile({ entity: e }: { entity: Entity }) {
                 <Button
                   size="sm"
                   onClick={() =>
-                    document.getElementById("public-message-box")?.scrollIntoView({ behavior: "smooth" })
+                    document
+                      .getElementById("public-message-box")
+                      ?.scrollIntoView({ behavior: "smooth" })
                   }
                 >
                   <Send className="mr-1.5 h-3.5 w-3.5" />
@@ -246,7 +252,8 @@ export function PublicOrgProfile({ entity: e }: { entity: Entity }) {
             )}
             <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
               <Lock className="h-3 w-3" />
-              Audit reports, certificates and transaction documents are private to this organization.
+              Audit reports, certificates and transaction documents are private to this
+              organization.
             </p>
           </CardContent>
         </Card>
@@ -282,7 +289,12 @@ export function PublicOrgProfile({ entity: e }: { entity: Entity }) {
         </Card>
       </main>
 
-      <MeetingRequestDialog entity={e} open={meetOpen} onOpenChange={setMeetOpen} viewerOrgUuid={null} />
+      <MeetingRequestDialog
+        entity={e}
+        open={meetOpen}
+        onOpenChange={setMeetOpen}
+        viewerOrgUuid={null}
+      />
     </div>
   );
 }

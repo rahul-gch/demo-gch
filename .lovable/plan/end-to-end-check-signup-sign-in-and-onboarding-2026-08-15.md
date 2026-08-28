@@ -35,6 +35,7 @@ Fix: route to the workspace when the user has an organization, otherwise straigh
 ## Verification pass
 
 After the fixes I'll drive the app headlessly and confirm, with the console clean of hydration and runtime errors:
+
 - New signup → confirmation state → welcome screen with both create and join options.
 - Sign in, sign out, sign in again.
 - Forgot password → reset link → new password → correct landing page.

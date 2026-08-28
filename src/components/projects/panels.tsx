@@ -10,7 +10,6 @@ import {
   MessageCircle,
   CalendarDays,
   Activity,
-  
   Building2,
   Mail,
   ExternalLink,
@@ -148,7 +147,9 @@ function fmtRelative(iso: string): string {
 // ============================================================
 
 export function OverviewPanel({ entity, project }: { entity: Entity; project: Project }) {
-  const openReq = project.requests.filter((r) => r.status !== "Completed" && r.status !== "Rejected");
+  const openReq = project.requests.filter(
+    (r) => r.status !== "Completed" && r.status !== "Rejected",
+  );
   const upcoming = project.meetings
     .filter((m) => new Date(m.date).getTime() >= Date.now() - 86400000)
     .slice(0, 3);
@@ -223,10 +224,7 @@ export function OverviewPanel({ entity, project }: { entity: Entity; project: Pr
             <SectionTitle icon={FolderOpen}>Important documents</SectionTitle>
             <ul className="space-y-2">
               {recentDocs.map((d) => (
-                <li
-                  key={d.id}
-                  className="flex items-center gap-2 rounded-md border p-2 text-sm"
-                >
+                <li key={d.id} className="flex items-center gap-2 rounded-md border p-2 text-sm">
                   <FileText className="h-4 w-4 text-muted-foreground" />
                   <div className="min-w-0 flex-1">
                     <div className="truncate font-medium">{d.name}</div>
@@ -348,13 +346,7 @@ function StatTile({
   );
 }
 
-function SectionTitle({
-  icon: Icon,
-  children,
-}: {
-  icon: typeof Users;
-  children: React.ReactNode;
-}) {
+function SectionTitle({ icon: Icon, children }: { icon: typeof Users; children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2 text-sm font-medium">
       <Icon className="h-4 w-4 text-muted-foreground" /> {children}
@@ -455,8 +447,8 @@ function StatusPill({ status }: { status: ProjectPartner["status"] }) {
     status === "Active"
       ? "bg-emerald-100 text-emerald-700"
       : status === "Invited"
-      ? "bg-amber-100 text-amber-700"
-      : "bg-slate-100 text-slate-700";
+        ? "bg-amber-100 text-amber-700"
+        : "bg-slate-100 text-slate-700";
   return (
     <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium", tone)}>{status}</span>
   );
@@ -688,7 +680,12 @@ export function RequestsPanel({ entity, project }: { entity: Entity; project: Pr
             </DialogHeader>
             <div className="space-y-4">
               <div className="flex flex-wrap items-center gap-2">
-                <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium", PRIORITY_TONE[active.priority])}>
+                <span
+                  className={cn(
+                    "rounded-full px-2 py-0.5 text-[11px] font-medium",
+                    PRIORITY_TONE[active.priority],
+                  )}
+                >
                   {active.priority} priority
                 </span>
                 <Select
@@ -958,13 +955,10 @@ export function DocumentsPanel({ entity, project }: { entity: Entity; project: P
                   const Icon = d.mime?.startsWith("image/")
                     ? ImageIcon
                     : d.mime?.startsWith("video/")
-                    ? Video
-                    : FileText;
+                      ? Video
+                      : FileText;
                   return (
-                    <li
-                      key={d.id}
-                      className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40"
-                    >
+                    <li key={d.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40">
                       <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
                       <div className="min-w-0 flex-1">
                         <div className="truncate text-sm font-medium">{d.name}</div>
@@ -1038,9 +1032,12 @@ function UploadDocumentDialog({
   const [folder, setFolder] = useState<DocFolder>("Certificates");
   const [name, setName] = useState("");
   const [visibility, setVisibility] = useState<"All Partners" | "Owner Only">("All Partners");
-  const [file, setFile] = useState<{ dataUrl?: string; name: string; mime: string; size: number } | null>(
-    null,
-  );
+  const [file, setFile] = useState<{
+    dataUrl?: string;
+    name: string;
+    mime: string;
+    size: number;
+  } | null>(null);
 
   async function handleFile(f: File) {
     const buf = f.size <= 3.5 * 1024 * 1024;
@@ -1180,7 +1177,11 @@ export function DiscussionsPanel({ entity, project }: { entity: Entity; project:
           />
           <div className="flex items-center justify-between">
             <div className="text-[11px] text-muted-foreground">
-              Mention: {project.partners.slice(0, 4).map((p) => `@${p.name.split(" ")[0]}`).join(", ")}
+              Mention:{" "}
+              {project.partners
+                .slice(0, 4)
+                .map((p) => `@${p.name.split(" ")[0]}`)
+                .join(", ")}
             </div>
             <Button
               disabled={!title.trim() || !body.trim()}
@@ -1261,9 +1262,7 @@ export function DiscussionsPanel({ entity, project }: { entity: Entity; project:
                   </div>
                 ))}
                 <div className="pl-0">
-                  <CommentComposer
-                    onSubmit={(b) => replyDiscussion(entity, project.id, d.id, b)}
-                  />
+                  <CommentComposer onSubmit={(b) => replyDiscussion(entity, project.id, d.id, b)} />
                 </div>
               </div>
             </CardContent>
@@ -1363,9 +1362,7 @@ function MeetingList({
                       <li key={a.id} className="flex items-center gap-2 text-sm">
                         <Checkbox
                           checked={a.done}
-                          onCheckedChange={() =>
-                            toggleActionItem(entity, project.id, m.id, a.id)
-                          }
+                          onCheckedChange={() => toggleActionItem(entity, project.id, m.id, a.id)}
                         />
                         <span className={cn(a.done && "text-muted-foreground line-through")}>
                           {a.text}

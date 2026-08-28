@@ -86,8 +86,18 @@ export const HM: Entity = {
   traceabilityNotes:
     "Public supplier list maintained by H&M Group. Tier 1 & 2 mills disclosed. Active Better Cotton and Textile Exchange partner. Material substitution and circularity investments via H&M Group Ventures, Looper Textile Co. and Sellpy.",
   contacts: [
-    { name: "H&M Group Investor Relations", email: "ir@hm.com", phone: "+46-8-796-55-00", role: "Investor Relations" },
-    { name: "H&M Group Sustainability", email: "sustainability@hm.com", phone: "", role: "Sustainability Lead" },
+    {
+      name: "H&M Group Investor Relations",
+      email: "ir@hm.com",
+      phone: "+46-8-796-55-00",
+      role: "Investor Relations",
+    },
+    {
+      name: "H&M Group Sustainability",
+      email: "sustainability@hm.com",
+      phone: "",
+      role: "Sustainability Lead",
+    },
   ],
   confidenceScore: 94,
   riskLevel: "Low",
@@ -110,12 +120,52 @@ export const HM_KPI_OVERRIDES: Record<
   string,
   { value: number; display: string; confidence: number; source: string }
 > = {
-  KPI001: { value: 56, display: "56% reduction", confidence: 92, source: "H&M Group A&S Report 2024 — Scope 1 & 2 vs 2019" },
-  KPI002: { value: 23, display: "23% reduction", confidence: 86, source: "H&M Group A&S Report 2024 — Scope 3 vs 2019" },
-  KPI003: { value: 33, display: "33%", confidence: 88, source: "H&M Group 2024 — Recycled material share" },
-  KPI004: { value: 89, display: "89%", confidence: 94, source: "H&M Group 2024 — Recycled or sustainably sourced materials" },
-  KPI005: { value: 100, display: "100%", confidence: 95, source: "H&M Group — Public Tier 1 supplier list" },
-  KPI006: { value: 96, display: "96%", confidence: 90, source: "H&M Group — Public Tier 2 supplier list" },
-  KPI010: { value: 100, display: "100%", confidence: 95, source: "H&M Group 2024 — Renewable electricity in own operations" },
-  KPI012: { value: 95, display: "95%", confidence: 88, source: "H&M Group 2024 — ZDHC MRSL conformance" },
+  KPI001: {
+    value: 56,
+    display: "56% reduction",
+    confidence: 92,
+    source: "H&M Group A&S Report 2024 — Scope 1 & 2 vs 2019",
+  },
+  KPI002: {
+    value: 23,
+    display: "23% reduction",
+    confidence: 86,
+    source: "H&M Group A&S Report 2024 — Scope 3 vs 2019",
+  },
+  KPI003: {
+    value: 33,
+    display: "33%",
+    confidence: 88,
+    source: "H&M Group 2024 — Recycled material share",
+  },
+  KPI004: {
+    value: 89,
+    display: "89%",
+    confidence: 94,
+    source: "H&M Group 2024 — Recycled or sustainably sourced materials",
+  },
+  KPI005: {
+    value: 100,
+    display: "100%",
+    confidence: 95,
+    source: "H&M Group — Public Tier 1 supplier list",
+  },
+  KPI006: {
+    value: 96,
+    display: "96%",
+    confidence: 90,
+    source: "H&M Group — Public Tier 2 supplier list",
+  },
+  KPI010: {
+    value: 100,
+    display: "100%",
+    confidence: 95,
+    source: "H&M Group 2024 — Renewable electricity in own operations",
+  },
+  KPI012: {
+    value: 95,
+    display: "95%",
+    confidence: 88,
+    source: "H&M Group 2024 — ZDHC MRSL conformance",
+  },
 };

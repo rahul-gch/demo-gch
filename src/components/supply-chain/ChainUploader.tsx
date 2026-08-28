@@ -36,7 +36,10 @@ export function ChainUploader({ entity }: { entity: Entity }) {
       sortBy: { column: "created_at", order: "desc" },
     });
     setLoading(false);
-    if (error) { setFiles([]); return; }
+    if (error) {
+      setFiles([]);
+      return;
+    }
     setFiles((data || []) as unknown as FileEntry[]);
   };
 
@@ -49,10 +52,14 @@ export function ChainUploader({ entity }: { entity: Entity }) {
     setUploading(true);
     const path = `${folder}/${Date.now()}-${file.name}`;
     const { error } = await supabase.storage.from("reports").upload(path, file, {
-      cacheControl: "3600", upsert: false,
+      cacheControl: "3600",
+      upsert: false,
     });
     setUploading(false);
-    if (error) { toast.error(`Upload failed: ${error.message}`); return; }
+    if (error) {
+      toast.error(`Upload failed: ${error.message}`);
+      return;
+    }
 
     let rowMsg = "";
     if (/\.csv$/i.test(file.name)) {
@@ -60,7 +67,9 @@ export function ChainUploader({ entity }: { entity: Entity }) {
         const text = await file.text();
         const rows = text.split(/\r?\n/).filter((r) => r.trim().length).length - 1;
         if (rows > 0) rowMsg = ` — ${rows} rows detected`;
-      } catch {/* ignore */}
+      } catch {
+        /* ignore */
+      }
     }
     toast.success(`Chain imported${rowMsg}`);
     list();
@@ -82,7 +91,10 @@ export function ChainUploader({ entity }: { entity: Entity }) {
   const onDelete = async (name: string) => {
     const { error } = await supabase.storage.from("reports").remove([`${folder}/${name}`]);
     if (error) toast.error(error.message);
-    else { toast.success("File removed"); list(); }
+    else {
+      toast.success("File removed");
+      list();
+    }
   };
 
   return (
@@ -91,7 +103,8 @@ export function ChainUploader({ entity }: { entity: Entity }) {
         <div>
           <CardTitle className="text-base font-semibold">Upload existing supply chain</CardTitle>
           <p className="mt-1 text-xs text-muted-foreground">
-            Import a .xlsx or .csv of your current supplier network. Stored privately under <code>{folder}/</code>.
+            Import a .xlsx or .csv of your current supplier network. Stored privately under{" "}
+            <code>{folder}/</code>.
           </p>
         </div>
         <Button asChild size="sm" variant="outline" className="gap-1.5">
@@ -103,7 +116,10 @@ export function ChainUploader({ entity }: { entity: Entity }) {
       <CardContent className="space-y-4">
         {session ? (
           <div
-            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
             onDragLeave={() => setDragOver(false)}
             onDrop={onDrop}
             onClick={() => inputRef.current?.click()}
@@ -131,8 +147,12 @@ export function ChainUploader({ entity }: { entity: Entity }) {
           </div>
         ) : (
           <div className="flex items-center justify-between rounded-lg border bg-slate-50 px-4 py-3">
-            <span className="text-sm text-muted-foreground">Sign in to upload supply chain files.</span>
-            <Button asChild size="sm" variant="outline"><Link to="/auth">Sign in</Link></Button>
+            <span className="text-sm text-muted-foreground">
+              Sign in to upload supply chain files.
+            </span>
+            <Button asChild size="sm" variant="outline">
+              <Link to="/auth">Sign in</Link>
+            </Button>
           </div>
         )}
 
@@ -147,11 +167,22 @@ export function ChainUploader({ entity }: { entity: Entity }) {
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-medium">{f.name.replace(/^\d+-/, "")}</div>
                   <div className="text-xs text-muted-foreground">
-                    {Math.max(1, Math.round((f.metadata?.size || 0) / 1024))} KB · uploaded {(f.created_at || "").slice(0, 10)}
+                    {Math.max(1, Math.round((f.metadata?.size || 0) / 1024))} KB · uploaded{" "}
+                    {(f.created_at || "").slice(0, 10)}
                   </div>
                 </div>
-                <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">Stored</Badge>
-                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onDelete(f.name)}>
+                <Badge
+                  variant="outline"
+                  className="border-emerald-200 bg-emerald-50 text-emerald-700"
+                >
+                  Stored
+                </Badge>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7"
+                  onClick={() => onDelete(f.name)}
+                >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </li>

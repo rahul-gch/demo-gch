@@ -23,8 +23,8 @@ export function ComingSoon({
           </div>
           <div className="text-base font-medium">Coming soon</div>
           <p className="max-w-md text-sm text-muted-foreground">
-            This section is part of the roadmap and will be built out next. Navigation and layout are
-            already in place so it stays consistent across every organization.
+            This section is part of the roadmap and will be built out next. Navigation and layout
+            are already in place so it stays consistent across every organization.
           </p>
         </CardContent>
       </Card>

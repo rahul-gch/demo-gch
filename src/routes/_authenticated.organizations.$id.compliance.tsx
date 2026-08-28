@@ -11,7 +11,10 @@ export const Route = createFileRoute("/_authenticated/organizations/$id/complian
   head: ({ loaderData }) => ({
     meta: [
       { title: `Compliance — ${loaderData?.entity.name ?? "Organization"} | GCH` },
-      { name: "description", content: "Social audits, product certifications, and transaction certificates." },
+      {
+        name: "description",
+        content: "Social audits, product certifications, and transaction certificates.",
+      },
     ],
   }),
   component: Page,

@@ -15,7 +15,8 @@ const ORG_COLUMNS = `
 type OrgRow = Record<string, unknown>;
 
 const str = (v: unknown, fallback = "") => (typeof v === "string" ? v : fallback);
-const numOr = (v: unknown, fallback = 0) => (typeof v === "number" && Number.isFinite(v) ? v : fallback);
+const numOr = (v: unknown, fallback = 0) =>
+  typeof v === "number" && Number.isFinite(v) ? v : fallback;
 const list = (v: unknown): string[] => (Array.isArray(v) ? (v as string[]) : []);
 
 export function rowToEntity(row: OrgRow): Entity {
@@ -33,7 +34,9 @@ export function rowToEntity(row: OrgRow): Entity {
     entityType: (str(row.entity_type) || str(row.type) || "Brand") as Entity["entityType"],
     rawEntityType: str(row.raw_entity_type) || str(row.type),
     organizationType: str(row.organization_type) || str(row.type),
-    actorType: (tier === null || tier === undefined ? "Tier 1" : `Tier ${tier}`) as Entity["actorType"],
+    actorType: (tier === null || tier === undefined
+      ? "Tier 1"
+      : `Tier ${tier}`) as Entity["actorType"],
     country: str(row.country),
     region: str(row.region),
     city: str(row.city),
@@ -62,7 +65,8 @@ export function rowToEntity(row: OrgRow): Entity {
     expiredCertCount: numOr(row.expired_cert_count),
     missingDataCount: numOr(row.missing_data_count),
     profileCompleteness: numOr(row.profile_completeness),
-    verificationStatus: (str(row.verification_status) || "Incomplete") as Entity["verificationStatus"],
+    verificationStatus: (str(row.verification_status) ||
+      "Incomplete") as Entity["verificationStatus"],
     preferredCommunicationChannel: (str(row.preferred_channel) ||
       "Email") as Entity["preferredCommunicationChannel"],
     kpiReadiness: numOr(row.kpi_readiness),
@@ -87,40 +91,41 @@ export function rowToEntity(row: OrgRow): Entity {
  * only available to authenticated members — the orgs SELECT policy is scoped to
  * the authenticated role and the `contacts` field must never be exposed to anon.
  */
-export const listEntities = createServerFn({ method: "GET" }).handler(async (): Promise<Entity[]> => {
-  const { getRequest } = await import("@tanstack/react-start/server");
-  const authHeader = getRequest()?.headers?.get("authorization") ?? "";
-  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
-  // Signed-out / SSR requests (auth page, public routes) get an empty registry
-  // instead of a thrown 401 that would blank the app.
-  if (!token) return [];
+export const listEntities = createServerFn({ method: "GET" }).handler(
+  async (): Promise<Entity[]> => {
+    const { getRequest } = await import("@tanstack/react-start/server");
+    const authHeader = getRequest()?.headers?.get("authorization") ?? "";
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+    // Signed-out / SSR requests (auth page, public routes) get an empty registry
+    // instead of a thrown 401 that would blank the app.
+    if (!token) return [];
 
-  const { createClient } = await import("@supabase/supabase-js");
-  const supabase = createClient(
-    process.env["SUPABASE_URL"]!,
-    process.env["SUPABASE_PUBLISHABLE_KEY"]!,
-    {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-      auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
-    },
-  );
+    const { createClient } = await import("@supabase/supabase-js");
+    const supabase = createClient(
+      process.env["SUPABASE_URL"]!,
+      process.env["SUPABASE_PUBLISHABLE_KEY"]!,
+      {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+        auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+      },
+    );
 
-  const { data: claims } = await supabase.auth.getClaims(token);
-  if (!claims?.claims?.sub) return [];
+    const { data: claims } = await supabase.auth.getClaims(token);
+    if (!claims?.claims?.sub) return [];
 
-  const all: Entity[] = [];
-  const pageSize = 1000;
-  for (let page = 0; page < 10; page++) {
-    const { data, error } = await supabase
-      .from("orgs")
-      .select(ORG_COLUMNS)
-      .order("name", { ascending: true })
-      .range(page * pageSize, page * pageSize + pageSize - 1);
-    if (error) throw new Error(error.message);
-    const rows = (data ?? []) as OrgRow[];
-    all.push(...rows.map(rowToEntity));
-    if (rows.length < pageSize) break;
-  }
-  return all;
-});
-
+    const all: Entity[] = [];
+    const pageSize = 1000;
+    for (let page = 0; page < 10; page++) {
+      const { data, error } = await supabase
+        .from("orgs")
+        .select(ORG_COLUMNS)
+        .order("name", { ascending: true })
+        .range(page * pageSize, page * pageSize + pageSize - 1);
+      if (error) throw new Error(error.message);
+      const rows = (data ?? []) as OrgRow[];
+      all.push(...rows.map(rowToEntity));
+      if (rows.length < pageSize) break;
+    }
+    return all;
+  },
+);

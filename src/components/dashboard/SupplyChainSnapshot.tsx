@@ -89,7 +89,9 @@ function Tile({
       }`}
     >
       <div className="flex items-center justify-between">
-        <div className={`flex h-7 w-7 items-center justify-center rounded-md bg-white/70 ${meta.iconColor}`}>
+        <div
+          className={`flex h-7 w-7 items-center justify-center rounded-md bg-white/70 ${meta.iconColor}`}
+        >
           <Icon className="h-4 w-4" />
         </div>
         <ChevronDown
@@ -97,7 +99,9 @@ function Tile({
         />
       </div>
       <div className={`mt-2 text-xl font-semibold tabular-nums ${meta.valueColor}`}>{value}</div>
-      <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{meta.label}</div>
+      <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+        {meta.label}
+      </div>
     </button>
   );
 }
@@ -161,7 +165,13 @@ export function SupplyChainSnapshot({ entity }: { entity: Entity }) {
         {hasData && (
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
             {tiles.map(([k, v]) => (
-              <Tile key={k} tile={k} value={v} active={open === k} onClick={() => setOpen(open === k ? null : k)} />
+              <Tile
+                key={k}
+                tile={k}
+                value={v}
+                active={open === k}
+                onClick={() => setOpen(open === k ? null : k)}
+              />
             ))}
           </div>
         )}
@@ -178,7 +188,9 @@ export function SupplyChainSnapshot({ entity }: { entity: Entity }) {
                   {open ? TILE_META[open].label : ""}
                 </div>
                 <div className="text-[11px] text-muted-foreground">
-                  {open === "countries" ? `${countryCounts.length} regions` : `${list.length} listed`}
+                  {open === "countries"
+                    ? `${countryCounts.length} regions`
+                    : `${list.length} listed`}
                 </div>
               </div>
 
@@ -205,8 +217,12 @@ export function SupplyChainSnapshot({ entity }: { entity: Entity }) {
                       <div className="min-w-0">
                         <div className="truncate text-xs font-medium text-slate-900">{e.name}</div>
                         <div className="mt-0.5 flex flex-wrap gap-1">
-                          <Badge variant="outline" className="text-[10px]">{e.actorType}</Badge>
-                          <Badge variant="secondary" className="text-[10px]">{e.country}</Badge>
+                          <Badge variant="outline" className="text-[10px]">
+                            {e.actorType}
+                          </Badge>
+                          <Badge variant="secondary" className="text-[10px]">
+                            {e.country}
+                          </Badge>
                         </div>
                       </div>
                       <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition group-hover:opacity-100" />
@@ -222,32 +238,34 @@ export function SupplyChainSnapshot({ entity }: { entity: Entity }) {
         </div>
 
         {s.tiers.length > 0 && (
-        <div>
-          <div className="mb-2 flex items-center justify-between">
-            <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-              Tier distribution
+          <div>
+            <div className="mb-2 flex items-center justify-between">
+              <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                Tier distribution
+              </div>
+              <div className="text-[10px] text-muted-foreground">
+                Total {s.tiers.reduce((a, b) => a + b.value, 0)}
+              </div>
             </div>
-            <div className="text-[10px] text-muted-foreground">
-              Total {s.tiers.reduce((a, b) => a + b.value, 0)}
+            <div className="flex h-28 items-end gap-3 rounded-lg border bg-slate-50/60 p-3">
+              {s.tiers.map((t) => {
+                const pct = Math.max(12, Math.round((t.value / max) * 100));
+                return (
+                  <div key={t.label} className="flex flex-1 flex-col items-center gap-1">
+                    <div className="text-[10px] font-semibold tabular-nums text-slate-700">
+                      {t.value}
+                    </div>
+                    <div
+                      className="w-full rounded-t-md bg-gradient-to-t from-slate-800 to-slate-500 transition-all"
+                      style={{ height: `${pct}%` }}
+                      title={`${t.label}: ${t.value}`}
+                    />
+                    <div className="text-[10px] font-medium text-muted-foreground">{t.label}</div>
+                  </div>
+                );
+              })}
             </div>
           </div>
-          <div className="flex h-28 items-end gap-3 rounded-lg border bg-slate-50/60 p-3">
-            {s.tiers.map((t) => {
-              const pct = Math.max(12, Math.round((t.value / max) * 100));
-              return (
-                <div key={t.label} className="flex flex-1 flex-col items-center gap-1">
-                  <div className="text-[10px] font-semibold tabular-nums text-slate-700">{t.value}</div>
-                  <div
-                    className="w-full rounded-t-md bg-gradient-to-t from-slate-800 to-slate-500 transition-all"
-                    style={{ height: `${pct}%` }}
-                    title={`${t.label}: ${t.value}`}
-                  />
-                  <div className="text-[10px] font-medium text-muted-foreground">{t.label}</div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
         )}
       </CardContent>
     </Card>

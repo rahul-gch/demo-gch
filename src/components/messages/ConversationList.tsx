@@ -42,9 +42,7 @@ export function ConversationList({
         last: { at: c.lastMessageAt, body: c.lastBody, from: c.lastFromMe ? "me" : "them" },
         unread: c.unread,
       }))
-      .filter((t) =>
-        filter ? t.entity.name.toLowerCase().includes(filter.toLowerCase()) : true,
-      );
+      .filter((t) => (filter ? t.entity.name.toLowerCase().includes(filter.toLowerCase()) : true));
   }, [conversations, filter]);
 
   return (
@@ -71,9 +69,7 @@ export function ConversationList({
                   onClick={() => onSelect(t.id)}
                   className={cn(
                     "group flex w-full min-w-0 items-start gap-3 overflow-hidden rounded-xl px-3 py-3 text-left transition-all",
-                    active
-                      ? "bg-muted/70 shadow-sm"
-                      : "hover:bg-muted/40",
+                    active ? "bg-muted/70 shadow-sm" : "hover:bg-muted/40",
                   )}
                 >
                   <OrgAvatar entity={t.entity} size={40} />
@@ -82,7 +78,9 @@ export function ConversationList({
                       <span
                         className={cn(
                           "truncate text-sm",
-                          hasUnread ? "font-semibold text-foreground" : "font-medium text-foreground/90",
+                          hasUnread
+                            ? "font-semibold text-foreground"
+                            : "font-medium text-foreground/90",
                         )}
                       >
                         {t.entity.name}

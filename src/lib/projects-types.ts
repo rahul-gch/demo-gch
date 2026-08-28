@@ -4,11 +4,7 @@
 
 export type ProjectStatus = "Planning" | "Active" | "On Hold" | "Completed";
 export type RequestStatus =
-  | "Open"
-  | "In Progress"
-  | "Waiting for Response"
-  | "Completed"
-  | "Rejected";
+  "Open" | "In Progress" | "Waiting for Response" | "Completed" | "Rejected";
 export type RequestPriority = "Low" | "Medium" | "High" | "Urgent";
 export type PartnerCategory =
   | "Brand"
@@ -26,14 +22,7 @@ export type PartnerCategory =
   | "Government";
 
 export type PermissionKey =
-  | "view"
-  | "upload"
-  | "edit"
-  | "approve"
-  | "invite"
-  | "createRequests"
-  | "comment"
-  | "download";
+  "view" | "upload" | "edit" | "approve" | "invite" | "createRequests" | "comment" | "download";
 
 export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   view: "View Project",

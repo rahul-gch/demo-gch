@@ -21,7 +21,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ALL_ENTITIES } from "@/seed/all-entities";
 import type { FeedKind, FeedMedia, FeedPost } from "@/lib/feed-types";
 import { useCommunityFeed, useFeedActions } from "@/lib/use-feed";
@@ -29,14 +35,38 @@ import { formatRelative } from "@/lib/admin-feed";
 
 const KIND_META: Record<FeedKind, { label: string; icon: typeof Rss; className: string }> = {
   update: { label: "Update", icon: Megaphone, className: "border-sky-200 bg-sky-50 text-sky-700" },
-  regulation: { label: "Regulation", icon: ScrollText, className: "border-amber-200 bg-amber-50 text-amber-800" },
-  investment: { label: "Investment", icon: Landmark, className: "border-emerald-200 bg-emerald-50 text-emerald-700" },
-  partnership: { label: "Partnership", icon: Handshake, className: "border-violet-200 bg-violet-50 text-violet-700" },
+  regulation: {
+    label: "Regulation",
+    icon: ScrollText,
+    className: "border-amber-200 bg-amber-50 text-amber-800",
+  },
+  investment: {
+    label: "Investment",
+    icon: Landmark,
+    className: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  },
+  partnership: {
+    label: "Partnership",
+    icon: Handshake,
+    className: "border-violet-200 bg-violet-50 text-violet-700",
+  },
   event: { label: "Event", icon: Calendar, className: "border-rose-200 bg-rose-50 text-rose-700" },
-  "ai-news": { label: "AI news", icon: Sparkles, className: "border-indigo-200 bg-indigo-50 text-indigo-700" },
-  photo: { label: "Photo", icon: ImageIcon, className: "border-slate-200 bg-slate-50 text-slate-700" },
+  "ai-news": {
+    label: "AI news",
+    icon: Sparkles,
+    className: "border-indigo-200 bg-indigo-50 text-indigo-700",
+  },
+  photo: {
+    label: "Photo",
+    icon: ImageIcon,
+    className: "border-slate-200 bg-slate-50 text-slate-700",
+  },
   video: { label: "Video", icon: Video, className: "border-slate-200 bg-slate-50 text-slate-700" },
-  document: { label: "Document", icon: FileText, className: "border-slate-200 bg-slate-50 text-slate-700" },
+  document: {
+    label: "Document",
+    icon: FileText,
+    className: "border-slate-200 bg-slate-50 text-slate-700",
+  },
 };
 
 type Row = FeedPost & { orgCountry: string; orgType: string };
@@ -70,9 +100,7 @@ export function CommunityFeed() {
   );
   const filtered = useMemo(
     () =>
-      rows.filter(
-        (r) => (kind === "all" || r.kind === kind) && (org === "all" || r.orgId === org),
-      ),
+      rows.filter((r) => (kind === "all" || r.kind === kind) && (org === "all" || r.orgId === org)),
     [rows, kind, org],
   );
   const visible = filtered.slice(0, limit);
@@ -170,11 +198,7 @@ function PostRow({ post }: { post: Row }) {
             </Avatar>
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-medium">
-                <Link
-                  to="/directory/$id"
-                  params={{ id: post.orgId }}
-                  className="hover:underline"
-                >
+                <Link to="/directory/$id" params={{ id: post.orgId }} className="hover:underline">
                   {post.authorOrg}
                 </Link>
               </div>
@@ -238,10 +262,19 @@ function PostRow({ post }: { post: Row }) {
 
 function MediaTile({ media }: { media: FeedMedia }) {
   if (media.type === "photo" && media.url) {
-    return <img src={media.url} alt={media.label} className="max-h-72 w-full rounded-md object-cover" />;
+    return (
+      <img src={media.url} alt={media.label} className="max-h-72 w-full rounded-md object-cover" />
+    );
   }
   if (media.type === "video" && media.url) {
-    return <video src={media.url} controls preload="metadata" className="max-h-72 w-full rounded-md bg-black" />;
+    return (
+      <video
+        src={media.url}
+        controls
+        preload="metadata"
+        className="max-h-72 w-full rounded-md bg-black"
+      />
+    );
   }
   return (
     <div className="flex items-center gap-2 rounded-md border bg-slate-50 px-3 py-2 text-sm">

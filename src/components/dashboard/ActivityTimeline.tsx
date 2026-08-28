@@ -1,7 +1,15 @@
 import type { Entity } from "@/seed/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buildTimeline } from "@/lib/dashboard-derive";
-import { Upload, Eye, TrendingUp, MessageSquare, Pencil, Handshake, FolderKanban } from "lucide-react";
+import {
+  Upload,
+  Eye,
+  TrendingUp,
+  MessageSquare,
+  Pencil,
+  Handshake,
+  FolderKanban,
+} from "lucide-react";
 
 const ICONS = {
   upload: Upload,

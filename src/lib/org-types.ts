@@ -44,10 +44,29 @@ export const MANUFACTURER_TYPES = new Set<string>([
 export const BRAND_TYPES = new Set<string>(["Brand", "Retailer", "Trader / Agent"]);
 
 export const SPECIALIZATION_SUGGESTIONS: Record<string, string[]> = {
-  Brand: ["Sportswear", "Womenswear", "Menswear", "Kidswear", "Denim", "Luxury", "Fast fashion", "Outdoor", "Loungewear", "Footwear"],
+  Brand: [
+    "Sportswear",
+    "Womenswear",
+    "Menswear",
+    "Kidswear",
+    "Denim",
+    "Luxury",
+    "Fast fashion",
+    "Outdoor",
+    "Loungewear",
+    "Footwear",
+  ],
   Retailer: ["Multi-brand", "Private label", "E-commerce", "Department store"],
   Manufacturer: ["Knitwear", "Denim", "Activewear", "Outerwear", "Home textiles"],
-  "Garment Factory": ["Knitwear", "Denim", "Activewear", "Outerwear", "T-shirts", "Formalwear", "Underwear"],
+  "Garment Factory": [
+    "Knitwear",
+    "Denim",
+    "Activewear",
+    "Outerwear",
+    "T-shirts",
+    "Formalwear",
+    "Underwear",
+  ],
   "Fabric Mill": ["Denim", "Jersey Knits", "Woven", "Performance Fabrics", "Selvedge"],
   "Dye House / Processing": ["Reactive Dyeing", "Indigo", "Pigment", "Digital Print"],
   "Printing Unit": ["Screen Print", "Digital Print", "Sublimation"],

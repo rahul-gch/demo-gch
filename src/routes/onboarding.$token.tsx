@@ -15,9 +15,16 @@ export const Route = createFileRoute("/onboarding/$token")({
   head: () => ({
     meta: [
       { title: "Join Global Chain Hub — onboarding invitation" },
-      { name: "description", content: "Accept your onboarding invitation and set up your organization on Global Chain Hub." },
+      {
+        name: "description",
+        content:
+          "Accept your onboarding invitation and set up your organization on Global Chain Hub.",
+      },
       { property: "og:title", content: "Join Global Chain Hub" },
-      { property: "og:description", content: "Accept your onboarding invitation and set up your organization." },
+      {
+        property: "og:description",
+        content: "Accept your onboarding invitation and set up your organization.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -45,7 +52,6 @@ function OnboardingPage() {
     queryFn: () => lookupPlatformInvite({ data: { token } }),
     retry: false,
   });
-
 
   const accept = async () => {
     setBusy(true);
@@ -133,7 +139,6 @@ function OnboardingPage() {
               {data.status === "active" && email === null && (
                 <EmailAuthForm mode="signup" compact />
               )}
-
 
               {data.status === "active" && email && (
                 <div className="space-y-2">

@@ -35,14 +35,35 @@ export function getEcosystemConnections(e: Entity): EcosystemConnection[] {
     return out;
   };
 
-  const upstream = pick(3, (x) => x.actorType === upstreamTier && x.entityType !== "Certification Body");
-  const downstream = pick(2, (x) => x.actorType === downstreamTier && x.entityType !== "Certification Body");
-  const verifiers = pick(2, (x) => x.entityType === "Certification Body" || x.entityType === "Sustainability Partner");
+  const upstream = pick(
+    3,
+    (x) => x.actorType === upstreamTier && x.entityType !== "Certification Body",
+  );
+  const downstream = pick(
+    2,
+    (x) => x.actorType === downstreamTier && x.entityType !== "Certification Body",
+  );
+  const verifiers = pick(
+    2,
+    (x) => x.entityType === "Certification Body" || x.entityType === "Sustainability Partner",
+  );
 
   return [
-    ...upstream.map((entity) => ({ entity, role: "Upstream" as const, relationship: `Supplies ${e.name.split(" ")[0]}` })),
-    ...downstream.map((entity) => ({ entity, role: "Downstream" as const, relationship: `Buyer of ${e.name.split(" ")[0]} output` })),
-    ...verifiers.map((entity) => ({ entity, role: "Verifier" as const, relationship: "Audits and certification" })),
+    ...upstream.map((entity) => ({
+      entity,
+      role: "Upstream" as const,
+      relationship: `Supplies ${e.name.split(" ")[0]}`,
+    })),
+    ...downstream.map((entity) => ({
+      entity,
+      role: "Downstream" as const,
+      relationship: `Buyer of ${e.name.split(" ")[0]} output`,
+    })),
+    ...verifiers.map((entity) => ({
+      entity,
+      role: "Verifier" as const,
+      relationship: "Audits and certification",
+    })),
   ];
 }
 
@@ -55,10 +76,12 @@ export interface MatchSuggestion {
 }
 
 export function getMatchSuggestions(e: Entity): MatchSuggestion[] {
-  return getMatchesFor(e, 8, 0).map((m) => ({ entity: m.entity, score: m.score, reasons: m.reasons }));
+  return getMatchesFor(e, 8, 0).map((m) => ({
+    entity: m.entity,
+    score: m.score,
+    reasons: m.reasons,
+  }));
 }
-
-
 
 export const SHOWCASE_IDS = [
   "gch-nike",
@@ -145,4 +168,3 @@ export interface MockActivity {
 export function getMockActivity(_e: Entity): MockActivity[] {
   return [];
 }
-

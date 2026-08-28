@@ -19,7 +19,8 @@ function AuthCallback() {
         if (data.session) {
           const stored = sessionStorage.getItem("gch:post-auth");
           sessionStorage.removeItem("gch:post-auth");
-          if (!cancelled) nav({ to: stored && stored.startsWith("/") ? stored : "/", replace: true });
+          if (!cancelled)
+            nav({ to: stored && stored.startsWith("/") ? stored : "/", replace: true });
           return;
         }
         await new Promise((r) => setTimeout(r, 200));

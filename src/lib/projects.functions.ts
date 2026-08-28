@@ -2,12 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { InboxRequest, Project } from "@/lib/projects-types";
-import {
-  groupBy,
-  loadOrgIndex,
-  mapProject,
-  mapRequest,
-} from "@/lib/projects.server";
+import { groupBy, loadOrgIndex, mapProject, mapRequest } from "@/lib/projects.server";
 
 const orgInput = z.object({ orgId: z.string().uuid() });
 const idInput = z.object({ projectId: z.string().uuid() });
@@ -163,7 +158,6 @@ export const createProjectFn = createServerFn({ method: "POST" })
         industry: "Sustainability",
         country: org?.country ?? "",
         image: "",
-
       } as never)
       .select("id")
       .single();
@@ -261,7 +255,10 @@ export const setPartnerPermissionFn = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!row) throw new Error("Partner not found on this project");
 
-    const next = { ...((row.permissions ?? {}) as Record<string, boolean>), [data.key]: data.value };
+    const next = {
+      ...((row.permissions ?? {}) as Record<string, boolean>),
+      [data.key]: data.value,
+    };
     const { error } = await supabase
       .from("project_partners")
       .update({ permissions: next } as never)
@@ -591,9 +588,7 @@ export const scheduleMeetingFn = createServerFn({ method: "POST" })
       meeting_time: data.time,
       link: data.link ?? null,
       agenda: data.agenda,
-      participants: data.participants
-        .map((p) => idx.toUuid(p))
-        .filter((v): v is string => !!v),
+      participants: data.participants.map((p) => idx.toUuid(p)).filter((v): v is string => !!v),
       created_by: userId,
     } as never);
     if (error) throw new Error(error.message);

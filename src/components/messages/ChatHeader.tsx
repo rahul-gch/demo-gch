@@ -5,7 +5,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, CalendarPlus, FolderPlus, User, PanelRightClose, PanelRightOpen } from "lucide-react";
+import {
+  MoreHorizontal,
+  CalendarPlus,
+  FolderPlus,
+  User,
+  PanelRightClose,
+  PanelRightOpen,
+} from "lucide-react";
 import type { Entity } from "@/seed/types";
 import { Link } from "@tanstack/react-router";
 import { OrgAvatar } from "./shared";
@@ -36,7 +43,6 @@ export function ChatHeader({
               {entity.entityType} · {entity.country}
             </span>
           </div>
-
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-1">
@@ -57,7 +63,11 @@ export function ChatHeader({
           aria-label="Toggle info"
           title="Organization details"
         >
-          {infoOpen ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
+          {infoOpen ? (
+            <PanelRightClose className="h-4 w-4" />
+          ) : (
+            <PanelRightOpen className="h-4 w-4" />
+          )}
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -82,7 +92,6 @@ export function ChatHeader({
               </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
-
         </DropdownMenu>
       </div>
     </div>

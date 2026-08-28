@@ -35,7 +35,6 @@ export interface MeetingRequest {
   rawStatus: string;
 }
 
-
 export interface ConversationCounterpart {
   id: string;
   name: string;

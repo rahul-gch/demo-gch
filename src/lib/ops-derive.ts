@@ -13,7 +13,9 @@ function seedFrom(s: string): number {
 function rand(seed: number): () => number {
   let x = seed || 1;
   return () => {
-    x ^= x << 13; x ^= x >>> 17; x ^= x << 5;
+    x ^= x << 13;
+    x ^= x >>> 17;
+    x ^= x << 5;
     return ((x >>> 0) % 10000) / 10000;
   };
 }
@@ -34,10 +36,34 @@ export function todaysPriorities(): PriorityItem[] {
   const newMatches = 4;
   const delayedProjects = 1;
   return [
-    { id: "verify", tone: "critical", label: "organizations waiting verification", count: waitingVerification, to: "/organizations" },
-    { id: "certs", tone: "warning", label: "certificates expire today", count: expiringToday, to: "/organizations" },
-    { id: "matches", tone: "info", label: "new matchmaking requests", count: newMatches, to: "/matchmaking" },
-    { id: "delay", tone: "critical", label: "project delayed more than 14 days", count: delayedProjects, to: "/organizations" },
+    {
+      id: "verify",
+      tone: "critical",
+      label: "organizations waiting verification",
+      count: waitingVerification,
+      to: "/organizations",
+    },
+    {
+      id: "certs",
+      tone: "warning",
+      label: "certificates expire today",
+      count: expiringToday,
+      to: "/organizations",
+    },
+    {
+      id: "matches",
+      tone: "info",
+      label: "new matchmaking requests",
+      count: newMatches,
+      to: "/matchmaking",
+    },
+    {
+      id: "delay",
+      tone: "critical",
+      label: "project delayed more than 14 days",
+      count: delayedProjects,
+      to: "/organizations",
+    },
   ];
 }
 
@@ -69,12 +95,48 @@ export interface AlertItem {
 
 export function platformAlerts(): AlertItem[] {
   return [
-    { id: "incomplete", tone: "warning", title: `${summaryMetrics.incomplete + 4} incomplete organization profiles`, detail: "Missing addresses, capabilities, or contacts.", to: "/organizations" },
-    { id: "cert-exp", tone: "critical", title: "5 certificates expiring this week", detail: "GOTS, OEKO-TEX, and Bluesign renewals due.", to: "/organizations" },
-    { id: "delayed", tone: "warning", title: "3 delayed projects", detail: "Two brand pilots and one supplier onboarding.", to: "/organizations" },
-    { id: "approvals", tone: "info", title: "8 pending partner approvals", detail: "Awaiting admin review across 4 regions.", to: "/matchmaking" },
-    { id: "dupes", tone: "info", title: "AI detected 2 duplicate suppliers", detail: "Same tax ID across different regions.", to: "/organizations" },
-    { id: "esg", tone: "warning", title: "6 organizations missing ESG data", detail: "Scope 1 & 2 emissions not reported for 2025.", to: "/organizations" },
+    {
+      id: "incomplete",
+      tone: "warning",
+      title: `${summaryMetrics.incomplete + 4} incomplete organization profiles`,
+      detail: "Missing addresses, capabilities, or contacts.",
+      to: "/organizations",
+    },
+    {
+      id: "cert-exp",
+      tone: "critical",
+      title: "5 certificates expiring this week",
+      detail: "GOTS, OEKO-TEX, and Bluesign renewals due.",
+      to: "/organizations",
+    },
+    {
+      id: "delayed",
+      tone: "warning",
+      title: "3 delayed projects",
+      detail: "Two brand pilots and one supplier onboarding.",
+      to: "/organizations",
+    },
+    {
+      id: "approvals",
+      tone: "info",
+      title: "8 pending partner approvals",
+      detail: "Awaiting admin review across 4 regions.",
+      to: "/matchmaking",
+    },
+    {
+      id: "dupes",
+      tone: "info",
+      title: "AI detected 2 duplicate suppliers",
+      detail: "Same tax ID across different regions.",
+      to: "/organizations",
+    },
+    {
+      id: "esg",
+      tone: "warning",
+      title: "6 organizations missing ESG data",
+      detail: "Scope 1 & 2 emissions not reported for 2025.",
+      to: "/organizations",
+    },
   ];
 }
 
@@ -104,17 +166,17 @@ export const QUICK_ACTIONS: QuickAction[] = [
   { id: "orgs", label: "Organizations", icon: "building", to: "/organizations" },
   { id: "match", label: "Matchmaking", icon: "handshake", to: "/matchmaking" },
   { id: "messages", label: "Messages", icon: "message", to: "/messages" },
-  { id: "feed", label: "Community feed", icon: "megaphone", to: "/feed", search: { tab: "community" } },
+  {
+    id: "feed",
+    label: "Community feed",
+    icon: "megaphone",
+    to: "/feed",
+    search: { tab: "community" },
+  },
 ];
 
-
 export type ApprovalKind =
-  | "Verification"
-  | "Projects"
-  | "Partnerships"
-  | "Org Updates"
-  | "Invitations"
-  | "Certificates";
+  "Verification" | "Projects" | "Partnerships" | "Org Updates" | "Invitations" | "Certificates";
 
 export interface ApprovalRow {
   id: string;
@@ -166,9 +228,24 @@ export interface ActivityRow {
 export function liveActivity(): ActivityRow[] {
   return [
     { time: "09:52", kind: "upload", org: "Nike", text: "uploaded Bluesign certificate" },
-    { time: "09:40", kind: "approval", org: "PUMA", text: "accepted partnership with Arvind Mills" },
-    { time: "09:18", kind: "project", org: "Adidas", text: "created project 'Circular Cotton Pilot'" },
-    { time: "08:54", kind: "verification", org: "Sivakumar Textiles", text: "supplier verification completed" },
+    {
+      time: "09:40",
+      kind: "approval",
+      org: "PUMA",
+      text: "accepted partnership with Arvind Mills",
+    },
+    {
+      time: "09:18",
+      kind: "project",
+      org: "Adidas",
+      text: "created project 'Circular Cotton Pilot'",
+    },
+    {
+      time: "08:54",
+      kind: "verification",
+      org: "Sivakumar Textiles",
+      text: "supplier verification completed",
+    },
     { time: "08:31", kind: "ai", org: "H&M", text: "AI flagged missing ESG report for 2025" },
     { time: "08:12", kind: "upload", org: "Primark", text: "updated Higg FEM 4.0 module" },
     { time: "07:58", kind: "approval", org: "M&S", text: "approved supplier onboarding request" },
@@ -184,11 +261,31 @@ export interface AiFinding {
 
 export function aiFindings(): AiFinding[] {
   return [
-    { id: "dupes", title: "17 duplicate suppliers", detail: "Same tax IDs across different regions." },
-    { id: "certs", title: "12 missing certifications", detail: "Suppliers claim standards without evidence." },
-    { id: "opps", title: "8 partnership opportunities", detail: "High-fit matches waiting for introduction." },
-    { id: "esg", title: "4 suspicious ESG reports", detail: "Anomalies detected in Scope 3 disclosures." },
-    { id: "supply", title: "3 organizations with incomplete supply chain", detail: "Missing Tier 3 and Tier 4 traceability." },
+    {
+      id: "dupes",
+      title: "17 duplicate suppliers",
+      detail: "Same tax IDs across different regions.",
+    },
+    {
+      id: "certs",
+      title: "12 missing certifications",
+      detail: "Suppliers claim standards without evidence.",
+    },
+    {
+      id: "opps",
+      title: "8 partnership opportunities",
+      detail: "High-fit matches waiting for introduction.",
+    },
+    {
+      id: "esg",
+      title: "4 suspicious ESG reports",
+      detail: "Anomalies detected in Scope 3 disclosures.",
+    },
+    {
+      id: "supply",
+      title: "3 organizations with incomplete supply chain",
+      detail: "Missing Tier 3 and Tier 4 traceability.",
+    },
   ];
 }
 
@@ -206,11 +303,29 @@ export function growthKpis(): KpiTrend[] {
     return Array.from({ length: 14 }, () => 20 + Math.floor(r() * 80));
   };
   return [
-    { id: "orgs", label: "Organizations", value: summaryMetrics.totalRegistry, delta: "+14 this month", sparkline: spark("orgs") },
+    {
+      id: "orgs",
+      label: "Organizations",
+      value: summaryMetrics.totalRegistry,
+      delta: "+14 this month",
+      sparkline: spark("orgs"),
+    },
     { id: "projects", label: "Projects", value: 14, delta: "+8", sparkline: spark("projects") },
     { id: "messages", label: "Messages", value: 486, delta: "+26%", sparkline: spark("messages") },
-    { id: "partnerships", label: "Partnerships", value: 92, delta: "+17%", sparkline: spark("partners") },
-    { id: "compliance", label: "Compliance", value: 78, delta: "+12%", sparkline: spark("compliance") },
+    {
+      id: "partnerships",
+      label: "Partnerships",
+      value: 92,
+      delta: "+17%",
+      sparkline: spark("partners"),
+    },
+    {
+      id: "compliance",
+      label: "Compliance",
+      value: 78,
+      delta: "+12%",
+      sparkline: spark("compliance"),
+    },
   ];
 }
 
@@ -250,13 +365,16 @@ export interface UserRow {
 }
 
 export function userOverview(): UserRow[] {
-  const byType = (t: Entity["entityType"]) =>
-    ALL_ENTITIES.filter((e) => e.entityType === t).length;
+  const byType = (t: Entity["entityType"]) => ALL_ENTITIES.filter((e) => e.entityType === t).length;
   return [
     { role: "Admins", count: 4 },
     { role: "Moderators", count: 9 },
     { role: "Brands", count: byType("Brand") },
-    { role: "Suppliers", count: byType("Garment Factory") + byType("Fabric Mill") + byType("Spinner") + byType("Dye House") },
+    {
+      role: "Suppliers",
+      count:
+        byType("Garment Factory") + byType("Fabric Mill") + byType("Spinner") + byType("Dye House"),
+    },
     { role: "Research Institutes", count: 6 },
     { role: "NGOs", count: 4 },
     { role: "Auditors", count: 3 },

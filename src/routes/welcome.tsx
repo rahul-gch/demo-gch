@@ -130,7 +130,6 @@ function WelcomePage() {
               <JoinWithInviteForm />
             )}
 
-
             {step !== "choose" && (
               <Button variant="ghost" size="sm" onClick={() => setStep("choose")}>
                 Back to options

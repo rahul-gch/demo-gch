@@ -9,9 +9,9 @@ function tierComplementarity(a: Entity, b: Entity): number {
   const bi = TIER_ORDER.indexOf(b.actorType);
   if (ai < 0 || bi < 0) return 0;
   const diff = Math.abs(ai - bi);
-  if (diff === 1) return 1;       // adjacent tier — strongest fit
+  if (diff === 1) return 1; // adjacent tier — strongest fit
   if (diff === 2) return 0.6;
-  if (diff === 0) return 0.2;     // same tier — co-supply only
+  if (diff === 0) return 0.2; // same tier — co-supply only
   return 0.3;
 }
 
@@ -28,8 +28,12 @@ function regionProximity(a: Entity, b: Entity): number {
 }
 
 function kpiCompatibility(a: Entity, b: Entity): number {
-  const ak = getKpisForEntity(a).filter((k) => k.reported && k.confidence >= 50).map((k) => k.kpi.category);
-  const bk = getKpisForEntity(b).filter((k) => k.reported && k.confidence >= 50).map((k) => k.kpi.category);
+  const ak = getKpisForEntity(a)
+    .filter((k) => k.reported && k.confidence >= 50)
+    .map((k) => k.kpi.category);
+  const bk = getKpisForEntity(b)
+    .filter((k) => k.reported && k.confidence >= 50)
+    .map((k) => k.kpi.category);
   if (!ak.length || !bk.length) return 0;
   const setB = new Set(bk);
   const shared = ak.filter((c) => setB.has(c)).length;
@@ -59,7 +63,15 @@ function deliveryFit(a: Entity, b: Entity): number {
 export interface MatchScore {
   entity: Entity;
   score: number;
-  breakdown: { material: number; cert: number; tier: number; region: number; kpi: number; capacity: number; delivery: number };
+  breakdown: {
+    material: number;
+    cert: number;
+    tier: number;
+    region: number;
+    kpi: number;
+    capacity: number;
+    delivery: number;
+  };
   reasons: string[];
 }
 
@@ -85,8 +97,13 @@ export function scoreMatch(a: Entity, b: Entity): MatchScore {
     delivery: 15 * delivery,
   };
   const score = Math.round(
-    breakdown.material + breakdown.cert + breakdown.tier +
-    breakdown.region + breakdown.kpi + breakdown.capacity + breakdown.delivery,
+    breakdown.material +
+      breakdown.cert +
+      breakdown.tier +
+      breakdown.region +
+      breakdown.kpi +
+      breakdown.capacity +
+      breakdown.delivery,
   );
 
   const reasons: string[] = [];
@@ -104,10 +121,8 @@ export function scoreMatch(a: Entity, b: Entity): MatchScore {
   return { entity: b, score: Math.min(100, score), breakdown, reasons };
 }
 
-
 export function getMatchesFor(entity: Entity, limit = 8, minScore = 0): MatchScore[] {
-  return ENTITIES
-    .filter((x) => x.id !== entity.id)
+  return ENTITIES.filter((x) => x.id !== entity.id)
     .map((b) => scoreMatch(entity, b))
     .filter((m) => m.score >= minScore)
     .sort((a, b) => b.score - a.score)
@@ -129,13 +144,49 @@ export function getTopPairs(limit = 50, minScore = 60): PairMatch[] {
   return all.sort((a, b) => b.score - a.score).slice(0, limit);
 }
 
-export const MATCH_WEIGHTS: { key: string; label: string; weight: number; description: string }[] = [
-  { key: "material", label: "Material overlap", weight: 18, description: "How many raw materials the two organizations share (cotton, denim, wool…)." },
-  { key: "tier", label: "Tier complementarity", weight: 18, description: "Whether the tiers fit as a natural supply step (brand ↔ garment factory ↔ mill ↔ farm)." },
-  { key: "delivery", label: "Delivery reliability", weight: 15, description: "Blend of on-time rate, average delay and how closely their lead times match." },
-  { key: "capacity", label: "Capacity fit", weight: 13, description: "Ratio between their production capacities — closer is better." },
-  { key: "cert", label: "Certification overlap", weight: 12, description: "Shared standards like GOTS, GRS, OEKO-TEX or SA8000." },
-  { key: "region", label: "Region proximity", weight: 12, description: "Same country scores highest, same region next, otherwise reduced." },
-  { key: "kpi", label: "KPI category overlap", weight: 12, description: "How many reported sustainability KPI categories align." },
-];
-
+export const MATCH_WEIGHTS: { key: string; label: string; weight: number; description: string }[] =
+  [
+    {
+      key: "material",
+      label: "Material overlap",
+      weight: 18,
+      description: "How many raw materials the two organizations share (cotton, denim, wool…).",
+    },
+    {
+      key: "tier",
+      label: "Tier complementarity",
+      weight: 18,
+      description:
+        "Whether the tiers fit as a natural supply step (brand ↔ garment factory ↔ mill ↔ farm).",
+    },
+    {
+      key: "delivery",
+      label: "Delivery reliability",
+      weight: 15,
+      description: "Blend of on-time rate, average delay and how closely their lead times match.",
+    },
+    {
+      key: "capacity",
+      label: "Capacity fit",
+      weight: 13,
+      description: "Ratio between their production capacities — closer is better.",
+    },
+    {
+      key: "cert",
+      label: "Certification overlap",
+      weight: 12,
+      description: "Shared standards like GOTS, GRS, OEKO-TEX or SA8000.",
+    },
+    {
+      key: "region",
+      label: "Region proximity",
+      weight: 12,
+      description: "Same country scores highest, same region next, otherwise reduced.",
+    },
+    {
+      key: "kpi",
+      label: "KPI category overlap",
+      weight: 12,
+      description: "How many reported sustainability KPI categories align.",
+    },
+  ];

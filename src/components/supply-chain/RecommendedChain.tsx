@@ -19,7 +19,10 @@ export function RecommendedChain({ entity }: { entity: Entity }) {
   const [added, setAdded] = useState<Set<string>>(new Set());
 
   const grouped = useMemo(() => {
-    const existing = new Set([entity.id, ...getEcosystemConnections(entity).map((c) => c.entity.id)]);
+    const existing = new Set([
+      entity.id,
+      ...getEcosystemConnections(entity).map((c) => c.entity.id),
+    ]);
     const matches = getMatchesFor(entity, 40, 20).filter((m) => !existing.has(m.entity.id));
     const byTier = new Map<ActorType, MatchScore[]>();
     for (const tier of ALL_TIERS) byTier.set(tier, []);
@@ -28,13 +31,16 @@ export function RecommendedChain({ entity }: { entity: Entity }) {
       const list = byTier.get(t);
       if (list && list.length < 3) list.push(m);
     }
-    return ALL_TIERS
-      .map((tier) => ({ tier, matches: byTier.get(tier) || [] }))
-      .filter((g) => g.matches.length > 0);
+    return ALL_TIERS.map((tier) => ({ tier, matches: byTier.get(tier) || [] })).filter(
+      (g) => g.matches.length > 0,
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entity, nonce]);
 
-  const openProfile = (m: MatchScore) => { setSelected(m); setSheetOpen(true); };
+  const openProfile = (m: MatchScore) => {
+    setSelected(m);
+    setSheetOpen(true);
+  };
   const addToChain = (m: MatchScore) => {
     setAdded((s) => new Set(s).add(m.entity.id));
     toast.success(`${m.entity.name} added to chain draft`);
@@ -49,10 +55,16 @@ export function RecommendedChain({ entity }: { entity: Entity }) {
             Recommended partners for this chain
           </CardTitle>
           <p className="mt-1 text-xs text-muted-foreground">
-            AI suggestions grouped by tier, ranked on material, certification, region and delivery fit.
+            AI suggestions grouped by tier, ranked on material, certification, region and delivery
+            fit.
           </p>
         </div>
-        <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setNonce((n) => n + 1)}>
+        <Button
+          size="sm"
+          variant="outline"
+          className="gap-1.5"
+          onClick={() => setNonce((n) => n + 1)}
+        >
           <RefreshCw className="h-3.5 w-3.5" /> Regenerate
         </Button>
       </CardHeader>
@@ -65,18 +77,33 @@ export function RecommendedChain({ entity }: { entity: Entity }) {
         {grouped.map(({ tier, matches }) => (
           <div key={tier} className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold uppercase tracking-wide text-slate-700">{tier}</span>
-              <span className="text-xs text-muted-foreground">{matches.length} suggestion{matches.length > 1 ? "s" : ""}</span>
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-700">
+                {tier}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {matches.length} suggestion{matches.length > 1 ? "s" : ""}
+              </span>
             </div>
             <ul className="divide-y rounded-lg border">
               {matches.map((m) => (
-                <li key={m.entity.id} className="grid gap-3 px-4 py-3 sm:grid-cols-[1fr_auto] sm:items-center">
+                <li
+                  key={m.entity.id}
+                  className="grid gap-3 px-4 py-3 sm:grid-cols-[1fr_auto] sm:items-center"
+                >
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="truncate text-sm font-semibold text-slate-900">{m.entity.name}</span>
-                      <Badge variant="outline" className="text-[10px]">{m.entity.entityType}</Badge>
-                      <Badge variant="outline" className="text-[10px]">{m.entity.country}</Badge>
-                      <span className="ml-auto text-xs font-semibold text-slate-700">{m.score}</span>
+                      <span className="truncate text-sm font-semibold text-slate-900">
+                        {m.entity.name}
+                      </span>
+                      <Badge variant="outline" className="text-[10px]">
+                        {m.entity.entityType}
+                      </Badge>
+                      <Badge variant="outline" className="text-[10px]">
+                        {m.entity.country}
+                      </Badge>
+                      <span className="ml-auto text-xs font-semibold text-slate-700">
+                        {m.score}
+                      </span>
                     </div>
                     <div className="mt-1.5">
                       <Progress value={m.score} className="h-1.5" />
@@ -99,7 +126,12 @@ export function RecommendedChain({ entity }: { entity: Entity }) {
                       <Plus className="h-3.5 w-3.5" />
                       {added.has(m.entity.id) ? "Added" : "Add to chain"}
                     </Button>
-                    <Button size="sm" variant="outline" className="gap-1.5" onClick={() => openProfile(m)}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1.5"
+                      onClick={() => openProfile(m)}
+                    >
                       <ExternalLink className="h-3.5 w-3.5" /> View
                     </Button>
                   </div>
@@ -111,7 +143,11 @@ export function RecommendedChain({ entity }: { entity: Entity }) {
       </CardContent>
 
       <MatchProfileSheet
-        match={selected ? { entity: selected.entity, score: selected.score, reasons: selected.reasons } : null}
+        match={
+          selected
+            ? { entity: selected.entity, score: selected.score, reasons: selected.reasons }
+            : null
+        }
         viewer={entity}
         open={sheetOpen}
         onOpenChange={setSheetOpen}

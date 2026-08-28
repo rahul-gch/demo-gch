@@ -28,7 +28,9 @@ export function PlatformAlerts({ items }: { items: AlertItem[] }) {
           >
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className={`rounded-full border px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide ${tone[a.tone]}`}>
+                <span
+                  className={`rounded-full border px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide ${tone[a.tone]}`}
+                >
                   {a.tone}
                 </span>
                 <span className="truncate text-sm font-medium text-slate-800">{a.title}</span>

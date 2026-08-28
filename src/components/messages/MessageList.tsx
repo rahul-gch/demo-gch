@@ -38,9 +38,7 @@ function MessageRow({
   return (
     <div className={cn("group flex min-w-0 gap-2.5", isMe ? "justify-end" : "justify-start")}>
       <div className="w-9 shrink-0">
-        {!isMe && showAvatar ? (
-          <OrgAvatar entity={entity} size={32} showStatus={false} />
-        ) : null}
+        {!isMe && showAvatar ? <OrgAvatar entity={entity} size={32} showStatus={false} /> : null}
       </div>
       <div
         className={cn(
@@ -83,19 +81,12 @@ function MessageRow({
             <Copy className="h-3 w-3" />
           </Button>
         </div>
-
       </div>
     </div>
   );
 }
 
-export function MessageList({
-  messages,
-  entity,
-}: {
-  messages: ThreadMessage[];
-  entity: Entity;
-}) {
+export function MessageList({ messages, entity }: { messages: ThreadMessage[]; entity: Entity }) {
   const endRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });

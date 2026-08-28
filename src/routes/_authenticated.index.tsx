@@ -109,11 +109,15 @@ function OpsHero() {
             Global Chain Hub · Admin
           </h1>
           <p className="mt-2 max-w-xl text-sm text-slate-300">
-            Monitor platform health, review pending approvals, and act on AI-surfaced signals across the network.
+            Monitor platform health, review pending approvals, and act on AI-surfaced signals across
+            the network.
           </p>
           <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
             {stats.map((s) => (
-              <div key={s.label} className="min-w-0 rounded-lg border border-white/10 bg-white/5 p-3">
+              <div
+                key={s.label}
+                className="min-w-0 rounded-lg border border-white/10 bg-white/5 p-3"
+              >
                 <div className="truncate text-[10px] uppercase tracking-wider text-slate-300">
                   {s.label}
                 </div>
@@ -142,7 +146,8 @@ function BenchmarkIntelligence() {
         <div>
           <CardTitle className="text-base font-semibold">Benchmark intelligence</CardTitle>
           <p className="mt-1 text-xs text-muted-foreground">
-            Sector reference from Inditex, H&amp;M, Nike, Adidas, Puma, Patagonia, Primark, M&amp;S, Zalando, Levi&apos;s.
+            Sector reference from Inditex, H&amp;M, Nike, Adidas, Puma, Patagonia, Primark, M&amp;S,
+            Zalando, Levi&apos;s.
           </p>
         </div>
         <Badge variant="outline" className="gap-1">
@@ -310,7 +315,9 @@ function DashboardPage() {
           <TopMovers />
           <Card className="shadow-sm">
             <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
-              <CardTitle className="min-w-0 truncate text-base font-semibold">Global network map</CardTitle>
+              <CardTitle className="min-w-0 truncate text-base font-semibold">
+                Global network map
+              </CardTitle>
               <Button asChild variant="outline" size="sm" className="shrink-0">
                 <Link to="/map">Open map</Link>
               </Button>
@@ -325,7 +332,9 @@ function DashboardPage() {
         <section className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           <Card className="shadow-sm">
             <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
-              <CardTitle className="min-w-0 truncate text-base font-semibold">Organization registry preview</CardTitle>
+              <CardTitle className="min-w-0 truncate text-base font-semibold">
+                Organization registry preview
+              </CardTitle>
               <Button asChild variant="ghost" size="sm" className="shrink-0">
                 <Link to="/organizations">
                   View all <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
@@ -357,7 +366,9 @@ function DashboardPage() {
                       </TableCell>
                       <TableCell className="text-muted-foreground">{e.entityType}</TableCell>
                       <TableCell className="text-muted-foreground">{e.country}</TableCell>
-                      <TableCell className="text-right tabular-nums">{e.confidenceScore}%</TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {e.confidenceScore}%
+                      </TableCell>
                       <TableCell>
                         <VerificationBadge status={e.verificationStatus} />
                       </TableCell>

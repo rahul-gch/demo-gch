@@ -48,7 +48,9 @@ function OverviewMissionControl({ e }: { e: Entity }) {
       <Divider />
       <Section>
         <div className="flex items-baseline justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700">Passport</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700">
+            Passport
+          </h2>
           <span className="text-xs text-muted-foreground">Verified network identity</span>
         </div>
         <PassportCards entity={e} />
@@ -57,15 +59,21 @@ function OverviewMissionControl({ e }: { e: Entity }) {
       <Divider />
       <Section>
         <div className="flex items-baseline justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700">Operations</h2>
-          <span className="text-xs text-muted-foreground">Editable · lead time · MOQ · capacity · specializations</span>
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700">
+            Operations
+          </h2>
+          <span className="text-xs text-muted-foreground">
+            Editable · lead time · MOQ · capacity · specializations
+          </span>
         </div>
         <OperationsCard entity={e} />
       </Section>
       <Divider />
       <Section>
         <div className="flex items-baseline justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700">Performance</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700">
+            Performance
+          </h2>
           <span className="text-xs text-muted-foreground">Headline KPIs · target · confidence</span>
         </div>
         <KpiInteractiveGrid entity={e} />

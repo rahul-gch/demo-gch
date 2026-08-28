@@ -1,7 +1,12 @@
 import type { Entity } from "../types";
 import { KPI_LIBRARY, HEADLINE_KPI_IDS, type KpiDef } from "./kpi-library";
 import { COMPANY_BENCHMARK, type BenchmarkRow } from "./company-benchmark";
-import { getConfidenceBand, confidenceClasses, CONFIDENCE_BANDS, type ConfidenceBand } from "./confidence-rules";
+import {
+  getConfidenceBand,
+  confidenceClasses,
+  CONFIDENCE_BANDS,
+  type ConfidenceBand,
+} from "./confidence-rules";
 import { NIKE_KPI_OVERRIDES } from "../nike";
 import { HM_KPI_OVERRIDES } from "../hm";
 import { MANDS_KPI_OVERRIDES } from "../mands";
@@ -9,7 +14,14 @@ import { PRIMARK_KPI_OVERRIDES } from "../primark";
 import { PUMA_KPI_OVERRIDES } from "../puma";
 import { ZALANDO_KPI_OVERRIDES } from "../zalando";
 
-export { KPI_LIBRARY, HEADLINE_KPI_IDS, COMPANY_BENCHMARK, CONFIDENCE_BANDS, getConfidenceBand, confidenceClasses };
+export {
+  KPI_LIBRARY,
+  HEADLINE_KPI_IDS,
+  COMPANY_BENCHMARK,
+  CONFIDENCE_BANDS,
+  getConfidenceBand,
+  confidenceClasses,
+};
 export type { KpiDef, BenchmarkRow, ConfidenceBand };
 
 const ENTITY_KPI_OVERRIDES: Record<string, typeof NIKE_KPI_OVERRIDES> = {
@@ -23,12 +35,12 @@ const ENTITY_KPI_OVERRIDES: Record<string, typeof NIKE_KPI_OVERRIDES> = {
 
 export interface EntityKpi {
   kpi: KpiDef;
-  value: number;        // normalized numeric value
+  value: number; // normalized numeric value
   displayValue: string; // formatted with unit
-  confidence: number;   // 0-100
+  confidence: number; // 0-100
   band: ConfidenceBand;
   source: string;
-  reported: boolean;    // false if not reported / missing
+  reported: boolean; // false if not reported / missing
 }
 
 function seedFn(id: string) {
@@ -47,7 +59,11 @@ function seedFn(id: string) {
 function entityBias(e: Entity) {
   const certBoost = Math.min(20, e.certifications.length * 4);
   const tierMap: Record<string, number> = {
-    "Tier 0": 6, "Tier 1": 4, "Tier 2": 2, "Tier 3": 0, "Tier 4": -2,
+    "Tier 0": 6,
+    "Tier 1": 4,
+    "Tier 2": 2,
+    "Tier 3": 0,
+    "Tier 4": -2,
   };
   const matBoost = Math.min(10, e.materials.length * 2);
   return {
@@ -61,12 +77,23 @@ function entityBias(e: Entity) {
 
 function categoryBucket(cat: string): keyof ReturnType<typeof entityBias> {
   switch (cat) {
-    case "Climate": return "climate";
-    case "Water": case "Chemicals": case "Waste": return "climate";
-    case "Materials": return "materials";
-    case "Traceability": case "Regulatory": return "traceability";
-    case "Social": case "Risk": return "social";
-    case "Data Quality": default: return "quality";
+    case "Climate":
+      return "climate";
+    case "Water":
+    case "Chemicals":
+    case "Waste":
+      return "climate";
+    case "Materials":
+      return "materials";
+    case "Traceability":
+    case "Regulatory":
+      return "traceability";
+    case "Social":
+    case "Risk":
+      return "social";
+    case "Data Quality":
+    default:
+      return "quality";
   }
 }
 
@@ -130,7 +157,9 @@ export function getKpisForEntity(e: Entity): EntityKpi[] {
 
 export function getHeadlineKpis(e: Entity): EntityKpi[] {
   const all = getKpisForEntity(e);
-  return HEADLINE_KPI_IDS.map((id) => all.find((k) => k.kpi.id === id)).filter(Boolean) as EntityKpi[];
+  return HEADLINE_KPI_IDS.map((id) => all.find((k) => k.kpi.id === id)).filter(
+    Boolean,
+  ) as EntityKpi[];
 }
 
 export interface SectorBenchmark {
@@ -156,10 +185,15 @@ export function getSectorBenchmark(kpiId: string): SectorBenchmark | null {
     kpiName: rows[0].kpiName,
     unit: rows[0].unit,
     values: numeric.map((x) => ({
-      company: x.row.company, value: x.n, raw: x.row.reportedValue,
-      confidence: x.row.confidence, sourceUrl: x.row.sourceUrl,
+      company: x.row.company,
+      value: x.n,
+      raw: x.row.reportedValue,
+      confidence: x.row.confidence,
+      sourceUrl: x.row.sourceUrl,
     })),
-    min: vals[0], max: vals[vals.length - 1], median,
+    min: vals[0],
+    max: vals[vals.length - 1],
+    median,
   };
 }
 

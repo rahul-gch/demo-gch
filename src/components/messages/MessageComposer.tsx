@@ -45,7 +45,8 @@ export function MessageComposer({
           </div>
           <div className="flex min-w-0 items-center justify-end gap-3">
             <span className="hidden text-[11px] text-muted-foreground sm:inline">
-              Press <kbd className="rounded border bg-muted px-1 py-0.5 text-[10px]">Enter</kbd> to send
+              Press <kbd className="rounded border bg-muted px-1 py-0.5 text-[10px]">Enter</kbd> to
+              send
             </span>
             <Button size="sm" onClick={onSend} disabled={!value.trim()} className="rounded-full">
               <Send className="mr-1 h-3.5 w-3.5" /> Send

@@ -53,7 +53,10 @@ function SignupPage() {
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
-            <EmailAuthForm mode="signup" onSignedIn={() => nav({ to: "/welcome", replace: true })} />
+            <EmailAuthForm
+              mode="signup"
+              onSignedIn={() => nav({ to: "/welcome", replace: true })}
+            />
             <div className="border-t pt-4 text-center text-xs text-muted-foreground">
               Already have an account?{" "}
               <Link to="/auth" className="text-primary hover:underline">

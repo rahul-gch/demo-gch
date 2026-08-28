@@ -3,8 +3,7 @@ import type { Entity, EntityType } from "@/seed/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useResolvedImages } from "@/lib/use-org-images";
 
-const IMG = (id: string) =>
-  `https://images.unsplash.com/${id}?auto=format&fit=crop&w=1600&q=70`;
+const IMG = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=1600&q=70`;
 
 const POOLS: Record<EntityType, string[]> = {
   Brand: [
@@ -83,8 +82,7 @@ export function HeroBackground({ entity }: { entity: Entity }) {
     return () => clearInterval(t);
   }, [slides.length]);
 
-  const go = (delta: number) =>
-    setIndex((i) => (i + delta + slides.length) % slides.length);
+  const go = (delta: number) => setIndex((i) => (i + delta + slides.length) % slides.length);
 
   return (
     <div

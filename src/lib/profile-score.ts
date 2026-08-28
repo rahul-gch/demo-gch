@@ -63,7 +63,10 @@ export function computeProfileScore(
     byBucket.set(field.bucket, arr);
   }
 
-  const weights: Partial<Record<Bucket, number>> = { basic: def.weights.basic ?? 15, ...def.weights };
+  const weights: Partial<Record<Bucket, number>> = {
+    basic: def.weights.basic ?? 15,
+    ...def.weights,
+  };
 
   const buckets: BucketScore[] = [];
   for (const bucket of BUCKET_ORDER) {
@@ -114,5 +117,11 @@ export function computeProfileScore(
     .flatMap((b) => b.missing.map((m) => ({ ...m, bucket: b.bucket })))
     .slice(0, 6);
 
-  return { score: Math.max(0, Math.min(100, score)), buckets, answeredCount, totalCount, nextMissing };
+  return {
+    score: Math.max(0, Math.min(100, score)),
+    buckets,
+    answeredCount,
+    totalCount,
+    nextMissing,
+  };
 }

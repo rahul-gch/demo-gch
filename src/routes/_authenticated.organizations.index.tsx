@@ -49,7 +49,10 @@ export const Route = createFileRoute("/_authenticated/organizations/")({
   head: () => ({
     meta: [
       { title: "Organizations — Global Chain Hub" },
-      { name: "description", content: "Search and filter all entities in the Global Chain Hub registry." },
+      {
+        name: "description",
+        content: "Search and filter all entities in the Global Chain Hub registry.",
+      },
     ],
   }),
   component: OrganizationsPage,
@@ -114,7 +117,18 @@ function OrganizationsPage() {
       }
       return true;
     });
-  }, [ENTITIES, q, entityType, actorType, country, certification, risk, confidence, verification, completeness]);
+  }, [
+    ENTITIES,
+    q,
+    entityType,
+    actorType,
+    country,
+    certification,
+    risk,
+    confidence,
+    verification,
+    completeness,
+  ]);
 
   return (
     <AppShell>
@@ -135,11 +149,36 @@ function OrganizationsPage() {
               className="max-w-xl"
             />
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              <FilterSelect label="Entity Type" value={entityType} onChange={setEntityType} options={ENTITY_TYPES} />
-              <FilterSelect label="Actor Type" value={actorType} onChange={setActorType} options={actors} />
-              <FilterSelect label="Country" value={country} onChange={setCountry} options={countries} />
-              <FilterSelect label="Certification" value={certification} onChange={setCertification} options={certs} />
-              <FilterSelect label="Risk Level" value={risk} onChange={setRisk} options={["Low", "Medium", "High"]} />
+              <FilterSelect
+                label="Entity Type"
+                value={entityType}
+                onChange={setEntityType}
+                options={ENTITY_TYPES}
+              />
+              <FilterSelect
+                label="Actor Type"
+                value={actorType}
+                onChange={setActorType}
+                options={actors}
+              />
+              <FilterSelect
+                label="Country"
+                value={country}
+                onChange={setCountry}
+                options={countries}
+              />
+              <FilterSelect
+                label="Certification"
+                value={certification}
+                onChange={setCertification}
+                options={certs}
+              />
+              <FilterSelect
+                label="Risk Level"
+                value={risk}
+                onChange={setRisk}
+                options={["Low", "Medium", "High"]}
+              />
               <FilterSelect
                 label="Confidence"
                 value={confidence}
@@ -217,16 +256,22 @@ function OrganizationsPage() {
                       <TableCell>
                         <TagList items={e.certifications} />
                       </TableCell>
-                      <TableCell className="text-right tabular-nums">{e.confidenceScore}%</TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {e.confidenceScore}%
+                      </TableCell>
                       <TableCell>
                         <RiskBadge level={e.riskLevel} />
                       </TableCell>
-                      <TableCell className="text-right tabular-nums">{e.profileCompleteness}%</TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {e.profileCompleteness}%
+                      </TableCell>
                       <TableCell>
                         <VerificationBadge status={e.verificationStatus} />
                       </TableCell>
                       <TableCell className="text-right tabular-nums">{e.evidenceCount}</TableCell>
-                      <TableCell className="text-right tabular-nums">{e.missingDataCount}</TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {e.missingDataCount}
+                      </TableCell>
                     </TableRow>
                   ))}
                   {rows.length === 0 && (

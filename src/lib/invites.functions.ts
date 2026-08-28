@@ -81,7 +81,9 @@ export const listInvites = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase
       .from("org_invites")
-      .select("id, email, role, token, max_uses, uses, expires_at, revoked_at, accepted_at, created_at")
+      .select(
+        "id, email, role, token, max_uses, uses, expires_at, revoked_at, accepted_at, created_at",
+      )
       .eq("org_id", data.orgId)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);

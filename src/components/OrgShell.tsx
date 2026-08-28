@@ -4,12 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Building2 } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { OrgSidebar } from "./OrgSidebar";
 import { UserMenu } from "./UserMenu";
@@ -19,13 +14,7 @@ import type { Entity } from "@/seed/types";
 import { useActingOrgId, useRealtimeComms } from "@/lib/use-comms";
 import { amIPlatformAdmin } from "@/lib/admin.functions";
 
-export function OrgShell({
-  entity,
-  children,
-}: {
-  entity: Entity;
-  children: ReactNode;
-}) {
+export function OrgShell({ entity, children }: { entity: Entity; children: ReactNode }) {
   useRealtimeComms(useActingOrgId(entity.orgUuid ?? null));
   const adminQuery = useQuery({
     queryKey: ["platform-admin"],
@@ -36,7 +25,6 @@ export function OrgShell({
 
   return (
     <SidebarProvider>
-
       <div className="flex min-h-screen w-full bg-background">
         <OrgSidebar entity={entity} />
         <div className="flex min-w-0 flex-1 flex-col">

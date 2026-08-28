@@ -59,7 +59,6 @@ export const Route = createFileRoute("/_authenticated/organizations/$id")({
       throw redirect({ to: "/directory/$id", params: { id: params.id } });
     }
 
-
     return { entity };
   },
 

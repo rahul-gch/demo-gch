@@ -50,8 +50,7 @@ const ADMIN_ITEMS: NavItem[] = [
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const isActive = (url: string) =>
-    url === "/" ? pathname === "/" : pathname.startsWith(url);
+  const isActive = (url: string) => (url === "/" ? pathname === "/" : pathname.startsWith(url));
   const actingOrgId = useActingOrgId();
   const unread = useUnreadTotal(actingOrgId);
   const myOrgs = useMyOrgs();
@@ -90,7 +89,7 @@ export function AppSidebar() {
           <div className="flex min-w-0 flex-col group-data-[collapsible=icon]:hidden">
             <span className="truncate text-sm font-semibold leading-tight">Global Chain Hub</span>
             <span className="truncate text-[11px] text-muted-foreground">
-              {admin ? "Admin Console" : primaryOrg?.name ?? "Workspace"}
+              {admin ? "Admin Console" : (primaryOrg?.name ?? "Workspace")}
             </span>
           </div>
         </div>
@@ -108,7 +107,9 @@ export function AppSidebar() {
                       <item.icon className="h-4 w-4" />
                       <span className="flex-1">{item.title}</span>
                       {item.badgeKind === "unread" && unread > 0 && (
-                        <Badge className="h-5 min-w-5 justify-center px-1 text-[10px]">{unread}</Badge>
+                        <Badge className="h-5 min-w-5 justify-center px-1 text-[10px]">
+                          {unread}
+                        </Badge>
                       )}
                     </Link>
                   </SidebarMenuButton>
@@ -138,7 +139,6 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
-
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

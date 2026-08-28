@@ -12,7 +12,12 @@ import { toast } from "sonner";
 import { Download, Loader2, ShieldCheck, Trash2 } from "lucide-react";
 import { exportMyData, submitDataRequest } from "@/lib/privacy.functions";
 import { logSecurityEvent } from "@/lib/security-log";
-import { MARKETING_CONSENT_VERSION, POLICY_VERSIONS, PRIVACY_VERSION, TERMS_VERSION } from "@/lib/policies";
+import {
+  MARKETING_CONSENT_VERSION,
+  POLICY_VERSIONS,
+  PRIVACY_VERSION,
+  TERMS_VERSION,
+} from "@/lib/policies";
 
 export const Route = createFileRoute("/_authenticated/privacy")({
   head: () => ({
@@ -20,10 +25,14 @@ export const Route = createFileRoute("/_authenticated/privacy")({
       { title: "Privacy & security — Global Chain Hub" },
       {
         name: "description",
-        content: "Manage your consents, export your data, request deletion and review security activity.",
+        content:
+          "Manage your consents, export your data, request deletion and review security activity.",
       },
       { property: "og:title", content: "Privacy & security — Global Chain Hub" },
-      { property: "og:description", content: "Consents, data export, deletion and security activity." },
+      {
+        property: "og:description",
+        content: "Consents, data export, deletion and security activity.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -31,7 +40,12 @@ export const Route = createFileRoute("/_authenticated/privacy")({
   component: PrivacyCenter,
 });
 
-type Consent = { policy_type: string; policy_version: string; accepted: boolean; accepted_at: string };
+type Consent = {
+  policy_type: string;
+  policy_version: string;
+  accepted: boolean;
+  accepted_at: string;
+};
 type Request = { id: string; request_type: string; status: string; created_at: string };
 type Event = { id: string; action: string; created_at: string; target_type: string | null };
 
@@ -46,8 +60,15 @@ function PrivacyCenter() {
   const load = async () => {
     const [{ data: c }, { data: r }, { data: e }] = await Promise.all([
       supabase.from("user_consents").select("policy_type, policy_version, accepted, accepted_at"),
-      supabase.from("data_requests").select("id, request_type, status, created_at").order("created_at", { ascending: false }),
-      supabase.from("security_events").select("id, action, created_at, target_type").order("created_at", { ascending: false }).limit(20),
+      supabase
+        .from("data_requests")
+        .select("id, request_type, status, created_at")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("security_events")
+        .select("id, action, created_at, target_type")
+        .order("created_at", { ascending: false })
+        .limit(20),
     ]);
     setConsents((c ?? []) as Consent[]);
     setRequests((r ?? []) as Request[]);
@@ -172,7 +193,8 @@ function PrivacyCenter() {
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              Current policy versions: terms {POLICY_VERSIONS.terms}, privacy {POLICY_VERSIONS.privacy}.
+              Current policy versions: terms {POLICY_VERSIONS.terms}, privacy{" "}
+              {POLICY_VERSIONS.privacy}.
             </p>
           </CardContent>
         </Card>
@@ -191,7 +213,12 @@ function PrivacyCenter() {
                 )}
                 Download my data (JSON)
               </Button>
-              <Button variant="outline" size="sm" onClick={() => request("export")} disabled={busy === "export"}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => request("export")}
+                disabled={busy === "export"}
+              >
                 Request a formal export
               </Button>
               <Button

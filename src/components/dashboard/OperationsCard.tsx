@@ -9,24 +9,64 @@ import { setOverride } from "@/seed/org-overrides";
 import { useServerFn } from "@tanstack/react-start";
 import { updateOrgOperations } from "@/lib/orgs.functions";
 import { toast } from "sonner";
-import { Loader2, Pencil, Plus, X, Clock, Package, Factory, Gauge, Sparkles, Layers } from "lucide-react";
+import {
+  Loader2,
+  Pencil,
+  Plus,
+  X,
+  Clock,
+  Package,
+  Factory,
+  Gauge,
+  Sparkles,
+  Layers,
+} from "lucide-react";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const SPEC_OPTIONS = [
-  "Sportswear", "Womenswear", "Menswear", "Kidswear", "Denim", "Luxury",
-  "Fast fashion", "Outdoor", "Loungewear", "Activewear", "Knitwear", "Footwear",
-  "Traceability", "Digital Product Passport",
+  "Sportswear",
+  "Womenswear",
+  "Menswear",
+  "Kidswear",
+  "Denim",
+  "Luxury",
+  "Fast fashion",
+  "Outdoor",
+  "Loungewear",
+  "Activewear",
+  "Knitwear",
+  "Footwear",
+  "Traceability",
+  "Digital Product Passport",
 ];
 
 const MATERIAL_OPTIONS = [
-  "Cotton", "Organic Cotton", "Recycled Cotton", "Denim", "Wool", "Viscose",
-  "Polyester", "Recycled Polyester", "Linen", "Silk", "Hemp", "Nylon",
+  "Cotton",
+  "Organic Cotton",
+  "Recycled Cotton",
+  "Denim",
+  "Wool",
+  "Viscose",
+  "Polyester",
+  "Recycled Polyester",
+  "Linen",
+  "Silk",
+  "Hemp",
+  "Nylon",
 ];
 
 const CAPABILITY_OPTIONS = [
-  "Spinning", "Weaving", "Knitting", "Dyeing", "Printing", "Finishing",
-  "Cut & Sew", "Embroidery", "Washing", "Packaging",
+  "Spinning",
+  "Weaving",
+  "Knitting",
+  "Dyeing",
+  "Printing",
+  "Finishing",
+  "Cut & Sew",
+  "Embroidery",
+  "Washing",
+  "Packaging",
 ];
 
 function ChipEditor({
@@ -54,7 +94,11 @@ function ChipEditor({
         {value.map((v) => (
           <Badge key={v} variant="secondary" className="gap-1">
             {v}
-            <button type="button" onClick={() => onChange(value.filter((x) => x !== v))} className="opacity-60 hover:opacity-100">
+            <button
+              type="button"
+              onClick={() => onChange(value.filter((x) => x !== v))}
+              className="opacity-60 hover:opacity-100"
+            >
               <X className="h-3 w-3" />
             </button>
           </Badge>
@@ -78,16 +122,19 @@ function ChipEditor({
         </Button>
       </div>
       <div className="flex flex-wrap gap-1 pt-0.5">
-        {suggestions.filter((s) => !value.includes(s)).slice(0, 8).map((s) => (
-          <button
-            key={s}
-            type="button"
-            onClick={() => add(s)}
-            className="rounded-full border px-2 py-0.5 text-[10px] text-muted-foreground hover:bg-muted"
-          >
-            + {s}
-          </button>
-        ))}
+        {suggestions
+          .filter((s) => !value.includes(s))
+          .slice(0, 8)
+          .map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => add(s)}
+              className="rounded-full border px-2 py-0.5 text-[10px] text-muted-foreground hover:bg-muted"
+            >
+              + {s}
+            </button>
+          ))}
       </div>
     </div>
   );
@@ -192,7 +239,15 @@ export function OperationsCard({ entity }: { entity: Entity }) {
           </Button>
         ) : (
           <div className="flex gap-2">
-            <Button size="sm" variant="ghost" onClick={() => { reset(); setEditing(false); }} disabled={saving}>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                reset();
+                setEditing(false);
+              }}
+              disabled={saving}
+            >
               Cancel
             </Button>
             <Button size="sm" onClick={save} disabled={saving}>
@@ -206,10 +261,18 @@ export function OperationsCard({ entity }: { entity: Entity }) {
         {!editing ? (
           <>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <Stat icon={Clock} label="Lead time" value={entity.leadTimeDays ? `${entity.leadTimeDays} days` : ""} />
+              <Stat
+                icon={Clock}
+                label="Lead time"
+                value={entity.leadTimeDays ? `${entity.leadTimeDays} days` : ""}
+              />
               <Stat icon={Package} label="MOQ" value={entity.moq} />
               <Stat icon={Factory} label="Capacity" value={entity.capacity} />
-              <Stat icon={Gauge} label="On-time rate" value={entity.onTimeRate ? `${entity.onTimeRate}%` : ""} />
+              <Stat
+                icon={Gauge}
+                label="On-time rate"
+                value={entity.onTimeRate ? `${entity.onTimeRate}%` : ""}
+              />
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
@@ -217,10 +280,14 @@ export function OperationsCard({ entity }: { entity: Entity }) {
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {(entity.specializations ?? []).length === 0 ? (
-                  <span className="text-xs text-muted-foreground">No specializations added yet.</span>
+                  <span className="text-xs text-muted-foreground">
+                    No specializations added yet.
+                  </span>
                 ) : (
                   entity.specializations!.map((s) => (
-                    <Badge key={s} variant="secondary">{s}</Badge>
+                    <Badge key={s} variant="secondary">
+                      {s}
+                    </Badge>
                   ))
                 )}
               </div>
@@ -233,7 +300,11 @@ export function OperationsCard({ entity }: { entity: Entity }) {
                       <Layers className="h-3 w-3" /> Materials
                     </div>
                     <div className="flex flex-wrap gap-1">
-                      {entity.materials!.map((m) => <Badge key={m} variant="outline">{m}</Badge>)}
+                      {entity.materials!.map((m) => (
+                        <Badge key={m} variant="outline">
+                          {m}
+                        </Badge>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -243,7 +314,11 @@ export function OperationsCard({ entity }: { entity: Entity }) {
                       <Factory className="h-3 w-3" /> Capabilities
                     </div>
                     <div className="flex flex-wrap gap-1">
-                      {entity.capabilities!.map((c) => <Badge key={c} variant="outline">{c}</Badge>)}
+                      {entity.capabilities!.map((c) => (
+                        <Badge key={c} variant="outline">
+                          {c}
+                        </Badge>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -255,7 +330,13 @@ export function OperationsCard({ entity }: { entity: Entity }) {
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <div className="space-y-1">
                 <Label className="text-xs">Lead time (days)</Label>
-                <Input type="number" min={0} value={leadTime} onChange={(e) => setLeadTime(e.target.value)} placeholder="45" />
+                <Input
+                  type="number"
+                  min={0}
+                  value={leadTime}
+                  onChange={(e) => setLeadTime(e.target.value)}
+                  placeholder="45"
+                />
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">MOQ</Label>
@@ -263,11 +344,22 @@ export function OperationsCard({ entity }: { entity: Entity }) {
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Capacity</Label>
-                <Input value={capacity} onChange={(e) => setCapacity(e.target.value)} placeholder="1M units/yr" />
+                <Input
+                  value={capacity}
+                  onChange={(e) => setCapacity(e.target.value)}
+                  placeholder="1M units/yr"
+                />
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">On-time rate (%)</Label>
-                <Input type="number" min={0} max={100} value={onTime} onChange={(e) => setOnTime(e.target.value)} placeholder="92" />
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={onTime}
+                  onChange={(e) => setOnTime(e.target.value)}
+                  placeholder="92"
+                />
               </div>
             </div>
 
@@ -278,8 +370,18 @@ export function OperationsCard({ entity }: { entity: Entity }) {
               suggestions={SPEC_OPTIONS}
             />
             <div className="grid gap-4 sm:grid-cols-2">
-              <ChipEditor label="Materials" value={materials} onChange={setMaterials} suggestions={MATERIAL_OPTIONS} />
-              <ChipEditor label="Capabilities" value={capabilities} onChange={setCapabilities} suggestions={CAPABILITY_OPTIONS} />
+              <ChipEditor
+                label="Materials"
+                value={materials}
+                onChange={setMaterials}
+                suggestions={MATERIAL_OPTIONS}
+              />
+              <ChipEditor
+                label="Capabilities"
+                value={capabilities}
+                onChange={setCapabilities}
+                suggestions={CAPABILITY_OPTIONS}
+              />
             </div>
             {!isDbOrg && (
               <p className="text-[11px] text-muted-foreground">

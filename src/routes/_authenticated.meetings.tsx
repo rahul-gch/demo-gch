@@ -5,7 +5,6 @@ import { AppShell } from "@/components/AppShell";
 import { useActingOrgId, useMeetings } from "@/lib/use-comms";
 import { MeetingsWorkspace } from "@/components/meetings/MeetingsWorkspace";
 
-
 export const Route = createFileRoute("/_authenticated/meetings")({
   head: () => ({
     meta: [
@@ -38,8 +37,8 @@ function MeetingsPage() {
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Meetings</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Requests you received and requests you sent. Switch organization if you belong to
-              more than one.
+              Requests you received and requests you sent. Switch organization if you belong to more
+              than one.
             </p>
           </div>
           <ActingOrgSwitcher value={orgId} onChange={setPreferred} />
@@ -49,5 +48,4 @@ function MeetingsPage() {
       </div>
     </AppShell>
   );
-
 }

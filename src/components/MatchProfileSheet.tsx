@@ -71,7 +71,11 @@ function operationsOf(e: Entity) {
   };
   const capacity =
     e.capacity ||
-    pick(e.id, 1, capacityByType[e.entityType] ?? ["120,000 units / month", "60,000 units / month"]);
+    pick(
+      e.id,
+      1,
+      capacityByType[e.entityType] ?? ["120,000 units / month", "60,000 units / month"],
+    );
   const moq = e.moq || pick(e.id, 2, moqByType[e.entityType] ?? ["1,000 pcs", "2,500 pcs"]);
   return { leadTime, timeframe, otr, delay, capacity, moq };
 }
@@ -90,7 +94,9 @@ function whyThisMatch(viewer: Entity | null | undefined, e: Entity): string[] {
   }
 
   const sharedMaterials = viewer
-    ? e.materials.filter((m) => viewer.materials.map((x) => x.toLowerCase()).includes(m.toLowerCase()))
+    ? e.materials.filter((m) =>
+        viewer.materials.map((x) => x.toLowerCase()).includes(m.toLowerCase()),
+      )
     : [];
   if (sharedMaterials.length > 0) {
     lines.push(
@@ -252,8 +258,16 @@ export function MatchProfileSheet({
                 Operations
               </div>
               <div className="mt-2 grid grid-cols-2 gap-3">
-                <Stat icon={<Clock className="h-4 w-4" />} label="Lead time" value={`${ops.leadTime} d`} />
-                <Stat icon={<Truck className="h-4 w-4" />} label="Delivery timeframe" value={`${ops.timeframe} d`} />
+                <Stat
+                  icon={<Clock className="h-4 w-4" />}
+                  label="Lead time"
+                  value={`${ops.leadTime} d`}
+                />
+                <Stat
+                  icon={<Truck className="h-4 w-4" />}
+                  label="Delivery timeframe"
+                  value={`${ops.timeframe} d`}
+                />
                 <Stat
                   icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />}
                   label="On-time rate"
@@ -270,7 +284,11 @@ export function MatchProfileSheet({
                   label="Avg delay"
                   value={`${ops.delay} d`}
                 />
-                <Stat icon={<Package className="h-4 w-4" />} label="Capacity" value={ops.capacity} />
+                <Stat
+                  icon={<Package className="h-4 w-4" />}
+                  label="Capacity"
+                  value={ops.capacity}
+                />
                 <Stat icon={<Package className="h-4 w-4" />} label="MOQ" value={ops.moq} />
               </div>
             </section>
@@ -326,7 +344,11 @@ export function MatchProfileSheet({
                   Send message
                 </Button>
                 <Button asChild size="sm" variant="ghost">
-                  <Link to="/directory/$id" params={{ id: e.id }} onClick={() => onOpenChange(false)}>
+                  <Link
+                    to="/directory/$id"
+                    params={{ id: e.id }}
+                    onClick={() => onOpenChange(false)}
+                  >
                     Open full profile <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
                   </Link>
                 </Button>
@@ -335,20 +357,17 @@ export function MatchProfileSheet({
           </div>
         </SheetContent>
       </Sheet>
-      <MeetingRequestDialog entity={e} open={meetOpen} onOpenChange={setMeetOpen} viewerOrgUuid={viewer?.orgUuid ?? null} />
+      <MeetingRequestDialog
+        entity={e}
+        open={meetOpen}
+        onOpenChange={setMeetOpen}
+        viewerOrgUuid={viewer?.orgUuid ?? null}
+      />
     </>
   );
 }
 
-function Stat({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
+function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="rounded-md border bg-card px-3 py-2">
       <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">

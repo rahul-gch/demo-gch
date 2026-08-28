@@ -131,7 +131,10 @@ export function ProjectShell({
                 <item.icon className="h-4 w-4" />
                 <span className="flex-1">{item.label}</span>
                 {!!item.count && item.count > 0 && (
-                  <Badge variant="secondary" className="h-5 min-w-5 justify-center px-1 text-[10px]">
+                  <Badge
+                    variant="secondary"
+                    className="h-5 min-w-5 justify-center px-1 text-[10px]"
+                  >
                     {item.count}
                   </Badge>
                 )}

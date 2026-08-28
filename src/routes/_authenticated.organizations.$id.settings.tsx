@@ -142,7 +142,6 @@ function OrgSettingsPage() {
           <MembersPanel orgId={orgUuid || e.id} />
         </TabsContent>
 
-
         <TabsContent value="profile" className="space-y-6">
           <BrandingPanel orgId={orgUuid} logo={e.logoUrl ?? null} banners={e.bannerUrls ?? []} />
           <Card className="shadow-sm">

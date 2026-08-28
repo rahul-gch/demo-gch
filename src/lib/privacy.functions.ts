@@ -13,17 +13,39 @@ export const exportMyData = createServerFn({ method: "POST" })
     const { supabase, userId, claims } = context;
 
     const [memberships, consents, requests, messages, meetings, events] = await Promise.all([
-      supabase.from("org_members").select("org_id, role, display_name, title, joined_at").eq("user_id", userId),
-      supabase.from("user_consents").select("policy_type, policy_version, accepted, accepted_at").eq("user_id", userId),
-      supabase.from("data_requests").select("request_type, status, note, created_at").eq("user_id", userId),
-      supabase.from("messages").select("id, conversation_id, sender_org_id, body, created_at").eq("sender_user_id", userId).limit(1000),
-      supabase.from("meeting_requests").select("id, requester_org_id, recipient_org_id, proposed_for, agenda, status, created_at").eq("requested_by", userId).limit(1000),
-      supabase.from("security_events").select("action, target_type, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(500),
+      supabase
+        .from("org_members")
+        .select("org_id, role, display_name, title, joined_at")
+        .eq("user_id", userId),
+      supabase
+        .from("user_consents")
+        .select("policy_type, policy_version, accepted, accepted_at")
+        .eq("user_id", userId),
+      supabase
+        .from("data_requests")
+        .select("request_type, status, note, created_at")
+        .eq("user_id", userId),
+      supabase
+        .from("messages")
+        .select("id, conversation_id, sender_org_id, body, created_at")
+        .eq("sender_user_id", userId)
+        .limit(1000),
+      supabase
+        .from("meeting_requests")
+        .select("id, requester_org_id, recipient_org_id, proposed_for, agenda, status, created_at")
+        .eq("requested_by", userId)
+        .limit(1000),
+      supabase
+        .from("security_events")
+        .select("action, target_type, created_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(500),
     ]);
 
     const orgIds = (memberships.data ?? []).map((m) => m.org_id as string);
     const orgs = orgIds.length
-      ? (await supabase.from("orgs").select("*").in("id", orgIds)).data ?? []
+      ? ((await supabase.from("orgs").select("*").in("id", orgIds)).data ?? [])
       : [];
 
     return {
@@ -80,7 +102,10 @@ export const submitDataRequest = createServerFn({ method: "POST" })
 
     await supabase.from("security_events").insert({
       user_id: userId,
-      action: data.requestType === "export" ? "privacy.data_export_requested" : "privacy.data_deletion_requested",
+      action:
+        data.requestType === "export"
+          ? "privacy.data_export_requested"
+          : "privacy.data_deletion_requested",
       target_type: "account",
       target_id: userId,
     });

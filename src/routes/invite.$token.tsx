@@ -37,7 +37,6 @@ function InvitePage() {
     retry: false,
   });
 
-
   const accept = async () => {
     setAccepting(true);
     try {
@@ -61,7 +60,9 @@ function InvitePage() {
           <CardTitle className="text-xl">Organization invitation</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {invite.isLoading && <p className="text-center text-sm text-muted-foreground">Loading invitation…</p>}
+          {invite.isLoading && (
+            <p className="text-center text-sm text-muted-foreground">Loading invitation…</p>
+          )}
           {invite.isError && (
             <p className="text-center text-sm text-destructive">Could not load invitation.</p>
           )}
@@ -96,12 +97,7 @@ function InvitePage() {
                         with that account to accept.
                       </p>
                     )}
-                  <Button
-                    onClick={accept}
-                    disabled={accepting}
-                    className="w-full"
-                    size="lg"
-                  >
+                  <Button onClick={accept} disabled={accepting} className="w-full" size="lg">
                     {accepting ? "Joining…" : `Accept and join ${invite.data.org_name}`}
                   </Button>
                 </div>

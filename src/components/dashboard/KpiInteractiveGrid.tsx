@@ -61,12 +61,17 @@ export function KpiInteractiveGrid({ entity }: { entity: Entity }) {
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
                   <div
                     className="h-full bg-slate-800"
-                    style={{ width: `${target === null ? 0 : Math.min(100, (k.value / Math.max(1, target)) * 100)}%` }}
+                    style={{
+                      width: `${target === null ? 0 : Math.min(100, (k.value / Math.max(1, target)) * 100)}%`,
+                    }}
                   />
                 </div>
               </div>
               <div className="mt-2 flex items-center justify-between">
-                <Badge variant="outline" className={`text-[10px] ${confidenceClasses(k.band.tone)}`}>
+                <Badge
+                  variant="outline"
+                  className={`text-[10px] ${confidenceClasses(k.band.tone)}`}
+                >
                   {k.band.label}
                 </Badge>
                 <Badge variant="outline" className={`text-[10px] ${statusTone}`}>

@@ -8,14 +8,14 @@ and two of which point at pages that don't match the label.
 
 New set — every tile links to a real, working destination:
 
-| Tile | Goes to |
-| --- | --- |
-| Add organization | Admin page, "Add organization" tab |
+| Tile                      | Goes to                            |
+| ------------------------- | ---------------------------------- |
+| Add organization          | Admin page, "Add organization" tab |
 | Onboarding links (invite) | Admin page, "Onboarding links" tab |
-| Organizations directory | Organizations list |
-| Matchmaking | Matchmaking page |
-| Messages | Messages page |
-| Community feed | Feed page |
+| Organizations directory   | Organizations list                 |
+| Matchmaking               | Matchmaking page                   |
+| Messages                  | Messages page                      |
+| Community feed            | Feed page                          |
 
 Removed: "Create Project" (projects are created inside an organization workspace,
 not from admin), "Approve Partnership" (the approve action was already removed from

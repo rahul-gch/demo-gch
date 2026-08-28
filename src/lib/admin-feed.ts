@@ -37,10 +37,7 @@ export function formatRelative(iso: string, now = Date.now()): string {
   return `${d}d ago`;
 }
 
-export const KIND_META: Record<
-  FeedEventKind,
-  { label: string }
-> = {
+export const KIND_META: Record<FeedEventKind, { label: string }> = {
   upload: { label: "Uploads" },
   verification: { label: "Verifications" },
   approval: { label: "Approvals" },

@@ -92,18 +92,20 @@ export function MiniDashboard({ entity }: { entity: Entity }) {
               {k.onTimeDelivery ? `${k.onTimeDelivery}%` : "—"}
             </span>
           }
-          hint={!k.onTimeDelivery ? (
-            "No delivery data yet"
-          ) : (
-            <span className="inline-flex items-center gap-1">
-              {k.onTimeTrend >= 0 ? (
-                <ArrowUpRight className="h-3 w-3 text-emerald-600" />
-              ) : (
-                <ArrowDownRight className="h-3 w-3 text-red-600" />
-              )}
-              {Math.abs(k.onTimeTrend)}% MoM
-            </span>
-          )}
+          hint={
+            !k.onTimeDelivery ? (
+              "No delivery data yet"
+            ) : (
+              <span className="inline-flex items-center gap-1">
+                {k.onTimeTrend >= 0 ? (
+                  <ArrowUpRight className="h-3 w-3 text-emerald-600" />
+                ) : (
+                  <ArrowDownRight className="h-3 w-3 text-red-600" />
+                )}
+                {Math.abs(k.onTimeTrend)}% MoM
+              </span>
+            )
+          }
         />
       </div>
 

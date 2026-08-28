@@ -2,9 +2,6 @@ import type { Entity } from "@/seed/types";
 import { ALL_ENTITIES } from "@/seed/all-entities";
 import { getEcosystemConnections, getMatchSuggestions, isSeededOrg } from "@/seed/showcase";
 
-
-
-
 export interface AiSummary {
   missingDocs: number;
   matches: number;
@@ -60,14 +57,23 @@ export function buildCriticalActions(e: Entity): CriticalAction[] {
       {
         id: "profile",
         tone: missing.length > 4 ? "amber" : "sky",
-        title: missing.length ? `Complete ${missing.length} profile field${missing.length === 1 ? "" : "s"}` : "Profile complete",
-        detail: missing.length ? missing.slice(0, 3).map((m) => m.label).join(" · ") : "All core profile fields are filled in.",
+        title: missing.length
+          ? `Complete ${missing.length} profile field${missing.length === 1 ? "" : "s"}`
+          : "Profile complete",
+        detail: missing.length
+          ? missing
+              .slice(0, 3)
+              .map((m) => m.label)
+              .join(" · ")
+          : "All core profile fields are filled in.",
         cta: "Edit profile",
       },
       {
         id: "certs",
         tone: e.certifications.length ? "sky" : "amber",
-        title: e.certifications.length ? `${e.certifications.length} certification${e.certifications.length === 1 ? "" : "s"} listed` : "Add your certifications",
+        title: e.certifications.length
+          ? `${e.certifications.length} certification${e.certifications.length === 1 ? "" : "s"} listed`
+          : "Add your certifications",
         detail: "Upload certificates so partners can verify your organization.",
         cta: "Upload",
       },
@@ -97,7 +103,9 @@ export function buildCriticalActions(e: Entity): CriticalAction[] {
       id: "matches",
       tone: "sky",
       title: `${matches.length} new partner ${matches.length === 1 ? "match" : "matches"}`,
-      detail: matches[0] ? `Top: ${matches[0].entity.name} · ${matches[0].score}% fit` : "No matches yet.",
+      detail: matches[0]
+        ? `Top: ${matches[0].entity.name} · ${matches[0].score}% fit`
+        : "No matches yet.",
       cta: "Open",
     },
     {
@@ -180,7 +188,12 @@ export function buildMissingFields(e: Entity): MissingField[] {
   };
   return (Object.keys(FIELD_META) as (keyof Entity & keyof typeof FIELD_META)[])
     .filter((k) => isMissing(k))
-    .map((k) => ({ key: k, label: FIELD_META[k].label, estMinutes: FIELD_META[k].est, cta: FIELD_META[k].cta }));
+    .map((k) => ({
+      key: k,
+      label: FIELD_META[k].label,
+      estMinutes: FIELD_META[k].est,
+      cta: FIELD_META[k].cta,
+    }));
 }
 
 export interface SupplyChainSnapshotData {
@@ -248,11 +261,31 @@ export interface TimelineEvent {
 export function buildTimeline(e: Entity): TimelineEvent[] {
   if (!isSeededOrg(e)) return [];
   return [
-    { when: "Today", time: "1h ago", title: `Project milestone completed on ${e.name.split(" ")[0]} pilot`, kind: "project" },
-    { when: "Today", time: "3h ago", title: `Research paper published in ecosystem`, kind: "upload" },
-    { when: "Yesterday", time: "17:24", title: `${e.certifications[0] || "GOTS"} certificate uploaded`, kind: "upload" },
+    {
+      when: "Today",
+      time: "1h ago",
+      title: `Project milestone completed on ${e.name.split(" ")[0]} pilot`,
+      kind: "project",
+    },
+    {
+      when: "Today",
+      time: "3h ago",
+      title: `Research paper published in ecosystem`,
+      kind: "upload",
+    },
+    {
+      when: "Yesterday",
+      time: "17:24",
+      title: `${e.certifications[0] || "GOTS"} certificate uploaded`,
+      kind: "upload",
+    },
     { when: "Yesterday", time: "10:02", title: "Partner request accepted", kind: "match" },
-    { when: "This week", time: "Mon", title: `Confidence score updated to ${e.confidenceScore}%`, kind: "score" },
+    {
+      when: "This week",
+      time: "Mon",
+      title: `Confidence score updated to ${e.confidenceScore}%`,
+      kind: "score",
+    },
     { when: "This week", time: "Mon", title: "Profile reviewed by GCH admin", kind: "review" },
   ];
 }

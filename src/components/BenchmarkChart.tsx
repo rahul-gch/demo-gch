@@ -1,9 +1,7 @@
 import type { Entity } from "@/seed/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  getKpisForEntity, getSectorBenchmark, HEADLINE_KPI_IDS,
-} from "@/seed/kpi";
+import { getKpisForEntity, getSectorBenchmark, HEADLINE_KPI_IDS } from "@/seed/kpi";
 
 export function BenchmarkChart({ entity }: { entity: Entity }) {
   const kpis = getKpisForEntity(entity);
@@ -13,8 +11,8 @@ export function BenchmarkChart({ entity }: { entity: Entity }) {
       <CardHeader>
         <CardTitle className="text-base font-semibold">Benchmark vs sector reference</CardTitle>
         <p className="text-xs text-muted-foreground">
-          Sector values pulled from public reports of Inditex, H&amp;M, Nike, Adidas, PUMA, Patagonia,
-          Primark, M&amp;S, Zalando, PVH. More peers will be added later.
+          Sector values pulled from public reports of Inditex, H&amp;M, Nike, Adidas, PUMA,
+          Patagonia, Primark, M&amp;S, Zalando, PVH. More peers will be added later.
         </p>
       </CardHeader>
       <CardContent className="space-y-5">
@@ -51,10 +49,23 @@ export function BenchmarkChart({ entity }: { entity: Entity }) {
 }
 
 function BenchRow({
-  title, entityName, entityVal, unit, sector, noBenchmark,
+  title,
+  entityName,
+  entityVal,
+  unit,
+  sector,
+  noBenchmark,
 }: {
-  title: string; entityName: string; entityVal: number | null; unit: string;
-  sector?: { min: number; max: number; median: number; values: { company: string; value: number }[] };
+  title: string;
+  entityName: string;
+  entityVal: number | null;
+  unit: string;
+  sector?: {
+    min: number;
+    max: number;
+    median: number;
+    values: { company: string; value: number }[];
+  };
   noBenchmark?: boolean;
 }) {
   const max = Math.max(100, sector?.max ?? 100, entityVal ?? 0);
@@ -66,7 +77,12 @@ function BenchRow({
         <div className="text-xs text-muted-foreground">{unit}</div>
       </div>
       <div className="mt-2 space-y-1.5">
-        <Row label={entityName} value={entityVal} w={entityVal != null ? w(entityVal) : "0%"} primary />
+        <Row
+          label={entityName}
+          value={entityVal}
+          w={entityVal != null ? w(entityVal) : "0%"}
+          primary
+        />
         {sector && (
           <>
             <Row label="Sector median" value={sector.median} w={w(sector.median)} />
@@ -84,13 +100,25 @@ function BenchRow({
         </div>
       )}
       {noBenchmark && (
-        <div className="mt-2 text-xs text-muted-foreground">No peer benchmark data yet for this KPI.</div>
+        <div className="mt-2 text-xs text-muted-foreground">
+          No peer benchmark data yet for this KPI.
+        </div>
       )}
     </div>
   );
 }
 
-function Row({ label, value, w, primary }: { label: string; value: number | null; w: string; primary?: boolean }) {
+function Row({
+  label,
+  value,
+  w,
+  primary,
+}: {
+  label: string;
+  value: number | null;
+  w: string;
+  primary?: boolean;
+}) {
   return (
     <div className="flex items-center gap-3">
       <div className="w-32 shrink-0 text-xs text-muted-foreground">{label}</div>
@@ -100,9 +128,7 @@ function Row({ label, value, w, primary }: { label: string; value: number | null
           style={{ width: w }}
         />
       </div>
-      <div className="w-14 text-right text-xs tabular-nums">
-        {value == null ? "—" : value}
-      </div>
+      <div className="w-14 text-right text-xs tabular-nums">{value == null ? "—" : value}</div>
     </div>
   );
 }

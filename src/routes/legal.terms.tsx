@@ -7,10 +7,14 @@ export const Route = createFileRoute("/legal/terms")({
       { title: "Terms & Conditions — Global Chain Hub" },
       {
         name: "description",
-        content: "Terms & Conditions governing the use of the Global Chain Hub supply-chain platform.",
+        content:
+          "Terms & Conditions governing the use of the Global Chain Hub supply-chain platform.",
       },
       { property: "og:title", content: "Terms & Conditions — Global Chain Hub" },
-      { property: "og:description", content: "Terms governing use of the Global Chain Hub platform." },
+      {
+        property: "og:description",
+        content: "Terms governing use of the Global Chain Hub platform.",
+      },
       { property: "og:type", content: "article" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -65,7 +69,8 @@ function TermsPage() {
           app. We may suspend accounts that breach these Terms.
         </Section>
         <Section title="8. Contact">
-          Questions about these Terms: <a href="mailto:legal@globalchainhub.io">legal@globalchainhub.io</a>.
+          Questions about these Terms:{" "}
+          <a href="mailto:legal@globalchainhub.io">legal@globalchainhub.io</a>.
         </Section>
       </div>
     </main>

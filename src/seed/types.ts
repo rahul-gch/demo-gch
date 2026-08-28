@@ -56,7 +56,6 @@ export interface Entity extends ReliabilityFields {
   name: string;
   website?: string;
 
-
   entityType: EntityType;
   rawEntityType: string;
   organizationType: string;

@@ -40,7 +40,11 @@ function MapPage() {
   const countries = useMemo(
     () =>
       Array.from(
-        new Set(ENTITIES.map((e) => (typeof e.country === "string" ? e.country.trim() : "")).filter(Boolean)),
+        new Set(
+          ENTITIES.map((e) => (typeof e.country === "string" ? e.country.trim() : "")).filter(
+            Boolean,
+          ),
+        ),
       ).sort(),
     [],
   );
@@ -73,9 +77,19 @@ function MapPage() {
 
         <Card className="shadow-sm">
           <CardContent className="grid grid-cols-2 gap-3 p-5 md:grid-cols-5">
-            <Filter label="Entity Type" value={entityType} onChange={setEntityType} options={ENTITY_TYPES} />
+            <Filter
+              label="Entity Type"
+              value={entityType}
+              onChange={setEntityType}
+              options={ENTITY_TYPES}
+            />
             <Filter label="Country" value={country} onChange={setCountry} options={countries} />
-            <Filter label="Risk" value={risk} onChange={setRisk} options={["Low", "Medium", "High"]} />
+            <Filter
+              label="Risk"
+              value={risk}
+              onChange={setRisk}
+              options={["Low", "Medium", "High"]}
+            />
             <Filter
               label="Verification"
               value={verification}
@@ -164,7 +178,6 @@ function MapPage() {
     </AppShell>
   );
 }
-
 
 function Block({ label, items }: { label: string; items: string[] }) {
   if (items.length === 0) return null;

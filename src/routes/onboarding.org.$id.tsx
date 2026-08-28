@@ -209,7 +209,6 @@ function OnboardingProfilePage() {
             <Sparkles className="h-3 w-3" /> {normalizeEntityType(entityType)}
           </Badge>
           <div className="min-w-40 flex-1">
-
             <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
               <span>Profile completeness</span>
               <span className="font-semibold text-foreground">{score.score}%</span>

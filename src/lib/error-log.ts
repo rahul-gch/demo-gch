@@ -12,7 +12,8 @@ const MAX_REPORTS_PER_PAGE_LOAD = 10;
 const seen = new Set<string>();
 let sent = 0;
 
-const SENSITIVE = /(pass(word)?|token|secret|api[-_]?key|bearer|session|credential|authorization)/gi;
+const SENSITIVE =
+  /(pass(word)?|token|secret|api[-_]?key|bearer|session|credential|authorization)/gi;
 
 function scrub(value: string | null | undefined): string | null {
   if (!value) return null;
@@ -56,8 +57,7 @@ export function reportClientError(error: unknown, extra?: { route?: string }): v
     sent += 1;
 
     const stack = scrub(error instanceof Error ? error.stack : null);
-    const userAgent =
-      typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 300) : null;
+    const userAgent = typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 300) : null;
 
     void (async () => {
       try {

@@ -65,8 +65,16 @@ function pillarValues(e: Entity) {
         ? 0.5
         : 0;
   const expiredPenalty = Math.min(30, e.expiredCertCount * 10);
-  const compliance = clamp(verifiedRatio * 100 - expiredPenalty + (e.verificationStatus === "Verified" ? 10 : 0));
-  const tierBonus = seeded ? (e.actorType === "Tier 0" ? 20 : e.actorType === "Tier 1" ? 15 : 10) : 0;
+  const compliance = clamp(
+    verifiedRatio * 100 - expiredPenalty + (e.verificationStatus === "Verified" ? 10 : 0),
+  );
+  const tierBonus = seeded
+    ? e.actorType === "Tier 0"
+      ? 20
+      : e.actorType === "Tier 1"
+        ? 15
+        : 10
+    : 0;
   const supplyChain = clamp(e.traceabilityReadiness * 0.7 + tierBonus);
   const connectivity = clamp(e.matchmakingReadiness);
   const certifications = clamp(
@@ -80,21 +88,77 @@ function pillarValues(e: Entity) {
   const freshness = seeded
     ? clamp(55 + Math.round(rand() * 40) - expiredPenalty)
     : clamp(e.profileCompleteness > 0 ? e.profileCompleteness - expiredPenalty : 0);
-  return { profile, compliance, supplyChain, connectivity, certifications, projectActivity, aiConfidence, freshness };
+  return {
+    profile,
+    compliance,
+    supplyChain,
+    connectivity,
+    certifications,
+    projectActivity,
+    aiConfidence,
+    freshness,
+  };
 }
-
 
 export function computeNhri(e: Entity): NhriResult {
   const v = pillarValues(e);
   const pillars: NhriPillar[] = [
-    { key: "profile", label: "Profile", value: v.profile, weight: WEIGHTS.profile, contribution: (v.profile * WEIGHTS.profile) / 100 },
-    { key: "compliance", label: "Compliance", value: v.compliance, weight: WEIGHTS.compliance, contribution: (v.compliance * WEIGHTS.compliance) / 100 },
-    { key: "supplyChain", label: "Supply Chain", value: v.supplyChain, weight: WEIGHTS.supplyChain, contribution: (v.supplyChain * WEIGHTS.supplyChain) / 100 },
-    { key: "connectivity", label: "Connectivity", value: v.connectivity, weight: WEIGHTS.connectivity, contribution: (v.connectivity * WEIGHTS.connectivity) / 100 },
-    { key: "certifications", label: "Certifications", value: v.certifications, weight: WEIGHTS.certifications, contribution: (v.certifications * WEIGHTS.certifications) / 100 },
-    { key: "projectActivity", label: "Project Activity", value: v.projectActivity, weight: WEIGHTS.projectActivity, contribution: (v.projectActivity * WEIGHTS.projectActivity) / 100 },
-    { key: "aiConfidence", label: "AI Confidence", value: v.aiConfidence, weight: WEIGHTS.aiConfidence, contribution: (v.aiConfidence * WEIGHTS.aiConfidence) / 100 },
-    { key: "freshness", label: "Data Freshness", value: v.freshness, weight: WEIGHTS.freshness, contribution: (v.freshness * WEIGHTS.freshness) / 100 },
+    {
+      key: "profile",
+      label: "Profile",
+      value: v.profile,
+      weight: WEIGHTS.profile,
+      contribution: (v.profile * WEIGHTS.profile) / 100,
+    },
+    {
+      key: "compliance",
+      label: "Compliance",
+      value: v.compliance,
+      weight: WEIGHTS.compliance,
+      contribution: (v.compliance * WEIGHTS.compliance) / 100,
+    },
+    {
+      key: "supplyChain",
+      label: "Supply Chain",
+      value: v.supplyChain,
+      weight: WEIGHTS.supplyChain,
+      contribution: (v.supplyChain * WEIGHTS.supplyChain) / 100,
+    },
+    {
+      key: "connectivity",
+      label: "Connectivity",
+      value: v.connectivity,
+      weight: WEIGHTS.connectivity,
+      contribution: (v.connectivity * WEIGHTS.connectivity) / 100,
+    },
+    {
+      key: "certifications",
+      label: "Certifications",
+      value: v.certifications,
+      weight: WEIGHTS.certifications,
+      contribution: (v.certifications * WEIGHTS.certifications) / 100,
+    },
+    {
+      key: "projectActivity",
+      label: "Project Activity",
+      value: v.projectActivity,
+      weight: WEIGHTS.projectActivity,
+      contribution: (v.projectActivity * WEIGHTS.projectActivity) / 100,
+    },
+    {
+      key: "aiConfidence",
+      label: "AI Confidence",
+      value: v.aiConfidence,
+      weight: WEIGHTS.aiConfidence,
+      contribution: (v.aiConfidence * WEIGHTS.aiConfidence) / 100,
+    },
+    {
+      key: "freshness",
+      label: "Data Freshness",
+      value: v.freshness,
+      weight: WEIGHTS.freshness,
+      contribution: (v.freshness * WEIGHTS.freshness) / 100,
+    },
   ];
   const score = Math.round(pillars.reduce((s, p) => s + p.contribution, 0));
   const { band, bandTone } = bandFor(score);

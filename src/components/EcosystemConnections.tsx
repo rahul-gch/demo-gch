@@ -18,7 +18,9 @@ export function EcosystemConnections({ connections }: { connections: EcosystemCo
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {items.length === 0 && <p className="text-xs text-muted-foreground">No connections.</p>}
+              {items.length === 0 && (
+                <p className="text-xs text-muted-foreground">No connections.</p>
+              )}
               {items.map((c) => (
                 <Link
                   key={c.entity.id}
@@ -31,8 +33,12 @@ export function EcosystemConnections({ connections }: { connections: EcosystemCo
                       <div className="truncate text-sm font-medium">{c.entity.name}</div>
                       <div className="mt-0.5 text-xs text-muted-foreground">{c.relationship}</div>
                       <div className="mt-1.5 flex flex-wrap gap-1">
-                        <Badge variant="secondary" className="text-[10px]">{c.entity.entityType}</Badge>
-                        <Badge variant="outline" className="text-[10px]">{c.entity.country}</Badge>
+                        <Badge variant="secondary" className="text-[10px]">
+                          {c.entity.entityType}
+                        </Badge>
+                        <Badge variant="outline" className="text-[10px]">
+                          {c.entity.country}
+                        </Badge>
                       </div>
                     </div>
                     <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition group-hover:opacity-100" />

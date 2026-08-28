@@ -236,11 +236,21 @@ export function EmailAuthForm({
             />
             <span>
               I accept the{" "}
-              <a href="/legal/terms" target="_blank" rel="noreferrer" className="text-primary hover:underline">
+              <a
+                href="/legal/terms"
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary hover:underline"
+              >
                 Terms &amp; Conditions
               </a>{" "}
               and the{" "}
-              <a href="/legal/privacy" target="_blank" rel="noreferrer" className="text-primary hover:underline">
+              <a
+                href="/legal/privacy"
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary hover:underline"
+              >
                 Privacy Policy
               </a>
               .
@@ -252,7 +262,9 @@ export function EmailAuthForm({
               onCheckedChange={(v) => setMarketing(v === true)}
               className="mt-0.5"
             />
-            <span>Optional: send me product news and network updates. You can opt out anytime.</span>
+            <span>
+              Optional: send me product news and network updates. You can opt out anytime.
+            </span>
           </label>
         </div>
       )}
@@ -272,7 +284,11 @@ export function EmailAuthForm({
           or use “Forgot password?” to recover it.
         </div>
       )}
-      <Button type="submit" className="w-full" disabled={busy || (mode === "signup" && !acceptPolicies)}>
+      <Button
+        type="submit"
+        className="w-full"
+        disabled={busy || (mode === "signup" && !acceptPolicies)}
+      >
         {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         {mode === "signup" ? "Create account" : "Sign in"}
       </Button>
@@ -310,8 +326,20 @@ async function recordConsents(userId: string | null, marketing: boolean) {
     const now = new Date().toISOString();
     await supabase.from("user_consents").upsert(
       [
-        { user_id: userId, policy_type: "terms", policy_version: TERMS_VERSION, accepted: true, accepted_at: now },
-        { user_id: userId, policy_type: "privacy", policy_version: PRIVACY_VERSION, accepted: true, accepted_at: now },
+        {
+          user_id: userId,
+          policy_type: "terms",
+          policy_version: TERMS_VERSION,
+          accepted: true,
+          accepted_at: now,
+        },
+        {
+          user_id: userId,
+          policy_type: "privacy",
+          policy_version: PRIVACY_VERSION,
+          accepted: true,
+          accepted_at: now,
+        },
         {
           user_id: userId,
           policy_type: "marketing",

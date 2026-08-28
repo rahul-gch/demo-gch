@@ -16,7 +16,6 @@ export const listConversations = createServerFn({ method: "POST" })
     });
     if (!isMember) return [];
 
-
     const { data: mine, error: mineErr } = await supabase
       .from("conversation_participants")
       .select("conversation_id, last_read_at")

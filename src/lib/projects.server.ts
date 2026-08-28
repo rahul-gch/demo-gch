@@ -85,7 +85,7 @@ export async function loadOrgIndex(supabase: AnyClient) {
 export type OrgIndex = Awaited<ReturnType<typeof loadOrgIndex>>;
 
 const iso = (v: unknown) => (typeof v === "string" ? v : new Date().toISOString());
-const arr = <T,>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
+const arr = <T>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
 const obj = (v: unknown): Record<string, number> =>
   v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, number>) : {};
 

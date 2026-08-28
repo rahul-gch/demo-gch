@@ -39,16 +39,33 @@ export function MatchmakingPanel({
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-medium hover:underline">{m.entity.name}</span>
-                    <Badge variant="secondary" className="text-[10px]">{m.entity.entityType}</Badge>
-                    <Badge variant="outline" className="text-[10px]">{m.entity.country}</Badge>
+                    <Badge variant="secondary" className="text-[10px]">
+                      {m.entity.entityType}
+                    </Badge>
+                    <Badge variant="outline" className="text-[10px]">
+                      {m.entity.country}
+                    </Badge>
                   </div>
                 </button>
                 <div className="flex flex-wrap gap-2">
-                  <Button size="sm" onClick={(e) => { e.stopPropagation(); openWith(m, "message"); }}>
+                  <Button
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openWith(m, "message");
+                    }}
+                  >
                     <Send className="mr-1 h-3.5 w-3.5" />
                     Send message
                   </Button>
-                  <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); openWith(m, "meeting"); }}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openWith(m, "meeting");
+                    }}
+                  >
                     <CalendarPlus className="mr-1 h-3.5 w-3.5" />
                     Request meeting
                   </Button>
@@ -57,7 +74,9 @@ export function MatchmakingPanel({
               <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex min-w-0 flex-wrap gap-x-2 gap-y-0.5">
                   {m.reasons.map((r) => (
-                    <span key={r} className="text-xs text-muted-foreground">· {r}</span>
+                    <span key={r} className="text-xs text-muted-foreground">
+                      · {r}
+                    </span>
                   ))}
                 </div>
                 <div className="flex w-44 items-center gap-2">

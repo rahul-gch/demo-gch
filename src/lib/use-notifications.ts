@@ -23,8 +23,7 @@ export function useNotifications(orgId: string | null) {
 
   useEffect(() => {
     if (!orgId) return;
-    const invalidate = () =>
-      queryClient.invalidateQueries({ queryKey: ["notifications", orgId] });
+    const invalidate = () => queryClient.invalidateQueries({ queryKey: ["notifications", orgId] });
     const channel = supabase
       .channel(`notifications-${orgId}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, invalidate)
@@ -38,7 +37,6 @@ export function useNotifications(orgId: string | null) {
       supabase.removeChannel(channel);
     };
   }, [orgId, queryClient]);
-
 
   return { items: query.data ?? [], isLoading: query.isLoading };
 }

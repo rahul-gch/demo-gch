@@ -46,8 +46,10 @@ function score(e: Entity, key: string): number {
   let h = 0;
   for (let i = 0; i < (e.id + key).length; i++) h = (h * 31 + (e.id + key).charCodeAt(i)) >>> 0;
   const base = 60 + (h % 35);
-  if (key === "trust") return Math.min(99, Math.round((e.profileCompleteness + e.confidenceScore) / 2));
-  if (key === "traceability") return Math.min(99, e.traceabilityReadiness > 0 ? 70 + ((h % 25)) : base);
+  if (key === "trust")
+    return Math.min(99, Math.round((e.profileCompleteness + e.confidenceScore) / 2));
+  if (key === "traceability")
+    return Math.min(99, e.traceabilityReadiness > 0 ? 70 + (h % 25) : base);
   return base;
 }
 
@@ -103,10 +105,7 @@ export function NetworkPassport({ entity: e }: { entity: Entity }) {
             <div className="mt-5 grid grid-cols-1 gap-x-10 gap-y-5 sm:grid-cols-2">
               <PassportField label="Organization" value={e.name} />
               <PassportField label="Entity Type" value={e.rawEntityType || e.entityType} />
-              <PassportField
-                label="Primary Material"
-                value={e.materials[0] || "Multi-material"}
-              />
+              <PassportField label="Primary Material" value={e.materials[0] || "Multi-material"} />
               <PassportField
                 label="Origin"
                 value={[e.city, e.country].filter(Boolean).join(", ") || e.country}
@@ -174,7 +173,9 @@ export function NetworkPassport({ entity: e }: { entity: Entity }) {
                   <span className="font-medium text-slate-100">{stage.key}</span>
                 </div>
                 <div>
-                  <div className="text-[10px] uppercase tracking-wider text-slate-500">Location</div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">
+                    Location
+                  </div>
                   <div className="text-sm text-slate-200">
                     {[e.city, e.country].filter(Boolean).join(", ") || "—"}
                   </div>

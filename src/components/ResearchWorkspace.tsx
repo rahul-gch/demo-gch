@@ -23,7 +23,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { Sparkles, Plus, Globe2, Network, Loader2, ArrowUpRight, Search } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
@@ -54,12 +59,12 @@ const ENTITY_TYPES: EntityType[] = [
 ];
 
 const COUNTERPART: Record<EntityType, EntityType> = {
-  "Brand": "Garment Factory",
+  Brand: "Garment Factory",
   "Garment Factory": "Fabric Mill",
   "Fabric Mill": "Spinner",
-  "Spinner": "Ginner",
-  "Ginner": "Farmer",
-  "Farmer": "Ginner",
+  Spinner: "Ginner",
+  Ginner: "Farmer",
+  Farmer: "Ginner",
   "Dye House": "Fabric Mill",
   "Logistics Provider": "Garment Factory",
   "Certification Body": "Garment Factory",
@@ -122,7 +127,9 @@ const chips = (xs?: string[], n = 3) =>
   ) : (
     <div className="flex flex-wrap gap-1">
       {xs.slice(0, n).map((x) => (
-        <Badge key={x} variant="outline" className="text-[10px] font-normal">{x}</Badge>
+        <Badge key={x} variant="outline" className="text-[10px] font-normal">
+          {x}
+        </Badge>
       ))}
     </div>
   );
@@ -152,19 +159,37 @@ const LOC_COL: ColumnDef = {
     </span>
   ),
 };
-const MOQ_COL: ColumnDef = { key: "moq", label: "MOQ", render: (r) => <span className="text-xs">{txt(r.moq)}</span> };
+const MOQ_COL: ColumnDef = {
+  key: "moq",
+  label: "MOQ",
+  render: (r) => <span className="text-xs">{txt(r.moq)}</span>,
+};
 const LEAD_COL: ColumnDef = {
-  key: "lead", label: "Lead",
+  key: "lead",
+  label: "Lead",
   render: (r) => <span className="text-xs">{r.leadTimeDays ? `${r.leadTimeDays}d` : "—"}</span>,
 };
 const OTR_COL: ColumnDef = {
-  key: "otr", label: "On-time",
+  key: "otr",
+  label: "On-time",
   render: (r) => <span className="text-xs">{r.onTimeRate != null ? `${r.onTimeRate}%` : "—"}</span>,
 };
-const CAP_COL: ColumnDef = { key: "cap", label: "Capacity", render: (r) => <span className="text-xs">{txt(r.capacity)}</span> };
+const CAP_COL: ColumnDef = {
+  key: "cap",
+  label: "Capacity",
+  render: (r) => <span className="text-xs">{txt(r.capacity)}</span>,
+};
 const MAT_COL: ColumnDef = { key: "mat", label: "Materials", render: (r) => chips(r.materials) };
-const CAPB_COL: ColumnDef = { key: "capb", label: "Capabilities", render: (r) => chips(r.capabilities) };
-const CERT_COL: ColumnDef = { key: "cert", label: "Certifications", render: (r) => chips(r.certifications) };
+const CAPB_COL: ColumnDef = {
+  key: "capb",
+  label: "Capabilities",
+  render: (r) => chips(r.capabilities),
+};
+const CERT_COL: ColumnDef = {
+  key: "cert",
+  label: "Certifications",
+  render: (r) => chips(r.certifications),
+};
 
 const COMMON_FILTERS: QuickFilter[] = [
   { label: "Lead < 30d", apply: (f) => ({ ...f, maxLead: "30" }) },
@@ -172,7 +197,7 @@ const COMMON_FILTERS: QuickFilter[] = [
 ];
 
 const SEARCH_PROFILES: Record<EntityType, SearchProfile> = {
-  "Brand": {
+  Brand: {
     defaultCounterpart: "Garment Factory",
     introVerb: "Source compliant manufacturing partners",
     columns: [NAME_COL, LOC_COL, CAPB_COL, CAP_COL, MOQ_COL, LEAD_COL, OTR_COL, CERT_COL],
@@ -223,7 +248,7 @@ const SEARCH_PROFILES: Record<EntityType, SearchProfile> = {
     ],
     emptyHint: "No spinners match. Try New Research for AI suggestions.",
   },
-  "Spinner": {
+  Spinner: {
     defaultCounterpart: "Ginner",
     introVerb: "Source seed cotton bales from gins",
     columns: [NAME_COL, LOC_COL, MAT_COL, CAP_COL, MOQ_COL, LEAD_COL, CERT_COL],
@@ -240,7 +265,7 @@ const SEARCH_PROFILES: Record<EntityType, SearchProfile> = {
     ],
     emptyHint: "No ginners match. Run new AI research.",
   },
-  "Ginner": {
+  Ginner: {
     defaultCounterpart: "Farmer",
     introVerb: "Source seed cotton from farms",
     columns: [NAME_COL, LOC_COL, MAT_COL, CAP_COL, CERT_COL],
@@ -257,7 +282,7 @@ const SEARCH_PROFILES: Record<EntityType, SearchProfile> = {
     ],
     emptyHint: "No farmers match. Try a new AI research run.",
   },
-  "Farmer": {
+  Farmer: {
     defaultCounterpart: "Ginner",
     introVerb: "Find ginners that accept your harvest",
     columns: [NAME_COL, LOC_COL, MAT_COL, CAP_COL, CERT_COL],
@@ -371,12 +396,21 @@ function searchInternal(params: {
     .map((e) => {
       let score = 0;
       const hay = [
-        e.name, e.entityType, e.country, e.region, e.city,
-        ...(e.materials || []), ...(e.capabilities || []), ...(e.certifications || []),
+        e.name,
+        e.entityType,
+        e.country,
+        e.region,
+        e.city,
+        ...(e.materials || []),
+        ...(e.capabilities || []),
+        ...(e.certifications || []),
         e.description,
-      ].join(" ").toLowerCase();
+      ]
+        .join(" ")
+        .toLowerCase();
 
-      if (countries.length && countries.some((c) => e.country.toLowerCase().includes(c))) score += 30;
+      if (countries.length && countries.some((c) => e.country.toLowerCase().includes(c)))
+        score += 30;
       if (etype && e.entityType.toLowerCase().includes(etype)) score += 25;
       if (industry && hay.includes(industry)) score += 15;
       for (const t of tokens) if (hay.includes(t)) score += 6;
@@ -437,9 +471,9 @@ export function ResearchWorkspace({ entity }: { entity: Entity }) {
             Research Workspace
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            {profile.introVerb} for{" "}
-            <span className="font-medium">{entity.name}</span> ({entity.entityType}, {entity.country}).
-            Ask in plain language — e.g. <em>{profile.promptSuggestions[0]}</em>.
+            {profile.introVerb} for <span className="font-medium">{entity.name}</span> (
+            {entity.entityType}, {entity.country}). Ask in plain language — e.g.{" "}
+            <em>{profile.promptSuggestions[0]}</em>.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -503,7 +537,9 @@ export function ResearchWorkspace({ entity }: { entity: Entity }) {
                 const { candidates } = await runAi({ data: params });
                 const ai: ResearchCandidate[] = candidates.map((c) => ({ source: "ai", ...c }));
                 updateRun(runId, { status: "done", results: [...networkResults, ...ai] });
-                toast.success(`Found ${networkResults.length} in network + ${ai.length} AI suggestions`);
+                toast.success(
+                  `Found ${networkResults.length} in network + ${ai.length} AI suggestions`,
+                );
               } catch (err) {
                 const msg = err instanceof Error ? err.message : "AI suggestions unavailable";
                 updateRun(runId, { status: "done", aiError: msg, results: networkResults });
@@ -512,7 +548,6 @@ export function ResearchWorkspace({ entity }: { entity: Entity }) {
             }}
           />
         </div>
-
       </header>
 
       <NetworkDirectoryCard entity={entity} profile={profile} />
@@ -526,7 +561,9 @@ export function ResearchWorkspace({ entity }: { entity: Entity }) {
           </CardHeader>
           <CardContent className="space-y-1.5 p-2">
             {runs.length === 0 && (
-              <div className="px-2 py-6 text-center text-sm text-muted-foreground">No runs yet.</div>
+              <div className="px-2 py-6 text-center text-sm text-muted-foreground">
+                No runs yet.
+              </div>
             )}
             {runs.map((r) => (
               <button
@@ -566,7 +603,10 @@ export function ResearchWorkspace({ entity }: { entity: Entity }) {
             <RunResults
               run={active}
               profile={profile}
-              onDelete={() => { deleteRun(active.id); setActiveId(null); }}
+              onDelete={() => {
+                deleteRun(active.id);
+                setActiveId(null);
+              }}
             />
           )}
         </div>
@@ -608,13 +648,7 @@ function candidateToRow(c: ResearchCandidate): RowData {
   };
 }
 
-function NetworkDirectoryCard({
-  entity,
-  profile,
-}: {
-  entity: Entity;
-  profile: SearchProfile;
-}) {
+function NetworkDirectoryCard({ entity, profile }: { entity: Entity; profile: SearchProfile }) {
   const [filters, setFilters] = useState<FilterState>({
     search: "",
     etype: profile.defaultCounterpart,
@@ -641,13 +675,19 @@ function NetworkDirectoryCard({
       .filter((e) =>
         cert ? (e.certifications ?? []).some((x) => x.toLowerCase().includes(cert)) : true,
       )
-      .filter((e) =>
-        mat ? (e.materials ?? []).some((x) => x.toLowerCase().includes(mat)) : true,
-      )
+      .filter((e) => (mat ? (e.materials ?? []).some((x) => x.toLowerCase().includes(mat)) : true))
       .filter((e) => {
         if (!s) return true;
-        const hay = [e.name, e.country, e.city, ...e.materials, ...e.capabilities, ...e.certifications]
-          .join(" ").toLowerCase();
+        const hay = [
+          e.name,
+          e.country,
+          e.city,
+          ...e.materials,
+          ...e.capabilities,
+          ...e.certifications,
+        ]
+          .join(" ")
+          .toLowerCase();
         return hay.includes(s);
       })
       .slice(0, 50);
@@ -661,7 +701,9 @@ function NetworkDirectoryCard({
         <CardTitle className="flex items-center gap-2 text-sm font-semibold">
           <Network className="h-4 w-4" />
           {entity.entityType} sourcing directory
-          <Badge variant="secondary" className="ml-1">{rows.length}</Badge>
+          <Badge variant="secondary" className="ml-1">
+            {rows.length}
+          </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -678,8 +720,13 @@ function NetworkDirectoryCard({
           <button
             onClick={() =>
               setFilters({
-                search: "", etype: profile.defaultCounterpart, country: "",
-                minOtr: "", maxLead: "", certContains: "", materialContains: "",
+                search: "",
+                etype: profile.defaultCounterpart,
+                country: "",
+                minOtr: "",
+                maxLead: "",
+                certContains: "",
+                materialContains: "",
               })
             }
             className="rounded-full px-2.5 py-0.5 text-[11px] text-muted-foreground hover:underline"
@@ -698,16 +745,40 @@ function NetworkDirectoryCard({
             />
           </div>
           <Select value={filters.etype} onValueChange={(v) => update({ etype: v })}>
-            <SelectTrigger><SelectValue placeholder="Entity type" /></SelectTrigger>
+            <SelectTrigger>
+              <SelectValue placeholder="Entity type" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All entity types</SelectItem>
-              {ENTITY_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+              {ENTITY_TYPES.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {t}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
-          <Input value={filters.country} onChange={(e) => update({ country: e.target.value })} placeholder="Country" />
-          <Input value={filters.minOtr} onChange={(e) => update({ minOtr: e.target.value })} placeholder="Min OTR %" inputMode="numeric" />
-          <Input value={filters.maxLead} onChange={(e) => update({ maxLead: e.target.value })} placeholder="Max lead d" inputMode="numeric" />
-          <Input value={filters.certContains} onChange={(e) => update({ certContains: e.target.value })} placeholder="Cert contains" />
+          <Input
+            value={filters.country}
+            onChange={(e) => update({ country: e.target.value })}
+            placeholder="Country"
+          />
+          <Input
+            value={filters.minOtr}
+            onChange={(e) => update({ minOtr: e.target.value })}
+            placeholder="Min OTR %"
+            inputMode="numeric"
+          />
+          <Input
+            value={filters.maxLead}
+            onChange={(e) => update({ maxLead: e.target.value })}
+            placeholder="Max lead d"
+            inputMode="numeric"
+          />
+          <Input
+            value={filters.certContains}
+            onChange={(e) => update({ certContains: e.target.value })}
+            placeholder="Cert contains"
+          />
         </div>
 
         {rows.length === 0 ? (
@@ -720,7 +791,9 @@ function NetworkDirectoryCard({
               <TableHeader>
                 <TableRow>
                   {columns.map((c) => (
-                    <TableHead key={c.key} className={c.align === "right" ? "text-right" : ""}>{c.label}</TableHead>
+                    <TableHead key={c.key} className={c.align === "right" ? "text-right" : ""}>
+                      {c.label}
+                    </TableHead>
                   ))}
                   <TableHead className="text-right">Action</TableHead>
                 </TableRow>
@@ -761,7 +834,9 @@ function StatusDot({ status }: { status: ResearchRun["status"] }) {
 }
 
 function RunResults({
-  run, profile, onDelete,
+  run,
+  profile,
+  onDelete,
 }: {
   run: ResearchRun;
   profile: SearchProfile;
@@ -783,7 +858,9 @@ function RunResults({
               <Badge variant="secondary">{run.results.length} results</Badge>
             </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={onDelete}>Delete run</Button>
+          <Button variant="ghost" size="sm" onClick={onDelete}>
+            Delete run
+          </Button>
         </CardHeader>
       </Card>
 
@@ -798,7 +875,8 @@ function RunResults({
       {run.aiError && (
         <Card className="border-amber-200 bg-amber-50">
           <CardContent className="p-4 text-sm text-amber-900">
-            <strong className="font-semibold">AI suggestions unavailable.</strong> Showing matches from your GCH network only. <span className="text-amber-800">{run.aiError}</span>
+            <strong className="font-semibold">AI suggestions unavailable.</strong> Showing matches
+            from your GCH network only. <span className="text-amber-800">{run.aiError}</span>
           </CardContent>
         </Card>
       )}
@@ -816,7 +894,9 @@ function RunResults({
         icon={<Globe2 className="h-4 w-4" />}
         rows={ai}
         columns={profile.columns}
-        emptyText={run.status === "running" ? "AI is researching…" : "No additional AI suggestions."}
+        emptyText={
+          run.status === "running" ? "AI is researching…" : "No additional AI suggestions."
+        }
         showRationale
       />
     </div>
@@ -824,7 +904,12 @@ function RunResults({
 }
 
 function ResultsSection({
-  title, icon, rows, columns, emptyText, showRationale,
+  title,
+  icon,
+  rows,
+  columns,
+  emptyText,
+  showRationale,
 }: {
   title: string;
   icon: React.ReactNode;
@@ -838,7 +923,9 @@ function ResultsSection({
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-sm font-semibold">
           {icon} {title}
-          <Badge variant="secondary" className="ml-1">{rows.length}</Badge>
+          <Badge variant="secondary" className="ml-1">
+            {rows.length}
+          </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
@@ -849,7 +936,9 @@ function ResultsSection({
             <TableHeader>
               <TableRow>
                 {columns.map((c) => (
-                  <TableHead key={c.key} className={c.align === "right" ? "text-right" : ""}>{c.label}</TableHead>
+                  <TableHead key={c.key} className={c.align === "right" ? "text-right" : ""}>
+                    {c.label}
+                  </TableHead>
                 ))}
                 {showRationale && <TableHead>Why</TableHead>}
                 <TableHead className="text-right">Action</TableHead>
@@ -893,7 +982,12 @@ function ResultsSection({
 }
 
 function NewResearchDialog({
-  open, onOpenChange, entity, counterpart, suggestions, onStart,
+  open,
+  onOpenChange,
+  entity,
+  counterpart,
+  suggestions,
+  onStart,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -915,8 +1009,7 @@ function NewResearchDialog({
   const [limit, setLimit] = useState(20);
 
   const queryPlaceholder = QUERY_PROMPTS[entity.entityType];
-  const materialsHint =
-    entity.materials.slice(0, 2).join(", ") || "Cotton, polyester, trims";
+  const materialsHint = entity.materials.slice(0, 2).join(", ") || "Cotton, polyester, trims";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -931,8 +1024,8 @@ function NewResearchDialog({
           <DialogTitle>New research for {entity.name}</DialogTitle>
           <DialogDescription>
             Search the GCH network for partners that match{" "}
-            <span className="font-medium">{entity.entityType}</span> sourcing needs.
-            AI expands the pool beyond our network.
+            <span className="font-medium">{entity.entityType}</span> sourcing needs. AI expands the
+            pool beyond our network.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
@@ -993,20 +1086,28 @@ function NewResearchDialog({
             <div>
               <Label>Entity type</Label>
               <Select value={entityType} onValueChange={setEntityType}>
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  {ENTITY_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  {ENTITY_TYPES.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
           <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-            Searches {ALL_ENTITIES.length} organizations across the GCH network instantly.
-            AI suggests additional candidates outside the network.
+            Searches {ALL_ENTITIES.length} organizations across the GCH network instantly. AI
+            suggests additional candidates outside the network.
           </p>
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
           <Button
             disabled={!query.trim()}
             onClick={() =>

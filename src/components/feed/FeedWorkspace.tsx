@@ -31,21 +31,40 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-
-
-const KIND_META: Record<
-  FeedKind,
-  { label: string; icon: typeof Rss; className: string }
-> = {
+const KIND_META: Record<FeedKind, { label: string; icon: typeof Rss; className: string }> = {
   update: { label: "Update", icon: Megaphone, className: "border-sky-200 bg-sky-50 text-sky-700" },
-  regulation: { label: "Regulation", icon: ScrollText, className: "border-amber-200 bg-amber-50 text-amber-800" },
-  investment: { label: "Investment", icon: Landmark, className: "border-emerald-200 bg-emerald-50 text-emerald-700" },
-  partnership: { label: "Partnership", icon: Handshake, className: "border-violet-200 bg-violet-50 text-violet-700" },
+  regulation: {
+    label: "Regulation",
+    icon: ScrollText,
+    className: "border-amber-200 bg-amber-50 text-amber-800",
+  },
+  investment: {
+    label: "Investment",
+    icon: Landmark,
+    className: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  },
+  partnership: {
+    label: "Partnership",
+    icon: Handshake,
+    className: "border-violet-200 bg-violet-50 text-violet-700",
+  },
   event: { label: "Event", icon: Calendar, className: "border-rose-200 bg-rose-50 text-rose-700" },
-  "ai-news": { label: "AI news", icon: Sparkles, className: "border-indigo-200 bg-indigo-50 text-indigo-700" },
-  photo: { label: "Photo", icon: ImageIcon, className: "border-slate-200 bg-slate-50 text-slate-700" },
+  "ai-news": {
+    label: "AI news",
+    icon: Sparkles,
+    className: "border-indigo-200 bg-indigo-50 text-indigo-700",
+  },
+  photo: {
+    label: "Photo",
+    icon: ImageIcon,
+    className: "border-slate-200 bg-slate-50 text-slate-700",
+  },
   video: { label: "Video", icon: Video, className: "border-slate-200 bg-slate-50 text-slate-700" },
-  document: { label: "Document", icon: FileText, className: "border-slate-200 bg-slate-50 text-slate-700" },
+  document: {
+    label: "Document",
+    icon: FileText,
+    className: "border-slate-200 bg-slate-50 text-slate-700",
+  },
 };
 
 const FILTERS: { value: "all" | FeedKind; label: string }[] = [
@@ -160,15 +179,14 @@ function Composer({ entity }: { entity: Entity }) {
     );
   };
 
-  const handleFiles = async (
-    type: "photo" | "video" | "document",
-    fileList: FileList | null,
-  ) => {
+  const handleFiles = async (type: "photo" | "video" | "document", fileList: FileList | null) => {
     if (!fileList || fileList.length === 0) return;
     const additions: FeedMedia[] = [];
     for (const file of Array.from(fileList)) {
       if (file.size > MAX_UPLOAD_BYTES) {
-        toast.error(`${file.name} is over ${(MAX_UPLOAD_BYTES / 1_000_000).toFixed(1)}MB — skipped.`);
+        toast.error(
+          `${file.name} is over ${(MAX_UPLOAD_BYTES / 1_000_000).toFixed(1)}MB — skipped.`,
+        );
         continue;
       }
       try {
@@ -209,7 +227,11 @@ function Composer({ entity }: { entity: Entity }) {
           />
         )}
         {mode === "event" && (
-          <Input type="datetime-local" value={eventAt} onChange={(e) => setEventAt(e.target.value)} />
+          <Input
+            type="datetime-local"
+            value={eventAt}
+            onChange={(e) => setEventAt(e.target.value)}
+          />
         )}
         <Textarea
           rows={3}
@@ -227,10 +249,7 @@ function Composer({ entity }: { entity: Entity }) {
         {media.length > 0 && (
           <div className="grid gap-2 sm:grid-cols-2">
             {media.map((m, i) => (
-              <div
-                key={i}
-                className="group relative overflow-hidden rounded-md border bg-slate-50"
-              >
+              <div key={i} className="group relative overflow-hidden rounded-md border bg-slate-50">
                 <MediaPreview media={m} compact />
                 <button
                   type="button"
@@ -280,13 +299,28 @@ function Composer({ entity }: { entity: Entity }) {
 
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap gap-1">
-            <Button type="button" variant="ghost" size="sm" onClick={() => photoInput.current?.click()}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => photoInput.current?.click()}
+            >
               <ImageIcon className="h-4 w-4" /> Photo
             </Button>
-            <Button type="button" variant="ghost" size="sm" onClick={() => videoInput.current?.click()}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => videoInput.current?.click()}
+            >
               <Video className="h-4 w-4" /> Video
             </Button>
-            <Button type="button" variant="ghost" size="sm" onClick={() => docInput.current?.click()}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => docInput.current?.click()}
+            >
               <FileText className="h-4 w-4" /> Document
             </Button>
           </div>
@@ -346,7 +380,9 @@ function MediaPreview({ media, compact }: { media: FeedMedia; compact?: boolean 
           </a>
         </Button>
       ) : (
-        <Badge variant="outline" className="text-xs">Preview only</Badge>
+        <Badge variant="outline" className="text-xs">
+          Preview only
+        </Badge>
       )}
     </div>
   );
@@ -367,8 +403,6 @@ function MediaFallback({
   );
 }
 
-
-
 function PostCard({ entity, post }: { entity: Entity; post: FeedPost }) {
   const { toggleLike, addComment } = useFeedActions(entity.orgUuid ?? null);
   const meta = KIND_META[post.kind];
@@ -384,7 +418,9 @@ function PostCard({ entity, post }: { entity: Entity; post: FeedPost }) {
 
   const share = () => {
     try {
-      navigator.clipboard?.writeText(`${window.location.origin}/organizations/${entity.id}/feed#${post.id}`);
+      navigator.clipboard?.writeText(
+        `${window.location.origin}/organizations/${entity.id}/feed#${post.id}`,
+      );
       toast.success("Link copied");
     } catch {
       toast.success("Shared");
@@ -417,19 +453,12 @@ function PostCard({ entity, post }: { entity: Entity; post: FeedPost }) {
         <p className="whitespace-pre-wrap text-sm text-slate-700">{post.body}</p>
 
         {post.media && post.media.length > 0 && (
-          <div
-            className={
-              post.media.length === 1
-                ? "space-y-2"
-                : "grid gap-2 sm:grid-cols-2"
-            }
-          >
+          <div className={post.media.length === 1 ? "space-y-2" : "grid gap-2 sm:grid-cols-2"}>
             {post.media.map((m, i) => (
               <MediaPreview key={i} media={m} />
             ))}
           </div>
         )}
-
 
         {post.kind === "event" && (
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-rose-50/50 px-3 py-2 text-xs text-rose-800">
@@ -461,7 +490,11 @@ function PostCard({ entity, post }: { entity: Entity; post: FeedPost }) {
               <div key={c.id} className="flex items-start gap-2 text-sm">
                 <Avatar className="h-7 w-7">
                   <AvatarFallback className="text-[10px]">
-                    {c.author.split(" ").map((s) => s[0]).join("").slice(0, 2)}
+                    {c.author
+                      .split(" ")
+                      .map((s) => s[0])
+                      .join("")
+                      .slice(0, 2)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 rounded-md bg-slate-50 px-3 py-2">

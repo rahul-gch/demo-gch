@@ -22,7 +22,11 @@ function validate(file: File, maxMb: number): string | null {
 }
 
 const safeName = (name: string) =>
-  name.toLowerCase().replace(/[^a-z0-9.]+/g, "-").replace(/^-+|-+$/g, "").slice(-60);
+  name
+    .toLowerCase()
+    .replace(/[^a-z0-9.]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(-60);
 
 export function BrandingPanel({
   orgId,
@@ -63,7 +67,9 @@ export function BrandingPanel({
     setBusy(true);
     try {
       const path = `${orgId}/logo-${Date.now()}-${safeName(file.name)}`;
-      const { error } = await supabase.storage.from(LOGO_BUCKET).upload(path, file, { upsert: false });
+      const { error } = await supabase.storage
+        .from(LOGO_BUCKET)
+        .upload(path, file, { upsert: false });
       if (error) throw new Error(error.message);
       const ref = makeRef(LOGO_BUCKET, path);
       if (await persist({ logoUrl: ref })) {
@@ -106,7 +112,9 @@ export function BrandingPanel({
       const refs: string[] = [];
       for (const file of picked) {
         const path = `${orgId}/banner-${Date.now()}-${safeName(file.name)}`;
-        const { error } = await supabase.storage.from(BANNER_BUCKET).upload(path, file, { upsert: false });
+        const { error } = await supabase.storage
+          .from(BANNER_BUCKET)
+          .upload(path, file, { upsert: false });
         if (error) throw new Error(error.message);
         refs.push(makeRef(BANNER_BUCKET, path));
       }
@@ -152,14 +160,22 @@ export function BrandingPanel({
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border bg-muted">
             {logoPreview ? (
-              <img src={logoPreview} alt="Organization logo" className="h-full w-full object-cover" />
+              <img
+                src={logoPreview}
+                alt="Organization logo"
+                className="h-full w-full object-cover"
+              />
             ) : (
               <ImagePlus className="h-6 w-6 text-muted-foreground" />
             )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <label className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90">
-              {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+              {busy ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Upload className="h-3.5 w-3.5" />
+              )}
               {logoValue ? "Replace logo" : "Upload logo"}
               <input
                 type="file"
@@ -191,7 +207,11 @@ export function BrandingPanel({
               </span>
             </div>
             <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-accent">
-              {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImagePlus className="h-3.5 w-3.5" />}
+              {busy ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <ImagePlus className="h-3.5 w-3.5" />
+              )}
               Add banners
               <input
                 type="file"

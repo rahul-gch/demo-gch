@@ -3,7 +3,6 @@ import { getEntity } from "@/seed/all-entities";
 import { useActingOrgId, useMeetings } from "@/lib/use-comms";
 import { MeetingsWorkspace } from "@/components/meetings/MeetingsWorkspace";
 
-
 export const Route = createFileRoute("/_authenticated/organizations/$id/meetings")({
   loader: ({ params }) => {
     const entity = getEntity(params.id);
@@ -47,4 +46,3 @@ function OrgMeetingsPage() {
     </div>
   );
 }
-

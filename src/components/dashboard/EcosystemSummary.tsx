@@ -20,25 +20,54 @@ import {
 } from "lucide-react";
 
 type MetricKey =
-  | "organizations"
-  | "countries"
-  | "suppliers"
-  | "research"
-  | "ngos"
-  | "auditors"
-  | "certifiers";
+  "organizations" | "countries" | "suppliers" | "research" | "ngos" | "auditors" | "certifiers";
 
 const METRIC_META: Record<
   MetricKey,
   { label: string; icon: React.ComponentType<{ className?: string }>; color: string; ring: string }
 > = {
-  organizations: { label: "Organizations", icon: Building2, color: "text-sky-600", ring: "hover:ring-sky-300" },
-  countries: { label: "Countries", icon: Globe2, color: "text-indigo-600", ring: "hover:ring-indigo-300" },
-  suppliers: { label: "Suppliers", icon: Factory, color: "text-cyan-600", ring: "hover:ring-cyan-300" },
-  research: { label: "Research", icon: FlaskConical, color: "text-violet-600", ring: "hover:ring-violet-300" },
-  ngos: { label: "NGOs", icon: HeartHandshake, color: "text-rose-600", ring: "hover:ring-rose-300" },
-  auditors: { label: "Auditors", icon: ShieldCheck, color: "text-amber-600", ring: "hover:ring-amber-300" },
-  certifiers: { label: "Certifiers", icon: BadgeCheck, color: "text-emerald-600", ring: "hover:ring-emerald-300" },
+  organizations: {
+    label: "Organizations",
+    icon: Building2,
+    color: "text-sky-600",
+    ring: "hover:ring-sky-300",
+  },
+  countries: {
+    label: "Countries",
+    icon: Globe2,
+    color: "text-indigo-600",
+    ring: "hover:ring-indigo-300",
+  },
+  suppliers: {
+    label: "Suppliers",
+    icon: Factory,
+    color: "text-cyan-600",
+    ring: "hover:ring-cyan-300",
+  },
+  research: {
+    label: "Research",
+    icon: FlaskConical,
+    color: "text-violet-600",
+    ring: "hover:ring-violet-300",
+  },
+  ngos: {
+    label: "NGOs",
+    icon: HeartHandshake,
+    color: "text-rose-600",
+    ring: "hover:ring-rose-300",
+  },
+  auditors: {
+    label: "Auditors",
+    icon: ShieldCheck,
+    color: "text-amber-600",
+    ring: "hover:ring-amber-300",
+  },
+  certifiers: {
+    label: "Certifiers",
+    icon: BadgeCheck,
+    color: "text-emerald-600",
+    ring: "hover:ring-emerald-300",
+  },
 };
 
 function MetricPill({
@@ -63,7 +92,9 @@ function MetricPill({
         active ? "border-slate-900 ring-slate-900/10 bg-slate-50" : "border-slate-200"
       }`}
     >
-      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-50 ${meta.color}`}>
+      <span
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-50 ${meta.color}`}
+      >
         <Icon className="h-4 w-4" />
       </span>
       <span className="min-w-0 flex-1">
@@ -142,17 +173,17 @@ export function EcosystemSummary({ entity }: { entity: Entity }) {
           </p>
         )}
         {hasData && (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7">
-          {metrics.map(([k, v]) => (
-            <MetricPill
-              key={k}
-              metric={k}
-              value={v}
-              active={open === k}
-              onClick={() => setOpen(open === k ? null : k)}
-            />
-          ))}
-        </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7">
+            {metrics.map(([k, v]) => (
+              <MetricPill
+                key={k}
+                metric={k}
+                value={v}
+                active={open === k}
+                onClick={() => setOpen(open === k ? null : k)}
+              />
+            ))}
+          </div>
         )}
 
         <div
@@ -167,7 +198,9 @@ export function EcosystemSummary({ entity }: { entity: Entity }) {
                   {open ? METRIC_META[open].label : ""}
                 </div>
                 <div className="text-[11px] text-muted-foreground">
-                  {open === "countries" ? `${countryCounts.length} regions` : `${filtered.length} listed`}
+                  {open === "countries"
+                    ? `${countryCounts.length} regions`
+                    : `${filtered.length} listed`}
                 </div>
               </div>
 
@@ -194,15 +227,21 @@ export function EcosystemSummary({ entity }: { entity: Entity }) {
                       <div className="min-w-0">
                         <div className="truncate text-xs font-medium text-slate-900">{e.name}</div>
                         <div className="mt-0.5 flex flex-wrap gap-1">
-                          <Badge variant="outline" className="text-[10px]">{e.entityType}</Badge>
-                          <Badge variant="secondary" className="text-[10px]">{e.country}</Badge>
+                          <Badge variant="outline" className="text-[10px]">
+                            {e.entityType}
+                          </Badge>
+                          <Badge variant="secondary" className="text-[10px]">
+                            {e.country}
+                          </Badge>
                         </div>
                       </div>
                       <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition group-hover:opacity-100" />
                     </Link>
                   ))}
                   {filtered.length === 0 && (
-                    <span className="text-xs text-muted-foreground">No connections in this category.</span>
+                    <span className="text-xs text-muted-foreground">
+                      No connections in this category.
+                    </span>
                   )}
                 </div>
               )}

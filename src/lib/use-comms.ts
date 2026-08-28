@@ -10,11 +10,7 @@ import {
   markConversationRead,
   sendMessage,
 } from "@/lib/messaging.functions";
-import {
-  createMeetingRequest,
-  listMeetings,
-  setMeetingStatus,
-} from "@/lib/meetings.functions";
+import { createMeetingRequest, listMeetings, setMeetingStatus } from "@/lib/meetings.functions";
 import type { ConversationSummary, MeetingRequest, ThreadMessage } from "@/lib/comms-types";
 import { getEntity } from "@/seed/all-entities";
 import { fallbackEntity } from "@/lib/entity-fallback";
@@ -69,11 +65,15 @@ export function useConversations(orgId: string | null) {
     if (!orgId) return;
     const channel = supabase
       .channel(`messages-${orgId}-${instanceId}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, (payload) => {
-        const convId = (payload.new as { conversation_id?: string })?.conversation_id;
-        queryClient.invalidateQueries({ queryKey: ["conversations", orgId] });
-        if (convId) queryClient.invalidateQueries({ queryKey: ["thread", convId] });
-      })
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages" },
+        (payload) => {
+          const convId = (payload.new as { conversation_id?: string })?.conversation_id;
+          queryClient.invalidateQueries({ queryKey: ["conversations", orgId] });
+          if (convId) queryClient.invalidateQueries({ queryKey: ["thread", convId] });
+        },
+      )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
@@ -220,7 +220,12 @@ export function useRealtimeComms(orgId: string | null) {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "messages" },
         (payload) => {
-          const row = payload.new as { conversation_id?: string; sender_org_id?: string; author_name?: string; body?: string };
+          const row = payload.new as {
+            conversation_id?: string;
+            sender_org_id?: string;
+            author_name?: string;
+            body?: string;
+          };
           queryClient.invalidateQueries({ queryKey: ["conversations", orgId] });
           queryClient.invalidateQueries({ queryKey: ["notifications", orgId] });
           if (row.conversation_id)
@@ -256,4 +261,3 @@ export function useRealtimeComms(orgId: string | null) {
     };
   }, [orgId, queryClient]);
 }
-

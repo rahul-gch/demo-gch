@@ -22,7 +22,8 @@ export function ChainMap({ entity }: { entity: Entity }) {
       <CardHeader>
         <CardTitle className="text-base font-semibold">Current supply chain map</CardTitle>
         <p className="mt-1 text-xs text-muted-foreground">
-          Geographic view of your organization and its known upstream, downstream and verifier partners.
+          Geographic view of your organization and its known upstream, downstream and verifier
+          partners.
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -47,7 +48,9 @@ export function ChainMap({ entity }: { entity: Entity }) {
 function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-lg border bg-slate-50 px-3 py-2">
-      <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </div>
       <div className="mt-0.5 text-lg font-semibold text-slate-900">{value}</div>
     </div>
   );

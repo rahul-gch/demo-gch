@@ -28,7 +28,10 @@ export const listFeedPosts = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z
-      .object({ orgId: z.string().uuid().nullable().optional(), limit: z.number().max(200).optional() })
+      .object({
+        orgId: z.string().uuid().nullable().optional(),
+        limit: z.number().max(200).optional(),
+      })
       .parse(d ?? {}),
   )
   .handler(async ({ data, context }): Promise<FeedPost[]> => {
@@ -36,7 +39,9 @@ export const listFeedPosts = createServerFn({ method: "POST" })
 
     let q = supabase
       .from("feed_posts")
-      .select("id, org_id, author_name, author_role, kind, title, body, media, event_at, created_at")
+      .select(
+        "id, org_id, author_name, author_role, kind, title, body, media, event_at, created_at",
+      )
       .order("created_at", { ascending: false })
       .limit(data.limit ?? 100);
     if (data.orgId) q = q.eq("org_id", data.orgId);

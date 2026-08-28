@@ -41,7 +41,8 @@ export const Route = createFileRoute("/_authenticated/admin/organizations")({
       { title: "Organization onboarding — Global Chain Hub Admin" },
       {
         name: "description",
-        content: "Review new organization signups and send onboarding invitations to new organizations.",
+        content:
+          "Review new organization signups and send onboarding invitations to new organizations.",
       },
       { property: "og:title", content: "Organization onboarding — Global Chain Hub Admin" },
       { property: "og:description", content: "Review new signups and invite new organizations." },
@@ -67,9 +68,7 @@ function AdminOrganizationsPage() {
           </p>
         </div>
 
-        {admin.isLoading && (
-          <p className="text-sm text-muted-foreground">Checking your access…</p>
-        )}
+        {admin.isLoading && <p className="text-sm text-muted-foreground">Checking your access…</p>}
         {admin.data && !admin.data.isAdmin && (
           <Card>
             <CardContent className="flex items-start gap-3 py-6">
@@ -114,7 +113,6 @@ function AdminOrganizationsPage() {
                     signedIn
                     onCreated={(id) => navigate({ to: "/organizations/$id", params: { id } })}
                   />
-
                 </CardContent>
               </Card>
             </TabsContent>
@@ -162,7 +160,9 @@ function RecentSignups() {
             </div>
             <div className="flex shrink-0 flex-wrap items-center gap-2 text-xs">
               <Badge variant={o.claimed ? "secondary" : "outline"}>
-                {o.claimed ? `${o.memberCount} member${o.memberCount === 1 ? "" : "s"}` : "Unclaimed"}
+                {o.claimed
+                  ? `${o.memberCount} member${o.memberCount === 1 ? "" : "s"}`
+                  : "Unclaimed"}
               </Badge>
               <span className="text-muted-foreground">
                 {new Date(o.created_at as string).toLocaleDateString()}
@@ -250,8 +250,6 @@ function OnboardingInvites() {
             </p>
           </div>
 
-
-
           <label className="flex items-start gap-2 rounded-md border p-3 text-sm">
             <input
               type="checkbox"
@@ -271,15 +269,23 @@ function OnboardingInvites() {
             <div className="space-y-3 rounded-md border bg-muted/30 p-3">
               <div className="space-y-1.5">
                 <Label htmlFor="shell-name">Organization name</Label>
-                <Input id="shell-name" value={orgName} onChange={(e) => setOrgName(e.target.value)} />
+                <Input
+                  id="shell-name"
+                  value={orgName}
+                  onChange={(e) => setOrgName(e.target.value)}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label>Organization type</Label>
                 <Select value={orgType} onValueChange={setOrgType}>
-                  <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
                   <SelectContent>
                     {ORG_TYPES.map((t) => (
-                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                      <SelectItem key={t} value={t}>
+                        {t}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -334,7 +340,10 @@ function OnboardingInvites() {
                   ? "used"
                   : "active";
             return (
-              <div key={i.id} className="flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between">
+              <div
+                key={i.id}
+                className="flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"
+              >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">
                     {i.org_name || i.email || "Open onboarding link"}
