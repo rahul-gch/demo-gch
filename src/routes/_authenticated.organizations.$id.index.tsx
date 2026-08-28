@@ -56,7 +56,6 @@ function OverviewMissionControl({ e }: { e: Entity }) {
         <PassportCards entity={e} />
       </Section>
       <Divider />
-      <Divider />
       <Section>
         <div className="flex items-baseline justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700">
@@ -78,11 +77,6 @@ function OverviewMissionControl({ e }: { e: Entity }) {
         </div>
         <KpiInteractiveGrid entity={e} />
       </Section>
-      <Divider />
-      <div className="grid gap-6 lg:grid-cols-2">
-        <EcosystemSummary entity={e} />
-        <SupplyChainSnapshot entity={e} />
-      </div>
       <Divider />
       <div className="grid gap-6 lg:grid-cols-2">
         <MissingDataGamified entity={e} />

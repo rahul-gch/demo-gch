@@ -134,6 +134,37 @@ export const listNotifications = createServerFn({ method: "POST" })
       });
     }
 
+    // --- pending inbound sample orders ---
+    const { data: sampleOrders } = await supabase
+      .from("sample_orders")
+      .select(
+        "id, quantity, material, created_at, buyer:orgs!sample_orders_buyer_org_id_fkey(name), product:showroom_products(name)",
+      )
+      .eq("seller_org_id", orgId)
+      .eq("status", "requested")
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    for (const s of (sampleOrders ?? []) as Array<{
+      id: string;
+      quantity: number;
+      material: string | null;
+      created_at: string;
+      buyer: { name: string } | { name: string }[] | null;
+      product: { name: string } | { name: string }[] | null;
+    }>) {
+      const buyer = Array.isArray(s.buyer) ? s.buyer[0] : s.buyer;
+      const product = Array.isArray(s.product) ? s.product[0] : s.product;
+      items.push({
+        id: `sample-${s.id}`,
+        kind: "request",
+        title: `Sample request from ${buyer?.name ?? "an organization"}`,
+        body: `${product?.name ?? "Product"} (${s.quantity} units)`,
+        at: s.created_at,
+        to: `/organizations/${orgId}/showroom`,
+      });
+    }
+
     // --- pending project partner invitations ---
     const { data: partners } = await supabase
       .from("project_partners")

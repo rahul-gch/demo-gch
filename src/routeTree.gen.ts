@@ -36,6 +36,20 @@ import { Route as AuthenticatedDirectoryIdRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminOrganizationsRouteImport } from './routes/_authenticated.admin.organizations'
 import { Route as AuthenticatedAdminLogsRouteImport } from './routes/_authenticated.admin.logs'
 import { Route as AuthenticatedOrganizationsIdIndexRouteImport } from './routes/_authenticated.organizations.$id.index'
+<<<<<<< HEAD
+=======
+import { Route as AuthenticatedOrganizationsIdComplianceRouteImport } from './routes/_authenticated.organizations.$id.compliance'
+import { Route as AuthenticatedOrganizationsIdFeedRouteImport } from './routes/_authenticated.organizations.$id.feed'
+import { Route as AuthenticatedOrganizationsIdMatchmakingRouteImport } from './routes/_authenticated.organizations.$id.matchmaking'
+import { Route as AuthenticatedOrganizationsIdMeetingsRouteImport } from './routes/_authenticated.organizations.$id.meetings'
+import { Route as AuthenticatedOrganizationsIdMessagesRouteImport } from './routes/_authenticated.organizations.$id.messages'
+import { Route as AuthenticatedOrganizationsIdProfileSetupRouteImport } from './routes/_authenticated.organizations.$id.profile-setup'
+import { Route as AuthenticatedOrganizationsIdProjectsRouteImport } from './routes/_authenticated.organizations.$id.projects'
+import { Route as AuthenticatedOrganizationsIdRequestsRouteImport } from './routes/_authenticated.organizations.$id.requests'
+import { Route as AuthenticatedOrganizationsIdResearchRouteImport } from './routes/_authenticated.organizations.$id.research'
+import { Route as AuthenticatedOrganizationsIdSettingsRouteImport } from './routes/_authenticated.organizations.$id.settings'
+import { Route as AuthenticatedOrganizationsIdShowroomRouteImport } from './routes/_authenticated.organizations.$id.showroom'
+>>>>>>> 3d4c45c (feat: Add B2B Showroom & Sample Orders and clean up Overview tab)
 import { Route as AuthenticatedOrganizationsIdSupplyChainRouteImport } from './routes/_authenticated.organizations.$id.supply-chain'
 import { Route as AuthenticatedOrganizationsIdSettingsRouteImport } from './routes/_authenticated.organizations.$id.settings'
 import { Route as AuthenticatedOrganizationsIdResearchRouteImport } from './routes/_authenticated.organizations.$id.research'
@@ -211,6 +225,7 @@ const AuthenticatedOrganizationsIdSettingsRoute =
     path: '/settings',
     getParentRoute: () => AuthenticatedOrganizationsIdRoute,
   } as any)
+<<<<<<< HEAD
 const AuthenticatedOrganizationsIdResearchRoute =
   AuthenticatedOrganizationsIdResearchRouteImport.update({
     id: '/research',
@@ -263,6 +278,18 @@ const AuthenticatedOrganizationsIdComplianceRoute =
   AuthenticatedOrganizationsIdComplianceRouteImport.update({
     id: '/compliance',
     path: '/compliance',
+=======
+const AuthenticatedOrganizationsIdShowroomRoute =
+  AuthenticatedOrganizationsIdShowroomRouteImport.update({
+    id: '/showroom',
+    path: '/showroom',
+    getParentRoute: () => AuthenticatedOrganizationsIdRoute,
+  } as any)
+const AuthenticatedOrganizationsIdSupplyChainRoute =
+  AuthenticatedOrganizationsIdSupplyChainRouteImport.update({
+    id: '/supply-chain',
+    path: '/supply-chain',
+>>>>>>> 3d4c45c (feat: Add B2B Showroom & Sample Orders and clean up Overview tab)
     getParentRoute: () => AuthenticatedOrganizationsIdRoute,
   } as any)
 const AuthenticatedOrganizationsIdProjectsIndexRoute =
@@ -362,6 +389,7 @@ export interface FileRoutesByFullPath {
   '/organizations/$id/requests': typeof AuthenticatedOrganizationsIdRequestsRoute
   '/organizations/$id/research': typeof AuthenticatedOrganizationsIdResearchRoute
   '/organizations/$id/settings': typeof AuthenticatedOrganizationsIdSettingsRoute
+  '/organizations/$id/showroom': typeof AuthenticatedOrganizationsIdShowroomRoute
   '/organizations/$id/supply-chain': typeof AuthenticatedOrganizationsIdSupplyChainRoute
   '/organizations/$id/': typeof AuthenticatedOrganizationsIdIndexRoute
   '/organizations/$id/projects/$projectId': typeof AuthenticatedOrganizationsIdProjectsProjectIdRouteWithChildren
@@ -408,6 +436,7 @@ export interface FileRoutesByTo {
   '/organizations/$id/requests': typeof AuthenticatedOrganizationsIdRequestsRoute
   '/organizations/$id/research': typeof AuthenticatedOrganizationsIdResearchRoute
   '/organizations/$id/settings': typeof AuthenticatedOrganizationsIdSettingsRoute
+  '/organizations/$id/showroom': typeof AuthenticatedOrganizationsIdShowroomRoute
   '/organizations/$id/supply-chain': typeof AuthenticatedOrganizationsIdSupplyChainRoute
   '/organizations/$id': typeof AuthenticatedOrganizationsIdIndexRoute
   '/organizations/$id/projects': typeof AuthenticatedOrganizationsIdProjectsIndexRoute
@@ -458,6 +487,7 @@ export interface FileRoutesById {
   '/_authenticated/organizations/$id/requests': typeof AuthenticatedOrganizationsIdRequestsRoute
   '/_authenticated/organizations/$id/research': typeof AuthenticatedOrganizationsIdResearchRoute
   '/_authenticated/organizations/$id/settings': typeof AuthenticatedOrganizationsIdSettingsRoute
+  '/_authenticated/organizations/$id/showroom': typeof AuthenticatedOrganizationsIdShowroomRoute
   '/_authenticated/organizations/$id/supply-chain': typeof AuthenticatedOrganizationsIdSupplyChainRoute
   '/_authenticated/organizations/$id/': typeof AuthenticatedOrganizationsIdIndexRoute
   '/_authenticated/organizations/$id/projects/$projectId': typeof AuthenticatedOrganizationsIdProjectsProjectIdRouteWithChildren
@@ -509,6 +539,7 @@ export interface FileRouteTypes {
     | '/organizations/$id/requests'
     | '/organizations/$id/research'
     | '/organizations/$id/settings'
+    | '/organizations/$id/showroom'
     | '/organizations/$id/supply-chain'
     | '/organizations/$id/'
     | '/organizations/$id/projects/$projectId'
@@ -555,6 +586,7 @@ export interface FileRouteTypes {
     | '/organizations/$id/requests'
     | '/organizations/$id/research'
     | '/organizations/$id/settings'
+    | '/organizations/$id/showroom'
     | '/organizations/$id/supply-chain'
     | '/organizations/$id'
     | '/organizations/$id/projects'
@@ -604,6 +636,7 @@ export interface FileRouteTypes {
     | '/_authenticated/organizations/$id/requests'
     | '/_authenticated/organizations/$id/research'
     | '/_authenticated/organizations/$id/settings'
+    | '/_authenticated/organizations/$id/showroom'
     | '/_authenticated/organizations/$id/supply-chain'
     | '/_authenticated/organizations/$id/'
     | '/_authenticated/organizations/$id/projects/$projectId'
@@ -837,6 +870,7 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrganizationsIdSettingsRouteImport
       parentRoute: typeof AuthenticatedOrganizationsIdRoute
     }
+<<<<<<< HEAD
     '/_authenticated/organizations/$id/research': {
       id: '/_authenticated/organizations/$id/research'
       path: '/research'
@@ -898,6 +932,20 @@ declare module '@tanstack/react-router' {
       path: '/compliance'
       fullPath: '/organizations/$id/compliance'
       preLoaderRoute: typeof AuthenticatedOrganizationsIdComplianceRouteImport
+=======
+    '/_authenticated/organizations/$id/showroom': {
+      id: '/_authenticated/organizations/$id/showroom'
+      path: '/showroom'
+      fullPath: '/organizations/$id/showroom'
+      preLoaderRoute: typeof AuthenticatedOrganizationsIdShowroomRouteImport
+      parentRoute: typeof AuthenticatedOrganizationsIdRoute
+    }
+    '/_authenticated/organizations/$id/supply-chain': {
+      id: '/_authenticated/organizations/$id/supply-chain'
+      path: '/supply-chain'
+      fullPath: '/organizations/$id/supply-chain'
+      preLoaderRoute: typeof AuthenticatedOrganizationsIdSupplyChainRouteImport
+>>>>>>> 3d4c45c (feat: Add B2B Showroom & Sample Orders and clean up Overview tab)
       parentRoute: typeof AuthenticatedOrganizationsIdRoute
     }
     '/_authenticated/organizations/$id/projects/': {
@@ -1038,6 +1086,7 @@ interface AuthenticatedOrganizationsIdRouteChildren {
   AuthenticatedOrganizationsIdRequestsRoute: typeof AuthenticatedOrganizationsIdRequestsRoute
   AuthenticatedOrganizationsIdResearchRoute: typeof AuthenticatedOrganizationsIdResearchRoute
   AuthenticatedOrganizationsIdSettingsRoute: typeof AuthenticatedOrganizationsIdSettingsRoute
+  AuthenticatedOrganizationsIdShowroomRoute: typeof AuthenticatedOrganizationsIdShowroomRoute
   AuthenticatedOrganizationsIdSupplyChainRoute: typeof AuthenticatedOrganizationsIdSupplyChainRoute
   AuthenticatedOrganizationsIdIndexRoute: typeof AuthenticatedOrganizationsIdIndexRoute
 }
@@ -1064,6 +1113,8 @@ const AuthenticatedOrganizationsIdRouteChildren: AuthenticatedOrganizationsIdRou
       AuthenticatedOrganizationsIdResearchRoute,
     AuthenticatedOrganizationsIdSettingsRoute:
       AuthenticatedOrganizationsIdSettingsRoute,
+    AuthenticatedOrganizationsIdShowroomRoute:
+      AuthenticatedOrganizationsIdShowroomRoute,
     AuthenticatedOrganizationsIdSupplyChainRoute:
       AuthenticatedOrganizationsIdSupplyChainRoute,
     AuthenticatedOrganizationsIdIndexRoute:

@@ -11,6 +11,7 @@ import {
   Network,
   ShieldCheck,
   Inbox,
+  Store,
 } from "lucide-react";
 import {
   Sidebar,
@@ -26,16 +27,19 @@ import {
 import { Badge } from "@/components/ui/badge";
 import type { Entity } from "@/seed/types";
 import { usePendingMeetingCount, useUnreadTotal } from "@/lib/use-comms";
+import { usePendingSampleOrderCount } from "@/lib/use-showroom";
 
 export function OrgSidebar({ entity }: { entity: Entity }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const base = `/organizations/${entity.id}`;
   const orgUuid = entity.orgUuid ?? null;
   const inbox = useUnreadTotal(orgUuid) + usePendingMeetingCount(orgUuid);
+  const pendingOrders = usePendingSampleOrderCount(orgUuid);
 
   const items = [
     { title: "Home / Feed", url: `${base}/feed`, icon: Rss },
     { title: "Dashboard", url: base, icon: LayoutDashboard, exact: true },
+    { title: "Showroom", url: `${base}/showroom`, icon: Store, badge: pendingOrders },
     { title: "Projects", url: `${base}/projects`, icon: FolderKanban },
     { title: "Supply Chain Mapping", url: `${base}/supply-chain`, icon: Network },
     { title: "Matchmaking & Partnerships", url: `${base}/matchmaking`, icon: Sparkles },

@@ -9,6 +9,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { UserMenu } from "@/components/UserMenu";
 import { MeetingRequestDialog } from "@/components/MeetingRequestDialog";
 import { useActingOrgId, useSendMessage } from "@/lib/use-comms";
+import { useShowroomProducts, useCreateSampleOrder } from "@/lib/use-showroom";
+import { ProductCard } from "@/components/showroom/ProductCard";
+import { SampleOrderDialog } from "@/components/showroom/SampleOrderDialog";
+import type { ShowroomProduct } from "@/lib/showroom.functions";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -19,6 +23,8 @@ import {
   Send,
   ShieldCheck,
   Lock,
+  Store,
+  Package,
 } from "lucide-react";
 
 function Field({ label, value }: { label: string; value?: string | number | null }) {
@@ -62,9 +68,20 @@ export function PublicOrgProfile({ entity: e }: { entity: Entity }) {
   const router = useRouter();
   const [draft, setDraft] = useState("");
   const [meetOpen, setMeetOpen] = useState(false);
+  const [orderModalProduct, setOrderModalProduct] = useState<ShowroomProduct | null>(null);
 
   const myOrgId = useActingOrgId(null);
   const sendMessage = useSendMessage(myOrgId);
+  const targetOrgUuid = e.orgUuid ?? e.id;
+
+  const { data: showroom, isLoading: showroomLoading } = useShowroomProducts(
+    targetOrgUuid,
+    myOrgId,
+  );
+  const createOrderMutation = useCreateSampleOrder(myOrgId);
+
+  const isConnected = showroom?.isConnected ?? false;
+  const products = showroom?.products ?? [];
 
   const send = () => {
     if (!draft.trim()) return;
@@ -198,6 +215,83 @@ export function PublicOrgProfile({ entity: e }: { entity: Entity }) {
           </CardContent>
         </Card>
 
+        {/* Product Showroom Section */}
+        <Card className="shadow-sm">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Store className="h-4 w-4 text-primary" />
+              <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                Product Showroom & Materials ({products.length})
+              </CardTitle>
+            </div>
+            {e.orgUuid && (
+              <Button asChild variant="ghost" size="sm" className="text-xs">
+                <Link to="/organizations/$id/showroom" params={{ id: e.id }}>
+                  View full showroom →
+                </Link>
+              </Button>
+            )}
+          </CardHeader>
+          <CardContent>
+            {showroomLoading ? (
+              <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="h-48 rounded-lg animate-pulse bg-slate-100 dark:bg-slate-800"
+                  />
+                ))}
+              </div>
+            ) : products.length > 0 ? (
+              <div className="space-y-4">
+                {!isConnected && (
+                  <div className="flex items-center justify-between rounded-lg bg-amber-50/80 p-3 text-xs text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+                    <span className="flex items-center gap-2">
+                      <Lock className="h-4 w-4 text-amber-600" />
+                      Sample ordering is unlocked for connected supply chain partners.
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs border-amber-300"
+                      onClick={() =>
+                        document
+                          .getElementById("public-message-box")
+                          ?.scrollIntoView({ behavior: "smooth" })
+                      }
+                    >
+                      Connect & Message
+                    </Button>
+                  </div>
+                )}
+
+                <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+                  {products.map((prod) => (
+                    <ProductCard
+                      key={prod.id}
+                      product={prod}
+                      isOwner={false}
+                      canManage={false}
+                      isConnected={isConnected}
+                      onOrderSample={(p) => setOrderModalProduct(p)}
+                      onConnect={() =>
+                        document
+                          .getElementById("public-message-box")
+                          ?.scrollIntoView({ behavior: "smooth" })
+                      }
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="py-6 text-center text-xs text-muted-foreground">
+                <Package className="mx-auto h-8 w-8 text-slate-300 dark:text-slate-700 mb-2" />
+                No products published in the showroom yet.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Capabilities */}
         <Card className="shadow-sm">
           <CardHeader className="pb-3">
@@ -288,6 +382,18 @@ export function PublicOrgProfile({ entity: e }: { entity: Entity }) {
           </CardContent>
         </Card>
       </main>
+
+      {/* Sample Order Dialog */}
+      <SampleOrderDialog
+        open={Boolean(orderModalProduct)}
+        onOpenChange={(open) => !open && setOrderModalProduct(null)}
+        product={orderModalProduct}
+        sellerOrgId={targetOrgUuid}
+        sellerName={e.name}
+        onSubmit={async (data) => {
+          await createOrderMutation.mutateAsync(data);
+        }}
+      />
 
       <MeetingRequestDialog
         entity={e}
