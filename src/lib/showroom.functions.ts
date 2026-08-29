@@ -153,40 +153,8 @@ function initSeedProducts() {
     FALLBACK_PRODUCTS.set(item.orgKey, item.products);
   }
 
-  FALLBACK_SAMPLE_ORDERS.push({
-    id: "sample-order-seed-1",
-    productId: "prod-nike-1",
-    product: {
-      id: "prod-nike-1",
-      name: "Next-Gen Flyknit Recycled Yarn Knit (300gsm)",
-      images: ["https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=800&auto=format&fit=crop&q=60"],
-      materials: ["Recycled Polyester", "Elastane"],
-    },
-    sellerOrgId: "gch-nike",
-    sellerOrg: {
-      id: "gch-nike",
-      name: "NIKE, Inc.",
-      country: "United States",
-      logoUrl: null,
-    },
-    buyerOrgId: "gch-hm",
-    buyerOrg: {
-      id: "gch-hm",
-      name: "H&M Group",
-      country: "Sweden",
-      logoUrl: null,
-    },
-    requestedBy: "demo-user-1",
-    quantity: 5,
-    material: "Recycled Polyester",
-    notes: "Please include lab dip swatches for shade 19-4052 TCX Classic Blue.",
-    shippingAddress: "H&M Innovation Lab, Mäster Samuelsgatan 46A, 106 38 Stockholm, Sweden",
-    neededBy: "2026-09-15",
-    status: "requested",
-    conversationId: null,
-    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-    updatedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-  });
+  // No seeded sample orders: real requests are persisted in the sample_orders table.
+
 }
 
 initSeedProducts();
@@ -259,7 +227,7 @@ export const listShowroomProducts = createServerFn({ method: "POST" })
 
       const { data: rows, error } = await query.order("created_at", { ascending: false });
 
-      if (!error && rows && rows.length > 0) {
+      if (!error && rows) {
         const products: ShowroomProduct[] = await Promise.all(
           rows.map(async (r: any) => {
             const rawImages = Array.isArray(r.images) ? (r.images as string[]) : [];
@@ -283,11 +251,10 @@ export const listShowroomProducts = createServerFn({ method: "POST" })
       // Fallback
     }
 
-    const fallbackList =
-      FALLBACK_PRODUCTS.get(targetUuid) ??
-      FALLBACK_PRODUCTS.get(rawOrgId) ??
-      FALLBACK_PRODUCTS.get("gch-nike") ??
-      [];
+    // Only fall back to demo catalogues for the seeded (non-UUID) showcase orgs.
+    // A real organisation with an empty showroom must render as empty.
+    const fallbackList = FALLBACK_PRODUCTS.get(targetUuid) ?? FALLBACK_PRODUCTS.get(rawOrgId) ?? [];
+
 
     const filtered = isOwner ? fallbackList : fallbackList.filter((p) => p.isActive);
 
@@ -474,17 +441,38 @@ export const createSampleOrder = createServerFn({ method: "POST" })
     const buyerEntity = getEntity(data.buyerOrgId);
     const sellerEntity = getEntity(data.sellerOrgId);
 
+    const isUuid = (v: string) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+
     let productName = "Showroom Product";
     let productImages: string[] = [];
     let productMaterials: string[] = [];
 
-    const sellerProducts = FALLBACK_PRODUCTS.get(data.sellerOrgId) ?? [];
-    const foundProduct = sellerProducts.find((p) => p.id === data.productId);
-    if (foundProduct) {
-      productName = foundProduct.name;
-      productImages = foundProduct.images;
-      productMaterials = foundProduct.materials;
+    if (isUuid(data.productId)) {
+      try {
+        const { data: prod } = await supabase
+          .from("showroom_products")
+          .select("name, images, materials")
+          .eq("id", data.productId)
+          .maybeSingle();
+        if (prod) {
+          productName = prod.name;
+          productImages = Array.isArray(prod.images) ? (prod.images as string[]) : [];
+          productMaterials = Array.isArray(prod.materials) ? (prod.materials as string[]) : [];
+        }
+      } catch {
+        // ignore
+      }
+    } else {
+      const sellerProducts = FALLBACK_PRODUCTS.get(data.sellerOrgId) ?? [];
+      const foundProduct = sellerProducts.find((p) => p.id === data.productId);
+      if (foundProduct) {
+        productName = foundProduct.name;
+        productImages = foundProduct.images;
+        productMaterials = foundProduct.materials;
+      }
     }
+
 
     let conversationId: string | null = null;
     try {
@@ -537,7 +525,38 @@ export const createSampleOrder = createServerFn({ method: "POST" })
       updatedAt: new Date().toISOString(),
     };
 
-    FALLBACK_SAMPLE_ORDERS.unshift(newOrder);
+    // Persist real orders (UUID orgs) to the database.
+    let persisted = false;
+    if (isUuid(data.buyerOrgId) && isUuid(data.sellerOrgId)) {
+      const { data: inserted, error } = await supabase
+        .from("sample_orders")
+        .insert({
+          product_id: isUuid(data.productId) ? data.productId : null,
+          seller_org_id: data.sellerOrgId,
+          buyer_org_id: data.buyerOrgId,
+          requested_by: userId,
+          quantity: data.quantity,
+          material: data.material ?? null,
+          notes: data.notes ?? null,
+          shipping_address: data.shippingAddress,
+          needed_by: data.neededBy ?? null,
+          status: "requested",
+          conversation_id: conversationId,
+        })
+        .select("id")
+        .single();
+
+      if (error) throw new Error(error.message);
+      if (inserted) {
+        newOrder.id = inserted.id;
+        persisted = true;
+      }
+    }
+
+    if (!persisted) {
+      FALLBACK_SAMPLE_ORDERS.unshift(newOrder);
+    }
+
 
     if (conversationId) {
       try {
