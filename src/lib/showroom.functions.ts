@@ -283,11 +283,10 @@ export const listShowroomProducts = createServerFn({ method: "POST" })
       // Fallback
     }
 
-    const fallbackList =
-      FALLBACK_PRODUCTS.get(targetUuid) ??
-      FALLBACK_PRODUCTS.get(rawOrgId) ??
-      FALLBACK_PRODUCTS.get("gch-nike") ??
-      [];
+    // Only fall back to demo catalogues for the seeded (non-UUID) showcase orgs.
+    // A real organisation with an empty showroom must render as empty.
+    const fallbackList = FALLBACK_PRODUCTS.get(targetUuid) ?? FALLBACK_PRODUCTS.get(rawOrgId) ?? [];
+
 
     const filtered = isOwner ? fallbackList : fallbackList.filter((p) => p.isActive);
 
