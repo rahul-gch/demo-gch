@@ -441,17 +441,38 @@ export const createSampleOrder = createServerFn({ method: "POST" })
     const buyerEntity = getEntity(data.buyerOrgId);
     const sellerEntity = getEntity(data.sellerOrgId);
 
+    const isUuid = (v: string) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+
     let productName = "Showroom Product";
     let productImages: string[] = [];
     let productMaterials: string[] = [];
 
-    const sellerProducts = FALLBACK_PRODUCTS.get(data.sellerOrgId) ?? [];
-    const foundProduct = sellerProducts.find((p) => p.id === data.productId);
-    if (foundProduct) {
-      productName = foundProduct.name;
-      productImages = foundProduct.images;
-      productMaterials = foundProduct.materials;
+    if (isUuid(data.productId)) {
+      try {
+        const { data: prod } = await supabase
+          .from("showroom_products")
+          .select("name, images, materials")
+          .eq("id", data.productId)
+          .maybeSingle();
+        if (prod) {
+          productName = prod.name;
+          productImages = Array.isArray(prod.images) ? (prod.images as string[]) : [];
+          productMaterials = Array.isArray(prod.materials) ? (prod.materials as string[]) : [];
+        }
+      } catch {
+        // ignore
+      }
+    } else {
+      const sellerProducts = FALLBACK_PRODUCTS.get(data.sellerOrgId) ?? [];
+      const foundProduct = sellerProducts.find((p) => p.id === data.productId);
+      if (foundProduct) {
+        productName = foundProduct.name;
+        productImages = foundProduct.images;
+        productMaterials = foundProduct.materials;
+      }
     }
+
 
     let conversationId: string | null = null;
     try {
