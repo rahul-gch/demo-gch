@@ -153,40 +153,8 @@ function initSeedProducts() {
     FALLBACK_PRODUCTS.set(item.orgKey, item.products);
   }
 
-  FALLBACK_SAMPLE_ORDERS.push({
-    id: "sample-order-seed-1",
-    productId: "prod-nike-1",
-    product: {
-      id: "prod-nike-1",
-      name: "Next-Gen Flyknit Recycled Yarn Knit (300gsm)",
-      images: ["https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=800&auto=format&fit=crop&q=60"],
-      materials: ["Recycled Polyester", "Elastane"],
-    },
-    sellerOrgId: "gch-nike",
-    sellerOrg: {
-      id: "gch-nike",
-      name: "NIKE, Inc.",
-      country: "United States",
-      logoUrl: null,
-    },
-    buyerOrgId: "gch-hm",
-    buyerOrg: {
-      id: "gch-hm",
-      name: "H&M Group",
-      country: "Sweden",
-      logoUrl: null,
-    },
-    requestedBy: "demo-user-1",
-    quantity: 5,
-    material: "Recycled Polyester",
-    notes: "Please include lab dip swatches for shade 19-4052 TCX Classic Blue.",
-    shippingAddress: "H&M Innovation Lab, Mäster Samuelsgatan 46A, 106 38 Stockholm, Sweden",
-    neededBy: "2026-09-15",
-    status: "requested",
-    conversationId: null,
-    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-    updatedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-  });
+  // No seeded sample orders: real requests are persisted in the sample_orders table.
+
 }
 
 initSeedProducts();
