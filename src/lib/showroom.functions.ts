@@ -259,7 +259,7 @@ export const listShowroomProducts = createServerFn({ method: "POST" })
 
       const { data: rows, error } = await query.order("created_at", { ascending: false });
 
-      if (!error && rows && rows.length > 0) {
+      if (!error && rows) {
         const products: ShowroomProduct[] = await Promise.all(
           rows.map(async (r: any) => {
             const rawImages = Array.isArray(r.images) ? (r.images as string[]) : [];
