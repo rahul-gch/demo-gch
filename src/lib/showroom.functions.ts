@@ -525,7 +525,38 @@ export const createSampleOrder = createServerFn({ method: "POST" })
       updatedAt: new Date().toISOString(),
     };
 
-    FALLBACK_SAMPLE_ORDERS.unshift(newOrder);
+    // Persist real orders (UUID orgs) to the database.
+    let persisted = false;
+    if (isUuid(data.buyerOrgId) && isUuid(data.sellerOrgId)) {
+      const { data: inserted, error } = await supabase
+        .from("sample_orders")
+        .insert({
+          product_id: isUuid(data.productId) ? data.productId : null,
+          seller_org_id: data.sellerOrgId,
+          buyer_org_id: data.buyerOrgId,
+          requested_by: userId,
+          quantity: data.quantity,
+          material: data.material ?? null,
+          notes: data.notes ?? null,
+          shipping_address: data.shippingAddress,
+          needed_by: data.neededBy ?? null,
+          status: "requested",
+          conversation_id: conversationId,
+        })
+        .select("id")
+        .single();
+
+      if (error) throw new Error(error.message);
+      if (inserted) {
+        newOrder.id = inserted.id;
+        persisted = true;
+      }
+    }
+
+    if (!persisted) {
+      FALLBACK_SAMPLE_ORDERS.unshift(newOrder);
+    }
+
 
     if (conversationId) {
       try {
