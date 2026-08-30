@@ -586,22 +586,79 @@ export const listSampleOrders = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ orgId: z.string().min(1) }).parse(d))
   .handler(
-    async (
-      { data },
-    ): Promise<{ inbound: SampleOrder[]; outbound: SampleOrder[]; pendingCount: number }> => {
+    async ({
+      data,
+      context,
+    }): Promise<{ inbound: SampleOrder[]; outbound: SampleOrder[]; pendingCount: number }> => {
       initSeedProducts();
+      const { supabase } = context;
       const targetUuid = resolveOrgUuid(data.orgId) ?? data.orgId;
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        targetUuid,
+      );
 
       const inbound: SampleOrder[] = [];
       const outbound: SampleOrder[] = [];
       let pendingCount = 0;
 
+      if (isUuid) {
+        const { data: rows, error } = await supabase
+          .from("sample_orders")
+          .select(
+            "id, product_id, seller_org_id, buyer_org_id, requested_by, quantity, material, notes, shipping_address, needed_by, status, conversation_id, created_at, updated_at, product:showroom_products(id, name, images, materials), sellerOrg:orgs!sample_orders_seller_org_id_fkey(id, name, country, logo_url), buyerOrg:orgs!sample_orders_buyer_org_id_fkey(id, name, country, logo_url)",
+          )
+          .or(`seller_org_id.eq.${targetUuid},buyer_org_id.eq.${targetUuid}`)
+          .order("created_at", { ascending: false });
+
+        if (error) throw new Error(error.message);
+
+        for (const r of (rows ?? []) as any[]) {
+          const mapOrg = (o: any) =>
+            o
+              ? { id: o.id, name: o.name, country: o.country ?? null, logoUrl: o.logo_url ?? null }
+              : null;
+
+          const order: SampleOrder = {
+            id: r.id,
+            productId: r.product_id,
+            product: r.product
+              ? {
+                  id: r.product.id,
+                  name: r.product.name,
+                  images: Array.isArray(r.product.images) ? r.product.images : [],
+                  materials: Array.isArray(r.product.materials) ? r.product.materials : [],
+                }
+              : null,
+            sellerOrgId: r.seller_org_id,
+            sellerOrg: mapOrg(r.sellerOrg),
+            buyerOrgId: r.buyer_org_id,
+            buyerOrg: mapOrg(r.buyerOrg),
+            requestedBy: r.requested_by ?? "",
+            quantity: r.quantity,
+            material: r.material,
+            notes: r.notes,
+            shippingAddress: r.shipping_address,
+            neededBy: r.needed_by,
+            status: r.status as SampleOrderStatus,
+            conversationId: r.conversation_id,
+            createdAt: r.created_at,
+            updatedAt: r.updated_at,
+          };
+
+          if (order.sellerOrgId === targetUuid) {
+            inbound.push(order);
+            if (order.status === "requested") pendingCount += 1;
+          } else {
+            outbound.push(order);
+          }
+        }
+
+        return { inbound, outbound, pendingCount };
+      }
+
+      // Demo (non-UUID) orgs only.
       for (const order of FALLBACK_SAMPLE_ORDERS) {
-        if (
-          order.sellerOrgId === targetUuid ||
-          order.sellerOrgId === data.orgId ||
-          order.sellerOrgId === "gch-nike"
-        ) {
+        if (order.sellerOrgId === targetUuid || order.sellerOrgId === data.orgId) {
           inbound.push(order);
           if (order.status === "requested") pendingCount += 1;
         } else if (order.buyerOrgId === targetUuid || order.buyerOrgId === data.orgId) {
@@ -634,8 +691,22 @@ export const updateSampleOrderStatus = createServerFn({ method: "POST" })
       })
       .parse(d),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     initSeedProducts();
+    const { supabase } = context;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      data.orderId,
+    );
+
+    if (isUuid) {
+      const { error } = await supabase
+        .from("sample_orders")
+        .update({ status: data.status, updated_at: new Date().toISOString() })
+        .eq("id", data.orderId);
+      if (error) throw new Error(error.message);
+      return { ok: true, status: data.status };
+    }
+
     const order = FALLBACK_SAMPLE_ORDERS.find((o) => o.id === data.orderId);
     if (order) {
       order.status = data.status;
@@ -643,3 +714,4 @@ export const updateSampleOrderStatus = createServerFn({ method: "POST" })
     }
     return { ok: true, status: data.status };
   });
+
