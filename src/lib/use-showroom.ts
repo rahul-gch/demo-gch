@@ -11,6 +11,12 @@ import {
   type SampleOrderStatus,
 } from "@/lib/showroom.functions";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+
+async function hasSession() {
+  const { data } = await supabase.auth.getSession();
+  return Boolean(data.session);
+}
 
 export function useShowroomProducts(
   orgId: string | null | undefined,
@@ -21,7 +27,8 @@ export function useShowroomProducts(
   return useQuery({
     queryKey: ["showroom-products", orgId, viewingOrgId],
     queryFn: async () => {
-      if (!orgId) return { products: [], isConnected: false, isOwner: false, canManage: false };
+      const empty = { products: [], isConnected: false, isOwner: false, canManage: false };
+      if (!orgId || !(await hasSession())) return empty;
       return listProducts({ data: { orgId, viewingOrgId } });
     },
     enabled: Boolean(orgId),
