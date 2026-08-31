@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import {
   listShowroomProducts,
   upsertShowroomProduct,
@@ -15,11 +16,13 @@ export function useShowroomProducts(
   orgId: string | null | undefined,
   viewingOrgId?: string | null,
 ) {
+  const listProducts = useServerFn(listShowroomProducts);
+
   return useQuery({
     queryKey: ["showroom-products", orgId, viewingOrgId],
     queryFn: async () => {
       if (!orgId) return { products: [], isConnected: false, isOwner: false, canManage: false };
-      return listShowroomProducts({ data: { orgId, viewingOrgId } });
+      return listProducts({ data: { orgId, viewingOrgId } });
     },
     enabled: Boolean(orgId),
     staleTime: 30_000,
@@ -28,6 +31,8 @@ export function useShowroomProducts(
 
 export function useUpsertShowroomProduct(orgId: string | null | undefined) {
   const qc = useQueryClient();
+  const saveProduct = useServerFn(upsertShowroomProduct);
+
   return useMutation({
     mutationFn: async (product: {
       id?: string;
@@ -38,7 +43,7 @@ export function useUpsertShowroomProduct(orgId: string | null | undefined) {
       isActive?: boolean;
     }) => {
       if (!orgId) throw new Error("No organization selected.");
-      return upsertShowroomProduct({
+      return saveProduct({
         data: {
           orgId,
           product: {
@@ -64,10 +69,12 @@ export function useUpsertShowroomProduct(orgId: string | null | undefined) {
 
 export function useDeleteShowroomProduct(orgId: string | null | undefined) {
   const qc = useQueryClient();
+  const removeProduct = useServerFn(deleteShowroomProduct);
+
   return useMutation({
     mutationFn: async (productId: string) => {
       if (!orgId) throw new Error("No organization selected.");
-      return deleteShowroomProduct({
+      return removeProduct({
         data: { orgId, productId },
       });
     },
@@ -82,11 +89,13 @@ export function useDeleteShowroomProduct(orgId: string | null | undefined) {
 }
 
 export function useSampleOrders(orgId: string | null | undefined) {
+  const listOrders = useServerFn(listSampleOrders);
+
   return useQuery({
     queryKey: ["sample-orders", orgId],
     queryFn: async () => {
       if (!orgId) return { inbound: [], outbound: [], pendingCount: 0 };
-      return listSampleOrders({ data: { orgId } });
+      return listOrders({ data: { orgId } });
     },
     enabled: Boolean(orgId),
     staleTime: 15_000,
@@ -100,6 +109,8 @@ export function usePendingSampleOrderCount(orgId: string | null | undefined): nu
 
 export function useCreateSampleOrder(buyerOrgId: string | null | undefined) {
   const qc = useQueryClient();
+  const createOrder = useServerFn(createSampleOrder);
+
   return useMutation({
     mutationFn: async (vars: {
       sellerOrgId: string;
@@ -111,7 +122,7 @@ export function useCreateSampleOrder(buyerOrgId: string | null | undefined) {
       neededBy?: string | null;
     }) => {
       if (!buyerOrgId) throw new Error("Please select your organization first.");
-      return createSampleOrder({
+      return createOrder({
         data: {
           buyerOrgId,
           sellerOrgId: vars.sellerOrgId,
@@ -138,10 +149,12 @@ export function useCreateSampleOrder(buyerOrgId: string | null | undefined) {
 
 export function useUpdateSampleOrderStatus(orgId: string | null | undefined) {
   const qc = useQueryClient();
+  const updateOrder = useServerFn(updateSampleOrderStatus);
+
   return useMutation({
     mutationFn: async (vars: { orderId: string; status: SampleOrderStatus; message?: string }) => {
       if (!orgId) throw new Error("No active organization.");
-      return updateSampleOrderStatus({
+      return updateOrder({
         data: {
           orderId: vars.orderId,
           orgId,
