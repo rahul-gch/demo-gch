@@ -89,7 +89,7 @@ export function FeedWorkspace({ entity }: { entity: Entity }) {
   );
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1fr_280px]">
+    <div className="grid w-full gap-6 lg:grid-cols-[1fr_280px]">
       <div className="space-y-6">
         <header>
           <h1 className="text-2xl font-semibold tracking-tight">Community feed</h1>

@@ -21,14 +21,18 @@ const ICONS = {
   project: FolderKanban,
 } as const;
 
-export function ActivityTimeline({ entity }: { entity: Entity }) {
-  const events = buildTimeline(entity);
+export function ActivityTimeline({ entity, limit }: { entity: Entity; limit?: number }) {
+  const all = buildTimeline(entity);
+  const events = limit ? all.slice(0, limit) : all;
   const groups = ["Today", "Yesterday", "This week"] as const;
   return (
-    <Card className="shadow-sm">
+    <Card className="h-full shadow-sm">
       <CardHeader>
-        <CardTitle className="text-base font-semibold">Activity timeline</CardTitle>
+        <CardTitle className="text-sm font-semibold">
+          {limit ? "Recent Activity" : "Activity timeline"}
+        </CardTitle>
       </CardHeader>
+
       <CardContent className="space-y-5">
         {events.length === 0 && (
           <p className="py-6 text-center text-sm text-muted-foreground">

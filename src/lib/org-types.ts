@@ -43,6 +43,21 @@ export const MANUFACTURER_TYPES = new Set<string>([
 
 export const BRAND_TYPES = new Set<string>(["Brand", "Retailer", "Trader / Agent"]);
 
+/**
+ * True when the organization makes or supplies physical goods, i.e. it can
+ * publish sample products in the showroom.
+ */
+export function isManufacturerOrg(org: {
+  organizationType?: string | null;
+  entityType?: string | null;
+}): boolean {
+  const candidates = [org.organizationType, org.entityType].filter(Boolean) as string[];
+  if (candidates.some((c) => MANUFACTURER_TYPES.has(c))) return true;
+  return candidates.some((c) =>
+    /manufact|farm|gin|spin|weav|knit|mill|dye|print|garment|trims|recycl/i.test(c),
+  );
+}
+
 export const SPECIALIZATION_SUGGESTIONS: Record<string, string[]> = {
   Brand: [
     "Sportswear",

@@ -116,7 +116,7 @@ function FeedPage() {
   const setTab = (v: "activity" | "community") => navigate({ search: { tab: v }, replace: true });
   return (
     <AppShell>
-      <div className="mx-auto max-w-6xl space-y-6">
+      <div className="w-full space-y-6">
         <header className="space-y-1">
           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             Platform Operations Center

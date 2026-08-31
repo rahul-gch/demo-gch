@@ -2,20 +2,16 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getEntity } from "@/seed/all-entities";
 import { HeroPassport } from "@/components/dashboard/HeroPassport";
-import { OrgBanner } from "@/components/dashboard/OrgBanner";
-import { AICommandCenter } from "@/components/dashboard/AICommandCenter";
-import { HealthScoreCard } from "@/components/dashboard/HealthScoreCard";
-import { CriticalActionsStrip } from "@/components/dashboard/CriticalActionsStrip";
 import { KpiInteractiveGrid } from "@/components/dashboard/KpiInteractiveGrid";
 import { EcosystemSummary } from "@/components/dashboard/EcosystemSummary";
-import { MissingDataGamified } from "@/components/dashboard/MissingDataGamified";
 import { SupplyChainSnapshot } from "@/components/dashboard/SupplyChainSnapshot";
-import { ReadinessBreakdown } from "@/components/dashboard/ReadinessBreakdown";
 import { ActivityTimeline } from "@/components/dashboard/ActivityTimeline";
-import { OpportunitiesPanel } from "@/components/dashboard/OpportunitiesPanel";
 import { QuickActionsDock } from "@/components/dashboard/QuickActionsDock";
-import { PassportCards } from "@/components/dashboard/PassportCards";
-import { OperationsCard } from "@/components/dashboard/OperationsCard";
+import { ActionQueue } from "@/components/dashboard/ActionQueue";
+import { KpiRow } from "@/components/dashboard/KpiRow";
+import { AiBriefCard } from "@/components/dashboard/AiBriefCard";
+import { PassportProgressCard } from "@/components/dashboard/PassportProgressCard";
+import { OperationsOverview } from "@/components/dashboard/OperationsOverview";
 import { KpiTable } from "@/components/KpiTable";
 import { BenchmarkChart } from "@/components/BenchmarkChart";
 import { ReportUploader } from "@/components/ReportUploader";
@@ -34,74 +30,57 @@ function Section({ children }: { children: React.ReactNode }) {
   return <section className="space-y-4">{children}</section>;
 }
 
-function Divider() {
-  return <div className="my-2 h-px w-full bg-slate-200/70" />;
+function SectionHeader({ title, hint }: { title: string; hint?: string }) {
+  return (
+    <div className="flex flex-wrap items-baseline justify-between gap-2">
+      <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-700">{title}</h2>
+      {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
+    </div>
+  );
 }
 
 function OverviewMissionControl({ e }: { e: Entity }) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <HeroPassport entity={e} />
-      <AICommandCenter entity={e} />
-      <HealthScoreCard entity={e} />
-      <CriticalActionsStrip entity={e} />
-      <Divider />
-      <Section>
-        <div className="flex items-baseline justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700">
-            Passport
-          </h2>
-          <span className="text-xs text-muted-foreground">Verified network identity</span>
+
+      <KpiRow entity={e} />
+
+      <div className="grid items-stretch gap-5 lg:grid-cols-12">
+        <div className="lg:col-span-3">
+          <AiBriefCard entity={e} />
         </div>
-        <PassportCards entity={e} />
-      </Section>
-      <Divider />
-      <Section>
-        <div className="flex items-baseline justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700">
-            Operations
-          </h2>
-          <span className="text-xs text-muted-foreground">
-            Editable · lead time · MOQ · capacity · specializations
-          </span>
+        <div className="lg:col-span-6">
+          <ActionQueue entity={e} />
         </div>
-        <OperationsCard entity={e} />
-      </Section>
-      <Divider />
-      <Section>
-        <div className="flex items-baseline justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700">
-            Performance
-          </h2>
-          <span className="text-xs text-muted-foreground">Headline KPIs · target · confidence</span>
+        <div className="lg:col-span-3">
+          <PassportProgressCard entity={e} />
         </div>
-        <KpiInteractiveGrid entity={e} />
-      </Section>
-      <Divider />
-      <div className="grid gap-6 lg:grid-cols-2">
-        <MissingDataGamified entity={e} />
-        <ReadinessBreakdown entity={e} />
       </div>
-      <Divider />
-      <OpportunitiesPanel entity={e} />
-      <Divider />
-      <ActivityTimeline entity={e} />
+
+      <div className="grid items-stretch gap-5 lg:grid-cols-12">
+        <div className="lg:col-span-7">
+          <OperationsOverview entity={e} />
+        </div>
+        <div className="lg:col-span-5">
+          <ActivityTimeline entity={e} limit={4} />
+        </div>
+      </div>
     </div>
   );
 }
+
 
 function OrgDashboardPage() {
   const { entity: e } = Route.useLoaderData();
 
   return (
-    <div className="relative mx-auto max-w-7xl space-y-6">
+    <div className="relative w-full space-y-6">
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="flex w-full flex-wrap justify-start">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="insights">Insights</TabsTrigger>
           <TabsTrigger value="performance">Performance</TabsTrigger>
           <TabsTrigger value="network">Network</TabsTrigger>
-          <TabsTrigger value="ai">AI</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
@@ -110,15 +89,11 @@ function OrgDashboardPage() {
           <OverviewMissionControl e={e} />
         </TabsContent>
 
-        <TabsContent value="insights" className="space-y-6">
-          <AICommandCenter entity={e} />
-          <OpportunitiesPanel entity={e} />
-          <CriticalActionsStrip entity={e} />
-        </TabsContent>
-
         <TabsContent value="performance" className="space-y-6">
-          <HealthScoreCard entity={e} />
-          <KpiInteractiveGrid entity={e} />
+          <Section>
+            <SectionHeader title="Performance" hint="Headline KPIs · target · confidence" />
+            <KpiInteractiveGrid entity={e} />
+          </Section>
           <KpiTableFallback entity={e} />
           <BenchmarkFallback entity={e} />
         </TabsContent>
@@ -126,12 +101,6 @@ function OrgDashboardPage() {
         <TabsContent value="network" className="space-y-6">
           <EcosystemSummary entity={e} />
           <SupplyChainSnapshot entity={e} />
-        </TabsContent>
-
-        <TabsContent value="ai" className="space-y-6">
-          <HealthScoreCard entity={e} />
-          <ReadinessBreakdown entity={e} />
-          <MissingDataGamified entity={e} />
         </TabsContent>
 
         <TabsContent value="documents" className="space-y-6">
