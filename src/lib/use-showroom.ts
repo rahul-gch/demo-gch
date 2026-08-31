@@ -101,7 +101,7 @@ export function useSampleOrders(orgId: string | null | undefined) {
   return useQuery({
     queryKey: ["sample-orders", orgId],
     queryFn: async () => {
-      if (!orgId) return { inbound: [], outbound: [], pendingCount: 0 };
+      if (!orgId || !(await hasSession())) return { inbound: [], outbound: [], pendingCount: 0 };
       return listOrders({ data: { orgId } });
     },
     enabled: Boolean(orgId),
