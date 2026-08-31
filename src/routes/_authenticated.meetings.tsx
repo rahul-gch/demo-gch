@@ -32,7 +32,7 @@ function MeetingsPage() {
 
   return (
     <AppShell>
-      <div className="mx-auto max-w-5xl space-y-6 px-2">
+      <div className="w-full space-y-6 px-2">
         <header className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Meetings</h1>

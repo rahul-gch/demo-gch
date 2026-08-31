@@ -60,7 +60,7 @@ function AdminOrganizationsPage() {
 
   return (
     <AppShell>
-      <div className="mx-auto w-full max-w-6xl space-y-6">
+      <div className="w-full space-y-6">
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight">Organization onboarding</h1>
           <p className="mt-1 text-sm text-muted-foreground">

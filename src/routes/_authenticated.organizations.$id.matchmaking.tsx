@@ -74,7 +74,7 @@ function OrgMatchmakingPage() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="w-full space-y-6">
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">Matchmaking</h1>
         <p className="mt-1 text-sm text-muted-foreground">
