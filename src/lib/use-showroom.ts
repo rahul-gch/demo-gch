@@ -109,6 +109,7 @@ export function useUpsertShowroomProduct(orgId: string | null | undefined) {
     onSuccess: (_, vars) => {
       toast.success(vars.id ? "Product updated" : "Product added to showroom");
       qc.invalidateQueries({ queryKey: ["showroom-products"] });
+      qc.invalidateQueries({ queryKey: ["showroom-product"] });
     },
     onError: (err) => {
       toast.error(err instanceof Error ? err.message : "Failed to save product");
