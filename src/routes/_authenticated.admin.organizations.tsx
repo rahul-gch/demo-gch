@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,7 +57,8 @@ export const Route = createFileRoute("/_authenticated/admin/organizations")({
 function AdminOrganizationsPage() {
   const { tab } = useSearch({ from: "/_authenticated/admin/organizations" });
   const navigate = useNavigate({ from: "/admin/organizations" });
-  const admin = useQuery({ queryKey: ["platform-admin"], queryFn: () => amIPlatformAdmin() });
+  const checkPlatformAdmin = useServerFn(amIPlatformAdmin);
+  const admin = useQuery({ queryKey: ["platform-admin"], queryFn: () => checkPlatformAdmin() });
 
   return (
     <AppShell>
@@ -124,9 +126,10 @@ function AdminOrganizationsPage() {
 }
 
 function RecentSignups() {
+  const fetchRecentSignups = useServerFn(listRecentSignups);
   const q = useQuery({
     queryKey: ["admin-recent-signups"],
-    queryFn: () => listRecentSignups({ data: { limit: 25 } }),
+    queryFn: () => fetchRecentSignups({ data: { limit: 25 } }),
     refetchOnMount: "always",
     refetchOnWindowFocus: true,
   });
@@ -177,9 +180,12 @@ function RecentSignups() {
 
 function OnboardingInvites() {
   const qc = useQueryClient();
+  const fetchPlatformInvites = useServerFn(listPlatformInvites);
+  const createPlatformInviteFn = useServerFn(createPlatformInvite);
+  const revokePlatformInviteFn = useServerFn(revokePlatformInvite);
   const invites = useQuery({
     queryKey: ["platform-invites"],
-    queryFn: () => listPlatformInvites(),
+    queryFn: () => fetchPlatformInvites(),
   });
 
   const [email, setEmail] = useState("");
@@ -191,7 +197,7 @@ function OnboardingInvites() {
 
   const create = useMutation({
     mutationFn: () =>
-      createPlatformInvite({
+      createPlatformInviteFn({
         data: {
           email: email.trim() || null,
           note: note.trim() || null,
@@ -217,7 +223,7 @@ function OnboardingInvites() {
   });
 
   const revoke = useMutation({
-    mutationFn: (id: string) => revokePlatformInvite({ data: { id } }),
+    mutationFn: (id: string) => revokePlatformInviteFn({ data: { id } }),
     onSuccess: () => {
       toast.success("Link revoked");
       qc.invalidateQueries({ queryKey: ["platform-invites"] });

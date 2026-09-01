@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Building2 } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
@@ -16,9 +17,10 @@ import { amIPlatformAdmin } from "@/lib/admin.functions";
 
 export function OrgShell({ entity, children }: { entity: Entity; children: ReactNode }) {
   useRealtimeComms(useActingOrgId(entity.orgUuid ?? null));
+  const checkPlatformAdmin = useServerFn(amIPlatformAdmin);
   const adminQuery = useQuery({
     queryKey: ["platform-admin"],
-    queryFn: () => amIPlatformAdmin(),
+    queryFn: () => checkPlatformAdmin(),
     staleTime: 5 * 60_000,
   });
   const isAdmin = !!adminQuery.data?.isAdmin;
