@@ -18,7 +18,7 @@ const prefsSchema = z.object({
 const memoryStore = new Map<string, MatchPreferences>();
 
 export const getOrgMatchPreferences = createServerFn({ method: "GET" })
-  .validator((data: unknown) => z.object({ orgId: z.string() }).parse(data))
+  .inputValidator((data: unknown) => z.object({ orgId: z.string() }).parse(data))
   .handler(async ({ data }) => {
     const orgId = data.orgId;
     if (memoryStore.has(orgId)) {
@@ -44,7 +44,7 @@ export const getOrgMatchPreferences = createServerFn({ method: "GET" })
   });
 
 export const saveOrgMatchPreferences = createServerFn({ method: "POST" })
-  .validator((data: unknown) =>
+  .inputValidator((data: unknown) =>
     z
       .object({
         orgId: z.string(),

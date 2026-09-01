@@ -18,7 +18,7 @@ const filterSchema = z.object({
 export type PartnerSearchFilters = z.infer<typeof filterSchema>;
 
 export const aiSearchPartners = createServerFn({ method: "POST" })
-  .validator((data: unknown) => inputSchema.parse(data))
+  .inputValidator((data: unknown) => inputSchema.parse(data))
   .handler(async ({ data }): Promise<PartnerSearchFilters> => {
     const key = process.env.LOVABLE_API_KEY;
     if (!key) {

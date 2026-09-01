@@ -65,7 +65,7 @@ async function getSupabaseServiceClient() {
 }
 
 export const getOrgConnections = createServerFn({ method: "GET" })
-  .validator((data: unknown) => z.object({ orgId: z.string().min(1) }).parse(data))
+  .inputValidator((data: unknown) => z.object({ orgId: z.string().min(1) }).parse(data))
   .handler(async ({ data }): Promise<ConnectionRecord[]> => {
     const results: ConnectionRecord[] = [];
     const supabase = await getSupabaseServiceClient();
@@ -111,7 +111,7 @@ export const getOrgConnections = createServerFn({ method: "GET" })
   });
 
 export const sendOrgConnection = createServerFn({ method: "POST" })
-  .validator(
+  .inputValidator(
     (data: unknown) =>
       z.object({ fromOrgId: z.string().min(1), toOrgId: z.string().min(1) }).parse(data),
   )
@@ -184,7 +184,7 @@ export const sendOrgConnection = createServerFn({ method: "POST" })
   });
 
 export const respondOrgConnection = createServerFn({ method: "POST" })
-  .validator(
+  .inputValidator(
     (data: unknown) =>
       z
         .object({
