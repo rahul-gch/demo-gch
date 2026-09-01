@@ -136,6 +136,20 @@ export const sendMessage = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
+    if (data.myOrgId === data.counterpartOrgId) {
+      throw new Error("You cannot message your own organization.");
+    }
+
+    // The sending organization must be one the caller actually belongs to —
+    // never trust the acting-org id coming from the client.
+    const { data: isMember } = await supabase.rpc("is_org_member", {
+      _user: userId,
+      _org: data.myOrgId,
+    });
+    if (!isMember) {
+      throw new Error("You are no longer a member of this organization.");
+    }
+
     const { data: conversationId, error: convErr } = await supabase.rpc(
       "get_or_create_conversation",
       { _org_a: data.myOrgId, _org_b: data.counterpartOrgId },
