@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import type { Entity } from "@/seed/types";
 import { ALL_ENTITIES, getEntity } from "@/seed/all-entities";
 import {
@@ -45,11 +46,12 @@ function matchesOrg(recordOrgId: string, queryOrgId: string): boolean {
 /** Pure React Query Hook for Organization Connections (Zero LocalStorage) */
 export function useOrgConnections(orgId: string | null | undefined) {
   const normOrgId = orgId ? canonicalId(orgId) : null;
+  const fetchConnections = useServerFn(getOrgConnections);
 
   const { data: records = [], isLoading, refetch } = useQuery({
     queryKey: ["org-connections", normOrgId],
     enabled: !!normOrgId,
-    queryFn: () => getOrgConnections({ data: { orgId: normOrgId! } }),
+    queryFn: () => fetchConnections({ data: { orgId: normOrgId! } }),
     staleTime: 10_000,
     refetchInterval: 15_000, // Background poll for live updates
   });
@@ -147,9 +149,10 @@ export function useOrgConnections(orgId: string | null | undefined) {
 /** Hook to send a connection request */
 export function useRequestConnection() {
   const queryClient = useQueryClient();
+  const send = useServerFn(sendOrgConnection);
   return useMutation({
     mutationFn: ({ fromOrgId, toOrgId }: { fromOrgId: string; toOrgId: string }) =>
-      sendOrgConnection({ data: { fromOrgId, toOrgId } }),
+      send({ data: { fromOrgId, toOrgId } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["org-connections"] });
     },
@@ -159,6 +162,7 @@ export function useRequestConnection() {
 /** Hook to accept or decline a connection request */
 export function useRespondConnection() {
   const queryClient = useQueryClient();
+  const respond = useServerFn(respondOrgConnection);
   return useMutation({
     mutationFn: ({
       myOrgId,
@@ -168,7 +172,7 @@ export function useRespondConnection() {
       myOrgId: string;
       otherOrgId: string;
       status: "accepted" | "declined";
-    }) => respondOrgConnection({ data: { myOrgId, otherOrgId, status } }),
+    }) => respond({ data: { myOrgId, otherOrgId, status } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["org-connections"] });
     },

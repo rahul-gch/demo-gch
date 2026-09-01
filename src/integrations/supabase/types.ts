@@ -430,6 +430,71 @@ export type Database = {
           },
         ]
       }
+      org_connections: {
+        Row: {
+          created_at: string
+          from_org_id: string
+          id: string
+          requested_by: string | null
+          responded_at: string | null
+          responded_by: string | null
+          status: string
+          to_org_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          from_org_id: string
+          id?: string
+          requested_by?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
+          status?: string
+          to_org_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          from_org_id?: string
+          id?: string
+          requested_by?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
+          status?: string
+          to_org_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_connections_from_org_id_fkey"
+            columns: ["from_org_id"]
+            isOneToOne: false
+            referencedRelation: "org_public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_connections_from_org_id_fkey"
+            columns: ["from_org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_connections_to_org_id_fkey"
+            columns: ["to_org_id"]
+            isOneToOne: false
+            referencedRelation: "org_public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_connections_to_org_id_fkey"
+            columns: ["to_org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       org_documents: {
         Row: {
           category: Database["public"]["Enums"]["doc_category"]
