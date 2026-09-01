@@ -46,11 +46,12 @@ function matchesOrg(recordOrgId: string, queryOrgId: string): boolean {
 /** Pure React Query Hook for Organization Connections (Zero LocalStorage) */
 export function useOrgConnections(orgId: string | null | undefined) {
   const normOrgId = orgId ? canonicalId(orgId) : null;
+  const fetchConnections = useServerFn(getOrgConnections);
 
   const { data: records = [], isLoading, refetch } = useQuery({
     queryKey: ["org-connections", normOrgId],
     enabled: !!normOrgId,
-    queryFn: () => getOrgConnections({ data: { orgId: normOrgId! } }),
+    queryFn: () => fetchConnections({ data: { orgId: normOrgId! } }),
     staleTime: 10_000,
     refetchInterval: 15_000, // Background poll for live updates
   });
