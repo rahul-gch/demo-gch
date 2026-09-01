@@ -4,7 +4,7 @@ import { ShowroomWorkspace } from "@/components/showroom/ShowroomWorkspace";
 
 import { refreshRegistry } from "@/lib/registry";
 
-export const Route = createFileRoute("/_authenticated/organizations/$id/showroom")({
+export const Route = createFileRoute("/_authenticated/organizations/$id/showroom/")({
   loader: async ({ params, context }) => {
     let entity = getEntity(params.id);
     if (!entity) {
