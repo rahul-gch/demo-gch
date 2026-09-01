@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -17,6 +17,34 @@ import { getEntity } from "@/seed/all-entities";
 import { fallbackEntity } from "@/lib/entity-fallback";
 
 export type { ThreadMessage, MeetingRequest } from "@/lib/comms-types";
+
+/**
+ * Protected communication queries can mount while the browser auth client is
+ * still restoring its session. Wait for that restoration before invoking a
+ * server function so its global middleware always has a bearer token to send.
+ */
+function useAuthenticatedSessionReady() {
+  const [hasSession, setHasSession] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    void supabase.auth.getSession().then(({ data }) => {
+      if (mounted) setHasSession(Boolean(data.session?.access_token));
+    });
+
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (mounted) setHasSession(Boolean(session?.access_token));
+    });
+
+    return () => {
+      mounted = false;
+      data.subscription.unsubscribe();
+    };
+  }, []);
+
+  return hasSession;
+}
 
 /** The organization the signed-in user is acting as (their first membership). */
 export function useMyOrgIds() {
@@ -163,11 +191,12 @@ export function useSendMessage(orgId: string | null) {
 export function useMeetings(orgId: string | null) {
   const queryClient = useQueryClient();
   const instanceId = useId();
+  const hasSession = useAuthenticatedSessionReady();
   const getMeetings = useServerFn(listMeetings);
 
   const query = useQuery({
     queryKey: ["meetings", orgId],
-    enabled: !!orgId,
+    enabled: !!orgId && hasSession,
     queryFn: () => {
       if (!orgId) return [];
       return getMeetings({ data: { orgId } });
