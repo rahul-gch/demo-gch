@@ -31,8 +31,8 @@ import { usePendingSampleOrderCount } from "@/lib/use-showroom";
 
 export function OrgSidebar({ entity }: { entity: Entity }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const base = `/organizations/${entity.id}`;
-  const orgUuid = entity.orgUuid ?? null;
+  const base = `/organizations/${entity.slug || entity.id}`;
+  const orgUuid = entity.orgUuid ?? entity.id;
   const inbox = useUnreadTotal(orgUuid) + usePendingMeetingCount(orgUuid);
   const pendingOrders = usePendingSampleOrderCount(orgUuid);
 
@@ -51,7 +51,6 @@ export function OrgSidebar({ entity }: { entity: Entity }) {
       badge: inbox,
     },
     { title: "Compliance", url: `${base}/compliance`, icon: ShieldCheck },
-
     { title: "Requests", url: `${base}/requests`, icon: Inbox },
     { title: "Settings", url: `${base}/settings`, icon: Settings },
   ];

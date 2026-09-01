@@ -2,10 +2,15 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { getEntity } from "@/seed/all-entities";
 import { useActingOrgId, useMeetings } from "@/lib/use-comms";
 import { MeetingsWorkspace } from "@/components/meetings/MeetingsWorkspace";
+import { refreshRegistry } from "@/lib/registry";
 
 export const Route = createFileRoute("/_authenticated/organizations/$id/meetings")({
-  loader: ({ params }) => {
-    const entity = getEntity(params.id);
+  loader: async ({ params, context }) => {
+    let entity = getEntity(params.id);
+    if (!entity) {
+      await refreshRegistry(context.queryClient);
+      entity = getEntity(params.id);
+    }
     if (!entity) throw notFound();
     return { entity };
   },

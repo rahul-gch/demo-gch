@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { getMatchesFor, type MatchScore } from "@/seed/matchmaking";
 import { getEcosystemConnections } from "@/seed/showcase";
 import { MatchProfileSheet } from "@/components/MatchProfileSheet";
+import { useSavedChainEntityIds, useAddChainEntity } from "@/lib/chain-storage";
 
 const ALL_TIERS: ActorType[] = ["Tier 4", "Tier 3", "Tier 2", "Tier 1", "Tier 0"];
 
@@ -16,12 +17,14 @@ export function RecommendedChain({ entity }: { entity: Entity }) {
   const [nonce, setNonce] = useState(0);
   const [selected, setSelected] = useState<MatchScore | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [added, setAdded] = useState<Set<string>>(new Set());
+  const { chainIds } = useSavedChainEntityIds(entity.id);
+  const addMutation = useAddChainEntity();
 
   const grouped = useMemo(() => {
     const existing = new Set([
       entity.id,
       ...getEcosystemConnections(entity).map((c) => c.entity.id),
+      ...chainIds,
     ]);
     const matches = getMatchesFor(entity, 40, 20).filter((m) => !existing.has(m.entity.id));
     const byTier = new Map<ActorType, MatchScore[]>();
@@ -34,16 +37,19 @@ export function RecommendedChain({ entity }: { entity: Entity }) {
     return ALL_TIERS.map((tier) => ({ tier, matches: byTier.get(tier) || [] })).filter(
       (g) => g.matches.length > 0,
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entity, nonce]);
+  }, [entity, nonce, chainIds]);
 
   const openProfile = (m: MatchScore) => {
     setSelected(m);
     setSheetOpen(true);
   };
-  const addToChain = (m: MatchScore) => {
-    setAdded((s) => new Set(s).add(m.entity.id));
-    toast.success(`${m.entity.name} added to chain draft`);
+  const addToChain = async (m: MatchScore) => {
+    try {
+      await addMutation.mutateAsync({ orgId: entity.id, entityId: m.entity.id });
+      toast.success(`${m.entity.name} added to your supply chain map!`);
+    } catch {
+      toast.error("Failed to add partner to chain");
+    }
   };
 
   return (
@@ -120,11 +126,11 @@ export function RecommendedChain({ entity }: { entity: Entity }) {
                     <Button
                       size="sm"
                       onClick={() => addToChain(m)}
-                      disabled={added.has(m.entity.id)}
+                      disabled={chainIds.includes(m.entity.id)}
                       className="gap-1.5"
                     >
                       <Plus className="h-3.5 w-3.5" />
-                      {added.has(m.entity.id) ? "Added" : "Add to chain"}
+                      {chainIds.includes(m.entity.id) ? "Added" : "Add to chain"}
                     </Button>
                     <Button
                       size="sm"

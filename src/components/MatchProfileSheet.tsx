@@ -29,10 +29,13 @@ import {
   CalendarPlus,
   ArrowUpRight,
   Sparkles,
+  UserPlus,
+  Check,
 } from "lucide-react";
-import { useActingOrgId, useSendMessage } from "@/lib/use-comms";
 import { toast } from "sonner";
+import { useActingOrgId, useSendMessage } from "@/lib/use-comms";
 import { MeetingRequestDialog } from "./MeetingRequestDialog";
+import { useOrgConnections, useRequestConnection } from "@/lib/org-connections";
 
 function hash(id: string) {
   let h = 0;
@@ -175,6 +178,9 @@ export function MatchProfileSheet({
     }
   }, [open, initialAction, match?.entity.id]);
 
+  const { isConnected } = useOrgConnections(viewer?.id);
+  const requestMutation = useRequestConnection();
+
   const myOrgId = useActingOrgId(viewer?.orgUuid ?? null);
   const sendMessage = useSendMessage(myOrgId);
 
@@ -214,13 +220,43 @@ export function MatchProfileSheet({
             <div className="flex flex-wrap items-start justify-between gap-3">
               <SheetTitle className="text-xl">{e.name}</SheetTitle>
               <div className="flex flex-wrap gap-2">
-                <Button size="sm" onClick={() => textareaRef.current?.focus()}>
+                {viewer?.id && isConnected(e.id) ? (
+                  <Badge variant="secondary" className="gap-1 bg-emerald-100 text-emerald-800 self-center py-1">
+                    <Check className="h-3.5 w-3.5" /> Connected
+                  </Badge>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="default"
+                    disabled={requestMutation.isPending}
+                    onClick={() => {
+                      if (viewer?.id) {
+                        requestMutation.mutate(
+                          { fromOrgId: viewer.id, toOrgId: e.id },
+                          {
+                            onSuccess: () => toast.success(`Connection request sent to ${e.name}`),
+                            onError: (err) =>
+                              toast.error(
+                                err instanceof Error ? err.message : "Failed to send request",
+                              ),
+                          },
+                        );
+                      } else {
+                        toast.info("Join an organization to connect.");
+                      }
+                    }}
+                  >
+                    <UserPlus className="mr-1 h-3.5 w-3.5" />
+                    {requestMutation.isPending ? "Connecting…" : "Connect"}
+                  </Button>
+                )}
+                <Button size="sm" variant="outline" onClick={() => textareaRef.current?.focus()}>
                   <Send className="mr-1 h-3.5 w-3.5" />
-                  Send message
+                  Message
                 </Button>
                 <Button size="sm" variant="outline" onClick={() => setMeetOpen(true)}>
                   <CalendarPlus className="mr-1 h-3.5 w-3.5" />
-                  Request meeting
+                  Meeting
                 </Button>
               </div>
             </div>

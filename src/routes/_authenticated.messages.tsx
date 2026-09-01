@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import {
@@ -17,8 +17,27 @@ import { MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { ActingOrgSwitcher } from "@/components/messages/ActingOrgSwitcher";
+import { myOrgMemberships } from "@/lib/orgs.functions";
+import { amIPlatformAdmin } from "@/lib/admin.functions";
+import { getEntity } from "@/seed/all-entities";
 
 export const Route = createFileRoute("/_authenticated/messages")({
+  beforeLoad: async () => {
+    const [admin, memberships] = await Promise.all([
+      amIPlatformAdmin().catch(() => ({ isAdmin: false })),
+      myOrgMemberships().catch(() => [] as { org_id: string }[]),
+    ]);
+    if (admin?.isAdmin) return;
+    const first = memberships[0];
+    if (first) {
+      const entity = getEntity(first.org_id);
+      throw redirect({
+        to: "/organizations/$id/messages",
+        params: { id: entity?.id ?? first.org_id },
+        replace: true,
+      });
+    }
+  },
   head: () => ({
     meta: [
       { title: "Messages — Global Chain Hub" },

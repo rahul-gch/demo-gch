@@ -1,3 +1,11 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import {
+  getOrgResearchRuns,
+  saveOrgResearchRun,
+  deleteOrgResearchRun,
+} from "@/lib/research.functions";
+
 export type ResearchCandidate = {
   source: "network" | "ai";
   id?: string;
@@ -32,40 +40,76 @@ export type ResearchRun = {
   results: ResearchCandidate[];
 };
 
-const KEY = "gch:research-runs:v1";
+/** React Query Hook for loading an organization's research history */
+export function useOrgResearchRuns(orgId: string) {
+  const getFn = useServerFn(getOrgResearchRuns);
 
-function load(): ResearchRun[] {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(window.localStorage.getItem(KEY) || "[]") as ResearchRun[];
-  } catch {
-    return [];
-  }
+  const query = useQuery({
+    queryKey: ["org-research-runs", orgId],
+    queryFn: async () => {
+      if (!orgId) return [];
+      try {
+        const res = await getFn({ data: { orgId } });
+        return (res as ResearchRun[]) ?? [];
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 60_000,
+  });
+
+  return {
+    runs: query.data ?? [],
+    isLoading: query.isLoading,
+    refetch: query.refetch,
+  };
 }
 
-function save(runs: ResearchRun[]) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(KEY, JSON.stringify(runs));
-  window.dispatchEvent(new CustomEvent("gch:research-runs"));
+/** React Query Hook for saving a research run */
+export function useSaveResearchRun() {
+  const qc = useQueryClient();
+  const saveFn = useServerFn(saveOrgResearchRun);
+
+  return useMutation({
+    mutationFn: async (run: ResearchRun) => {
+      const res = await saveFn({ data: { run } });
+      return res;
+    },
+    onSuccess: (data, run) => {
+      if (data?.runs) {
+        qc.setQueryData(["org-research-runs", run.orgId], data.runs);
+      }
+      qc.invalidateQueries({ queryKey: ["org-research-runs", run.orgId] });
+    },
+  });
 }
 
-export function getRunsForOrg(orgId: string): ResearchRun[] {
-  return load()
-    .filter((r) => r.orgId === orgId)
-    .sort((a, b) => b.createdAt - a.createdAt);
+/** React Query Hook for deleting a research run */
+export function useDeleteResearchRun() {
+  const qc = useQueryClient();
+  const delFn = useServerFn(deleteOrgResearchRun);
+
+  return useMutation({
+    mutationFn: async ({ orgId, runId }: { orgId: string; runId: string }) => {
+      const res = await delFn({ data: { orgId, runId } });
+      return res;
+    },
+    onSuccess: (data, vars) => {
+      if (data?.runs) {
+        qc.setQueryData(["org-research-runs", vars.orgId], data.runs);
+      }
+      qc.invalidateQueries({ queryKey: ["org-research-runs", vars.orgId] });
+    },
+  });
 }
 
-export function createRun(run: ResearchRun) {
-  const runs = load();
-  runs.push(run);
-  save(runs);
+/** Compatibility helpers */
+export function getRunsForOrg(_orgId: string): ResearchRun[] {
+  return [];
 }
 
-export function updateRun(id: string, patch: Partial<ResearchRun>) {
-  const runs = load().map((r) => (r.id === id ? { ...r, ...patch } : r));
-  save(runs);
-}
+export function createRun(_run: ResearchRun) {}
 
-export function deleteRun(id: string) {
-  save(load().filter((r) => r.id !== id));
-}
+export function updateRun(_id: string, _patch: Partial<ResearchRun>) {}
+
+export function deleteRun(_id: string) {}

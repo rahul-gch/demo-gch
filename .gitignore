@@ -16,6 +16,10 @@ dist-ssr
 .nitro
 *.local
 
+# Environment variables (secrets)
+.env
+.env.*
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars
@@ -30,3 +34,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local Documentation & Architecture PDFs (Ignored from git)
+docs/
+docs_gch/
+*.pdf
+
+# Tests & Test Results
+test/
+test-results/
+test-results
+

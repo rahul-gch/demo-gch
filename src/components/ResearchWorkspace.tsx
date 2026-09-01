@@ -37,10 +37,9 @@ import type { Entity, EntityType } from "@/seed/types";
 import { ALL_ENTITIES } from "@/seed/all-entities";
 import { runAiResearch } from "@/lib/research.functions";
 import {
-  createRun,
-  deleteRun,
-  getRunsForOrg,
-  updateRun,
+  useOrgResearchRuns,
+  useSaveResearchRun,
+  useDeleteResearchRun,
   type ResearchCandidate,
   type ResearchRun,
 } from "@/seed/research-runs";
@@ -439,21 +438,14 @@ function searchInternal(params: {
 }
 
 export function ResearchWorkspace({ entity }: { entity: Entity }) {
-  const [runs, setRuns] = useState<ResearchRun[]>([]);
+  const { runs, isLoading } = useOrgResearchRuns(entity.id);
+  const saveRunMutation = useSaveResearchRun();
+  const deleteRunMutation = useDeleteResearchRun();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const runAi = useServerFn(runAiResearch);
 
   const profile = getProfile(entity.entityType);
-
-  const refresh = () => setRuns(getRunsForOrg(entity.id));
-
-  useEffect(() => {
-    refresh();
-    const onUpd = () => refresh();
-    window.addEventListener("gch:research-runs", onUpd);
-    return () => window.removeEventListener("gch:research-runs", onUpd);
-  }, [entity.id]);
 
   const active = useMemo(
     () => runs.find((r) => r.id === activeId) ?? runs[0] ?? null,
@@ -479,7 +471,7 @@ export function ResearchWorkspace({ entity }: { entity: Entity }) {
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
-            onClick={() => {
+            onClick={async () => {
               const runId = uid();
               const params = {
                 query: `Network search · ${profile.defaultCounterpart}`,
@@ -489,7 +481,7 @@ export function ResearchWorkspace({ entity }: { entity: Entity }) {
                 limit: 25,
               };
               const networkResults = searchInternal({ ...params, excludeId: entity.id });
-              createRun({
+              const newRun: ResearchRun = {
                 id: runId,
                 orgId: entity.id,
                 query: params.query,
@@ -497,7 +489,8 @@ export function ResearchWorkspace({ entity }: { entity: Entity }) {
                 createdAt: Date.now(),
                 status: "done",
                 results: networkResults,
-              });
+              };
+              await saveRunMutation.mutateAsync(newRun);
               setActiveId(runId);
               toast.success(`Found ${networkResults.length} in your GCH network`);
             }}
@@ -529,20 +522,29 @@ export function ResearchWorkspace({ entity }: { entity: Entity }) {
                 status: "running",
                 results: networkResults,
               };
-              createRun(newRun);
+              await saveRunMutation.mutateAsync(newRun);
               setActiveId(runId);
               setOpen(false);
 
               try {
                 const { candidates } = await runAi({ data: params });
                 const ai: ResearchCandidate[] = candidates.map((c) => ({ source: "ai", ...c }));
-                updateRun(runId, { status: "done", results: [...networkResults, ...ai] });
+                await saveRunMutation.mutateAsync({
+                  ...newRun,
+                  status: "done",
+                  results: [...networkResults, ...ai],
+                });
                 toast.success(
                   `Found ${networkResults.length} in network + ${ai.length} AI suggestions`,
                 );
               } catch (err) {
                 const msg = err instanceof Error ? err.message : "AI suggestions unavailable";
-                updateRun(runId, { status: "done", aiError: msg, results: networkResults });
+                await saveRunMutation.mutateAsync({
+                  ...newRun,
+                  status: "done",
+                  aiError: msg,
+                  results: networkResults,
+                });
                 toast.message("Showing network matches only", { description: msg });
               }
             }}
@@ -603,8 +605,8 @@ export function ResearchWorkspace({ entity }: { entity: Entity }) {
             <RunResults
               run={active}
               profile={profile}
-              onDelete={() => {
-                deleteRun(active.id);
+              onDelete={async () => {
+                await deleteRunMutation.mutateAsync({ orgId: entity.id, runId: active.id });
                 setActiveId(null);
               }}
             />

@@ -1,5 +1,4 @@
-// localStorage-backed per-org profile overrides. Merged into the entity
-// when read through getEntity() so dashboards/matchmaking pick them up.
+// Decommissioned: Profile updates now persist directly to the database via TanStack Server Functions.
 import type { Entity } from "./types";
 
 export interface OrgOverride {
@@ -19,46 +18,12 @@ export interface OrgOverride {
   specializations?: string[];
 }
 
-const KEY = "gch.org-overrides.v1";
-
-const isBrowser = () => typeof window !== "undefined";
-
-function loadAll(): Record<string, OrgOverride> {
-  if (!isBrowser()) return {};
-  try {
-    return JSON.parse(window.localStorage.getItem(KEY) || "{}");
-  } catch {
-    return {};
-  }
+export function getOverride(_orgId: string): OrgOverride {
+  return {};
 }
 
-function saveAll(map: Record<string, OrgOverride>) {
-  if (!isBrowser()) return;
-  try {
-    window.localStorage.setItem(KEY, JSON.stringify(map));
-  } catch {
-    /* ignore */
-  }
-}
+export function setOverride(_orgId: string, _patch: OrgOverride) {}
 
-export function getOverride(orgId: string): OrgOverride {
-  return loadAll()[orgId] ?? {};
-}
-
-export function setOverride(orgId: string, patch: OrgOverride) {
-  const all = loadAll();
-  all[orgId] = { ...(all[orgId] ?? {}), ...patch };
-  saveAll(all);
-}
-
-export function clearOverride(orgId: string) {
-  const all = loadAll();
-  delete all[orgId];
-  saveAll(all);
-}
-
-export function applyOverride(entity: Entity): Entity {
-  const o = getOverride(entity.id);
-  if (!o || Object.keys(o).length === 0) return entity;
-  return { ...entity, ...o } as Entity;
+export function applyOverride<T extends Entity>(entity: T): T {
+  return entity;
 }

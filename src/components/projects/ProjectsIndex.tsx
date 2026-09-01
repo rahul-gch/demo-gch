@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Plus, Search, ArrowRight, Users, Inbox, CalendarDays } from "lucide-react";
+import { Plus, Search, ArrowRight, Users, Inbox, CalendarDays, Eye } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,9 +18,11 @@ import { Textarea } from "@/components/ui/textarea";
 import type { Entity } from "@/seed/types";
 import { useProjects, createProject } from "@/lib/use-projects";
 import { ProjectStatusBadge } from "./ProjectShell";
+import { useOrgRole } from "@/lib/use-org-role";
 
 export function ProjectsIndex({ entity }: { entity: Entity }) {
   const projects = useProjects(entity);
+  const { canEdit } = useOrgRole(entity.orgUuid ?? entity.id);
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: "", description: "", tags: "" });
@@ -46,136 +48,143 @@ export function ProjectsIndex({ entity }: { entity: Entity }) {
             for requests, documents, discussions and meetings.
           </p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4" /> New project
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create a project</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <div className="space-y-1.5">
-                <Label>Project name</Label>
-                <Input
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="e.g. Regenerative Cotton Program"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Description</Label>
-                <Textarea
-                  rows={3}
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  placeholder="What are you collaborating on?"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Tags (comma-separated)</Label>
-                <Input
-                  value={form.tags}
-                  onChange={(e) => setForm({ ...form, tags: e.target.value })}
-                  placeholder="DPP, Traceability"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setOpen(false)}>
-                Cancel
+        {canEdit && (
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4" /> New project
               </Button>
-              <Button
-                disabled={!form.name.trim()}
-                onClick={() => {
-                  createProject(entity, {
-                    name: form.name.trim(),
-                    description: form.description.trim(),
-                    tags: form.tags
-                      .split(",")
-                      .map((t) => t.trim())
-                      .filter(Boolean),
-                  });
-                  setForm({ name: "", description: "", tags: "" });
-                  setOpen(false);
-                }}
-              >
-                Create
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create a project</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label>Project name</Label>
+                  <Input
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    placeholder="e.g. Regenerative Cotton Program"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Description</Label>
+                  <Textarea
+                    value={form.description}
+                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                    placeholder="Shared goals, scope, and target outcomes..."
+                    rows={3}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Tags (comma-separated)</Label>
+                  <Input
+                    value={form.tags}
+                    onChange={(e) => setForm({ ...form, tags: e.target.value })}
+                    placeholder="e.g. Circularity, Tier 1, Q3-2026"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  disabled={!form.name.trim()}
+                  onClick={() => {
+                    createProject(entity, {
+                      name: form.name.trim(),
+                      description: form.description.trim(),
+                      tags: form.tags
+                        .split(",")
+                        .map((t) => t.trim())
+                        .filter(Boolean),
+                    });
+                    setForm({ name: "", description: "", tags: "" });
+                    setOpen(false);
+                  }}
+                >
+                  Create
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
       </header>
 
-      <div className="relative max-w-md">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search projects, tags, description…"
-          className="pl-9"
-        />
-      </div>
+      {!canEdit && (
+        <div className="flex items-center gap-2.5 rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-200">
+          <Eye className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+          <span>
+            You have viewer access in <strong>{entity.name}</strong>. You can browse active projects and details, but project creation is reserved for Editors and Admins.
+          </span>
+        </div>
+      )}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {projects.length > 0 && (
+        <div className="relative max-w-sm">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search projects..."
+            className="pl-9"
+          />
+        </div>
+      )}
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map((p) => (
           <Link
             key={p.id}
             to="/organizations/$id/projects/$projectId"
-            params={{ id: entity.id, projectId: p.id }}
-            className="group"
+            params={{ id: entity.slug || entity.id, projectId: p.id }}
+            className="group block"
           >
-            <Card className="overflow-hidden transition-shadow group-hover:shadow-md">
-              {p.image ? (
-                <div
-                  className="h-32 w-full bg-cover bg-center"
-                  style={{ backgroundImage: `url(${p.image})` }}
-                />
-              ) : (
-                <div className="flex h-32 w-full items-center justify-center bg-gradient-to-br from-slate-900 via-slate-700 to-slate-500">
-                  <span className="px-4 text-center text-sm font-medium text-white/90 line-clamp-2">
-                    {p.name}
-                  </span>
-                </div>
-              )}
-
-              <CardContent className="space-y-3 p-4">
+            <Card className="h-full transition-all duration-150 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md">
+              <CardContent className="space-y-4 p-5">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <div className="line-clamp-1 font-medium">{p.name}</div>
-                    <div className="mt-0.5 text-[11px] text-muted-foreground">
-                      {p.industry} · {p.country}
-                    </div>
+                    <h3 className="truncate font-semibold text-foreground group-hover:text-primary">
+                      {p.name}
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      Owner: {p.ownerOrgId === (entity.orgUuid || entity.id) ? "You" : p.ownerOrgId}
+                    </p>
                   </div>
                   <ProjectStatusBadge status={p.status} />
                 </div>
-                <p className="line-clamp-2 text-sm text-muted-foreground">{p.description}</p>
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                    <span>Progress</span>
-                    <span>{p.progress}%</span>
+
+                <p className="line-clamp-2 text-xs text-muted-foreground">
+                  {p.description || "No description provided."}
+                </p>
+
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Progress</span>
+                    <span className="font-medium">{p.progress}%</span>
                   </div>
                   <Progress value={p.progress} className="h-1.5" />
                 </div>
-                <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
+
+                <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3 text-xs text-muted-foreground">
                   <span className="inline-flex items-center gap-1">
-                    <Users className="h-3.5 w-3.5" /> {p.partners.length}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <Inbox className="h-3.5 w-3.5" />
-                    {p.requests.filter((r) => r.status !== "Completed").length} open
+                    <Users className="h-3.5 w-3.5" /> {p.partners.length} partner
+                    {p.partners.length === 1 ? "" : "s"}
                   </span>
                   <span className="inline-flex items-center gap-1">
-                    <CalendarDays className="h-3.5 w-3.5" /> {p.meetings.length}
+                    <Inbox className="h-3.5 w-3.5" /> {p.requests.filter((r) => r.status === "Open").length} open
                   </span>
-                  <span className="ml-auto inline-flex items-center gap-1 text-primary opacity-0 transition-opacity group-hover:opacity-100">
-                    Open <ArrowRight className="h-3.5 w-3.5" />
-                  </span>
+                  {p.meetings.length > 0 && (
+                    <span className="inline-flex items-center gap-1">
+                      <CalendarDays className="h-3.5 w-3.5" /> {p.meetings[0].date}
+                    </span>
+                  )}
                 </div>
+
                 <div className="flex flex-wrap gap-1">
-                  {p.tags.map((t) => (
+                  {p.tags.slice(0, 3).map((t) => (
                     <span
                       key={t}
                       className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground"
@@ -197,12 +206,15 @@ export function ProjectsIndex({ entity }: { entity: Entity }) {
               <>
                 <div className="text-sm font-medium">No projects yet</div>
                 <p className="mx-auto max-w-md text-sm text-muted-foreground">
-                  Create a project to start a shared workspace with your partners — requests,
-                  documents, discussions and meetings all live inside it.
+                  {canEdit
+                    ? "Create a project to start a shared workspace with your partners — requests, documents, discussions and meetings all live inside it."
+                    : "No projects have been created in this organization yet."}
                 </p>
-                <Button onClick={() => setOpen(true)}>
-                  <Plus className="h-4 w-4" /> New project
-                </Button>
+                {canEdit && (
+                  <Button onClick={() => setOpen(true)}>
+                    <Plus className="h-4 w-4" /> New project
+                  </Button>
+                )}
               </>
             ) : (
               <p className="text-sm text-muted-foreground">No projects match “{q}”.</p>

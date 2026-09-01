@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { Entity } from "@/seed/types";
 import { Badge } from "@/components/ui/badge";
 import { VerificationBadge } from "@/components/StatusBadge";
-import { MapPin } from "lucide-react";
+import { MapPin, Mail } from "lucide-react";
 import { HeroBackground, deriveDomain, entityInitials } from "./OrgBanner";
 import { useResolvedImage } from "@/lib/use-org-images";
 
@@ -12,7 +12,6 @@ export function HeroPassport({ entity: e }: { entity: Entity }) {
     ...(e.materials ?? []).slice(0, 2),
   ].slice(0, 4);
 
-
   const [logoFailed, setLogoFailed] = useState(false);
   const token = import.meta.env.VITE_LOVABLE_CONNECTOR_LOGO_DEV_API_KEY as string | undefined;
   const domain = deriveDomain(e);
@@ -20,6 +19,8 @@ export function HeroPassport({ entity: e }: { entity: Entity }) {
   const logoUrl =
     uploadedLogo ??
     (token ? `https://img.logo.dev/${domain}?token=${token}&size=200&format=png` : null);
+
+  const primaryContact = e.contacts && e.contacts.length > 0 ? e.contacts[0] : null;
 
   return (
     <section className="relative overflow-hidden rounded-2xl border border-white/10 p-6 text-slate-100 shadow-lg">
@@ -69,6 +70,12 @@ export function HeroPassport({ entity: e }: { entity: Entity }) {
               <MapPin className="mr-1 h-3 w-3" />
               {[e.city, e.country].filter(Boolean).join(", ")}
             </Badge>
+            {primaryContact?.email && (
+              <Badge variant="outline" className="border-white/25 bg-white/10 text-white/90 gap-1.5 font-normal">
+                <Mail className="h-3 w-3 text-sky-300" />
+                {primaryContact.email}
+              </Badge>
+            )}
             <span className="inline-flex items-center gap-1">
               <VerificationBadge status={e.verificationStatus} />
             </span>

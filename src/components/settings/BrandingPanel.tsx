@@ -10,6 +10,7 @@ import { updateOrgProfile } from "@/lib/orgs.functions";
 import { refreshRegistry } from "@/lib/registry";
 import { BANNER_BUCKET, LOGO_BUCKET, makeRef, parseRef, resolveImage } from "@/lib/org-images";
 import { useResolvedImage, useResolvedImages } from "@/lib/use-org-images";
+import { useOrgRole } from "@/lib/use-org-role";
 
 const MAX_BANNERS = 4;
 const ACCEPT = "image/jpeg,image/png,image/webp";
@@ -39,6 +40,7 @@ export function BrandingPanel({
 }) {
   const queryClient = useQueryClient();
   const save = useServerFn(updateOrgProfile);
+  const { canManage } = useOrgRole(orgId);
 
   const [logoValue, setLogoValue] = useState<string | null>(logo ?? null);
   const [bannerValues, setBannerValues] = useState<string[]>(banners ?? []);
@@ -169,32 +171,34 @@ export function BrandingPanel({
               <ImagePlus className="h-6 w-6 text-muted-foreground" />
             )}
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <label className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90">
-              {busy ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Upload className="h-3.5 w-3.5" />
+          {canManage && (
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90">
+                {busy ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Upload className="h-3.5 w-3.5" />
+                )}
+                {logoValue ? "Replace logo" : "Upload logo"}
+                <input
+                  type="file"
+                  accept={ACCEPT}
+                  className="hidden"
+                  disabled={busy}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    e.target.value = "";
+                    if (f) void uploadLogo(f);
+                  }}
+                />
+              </label>
+              {logoValue && (
+                <Button size="sm" variant="outline" disabled={busy} onClick={() => void removeLogo()}>
+                  <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Remove
+                </Button>
               )}
-              {logoValue ? "Replace logo" : "Upload logo"}
-              <input
-                type="file"
-                accept={ACCEPT}
-                className="hidden"
-                disabled={busy}
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  e.target.value = "";
-                  if (f) void uploadLogo(f);
-                }}
-              />
-            </label>
-            {logoValue && (
-              <Button size="sm" variant="outline" disabled={busy} onClick={() => void removeLogo()}>
-                <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Remove
-              </Button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Banners */}
@@ -206,31 +210,33 @@ export function BrandingPanel({
                 ({bannerValues.length}/{MAX_BANNERS})
               </span>
             </div>
-            <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-accent">
-              {busy ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <ImagePlus className="h-3.5 w-3.5" />
-              )}
-              Add banners
-              <input
-                type="file"
-                accept={ACCEPT}
-                multiple
-                className="hidden"
-                disabled={busy || bannerValues.length >= MAX_BANNERS}
-                onChange={(e) => {
-                  const files = e.target.files;
-                  const list = files;
-                  e.target.value = "";
-                  if (list && list.length) void uploadBanners(list);
-                }}
-              />
-            </label>
+            {canManage && (
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-accent">
+                {busy ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <ImagePlus className="h-3.5 w-3.5" />
+                )}
+                Add banners
+                <input
+                  type="file"
+                  accept={ACCEPT}
+                  multiple
+                  className="hidden"
+                  disabled={busy || bannerValues.length >= MAX_BANNERS}
+                  onChange={(e) => {
+                    const files = e.target.files;
+                    const list = files;
+                    e.target.value = "";
+                    if (list && list.length) void uploadBanners(list);
+                  }}
+                />
+              </label>
+            )}
           </div>
           {bannerValues.length === 0 ? (
             <div className="rounded-md border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">
-              No banner photos yet — upload up to {MAX_BANNERS} images for your dashboard hero.
+              No banner photos yet — {canManage ? `upload up to ${MAX_BANNERS} images for your dashboard hero.` : "none uploaded."}
             </div>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
@@ -241,16 +247,18 @@ export function BrandingPanel({
                   ) : (
                     <div className="h-28 w-full animate-pulse bg-muted" />
                   )}
-                  <Button
-                    size="icon"
-                    variant="secondary"
-                    className="absolute right-2 top-2 h-7 w-7"
-                    disabled={busy}
-                    onClick={() => void removeBanner(i)}
-                    title="Remove banner"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  {canManage && (
+                    <Button
+                      size="icon"
+                      variant="secondary"
+                      className="absolute right-2 top-2 h-7 w-7"
+                      disabled={busy}
+                      onClick={() => void removeBanner(i)}
+                      title="Remove banner"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>

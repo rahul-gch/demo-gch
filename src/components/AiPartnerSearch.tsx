@@ -2,20 +2,29 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, X, Loader2 } from "lucide-react";
+import { Sparkles, X, Loader2, Search } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { aiSearchPartners, type PartnerSearchFilters } from "@/lib/matchmaking-ai.functions";
 import { toast } from "sonner";
 
 export function AiPartnerSearch({
   onFilters,
+  onSearchText,
 }: {
   onFilters: (f: PartnerSearchFilters | null) => void;
+  onSearchText?: (text: string) => void;
 }) {
   const call = useServerFn(aiSearchPartners);
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<PartnerSearchFilters | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const handleTextChange = (val: string) => {
+    setQuery(val);
+    if (onSearchText) {
+      onSearchText(val);
+    }
+  };
 
   const run = async () => {
     if (!query.trim()) return;
@@ -35,6 +44,7 @@ export function AiPartnerSearch({
     setFilters(null);
     setQuery("");
     onFilters(null);
+    if (onSearchText) onSearchText("");
   };
 
   const chips: { key: string; label: string }[] = [];
@@ -54,26 +64,26 @@ export function AiPartnerSearch({
     <div className="space-y-2">
       <div className="flex gap-2">
         <div className="relative flex-1">
-          <Sparkles className="absolute left-2.5 top-2.5 h-4 w-4 text-primary" />
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => handleTextChange(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") run();
             }}
-            placeholder="AI search — e.g. GOTS-certified denim mill in Turkey, lead time under 30 days"
+            placeholder="Search by name, country, material (e.g. Sharabati, GOTS denim in Turkey)"
             className="pl-8"
           />
         </div>
-        <Button onClick={run} disabled={loading || !query.trim()}>
+        <Button onClick={run} disabled={loading || !query.trim()} className="gap-1.5">
           {loading ? (
-            <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+            <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <Sparkles className="mr-1 h-4 w-4" />
+            <Sparkles className="h-4 w-4 text-amber-300" />
           )}
-          Search
+          AI Filter
         </Button>
-        {filters && (
+        {(filters || query) && (
           <Button variant="outline" onClick={clear}>
             <X className="mr-1 h-4 w-4" /> Clear
           </Button>

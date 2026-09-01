@@ -76,16 +76,16 @@ export interface MatchScore {
 }
 
 export function scoreMatch(a: Entity, b: Entity): MatchScore {
-  const matN = overlap(a.materials, b.materials);
-  const certN = overlap(a.certifications, b.certifications);
+  const matN = overlap(a.materials || [], b.materials || []);
+  const certN = overlap(a.certifications || [], b.certifications || []);
   const tier = tierComplementarity(a, b);
   const region = regionProximity(a, b);
   const kpi = kpiCompatibility(a, b);
   const cap = capacityFit(a, b);
   const delivery = deliveryFit(a, b);
 
-  const matMax = Math.max(1, Math.min(a.materials.length, b.materials.length));
-  const certMax = Math.max(1, Math.min(a.certifications.length, b.certifications.length));
+  const matMax = Math.max(1, Math.min((a.materials || []).length, (b.materials || []).length));
+  const certMax = Math.max(1, Math.min((a.certifications || []).length, (b.certifications || []).length));
 
   const breakdown = {
     material: 18 * (matN / matMax),
@@ -121,12 +121,27 @@ export function scoreMatch(a: Entity, b: Entity): MatchScore {
   return { entity: b, score: Math.min(100, score), breakdown, reasons };
 }
 
-export function getMatchesFor(entity: Entity, limit = 8, minScore = 0): MatchScore[] {
-  return ENTITIES.filter((x) => x.id !== entity.id)
-    .map((b) => scoreMatch(entity, b))
+export function getMatchesFor(entity: Entity, limit = 20, minScore = 0): MatchScore[] {
+  let target = entity;
+  if (!target.materials || target.materials.length === 0) {
+    target = {
+      ...target,
+      materials: ["Cotton", "Denim", "Wool", "Viscose", "Polyester", "Linen"],
+      certifications: ["GOTS", "GRS", "OEKO-TEX"],
+    };
+  }
+  let matches = ENTITIES.filter((x) => x.id !== target.id)
+    .map((b) => scoreMatch(target, b))
     .filter((m) => m.score >= minScore)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit);
+    .sort((a, b) => b.score - a.score);
+
+  if (matches.length === 0) {
+    matches = ENTITIES.filter((x) => x.id !== target.id)
+      .map((b) => scoreMatch(target, b))
+      .sort((a, b) => b.score - a.score);
+  }
+
+  return matches.slice(0, limit);
 }
 
 export interface PairMatch extends MatchScore {

@@ -3,6 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { computeNhri } from "@/lib/nhri";
 import { buildEcosystemCounts } from "@/lib/dashboard-derive";
+import { useOrgConnections } from "@/lib/org-connections";
 import { ShieldCheck, UserRound, BadgeCheck, Users2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -57,8 +58,21 @@ function KpiCard({ label, value, unit, caption, icon: Icon, tone = "slate" }: Kp
 export function KpiRow({ entity: e }: { entity: Entity }) {
   const nhri = computeNhri(e);
   const eco = buildEcosystemCounts(e);
+  const { connectedEntities } = useOrgConnections(e.id);
+
   const certs = e.certifications.length;
   const trust = certs ? Math.round((e.verifiedCertCount / certs) * 100) : 0;
+
+  const dynamicNetworkCount = connectedEntities.length + (e.isSeeded ? eco.organizations : 0);
+  const countriesSet = new Set(connectedEntities.map((c) => c.country).filter(Boolean));
+  const dynamicCountries = Math.max(countriesSet.size, e.isSeeded ? eco.countries : 0);
+
+  const networkCaption =
+    dynamicNetworkCount > 0
+      ? `${connectedEntities.length || eco.suppliers} partner${
+          (connectedEntities.length || eco.suppliers) === 1 ? "" : "s"
+        }${dynamicCountries > 0 ? ` · ${dynamicCountries} countr${dynamicCountries === 1 ? "y" : "ies"}` : ""}`
+      : "No connections yet";
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -86,14 +100,10 @@ export function KpiRow({ entity: e }: { entity: Entity }) {
       />
       <KpiCard
         label="Network"
-        value={eco.organizations}
-        caption={
-          eco.organizations
-            ? `${eco.suppliers} suppliers · ${eco.countries} countries`
-            : "No connections yet"
-        }
+        value={dynamicNetworkCount}
+        caption={networkCaption}
         icon={Users2}
-        tone={eco.organizations ? "sky" : "slate"}
+        tone={dynamicNetworkCount > 0 ? "sky" : "slate"}
       />
     </div>
   );

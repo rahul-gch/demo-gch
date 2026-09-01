@@ -94,9 +94,15 @@ export function MeetingDetailsDialog({
         <DialogFooter className="flex-wrap gap-2 sm:justify-between">
           <div className="flex gap-2">
             <Button asChild variant="outline" size="sm">
-              <Link to="/messages">
-                <MessageSquare className="mr-1 h-3.5 w-3.5" /> Message
-              </Link>
+              {entity?.id ? (
+                <Link to="/organizations/$id/messages" params={{ id: entity.id }}>
+                  <MessageSquare className="mr-1 h-3.5 w-3.5" /> Message
+                </Link>
+              ) : (
+                <Link to="/messages">
+                  <MessageSquare className="mr-1 h-3.5 w-3.5" /> Message
+                </Link>
+              )}
             </Button>
             <Button asChild variant="ghost" size="sm">
               <Link to="/directory/$id" params={{ id: entity?.id ?? m.orgId }}>

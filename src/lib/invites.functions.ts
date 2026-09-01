@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertOrgRole } from "@/lib/rbac.server";
 
 // Public lookup — anon-friendly; uses server publishable client and the
 // SECURITY DEFINER RPC.
@@ -58,6 +59,8 @@ export const createInvite = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
+    await assertOrgRole(context.supabase, context.userId, data.orgId, "admin");
+
     const expiresAt = new Date(Date.now() + data.expiresInDays * 86400_000).toISOString();
     const { data: row, error } = await context.supabase
       .from("org_invites")
@@ -79,6 +82,8 @@ export const listInvites = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.object({ orgId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
+    await assertOrgRole(context.supabase, context.userId, data.orgId, "admin");
+
     const { data: rows, error } = await context.supabase
       .from("org_invites")
       .select(
@@ -94,6 +99,15 @@ export const revokeInvite = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
+    const { data: invite } = await context.supabase
+      .from("org_invites")
+      .select("org_id")
+      .eq("id", data.id)
+      .single();
+    if (invite?.org_id) {
+      await assertOrgRole(context.supabase, context.userId, invite.org_id, "admin");
+    }
+
     const { error } = await context.supabase
       .from("org_invites")
       .update({ revoked_at: new Date().toISOString() })
@@ -106,6 +120,8 @@ export const listMembers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.object({ orgId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
+    await assertOrgRole(context.supabase, context.userId, data.orgId, "viewer");
+
     const { data: rows, error } = await context.supabase
       .from("org_members")
       .select("id, user_id, display_name, role, title, joined_at")
@@ -126,6 +142,17 @@ export const updateMemberRole = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
+    const { data: targetMember } = await context.supabase
+      .from("org_members")
+      .select("org_id, role")
+      .eq("id", data.id)
+      .single();
+    if (targetMember?.org_id) {
+      // Demoting or promoting an owner requires owner rank
+      const requiredRole = targetMember.role === "owner" || data.role === "owner" ? "owner" : "admin";
+      await assertOrgRole(context.supabase, context.userId, targetMember.org_id, requiredRole);
+    }
+
     const { error } = await context.supabase
       .from("org_members")
       .update({ role: data.role })
@@ -138,6 +165,16 @@ export const removeMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
+    const { data: targetMember } = await context.supabase
+      .from("org_members")
+      .select("org_id, role")
+      .eq("id", data.id)
+      .single();
+    if (targetMember?.org_id) {
+      const requiredRole = targetMember.role === "owner" ? "owner" : "admin";
+      await assertOrgRole(context.supabase, context.userId, targetMember.org_id, requiredRole);
+    }
+
     const { error } = await context.supabase.from("org_members").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };

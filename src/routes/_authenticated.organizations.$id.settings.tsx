@@ -16,20 +16,26 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { Eye } from "lucide-react";
 import { getEntity } from "@/seed/all-entities";
 import { updateOrgProfile } from "@/lib/orgs.functions";
 import { refreshRegistry } from "@/lib/registry";
 import { MembersPanel } from "@/components/settings/MembersPanel";
 import { EntityProfilePanel } from "@/components/settings/EntityProfilePanel";
 import { BrandingPanel } from "@/components/settings/BrandingPanel";
+import { useOrgRole } from "@/lib/use-org-role";
 
 import { ORG_TYPES } from "@/lib/org-types";
 
 const SIZE_OPTIONS = ["1-10", "11-50", "51-200", "201-1000", "1000+"];
 
 export const Route = createFileRoute("/_authenticated/organizations/$id/settings")({
-  loader: ({ params }) => {
-    const entity = getEntity(params.id);
+  loader: async ({ params, context }) => {
+    let entity = getEntity(params.id);
+    if (!entity) {
+      await refreshRegistry(context.queryClient);
+      entity = getEntity(params.id);
+    }
     if (!entity) throw notFound();
     return { entity };
   },
@@ -48,6 +54,9 @@ function OrgSettingsPage() {
   const queryClient = useQueryClient();
   const hash = useLocation({ select: (l) => l.hash });
   const saveProfile = useServerFn(updateOrgProfile);
+  const orgUuid = e.orgUuid ?? e.id;
+  const { role } = useOrgRole(orgUuid);
+  const isViewer = role === "viewer";
 
   const [name, setName] = useState(e.name);
   const [type, setType] = useState(e.organizationType || e.rawEntityType || "");
@@ -72,9 +81,11 @@ function OrgSettingsPage() {
   const [productTypes, setProductTypes] = useState(csv(e.productTypes ?? []));
   const [saving, setSaving] = useState(false);
 
-  const orgUuid = e.orgUuid;
-
   const save = async () => {
+    if (isViewer) {
+      toast.error("You have view-only permissions in this organization.");
+      return;
+    }
     if (!orgUuid) {
       toast.error("This organization is not editable.");
       return;
@@ -124,6 +135,18 @@ function OrgSettingsPage() {
         </p>
       </header>
 
+      {isViewer && (
+        <div className="flex items-center gap-3 rounded-lg border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-950 dark:text-amber-200">
+          <Eye className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+          <div>
+            <p className="font-semibold">Viewer Access Mode</p>
+            <p className="text-xs opacity-90">
+              You have read-only access to <strong>{e.name}</strong>. Editing company information, uploading branding, and managing members are disabled.
+            </p>
+          </div>
+        </div>
+      )}
+
       <Tabs
         defaultValue={hash === "members" ? "members" : hash === "entity" ? "entity" : "profile"}
         className="space-y-6"
@@ -150,10 +173,10 @@ function OrgSettingsPage() {
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
               <Row label="Organization name">
-                <Input value={name} onChange={(ev) => setName(ev.target.value)} />
+                <Input value={name} onChange={(ev) => setName(ev.target.value)} disabled={isViewer} />
               </Row>
               <Row label="Organization type">
-                <Select value={type} onValueChange={setType}>
+                <Select value={type} onValueChange={setType} disabled={isViewer}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
@@ -167,88 +190,98 @@ function OrgSettingsPage() {
                 </Select>
               </Row>
               <Row label="Country">
-                <Input value={country} onChange={(ev) => setCountry(ev.target.value)} />
+                <Input value={country} onChange={(ev) => setCountry(ev.target.value)} disabled={isViewer} />
               </Row>
               <Row label="Region / State">
-                <Input value={region} onChange={(ev) => setRegion(ev.target.value)} />
+                <Input value={region} onChange={(ev) => setRegion(ev.target.value)} disabled={isViewer} />
               </Row>
               <Row label="City">
-                <Input value={city} onChange={(ev) => setCity(ev.target.value)} />
+                <Input value={city} onChange={(ev) => setCity(ev.target.value)} disabled={isViewer} />
               </Row>
               <Row label="Website">
                 <Input
                   value={website}
-                  onChange={(ev) => setWebsite(ev.target.value)}
                   placeholder="https://example.com"
+                  onChange={(ev) => setWebsite(ev.target.value)}
+                  disabled={isViewer}
                 />
               </Row>
-              <Row label="Company size">
-                <Select value={size} onValueChange={setSize}>
+              <Row label="Company size (employees)" className="md:col-span-2">
+                <Select value={size} onValueChange={setSize} disabled={isViewer}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select size" />
                   </SelectTrigger>
                   <SelectContent>
                     {SIZE_OPTIONS.map((s) => (
                       <SelectItem key={s} value={s}>
-                        {s} employees
+                        {s}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </Row>
-              <div className="md:col-span-2">
-                <Row label="About the organization">
-                  <Textarea
-                    rows={4}
-                    value={description}
-                    onChange={(ev) => setDescription(ev.target.value)}
-                    placeholder="What you make, who you work with, and what you're known for."
-                  />
-                </Row>
-              </div>
+              <Row label="About / Description" className="md:col-span-2">
+                <Textarea
+                  value={description}
+                  rows={3}
+                  onChange={(ev) => setDescription(ev.target.value)}
+                  disabled={isViewer}
+                />
+              </Row>
             </CardContent>
           </Card>
 
           <Card className="shadow-sm">
             <CardHeader>
-              <CardTitle className="text-base font-semibold">Operations & reliability</CardTitle>
+              <CardTitle className="text-base font-semibold">Capacity &amp; operations</CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <Row label="Capacity">
-                <Input value={capacity} onChange={(ev) => setCapacity(ev.target.value)} />
+            <CardContent className="grid gap-4 md:grid-cols-2">
+              <Row label="Monthly capacity">
+                <Input
+                  value={capacity}
+                  placeholder="e.g. 50,000 units/mo"
+                  onChange={(ev) => setCapacity(ev.target.value)}
+                  disabled={isViewer}
+                />
               </Row>
-              <Row label="MOQ">
-                <Input value={moq} onChange={(ev) => setMoq(ev.target.value)} />
+              <Row label="Minimum order quantity (MOQ)">
+                <Input
+                  value={moq}
+                  placeholder="e.g. 500 pcs"
+                  onChange={(ev) => setMoq(ev.target.value)}
+                  disabled={isViewer}
+                />
               </Row>
-              <Row label="Lead time (days)">
+              <Row label="Production lead time (days)">
                 <Input
                   type="number"
                   value={leadTime}
-                  onChange={(ev) => setLeadTime(parseInt(ev.target.value) || 0)}
+                  onChange={(ev) => setLeadTime(Number(ev.target.value))}
+                  disabled={isViewer}
                 />
               </Row>
-              <Row label="Target delivery timeframe (days)">
+              <Row label="Delivery timeframe (days)">
                 <Input
                   type="number"
                   value={deliveryTimeframe}
-                  onChange={(ev) => setDeliveryTimeframe(parseInt(ev.target.value) || 0)}
+                  onChange={(ev) => setDeliveryTimeframe(Number(ev.target.value))}
+                  disabled={isViewer}
                 />
               </Row>
-              <Row label="On-time rate (%)">
+              <Row label="On-time delivery rate (%)">
                 <Input
                   type="number"
-                  min={0}
-                  max={100}
                   value={onTimeRate}
-                  onChange={(ev) => setOnTimeRate(parseInt(ev.target.value) || 0)}
+                  onChange={(ev) => setOnTimeRate(Number(ev.target.value))}
+                  disabled={isViewer}
                 />
               </Row>
               <Row label="Average delay (days)">
                 <Input
                   type="number"
-                  min={0}
                   value={avgDelay}
-                  onChange={(ev) => setAvgDelay(parseInt(ev.target.value) || 0)}
+                  onChange={(ev) => setAvgDelay(Number(ev.target.value))}
+                  disabled={isViewer}
                 />
               </Row>
             </CardContent>
@@ -256,60 +289,77 @@ function OrgSettingsPage() {
 
           <Card className="shadow-sm">
             <CardHeader>
-              <CardTitle className="text-base font-semibold">
-                Capabilities, materials & certifications
-              </CardTitle>
+              <CardTitle className="text-base font-semibold">Capabilities &amp; materials</CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-4">
-              <Row label="Materials (comma-separated)">
-                <Textarea
-                  rows={2}
+            <CardContent className="space-y-4">
+              <Row label="Materials (comma separated)">
+                <Input
                   value={materials}
+                  placeholder="Organic cotton, recycled polyester..."
                   onChange={(ev) => setMaterials(ev.target.value)}
+                  disabled={isViewer}
                 />
               </Row>
-              <Row label="Capabilities (comma-separated)">
-                <Textarea
-                  rows={2}
+              <Row label="Capabilities (comma separated)">
+                <Input
                   value={capabilities}
+                  placeholder="Weaving, digital printing, cut & sew..."
                   onChange={(ev) => setCapabilities(ev.target.value)}
+                  disabled={isViewer}
                 />
               </Row>
-              <Row label="Certifications (comma-separated)">
-                <Textarea rows={2} value={certs} onChange={(ev) => setCerts(ev.target.value)} />
+              <Row label="Certifications (comma separated)">
+                <Input
+                  value={certs}
+                  placeholder="GOTS, OEKO-TEX 100, Fair Trade..."
+                  onChange={(ev) => setCerts(ev.target.value)}
+                  disabled={isViewer}
+                />
               </Row>
-              <Row label="Product categories (comma-separated)">
-                <Textarea
-                  rows={2}
+              <Row label="Product categories (comma separated)">
+                <Input
                   value={productCategories}
+                  placeholder="Apparel, Home Textiles, Accessories..."
                   onChange={(ev) => setProductCategories(ev.target.value)}
+                  disabled={isViewer}
                 />
               </Row>
-              <Row label="Product types (comma-separated)">
-                <Textarea
-                  rows={2}
+              <Row label="Product types (comma separated)">
+                <Input
                   value={productTypes}
+                  placeholder="T-Shirts, Denim, Knitwear..."
                   onChange={(ev) => setProductTypes(ev.target.value)}
+                  disabled={isViewer}
                 />
               </Row>
             </CardContent>
           </Card>
 
-          <div className="flex justify-end gap-2">
-            <Button onClick={save} disabled={saving}>
-              {saving ? "Saving…" : "Save changes"}
-            </Button>
-          </div>
+          {!isViewer && (
+            <div className="flex justify-end">
+              <Button onClick={save} disabled={saving}>
+                {saving ? "Saving…" : "Save changes"}
+              </Button>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>
   );
 }
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
+function Row({
+  label,
+  children,
+  className = "",
+}: {
+  label: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
-    <div className="space-y-1.5">
-      <Label className="text-xs uppercase tracking-wide text-muted-foreground">{label}</Label>
+    <div className={`space-y-1.5 ${className}`}>
+      <Label className="text-xs text-muted-foreground">{label}</Label>
       {children}
     </div>
   );

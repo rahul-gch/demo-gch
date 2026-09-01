@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,8 +13,27 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { myOrgMemberships } from "@/lib/orgs.functions";
+import { amIPlatformAdmin } from "@/lib/admin.functions";
+import { getEntity } from "@/seed/all-entities";
 
 export const Route = createFileRoute("/_authenticated/settings")({
+  beforeLoad: async () => {
+    const [admin, memberships] = await Promise.all([
+      amIPlatformAdmin().catch(() => ({ isAdmin: false })),
+      myOrgMemberships().catch(() => [] as { org_id: string }[]),
+    ]);
+    if (admin?.isAdmin) return;
+    const first = memberships[0];
+    if (first) {
+      const entity = getEntity(first.org_id);
+      throw redirect({
+        to: "/organizations/$id/settings",
+        params: { id: entity?.id ?? first.org_id },
+        replace: true,
+      });
+    }
+  },
   head: () => ({
     meta: [
       { title: "Settings — Global Chain Hub" },

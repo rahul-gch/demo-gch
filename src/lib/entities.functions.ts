@@ -22,7 +22,7 @@ const list = (v: unknown): string[] => (Array.isArray(v) ? (v as string[]) : [])
 export function rowToEntity(row: OrgRow): Entity {
   const tier = row.tier as number | null;
   return {
-    id: str(row.legacy_id) || str(row.id),
+    id: str(row.slug) || str(row.legacy_id) || str(row.id),
     isSeeded: !!str(row.legacy_id),
     orgUuid: str(row.id),
     slug: str(row.slug),

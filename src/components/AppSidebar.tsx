@@ -62,8 +62,9 @@ export function AppSidebar() {
 
   const admin = !!isAdmin.data?.isAdmin;
   const primaryOrg = myOrgs[0];
+  const primaryEntity = primaryOrg ? getEntity(primaryOrg.id) : null;
   const primaryOrgPath = primaryOrg
-    ? `/organizations/${getEntity(primaryOrg.id)?.id ?? primaryOrg.id}`
+    ? `/organizations/${primaryEntity?.slug || primaryEntity?.id || primaryOrg.id}`
     : null;
 
   const items: NavItem[] = admin

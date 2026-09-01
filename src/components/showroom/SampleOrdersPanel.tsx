@@ -224,7 +224,7 @@ export function SampleOrdersPanel({
                     <div className="flex items-center gap-2 self-end sm:self-start">
                       {order.conversationId && (
                         <Button asChild variant="outline" size="sm" className="h-8 text-xs gap-1.5">
-                          <Link to="/messages">
+                          <Link to="/organizations/$id/messages" params={{ id: orgId }}>
                             <MessageSquare className="h-3.5 w-3.5" />
                             Chat
                           </Link>
@@ -319,7 +319,7 @@ export function SampleOrdersPanel({
                     <div className="flex items-center gap-2 self-end sm:self-start">
                       {order.conversationId && (
                         <Button asChild variant="outline" size="sm" className="h-8 text-xs gap-1.5">
-                          <Link to="/messages">
+                          <Link to="/organizations/$id/messages" params={{ id: orgId }}>
                             <MessageSquare className="h-3.5 w-3.5" />
                             Messages
                           </Link>

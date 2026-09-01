@@ -3,17 +3,19 @@ import type { Entity } from "@/seed/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EcosystemGoogleMap } from "@/components/EcosystemGoogleMap";
 import { getEcosystemConnections } from "@/seed/showcase";
+import { useSavedChainEntities } from "@/lib/chain-storage";
 
 export function ChainMap({ entity }: { entity: Entity }) {
   const conns = useMemo(() => getEcosystemConnections(entity), [entity]);
+  const { entities: savedExtra } = useSavedChainEntities(entity.id);
+
   const nodes = useMemo(() => {
-    const list: Entity[] = [entity, ...conns.map((c) => c.entity)];
-    // Dedupe by id
+    const list: Entity[] = [entity, ...conns.map((c) => c.entity), ...savedExtra];
     const seen = new Set<string>();
     return list.filter((e) => (seen.has(e.id) ? false : (seen.add(e.id), true)));
-  }, [entity, conns]);
+  }, [entity, conns, savedExtra]);
 
-  const upstream = conns.filter((c) => c.role === "Upstream").length;
+  const upstream = conns.filter((c) => c.role === "Upstream").length + savedExtra.length;
   const downstream = conns.filter((c) => c.role === "Downstream").length;
   const countries = new Set(nodes.map((n) => n.country).filter(Boolean)).size;
 

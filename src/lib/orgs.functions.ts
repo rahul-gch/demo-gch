@@ -47,16 +47,19 @@ function slugify(input: string): string {
   );
 }
 
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
 export const createOrg = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => createOrgSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId, claims } = context;
+    const adminSb = supabaseAdmin as any;
 
     let slug = slugify(data.slug);
     for (let i = 0; i < 10; i++) {
       const candidate = i === 0 ? slug : `${slug}-${i + 1}`;
-      const { data: existing } = await supabase
+      const { data: existing } = await adminSb
         .from("orgs")
         .select("id")
         .eq("slug", candidate)
@@ -74,15 +77,35 @@ export const createOrg = createServerFn({ method: "POST" })
       logoUrl = pub?.publicUrl ?? null;
     }
 
-    const { data: org, error: insErr } = await supabase
+    const meta =
+      (claims as { user_metadata?: Record<string, unknown>; email?: string } | undefined) ?? {};
+    const userMeta = (meta.user_metadata as Record<string, unknown> | undefined) ?? {};
+    const userEmail = meta.email || (claims as any)?.email || "";
+    const displayName =
+      (userMeta.full_name as string | undefined) ||
+      (userMeta.name as string | undefined) ||
+      (userEmail ? String(userEmail).split("@")[0] : "Owner");
+    const avatarUrl = (userMeta.avatar_url as string | undefined) || null;
+
+    const initialContacts = [
+      {
+        name: displayName,
+        email: userEmail,
+        role: "Organization Owner",
+        phone: "",
+      },
+    ];
+
+    const { data: org, error: insErr } = await adminSb
       .from("orgs")
       .insert({
+        created_by: userId,
         name: data.name,
         slug,
         type: data.type,
         country: data.country || null,
         city: data.city || null,
-
+        contacts: initialContacts,
         website: data.website || null,
         description: data.description || null,
         size: data.size || null,
@@ -104,16 +127,7 @@ export const createOrg = createServerFn({ method: "POST" })
       .single();
     if (insErr) throw new Error(insErr.message);
 
-    const meta =
-      (claims as { user_metadata?: Record<string, unknown>; email?: string } | undefined) ?? {};
-    const userMeta = (meta.user_metadata as Record<string, unknown> | undefined) ?? {};
-    const displayName =
-      (userMeta.full_name as string | undefined) ||
-      (userMeta.name as string | undefined) ||
-      (meta.email ? String(meta.email).split("@")[0] : "Owner");
-    const avatarUrl = (userMeta.avatar_url as string | undefined) || null;
-
-    const { error: memErr } = await supabase.from("org_members").insert({
+    const { error: memErr } = await adminSb.from("org_members").insert({
       org_id: org.id,
       user_id: userId,
       role: "owner",
@@ -121,7 +135,7 @@ export const createOrg = createServerFn({ method: "POST" })
       avatar_url: avatarUrl,
     });
     if (memErr) {
-      await supabase.from("orgs").delete().eq("id", org.id);
+      await adminSb.from("orgs").delete().eq("id", org.id);
       throw new Error(memErr.message);
     }
 
@@ -459,4 +473,53 @@ export const getOrgProfileAnswers = createServerFn({ method: "GET" })
         logoUrl: (org.logo_url as string | null) ?? "",
       },
     };
+  });
+
+export const leaveOrganizationFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ orgId: z.string().min(1) }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    // Check member's current role
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.orgId);
+    let targetOrgId = data.orgId;
+    if (!isUuid) {
+      const { data: orgRow } = await supabase
+        .from("orgs")
+        .select("id")
+        .or(`slug.ilike.${data.orgId},legacy_id.ilike.${data.orgId},name.ilike.${data.orgId}`)
+        .maybeSingle();
+      if (orgRow?.id) targetOrgId = orgRow.id;
+    }
+
+    const { data: member } = await supabase
+      .from("org_members")
+      .select("id, role")
+      .eq("org_id", targetOrgId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (!member) {
+      throw new Error("You are not a member of this organization.");
+    }
+
+    if (member.role === "owner") {
+      const { data: otherOwners } = await supabase
+        .from("org_members")
+        .select("id")
+        .eq("org_id", targetOrgId)
+        .eq("role", "owner")
+        .neq("user_id", userId);
+
+      if (!otherOwners || otherOwners.length === 0) {
+        throw new Error(
+          "As the sole owner, you cannot leave this organization. Please transfer ownership to another member or delete the organization in Settings.",
+        );
+      }
+    }
+
+    const { error } = await supabase.from("org_members").delete().eq("id", member.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });

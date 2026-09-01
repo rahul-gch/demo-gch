@@ -4,7 +4,6 @@
 // summaryMetrics, ENTITY_TYPE_BREAKDOWN) that are mutated in place when data
 // arrives, so existing synchronous consumers keep working.
 import type { Entity } from "./types";
-import { applyOverride } from "./org-overrides";
 
 export const ENTITY_TYPES = [
   "Brand",
@@ -62,6 +61,7 @@ export function hydrateEntities(entities: Entity[]) {
     byId.set(e.id, e);
     if (e.orgUuid) byId.set(e.orgUuid, e);
     if (e.slug) byId.set(e.slug, e);
+    if (e.gchNumber) byId.set(e.gchNumber, e);
   }
 
   const n = entities.length || 1;
@@ -94,6 +94,24 @@ export function hydrateEntities(entities: Entity[]) {
 }
 
 export function getEntity(id: string): Entity | undefined {
+  if (!id) return undefined;
   const base = byId.get(id);
-  return base ? applyOverride(base) : undefined;
+  if (base) return base;
+
+  const lower = id.toLowerCase();
+  const normalized = lower.replace(/[^a-z0-9]/g, "");
+
+  const found = ALL_ENTITIES.find((e) => {
+    if (e.id.toLowerCase() === lower) return true;
+    if (e.orgUuid?.toLowerCase() === lower) return true;
+    if (e.slug?.toLowerCase() === lower) return true;
+    if (e.gchNumber?.toLowerCase() === lower) return true;
+    if (e.name.toLowerCase() === lower) return true;
+    if (e.name.toLowerCase().replace(/[^a-z0-9]/g, "") === normalized) return true;
+    if (e.id.toLowerCase().replace(/[^a-z0-9]/g, "") === normalized) return true;
+    if (e.gchNumber?.toLowerCase().replace(/[^a-z0-9]/g, "") === normalized) return true;
+    return false;
+  });
+
+  return found;
 }

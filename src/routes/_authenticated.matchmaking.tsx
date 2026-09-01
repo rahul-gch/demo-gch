@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,8 +17,27 @@ import {
 import { getTopPairs } from "@/seed/matchmaking";
 import { MatchProfileSheet } from "@/components/MatchProfileSheet";
 import type { Entity } from "@/seed/types";
+import { myOrgMemberships } from "@/lib/orgs.functions";
+import { amIPlatformAdmin } from "@/lib/admin.functions";
+import { getEntity } from "@/seed/all-entities";
 
 export const Route = createFileRoute("/_authenticated/matchmaking")({
+  beforeLoad: async () => {
+    const [admin, memberships] = await Promise.all([
+      amIPlatformAdmin().catch(() => ({ isAdmin: false })),
+      myOrgMemberships().catch(() => [] as { org_id: string }[]),
+    ]);
+    if (admin?.isAdmin) return;
+    const first = memberships[0];
+    if (first) {
+      const entity = getEntity(first.org_id);
+      throw redirect({
+        to: "/organizations/$id/matchmaking",
+        params: { id: entity?.id ?? first.org_id },
+        replace: true,
+      });
+    }
+  },
   head: () => ({
     meta: [
       { title: "Matchmaking — Global Chain Hub" },

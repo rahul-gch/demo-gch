@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Loader2, MailCheck } from "lucide-react";
+import { refreshRegistry } from "@/lib/registry";
 import {
   MARKETING_CONSENT_VERSION,
   PASSWORD_RULES,
@@ -27,6 +29,7 @@ export function EmailAuthForm({
   onSignedIn?: () => void;
   compact?: boolean;
 }) {
+  const queryClient = useQueryClient();
   const [mode, setMode] = useState<Mode>(initialMode ?? "signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -93,11 +96,15 @@ export function EmailAuthForm({
           return;
         }
         void logSecurityEvent("auth.sign_up");
+        queryClient.clear();
+        await refreshRegistry(queryClient);
         onSignedIn?.();
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email: mail, password });
         if (error) throw error;
         void logSecurityEvent("auth.sign_in");
+        queryClient.clear();
+        await refreshRegistry(queryClient);
         onSignedIn?.();
       }
     } catch (err) {

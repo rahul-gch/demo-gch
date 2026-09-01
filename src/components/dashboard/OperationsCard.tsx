@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { setOverride } from "@/seed/org-overrides";
+import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { updateOrgOperations } from "@/lib/orgs.functions";
+import { refreshRegistry } from "@/lib/registry";
 import { toast } from "sonner";
 import {
   Loader2,
@@ -163,6 +164,7 @@ function Stat({
 
 export function OperationsCard({ entity }: { entity: Entity }) {
   const updateFn = useServerFn(updateOrgOperations);
+  const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -173,8 +175,6 @@ export function OperationsCard({ entity }: { entity: Entity }) {
   const [materials, setMaterials] = useState<string[]>(entity.materials ?? []);
   const [capabilities, setCapabilities] = useState<string[]>(entity.capabilities ?? []);
   const [specializations, setSpecializations] = useState<string[]>(entity.specializations ?? []);
-
-  const isDbOrg = useMemo(() => UUID_RE.test(entity.id), [entity.id]);
 
   const reset = () => {
     setMoq(entity.moq ?? "");
@@ -198,25 +198,13 @@ export function OperationsCard({ entity }: { entity: Entity }) {
       specializations,
     };
     try {
-      if (isDbOrg) {
-        await updateFn({ data: { orgId: entity.id, ...patch } });
-      } else {
-        setOverride(entity.id, {
-          moq: patch.moq ?? undefined,
-          leadTimeDays: patch.leadTimeDays ?? undefined,
-          capacity: patch.capacity ?? undefined,
-          onTimeRate: patch.onTimeRate ?? undefined,
-          materials,
-          capabilities,
-          specializations,
-        });
+      const targetId = entity.orgUuid || (UUID_RE.test(entity.id) ? entity.id : null);
+      if (targetId) {
+        await updateFn({ data: { orgId: targetId, ...patch } });
+        await refreshRegistry(queryClient);
       }
       toast.success("Operations updated");
       setEditing(false);
-      if (isDbOrg) {
-        // Reload so server-fetched entity refreshes.
-        window.setTimeout(() => window.location.reload(), 300);
-      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to save");
     } finally {
@@ -383,11 +371,6 @@ export function OperationsCard({ entity }: { entity: Entity }) {
                 suggestions={CAPABILITY_OPTIONS}
               />
             </div>
-            {!isDbOrg && (
-              <p className="text-[11px] text-muted-foreground">
-                Demo organization — changes are saved locally in your browser.
-              </p>
-            )}
           </>
         )}
       </CardContent>

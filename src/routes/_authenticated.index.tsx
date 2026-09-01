@@ -41,9 +41,12 @@ import { ScheduledJobs } from "@/components/ops/ScheduledJobs";
 import { OpsFooter } from "@/components/ops/OpsFooter";
 import { platformCounts, todaysPriorities, platformAlerts } from "@/lib/ops-derive";
 
+import { refreshRegistry } from "@/lib/registry";
+
 export const Route = createFileRoute("/_authenticated/")({
-  beforeLoad: async () => {
+  beforeLoad: async ({ context }) => {
     // Only Global Chain Hub platform admins see the operations console.
+    await refreshRegistry((context as any).queryClient);
     const [admin, memberships] = await Promise.all([
       amIPlatformAdmin().catch(() => ({ isAdmin: false })),
       myOrgMemberships().catch(() => [] as { org_id: string }[]),
@@ -51,10 +54,15 @@ export const Route = createFileRoute("/_authenticated/")({
     if (admin?.isAdmin) return;
     const first = memberships[0];
     if (first) {
-      const entity = getEntity(first.org_id);
+      let entity = getEntity(first.org_id);
+      if (!entity) {
+        await refreshRegistry((context as any).queryClient);
+        entity = getEntity(first.org_id);
+      }
+      const targetId = entity?.slug || entity?.id || first.org_id;
       throw redirect({
         to: "/organizations/$id",
-        params: { id: entity?.id ?? first.org_id },
+        params: { id: targetId },
         replace: true,
       });
     }

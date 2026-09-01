@@ -10,12 +10,14 @@ import { getOrgProfileAnswers, saveOrgProfileAnswers } from "@/lib/orgs.function
 import { getProfileSteps, normalizeEntityType, type ProfileAnswers } from "@/lib/entity-profiles";
 import { computeProfileScore } from "@/lib/profile-score";
 import { refreshRegistry } from "@/lib/registry";
+import { useOrgRole } from "@/lib/use-org-role";
 
 /** Entity-specific questionnaire, editable any time after onboarding. */
 export function EntityProfilePanel({ orgId }: { orgId: string }) {
   const queryClient = useQueryClient();
-  const load = useServerFn(getOrgProfileAnswers);
   const save = useServerFn(saveOrgProfileAnswers);
+  const { canManage } = useOrgRole(orgId);
+  const load = useServerFn(getOrgProfileAnswers);
   const { data, isLoading } = useQuery({
     queryKey: ["org-profile-answers", orgId],
     queryFn: () => load({ data: { orgId } }),
@@ -106,12 +108,14 @@ export function EntityProfilePanel({ orgId }: { orgId: string }) {
         </Card>
       ))}
 
-      <div className="flex justify-end">
-        <Button onClick={() => void submit()} disabled={saving}>
-          {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Save profile
-        </Button>
-      </div>
+      {canManage && (
+        <div className="flex justify-end">
+          <Button onClick={() => void submit()} disabled={saving}>
+            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Save profile
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

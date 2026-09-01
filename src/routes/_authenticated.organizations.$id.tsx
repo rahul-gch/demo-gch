@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { createFileRoute, Link, Outlet, notFound, redirect } from "@tanstack/react-router";
 import { OrgShell } from "@/components/OrgShell";
 import { getEntity } from "@/seed/all-entities";
@@ -17,42 +18,57 @@ export const Route = createFileRoute("/_authenticated/organizations/$id")({
     }
     if (!entity) throw notFound();
 
+    // Canonicalize raw UUID in URL to clean slug if available
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(params.id);
+    if (isUuid && entity.slug && entity.slug !== params.id) {
+      throw redirect({
+        to: "/organizations/$id",
+        params: { id: entity.slug },
+        replace: true,
+      });
+    }
+
     // Only members of this organization (and platform admins) get the internal
     // workspace. Everyone else sees the read-only public network profile.
-    // Caches are scoped to the signed-in user (same keys as the auth gate) so a
-    // pre-session empty result can never decide this check.
     const userId = (context as { user?: { id?: string } }).user?.id ?? "anon";
     const [memberships, admin] = await Promise.all([
       context.queryClient
         .ensureQueryData({
           queryKey: ["my-org-memberships-gate", userId],
           queryFn: () => myOrgMemberships(),
-          staleTime: 30_000,
+          staleTime: 10_000,
         })
         .catch(() => [] as { org_id: string }[]),
       context.queryClient
         .ensureQueryData({
           queryKey: ["am-i-platform-admin", userId],
           queryFn: () => amIPlatformAdmin(),
-          staleTime: 60_000,
+          staleTime: 30_000,
         })
         .catch(() => ({ isAdmin: false })),
     ]);
 
     const belongs = (list: { org_id: string }[] | undefined | null) => {
       const ids = new Set((list ?? []).map((m) => m.org_id));
-      return ids.has(entity!.orgUuid ?? "") || ids.has(entity!.id);
+      return (
+        (entity?.orgUuid && ids.has(entity.orgUuid)) ||
+        (entity?.id && ids.has(entity.id)) ||
+        (entity?.slug && ids.has(entity.slug)) ||
+        ids.has(params.id)
+      );
     };
 
     let isMember = belongs(memberships);
     if (!isMember && !admin?.isAdmin) {
-      // An empty list can also mean "the session token wasn't attached yet".
-      // Re-check once with a fresh call before sending the owner to the public
-      // profile of their own organization.
+      // Re-check once with a fresh call before sending to public profile
       const fresh = await myOrgMemberships().catch(() => null);
-      if (fresh) {
+      if (fresh && fresh.length > 0) {
         context.queryClient.setQueryData(["my-org-memberships-gate", userId], fresh);
         isMember = belongs(fresh);
+      }
+      if (!isMember) {
+        const freshAdmin = await amIPlatformAdmin().catch(() => ({ isAdmin: false }));
+        if (freshAdmin?.isAdmin) isMember = true;
       }
     }
     if (!isMember && !admin?.isAdmin) {
@@ -75,6 +91,14 @@ export const Route = createFileRoute("/_authenticated/organizations/$id")({
 
 function OrgLayout() {
   const { entity } = Route.useLoaderData();
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && entity) {
+      const activeRef = entity.slug || entity.id;
+      if (activeRef) localStorage.setItem("gch_active_org", activeRef);
+    }
+  }, [entity]);
+
   return (
     <OrgShell entity={entity}>
       <Outlet />

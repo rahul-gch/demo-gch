@@ -653,10 +653,19 @@ export const listSampleOrders = createServerFn({ method: "POST" })
           }
         }
 
+        for (const order of FALLBACK_SAMPLE_ORDERS) {
+          if (inbound.some((o) => o.id === order.id) || outbound.some((o) => o.id === order.id)) continue;
+          if (order.sellerOrgId === targetUuid || order.sellerOrgId === data.orgId) {
+            inbound.push(order);
+            if (order.status === "requested") pendingCount += 1;
+          } else if (order.buyerOrgId === targetUuid || order.buyerOrgId === data.orgId) {
+            outbound.push(order);
+          }
+        }
+
         return { inbound, outbound, pendingCount };
       }
 
-      // Demo (non-UUID) orgs only.
       for (const order of FALLBACK_SAMPLE_ORDERS) {
         if (order.sellerOrgId === targetUuid || order.sellerOrgId === data.orgId) {
           inbound.push(order);

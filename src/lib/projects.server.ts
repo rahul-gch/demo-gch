@@ -45,29 +45,44 @@ const CATEGORY: Record<string, PartnerCategory> = {
 export async function loadOrgIndex(supabase: AnyClient) {
   const { data } = await supabase
     .from("orgs")
-    .select("id, legacy_id, name, country, entity_type, type");
+    .select("id, legacy_id, slug, name, country, entity_type, type");
   const byUuid = new Map<string, OrgRef>();
   const byEntityId = new Map<string, OrgRef>();
   for (const r of (data ?? []) as Row[]) {
     const uuid = String(r.id);
     const legacy = typeof r.legacy_id === "string" ? r.legacy_id : "";
+    const slug = typeof r.slug === "string" ? r.slug : "";
+    const name = String(r.name ?? "");
     const ref: OrgRef = {
       uuid,
-      entityId: legacy || uuid,
-      name: String(r.name ?? ""),
+      entityId: legacy || slug || uuid,
+      name,
       country: String(r.country ?? ""),
       entityType: String(r.entity_type ?? r.type ?? "Brand"),
     };
     byUuid.set(uuid, ref);
-    byEntityId.set(ref.entityId, ref);
+    if (legacy) {
+      byEntityId.set(legacy, ref);
+      byEntityId.set(legacy.toLowerCase(), ref);
+    }
+    if (slug) {
+      byEntityId.set(slug, ref);
+      byEntityId.set(slug.toLowerCase(), ref);
+    }
+    if (name) {
+      byEntityId.set(name.toLowerCase(), ref);
+    }
+    byEntityId.set(uuid, ref);
+    byEntityId.set(uuid.toLowerCase(), ref);
   }
   return {
     byUuid,
     byEntityId,
-    /** Accepts either an entity id ("gch-012") or an org uuid. */
+    /** Accepts either an entity id ("gch-012"), a slug ("xyz"), or an org uuid. */
     toUuid(ref: string | null | undefined): string | null {
       if (!ref) return null;
       if (byEntityId.has(ref)) return byEntityId.get(ref)!.uuid;
+      if (byEntityId.has(ref.toLowerCase())) return byEntityId.get(ref.toLowerCase())!.uuid;
       if (isUuid(ref) && byUuid.has(ref)) return ref;
       return isUuid(ref) ? ref : null;
     },
@@ -80,6 +95,26 @@ export async function loadOrgIndex(supabase: AnyClient) {
       return byUuid.get(uuid)?.name ?? "";
     },
   };
+}
+
+export async function resolveOrgRow(supabase: AnyClient, ref: string) {
+  if (!ref) return null;
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(ref);
+  if (isUuid) {
+    const { data } = await supabase
+      .from("orgs")
+      .select("id, name, country, created_by, slug")
+      .eq("id", ref)
+      .maybeSingle();
+    return data as { id: string; name: string; country: string | null; created_by?: string | null; slug?: string } | null;
+  }
+  const clean = ref.trim().toLowerCase();
+  const { data } = await supabase
+    .from("orgs")
+    .select("id, name, country, created_by, slug")
+    .or(`slug.ilike.${clean},legacy_id.ilike.${clean},name.ilike.${clean}`)
+    .maybeSingle();
+  return data as { id: string; name: string; country: string | null; created_by?: string | null; slug?: string } | null;
 }
 
 export type OrgIndex = Awaited<ReturnType<typeof loadOrgIndex>>;

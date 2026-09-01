@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "@tanstack/react-router";
 import { buildEcosystemCounts } from "@/lib/dashboard-derive";
+import { useOrgConnections } from "@/lib/org-connections";
 import { EcosystemGoogleMap } from "@/components/EcosystemGoogleMap";
 import { getEcosystemConnections } from "@/seed/showcase";
 import {
@@ -112,8 +113,32 @@ function MetricPill({
 
 export function EcosystemSummary({ entity }: { entity: Entity }) {
   const c = buildEcosystemCounts(entity);
-  const hasData = c.organizations > 0;
-  const conns = useMemo(() => getEcosystemConnections(entity).map((x) => x.entity), [entity]);
+  const { connectedEntities } = useOrgConnections(entity.id);
+  const rawConns = useMemo(() => getEcosystemConnections(entity).map((x) => x.entity), [entity]);
+
+  const conns = useMemo(() => {
+    const map = new Map<string, Entity>();
+    for (const item of connectedEntities) map.set(item.id, item);
+    for (const item of rawConns) {
+      if (!map.has(item.id)) map.set(item.id, item);
+    }
+    return Array.from(map.values());
+  }, [connectedEntities, rawConns]);
+
+  const dynamicCounts = useMemo(() => {
+    const setCountries = new Set(conns.map((x) => x.country).filter(Boolean));
+    return {
+      organizations: conns.length || c.organizations,
+      countries: setCountries.size || c.countries,
+      suppliers: conns.filter((x) => x.actorType !== "Tier 0").length || c.suppliers,
+      research: conns.filter((x) => x.entityType === "Sustainability Partner" || (x.organizationType as string) === "Research Institute").length || c.research,
+      ngos: conns.filter((x) => x.entityType === "Sustainability Partner").length || c.ngos,
+      auditors: conns.filter((x) => x.entityType === "Certification Body").length || c.auditors,
+      certifiers: conns.filter((x) => x.entityType === "Certification Body").length || c.certifiers,
+    };
+  }, [conns, c]);
+
+  const hasData = conns.length > 0 || c.organizations > 0;
   const [open, setOpen] = useState<MetricKey | null>(null);
 
   const filtered = useMemo(() => {
@@ -124,13 +149,14 @@ export function EcosystemSummary({ entity }: { entity: Entity }) {
       case "suppliers":
         return conns.filter((x) => x.actorType !== "Tier 0");
       case "research":
+        return conns.filter((x) => x.entityType === "Sustainability Partner" || (x.organizationType as string) === "Research Institute");
       case "ngos":
         return conns.filter((x) => x.entityType === "Sustainability Partner");
       case "auditors":
       case "certifiers":
         return conns.filter((x) => x.entityType === "Certification Body");
       case "countries":
-        return [];
+        return conns;
       default:
         return [];
     }
@@ -143,13 +169,13 @@ export function EcosystemSummary({ entity }: { entity: Entity }) {
   }, [conns]);
 
   const metrics: [MetricKey, number][] = [
-    ["organizations", c.organizations],
-    ["countries", c.countries],
-    ["suppliers", c.suppliers],
-    ["research", c.research],
-    ["ngos", c.ngos],
-    ["auditors", c.auditors],
-    ["certifiers", c.certifiers],
+    ["organizations", dynamicCounts.organizations],
+    ["countries", dynamicCounts.countries],
+    ["suppliers", dynamicCounts.suppliers],
+    ["research", dynamicCounts.research],
+    ["ngos", dynamicCounts.ngos],
+    ["auditors", dynamicCounts.auditors],
+    ["certifiers", dynamicCounts.certifiers],
   ];
 
   return (
