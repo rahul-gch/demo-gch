@@ -59,6 +59,7 @@ export function ShowroomWorkspace({ entity, defaultTab = "products" }: ShowroomW
   );
   const upsertMutation = useUpsertShowroomProduct(targetOrgUuid);
   const deleteMutation = useDeleteShowroomProduct(targetOrgUuid);
+  const activeMutation = useSetShowroomProductActive(targetOrgUuid);
 
   const isOwner = showroom?.isOwner ?? false;
   const canManage = showroom?.canManage ?? false;
