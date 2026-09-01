@@ -250,6 +250,7 @@ export function ShowroomWorkspace({ entity, defaultTab = "products" }: ShowroomW
                 <ProductCard
                   key={prod.id}
                   product={prod}
+                  orgRouteId={entity.id}
                   isOwner={isOwner}
                   canManage={canManage}
                   isConnected={isConnected}
@@ -258,6 +259,9 @@ export function ShowroomWorkspace({ entity, defaultTab = "products" }: ShowroomW
                     setEditorOpen(true);
                   }}
                   onDelete={() => deleteMutation.mutate(prod.id)}
+                  onToggleActive={(p, next) =>
+                    activeMutation.mutate({ productId: p.id, isActive: next })
+                  }
                   onOrderSample={() => setOrderModalProduct(prod)}
                 />
               ))}
