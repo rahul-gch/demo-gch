@@ -377,30 +377,32 @@ export function MembersPanel({ orgId }: { orgId: string }) {
         </CardContent>
       </Card>
 
-      <Card className="border-destructive/20 shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-base font-semibold text-destructive flex items-center gap-2">
-            <LogOut className="h-4 w-4" /> Leave Organization
-          </CardTitle>
-          <CardDescription className="text-xs">
-            Revoke your membership and remove this workspace from your account.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button
-            variant="destructive"
-            size="sm"
-            disabled={leaveMut.isPending}
-            onClick={() => {
-              if (window.confirm("Are you sure you want to leave this organization?")) {
-                leaveMut.mutate();
-              }
-            }}
-          >
-            {leaveMut.isPending ? "Leaving…" : "Leave Organization"}
-          </Button>
-        </CardContent>
-      </Card>
+      {!isOwner && (
+        <Card className="border-destructive/20 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-base font-semibold text-destructive flex items-center gap-2">
+              <LogOut className="h-4 w-4" /> Leave Organization
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Revoke your membership and remove this workspace from your account.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={leaveMut.isPending}
+              onClick={() => {
+                if (window.confirm("Are you sure you want to leave this organization?")) {
+                  leaveMut.mutate();
+                }
+              }}
+            >
+              {leaveMut.isPending ? "Leaving…" : "Leave Organization"}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
