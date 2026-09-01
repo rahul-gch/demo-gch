@@ -76,19 +76,26 @@ export function PublicOrgProfile({ entity: e }: { entity: Entity }) {
     const entity = getEntity(primaryOrg.id);
     return entity?.id ?? primaryOrg.id;
   }, [primaryOrg]);
+  // Server functions expect the database UUID, not the seed/legacy entity id.
+  const actingOrgUuid = useMemo(() => {
+    if (!primaryOrg) return null;
+    const entity = getEntity(primaryOrg.id);
+    return entity?.orgUuid ?? primaryOrg.id;
+  }, [primaryOrg]);
 
   const { isConnected: checkIsConnected, getConnectionStatus } = useOrgConnections(actingOrgId);
   const requestMutation = useRequestConnection();
   const respondMutation = useRespondConnection();
 
-  const sendMessage = useSendMessage(actingOrgId);
+  const sendMessage = useSendMessage(actingOrgUuid);
   const targetOrgUuid = e.orgUuid ?? e.id;
 
   const { data: showroom, isLoading: showroomLoading } = useShowroomProducts(
     targetOrgUuid,
-    actingOrgId,
+    actingOrgUuid,
   );
-  const createOrderMutation = useCreateSampleOrder(actingOrgId);
+  const createOrderMutation = useCreateSampleOrder(actingOrgUuid);
+
 
   const isConnected =
     (showroom?.isConnected ?? false) ||
