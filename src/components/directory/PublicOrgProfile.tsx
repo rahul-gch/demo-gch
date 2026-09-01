@@ -133,14 +133,15 @@ export function PublicOrgProfile({ entity: e }: { entity: Entity }) {
 
   const send = () => {
     if (!draft.trim()) return;
-    if (!actingOrgId) {
+    if (!actingOrgUuid) {
       toast.error("Join or create an organization before messaging partners.");
       return;
     }
-    if (!targetOrgUuid || targetOrgUuid === actingOrgId) {
+    if (!targetOrgUuid || targetOrgUuid === actingOrgUuid) {
       toast.error("This organization cannot be messaged yet.");
       return;
     }
+
     sendMessage.mutate(
       { counterpartOrgId: targetOrgUuid, body: draft.trim() },
       {
