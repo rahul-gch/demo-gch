@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { myOrgMemberships } from "@/lib/orgs.functions";
@@ -19,9 +20,10 @@ export type { ThreadMessage, MeetingRequest } from "@/lib/comms-types";
 
 /** The organization the signed-in user is acting as (their first membership). */
 export function useMyOrgIds() {
+  const getMemberships = useServerFn(myOrgMemberships);
   const { data } = useQuery({
     queryKey: ["my-org-memberships"],
-    queryFn: () => myOrgMemberships(),
+    queryFn: () => getMemberships(),
     staleTime: 5 * 60_000,
   });
   return useMemo(() => (data ?? []).map((m) => m.org_id as string), [data]);
@@ -29,9 +31,10 @@ export function useMyOrgIds() {
 
 /** Memberships with display names, for the acting-organization switcher. */
 export function useMyOrgs() {
+  const getMemberships = useServerFn(myOrgMemberships);
   const { data } = useQuery({
     queryKey: ["my-org-memberships"],
-    queryFn: () => myOrgMemberships(),
+    queryFn: () => getMemberships(),
     staleTime: 5 * 60_000,
   });
   return useMemo(
@@ -53,11 +56,15 @@ export interface ConversationView extends ConversationSummary {
 export function useConversations(orgId: string | null) {
   const queryClient = useQueryClient();
   const instanceId = useId();
+  const getConversations = useServerFn(listConversations);
 
   const query = useQuery({
     queryKey: ["conversations", orgId],
     enabled: !!orgId,
-    queryFn: () => listConversations({ data: { orgId: orgId! } }),
+    queryFn: () => {
+      if (!orgId) return [];
+      return getConversations({ data: { orgId } });
+    },
   });
 
   // Live delivery: any new message refreshes the list and the open thread.
@@ -96,10 +103,14 @@ export function useConversations(orgId: string | null) {
 }
 
 export function useThread(conversationId: string | null, myOrgId: string | null) {
+  const getMessages = useServerFn(listMessages);
   const query = useQuery({
     queryKey: ["thread", conversationId],
     enabled: !!conversationId,
-    queryFn: () => listMessages({ data: { conversationId: conversationId! } }),
+    queryFn: () => {
+      if (!conversationId) return [];
+      return getMessages({ data: { conversationId } });
+    },
   });
 
   const messages = useMemo<ThreadMessage[]>(
@@ -121,18 +132,24 @@ export function useThread(conversationId: string | null, myOrgId: string | null)
 
 export function useMarkRead(orgId: string | null) {
   const queryClient = useQueryClient();
+  const markRead = useServerFn(markConversationRead);
   return useMutation({
-    mutationFn: (conversationId: string) =>
-      markConversationRead({ data: { conversationId, orgId: orgId! } }),
+    mutationFn: (conversationId: string) => {
+      if (!orgId) throw new Error("No organization selected.");
+      return markRead({ data: { conversationId, orgId } });
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["conversations", orgId] }),
   });
 }
 
 export function useSendMessage(orgId: string | null) {
   const queryClient = useQueryClient();
+  const send = useServerFn(sendMessage);
   return useMutation({
-    mutationFn: (vars: { counterpartOrgId: string; body: string }) =>
-      sendMessage({ data: { myOrgId: orgId!, ...vars } }),
+    mutationFn: (vars: { counterpartOrgId: string; body: string }) => {
+      if (!orgId) throw new Error("No organization selected.");
+      return send({ data: { myOrgId: orgId, ...vars } });
+    },
     onSuccess: (row) => {
       queryClient.invalidateQueries({ queryKey: ["conversations", orgId] });
       queryClient.invalidateQueries({ queryKey: ["thread", row.conversation_id] });
@@ -146,11 +163,15 @@ export function useSendMessage(orgId: string | null) {
 export function useMeetings(orgId: string | null) {
   const queryClient = useQueryClient();
   const instanceId = useId();
+  const getMeetings = useServerFn(listMeetings);
 
   const query = useQuery({
     queryKey: ["meetings", orgId],
     enabled: !!orgId,
-    queryFn: () => listMeetings({ data: { orgId: orgId! } }),
+    queryFn: () => {
+      if (!orgId) return [];
+      return getMeetings({ data: { orgId } });
+    },
   });
 
   useEffect(() => {
@@ -172,22 +193,27 @@ export function useMeetings(orgId: string | null) {
 
 export function useCreateMeeting(orgId: string | null) {
   const queryClient = useQueryClient();
+  const createMeeting = useServerFn(createMeetingRequest);
   return useMutation({
     mutationFn: (vars: {
       recipientOrgId: string;
       proposedFor: string;
       durationMin: number;
       agenda: string;
-    }) => createMeetingRequest({ data: { requesterOrgId: orgId!, ...vars } }),
+    }) => {
+      if (!orgId) throw new Error("No organization selected.");
+      return createMeeting({ data: { requesterOrgId: orgId, ...vars } });
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["meetings"] }),
   });
 }
 
 export function useSetMeetingStatus(actingOrgId?: string | null) {
   const queryClient = useQueryClient();
+  const updateMeetingStatus = useServerFn(setMeetingStatus);
   return useMutation({
     mutationFn: (vars: { id: string; status: "confirmed" | "declined" | "cancelled" }) =>
-      setMeetingStatus({ data: { ...vars, actingOrgId: actingOrgId ?? undefined } }),
+      updateMeetingStatus({ data: { ...vars, actingOrgId: actingOrgId ?? undefined } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["meetings"] });
       queryClient.invalidateQueries({ queryKey: ["notifications", actingOrgId] });
