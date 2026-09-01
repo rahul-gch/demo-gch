@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 const memoryChainStore = new Map<string, Set<string>>();
 
 export const getOrgChainIds = createServerFn({ method: "GET" })
-  .validator((data: unknown) => z.object({ orgId: z.string() }).parse(data))
+  .inputValidator((data: unknown) => z.object({ orgId: z.string() }).parse(data))
   .handler(async ({ data }) => {
     const orgId = data.orgId;
     if (memoryChainStore.has(orgId)) {
@@ -32,7 +32,7 @@ export const getOrgChainIds = createServerFn({ method: "GET" })
   });
 
 export const addOrgChainId = createServerFn({ method: "POST" })
-  .validator((data: unknown) =>
+  .inputValidator((data: unknown) =>
     z
       .object({
         orgId: z.string(),
@@ -65,7 +65,7 @@ export const addOrgChainId = createServerFn({ method: "POST" })
   });
 
 export const removeOrgChainId = createServerFn({ method: "POST" })
-  .validator((data: unknown) =>
+  .inputValidator((data: unknown) =>
     z
       .object({
         orgId: z.string(),

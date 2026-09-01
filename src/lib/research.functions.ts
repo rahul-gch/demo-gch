@@ -92,7 +92,7 @@ Return concise, structured candidates with a one-sentence rationale per candidat
 const researchRunsMemory = new Map<string, ResearchRun[]>();
 
 export const getOrgResearchRuns = createServerFn({ method: "GET" })
-  .validator((data: unknown) => z.object({ orgId: z.string() }).parse(data))
+  .inputValidator((data: unknown) => z.object({ orgId: z.string() }).parse(data))
   .handler(async ({ data }) => {
     const orgId = data.orgId;
     if (researchRunsMemory.has(orgId)) {
@@ -118,7 +118,7 @@ export const getOrgResearchRuns = createServerFn({ method: "GET" })
   });
 
 export const saveOrgResearchRun = createServerFn({ method: "POST" })
-  .validator((data: unknown) =>
+  .inputValidator((data: unknown) =>
     z
       .object({
         run: z.any(),
@@ -154,7 +154,7 @@ export const saveOrgResearchRun = createServerFn({ method: "POST" })
   });
 
 export const deleteOrgResearchRun = createServerFn({ method: "POST" })
-  .validator((data: unknown) =>
+  .inputValidator((data: unknown) =>
     z
       .object({
         orgId: z.string(),
