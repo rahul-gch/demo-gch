@@ -49,6 +49,7 @@ import { Route as AuthenticatedOrganizationsIdFeedRouteImport } from './routes/_
 import { Route as AuthenticatedOrganizationsIdComplianceRouteImport } from './routes/_authenticated.organizations.$id.compliance'
 import { Route as AuthenticatedOrganizationsIdShowroomIndexRouteImport } from './routes/_authenticated.organizations.$id.showroom.index'
 import { Route as AuthenticatedOrganizationsIdProjectsIndexRouteImport } from './routes/_authenticated.organizations.$id.projects.index'
+import { Route as AuthenticatedOrganizationsIdShowroomProductIdRouteImport } from './routes/_authenticated.organizations.$id.showroom.$productId'
 import { Route as AuthenticatedOrganizationsIdProjectsProjectIdRouteImport } from './routes/_authenticated.organizations.$id.projects.$projectId'
 import { Route as AuthenticatedOrganizationsIdProjectsProjectIdIndexRouteImport } from './routes/_authenticated.organizations.$id.projects.$projectId.index'
 import { Route as AuthenticatedOrganizationsIdProjectsProjectIdRequestsRouteImport } from './routes/_authenticated.organizations.$id.projects.$projectId.requests'
@@ -278,6 +279,12 @@ const AuthenticatedOrganizationsIdProjectsIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedOrganizationsIdProjectsRoute,
   } as any)
+const AuthenticatedOrganizationsIdShowroomProductIdRoute =
+  AuthenticatedOrganizationsIdShowroomProductIdRouteImport.update({
+    id: '/showroom/$productId',
+    path: '/showroom/$productId',
+    getParentRoute: () => AuthenticatedOrganizationsIdRoute,
+  } as any)
 const AuthenticatedOrganizationsIdProjectsProjectIdRoute =
   AuthenticatedOrganizationsIdProjectsProjectIdRouteImport.update({
     id: '/$projectId',
@@ -372,6 +379,7 @@ export interface FileRoutesByFullPath {
   '/organizations/$id/supply-chain': typeof AuthenticatedOrganizationsIdSupplyChainRoute
   '/organizations/$id/': typeof AuthenticatedOrganizationsIdIndexRoute
   '/organizations/$id/projects/$projectId': typeof AuthenticatedOrganizationsIdProjectsProjectIdRouteWithChildren
+  '/organizations/$id/showroom/$productId': typeof AuthenticatedOrganizationsIdShowroomProductIdRoute
   '/organizations/$id/projects/': typeof AuthenticatedOrganizationsIdProjectsIndexRoute
   '/organizations/$id/showroom/': typeof AuthenticatedOrganizationsIdShowroomIndexRoute
   '/organizations/$id/projects/$projectId/activity': typeof AuthenticatedOrganizationsIdProjectsProjectIdActivityRoute
@@ -418,6 +426,7 @@ export interface FileRoutesByTo {
   '/organizations/$id/settings': typeof AuthenticatedOrganizationsIdSettingsRoute
   '/organizations/$id/supply-chain': typeof AuthenticatedOrganizationsIdSupplyChainRoute
   '/organizations/$id': typeof AuthenticatedOrganizationsIdIndexRoute
+  '/organizations/$id/showroom/$productId': typeof AuthenticatedOrganizationsIdShowroomProductIdRoute
   '/organizations/$id/projects': typeof AuthenticatedOrganizationsIdProjectsIndexRoute
   '/organizations/$id/showroom': typeof AuthenticatedOrganizationsIdShowroomIndexRoute
   '/organizations/$id/projects/$projectId/activity': typeof AuthenticatedOrganizationsIdProjectsProjectIdActivityRoute
@@ -470,6 +479,7 @@ export interface FileRoutesById {
   '/_authenticated/organizations/$id/supply-chain': typeof AuthenticatedOrganizationsIdSupplyChainRoute
   '/_authenticated/organizations/$id/': typeof AuthenticatedOrganizationsIdIndexRoute
   '/_authenticated/organizations/$id/projects/$projectId': typeof AuthenticatedOrganizationsIdProjectsProjectIdRouteWithChildren
+  '/_authenticated/organizations/$id/showroom/$productId': typeof AuthenticatedOrganizationsIdShowroomProductIdRoute
   '/_authenticated/organizations/$id/projects/': typeof AuthenticatedOrganizationsIdProjectsIndexRoute
   '/_authenticated/organizations/$id/showroom/': typeof AuthenticatedOrganizationsIdShowroomIndexRoute
   '/_authenticated/organizations/$id/projects/$projectId/activity': typeof AuthenticatedOrganizationsIdProjectsProjectIdActivityRoute
@@ -522,6 +532,7 @@ export interface FileRouteTypes {
     | '/organizations/$id/supply-chain'
     | '/organizations/$id/'
     | '/organizations/$id/projects/$projectId'
+    | '/organizations/$id/showroom/$productId'
     | '/organizations/$id/projects/'
     | '/organizations/$id/showroom/'
     | '/organizations/$id/projects/$projectId/activity'
@@ -568,6 +579,7 @@ export interface FileRouteTypes {
     | '/organizations/$id/settings'
     | '/organizations/$id/supply-chain'
     | '/organizations/$id'
+    | '/organizations/$id/showroom/$productId'
     | '/organizations/$id/projects'
     | '/organizations/$id/showroom'
     | '/organizations/$id/projects/$projectId/activity'
@@ -619,6 +631,7 @@ export interface FileRouteTypes {
     | '/_authenticated/organizations/$id/supply-chain'
     | '/_authenticated/organizations/$id/'
     | '/_authenticated/organizations/$id/projects/$projectId'
+    | '/_authenticated/organizations/$id/showroom/$productId'
     | '/_authenticated/organizations/$id/projects/'
     | '/_authenticated/organizations/$id/showroom/'
     | '/_authenticated/organizations/$id/projects/$projectId/activity'
@@ -927,6 +940,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrganizationsIdProjectsIndexRouteImport
       parentRoute: typeof AuthenticatedOrganizationsIdProjectsRoute
     }
+    '/_authenticated/organizations/$id/showroom/$productId': {
+      id: '/_authenticated/organizations/$id/showroom/$productId'
+      path: '/showroom/$productId'
+      fullPath: '/organizations/$id/showroom/$productId'
+      preLoaderRoute: typeof AuthenticatedOrganizationsIdShowroomProductIdRouteImport
+      parentRoute: typeof AuthenticatedOrganizationsIdRoute
+    }
     '/_authenticated/organizations/$id/projects/$projectId': {
       id: '/_authenticated/organizations/$id/projects/$projectId'
       path: '/$projectId'
@@ -1060,6 +1080,7 @@ interface AuthenticatedOrganizationsIdRouteChildren {
   AuthenticatedOrganizationsIdSettingsRoute: typeof AuthenticatedOrganizationsIdSettingsRoute
   AuthenticatedOrganizationsIdSupplyChainRoute: typeof AuthenticatedOrganizationsIdSupplyChainRoute
   AuthenticatedOrganizationsIdIndexRoute: typeof AuthenticatedOrganizationsIdIndexRoute
+  AuthenticatedOrganizationsIdShowroomProductIdRoute: typeof AuthenticatedOrganizationsIdShowroomProductIdRoute
   AuthenticatedOrganizationsIdShowroomIndexRoute: typeof AuthenticatedOrganizationsIdShowroomIndexRoute
 }
 
@@ -1089,6 +1110,8 @@ const AuthenticatedOrganizationsIdRouteChildren: AuthenticatedOrganizationsIdRou
       AuthenticatedOrganizationsIdSupplyChainRoute,
     AuthenticatedOrganizationsIdIndexRoute:
       AuthenticatedOrganizationsIdIndexRoute,
+    AuthenticatedOrganizationsIdShowroomProductIdRoute:
+      AuthenticatedOrganizationsIdShowroomProductIdRoute,
     AuthenticatedOrganizationsIdShowroomIndexRoute:
       AuthenticatedOrganizationsIdShowroomIndexRoute,
   }
