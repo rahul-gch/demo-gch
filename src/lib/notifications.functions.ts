@@ -69,7 +69,7 @@ export const listNotifications = createServerFn({ method: "POST" })
           items.push({
             id: `msg-${m.id}`,
             kind: "message",
-            title: names.get(m.sender_org_id) ?? m.author_name,
+            title: names.get(m.sender_org_id) ?? "Partner organization",
             body: m.body.length > 120 ? `${m.body.slice(0, 117)}…` : m.body,
             at: m.created_at,
             to: "/messages",

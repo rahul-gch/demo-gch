@@ -77,10 +77,18 @@ function MessagesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active?.id, active?.unread]);
 
+  // Switching the acting organization opens that organization's own inbox
+  // instead of keeping the previous thread open under a new identity.
+  useEffect(() => {
+    setActiveId(null);
+    setDraft("");
+  }, [orgId]);
+
   const activeEntity = active?.entity ?? null;
 
   const send = () => {
     if (!active || !draft.trim() || !orgId) return;
+    if (active.counterpartOrgId === orgId) return;
     sendMessage.mutate({ counterpartOrgId: active.counterpartOrgId, body: draft.trim() });
     setDraft("");
   };

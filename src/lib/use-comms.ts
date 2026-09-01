@@ -249,7 +249,6 @@ export function useRealtimeComms(orgId: string | null) {
           const row = payload.new as {
             conversation_id?: string;
             sender_org_id?: string;
-            author_name?: string;
             body?: string;
           };
           queryClient.invalidateQueries({ queryKey: ["conversations", orgId] });
@@ -257,7 +256,7 @@ export function useRealtimeComms(orgId: string | null) {
           if (row.conversation_id)
             queryClient.invalidateQueries({ queryKey: ["thread", row.conversation_id] });
           if (row.sender_org_id && row.sender_org_id !== orgId) {
-            toast.message(`New message from ${row.author_name ?? "a partner"}`, {
+            toast.message("New message from a partner organization", {
               description: row.body?.slice(0, 100),
             });
           }
