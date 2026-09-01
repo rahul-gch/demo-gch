@@ -162,6 +162,7 @@ export function useRequestConnection() {
 /** Hook to accept or decline a connection request */
 export function useRespondConnection() {
   const queryClient = useQueryClient();
+  const respond = useServerFn(respondOrgConnection);
   return useMutation({
     mutationFn: ({
       myOrgId,
