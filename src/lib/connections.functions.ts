@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { getEntity, ALL_ENTITIES } from "@/seed/all-entities";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export interface ConnectionRecord {
   id: string;
@@ -10,217 +11,153 @@ export interface ConnectionRecord {
   createdAt: string;
 }
 
-// In-memory shared server-side registry of connections (dev & demo fallback)
-const SERVER_CONNECTIONS = new Map<string, ConnectionRecord>();
+const UUID_RE =
+  /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
-function matchesOrg(recordOrgId: string, queryOrgId: string): boolean {
-  if (!recordOrgId || !queryOrgId) return false;
-  if (recordOrgId.toLowerCase() === queryOrgId.toLowerCase()) return true;
-
-  const e1 = getEntity(recordOrgId) || ALL_ENTITIES.find((e) => e.id === recordOrgId || e.orgUuid === recordOrgId);
-  const e2 = getEntity(queryOrgId) || ALL_ENTITIES.find((e) => e.id === queryOrgId || e.orgUuid === queryOrgId);
-
-  if (e1 && e2) {
-    return e1.id === e2.id || (!!e1.orgUuid && e1.orgUuid === e2.orgUuid);
-  }
-  if (e1) {
-    return (
-      e1.id.toLowerCase() === queryOrgId.toLowerCase() ||
-      e1.slug?.toLowerCase() === queryOrgId.toLowerCase() ||
-      e1.orgUuid?.toLowerCase() === queryOrgId.toLowerCase()
-    );
-  }
-  if (e2) {
-    return (
-      e2.id.toLowerCase() === recordOrgId.toLowerCase() ||
-      e2.slug?.toLowerCase() === recordOrgId.toLowerCase() ||
-      e2.orgUuid?.toLowerCase() === recordOrgId.toLowerCase()
-    );
-  }
-  return false;
+/**
+ * Accepts an organization UUID, a legacy seed id, or a slug and resolves it to
+ * the database UUID. Returns null when nothing matches.
+ */
+async function resolveOrgUuid(
+  supabase: SupabaseClient,
+  id: string,
+): Promise<string | null> {
+  if (UUID_RE.test(id)) return id;
+  const { data } = await supabase
+    .from("orgs")
+    .select("id")
+    .or(`legacy_id.eq.${id},slug.eq.${id}`)
+    .limit(1)
+    .maybeSingle();
+  return (data?.id as string | undefined) ?? null;
 }
 
-function canonicalId(id: string): string {
-  const e = getEntity(id) || ALL_ENTITIES.find((item) => item.id === id || item.orgUuid === id || item.slug === id);
-  return e?.id ?? id;
-}
-
-function getOrgUuid(id: string): string | null {
-  const e = getEntity(id) || ALL_ENTITIES.find((item) => item.id === id || item.orgUuid === id || item.slug === id);
-  return e?.orgUuid ?? null;
-}
-
-async function getSupabaseServiceClient() {
-  const url = process.env["SUPABASE_URL"];
-  const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"] || process.env["SUPABASE_PUBLISHABLE_KEY"];
-  if (!url || !serviceKey) return null;
-  try {
-    const { createClient } = await import("@supabase/supabase-js");
-    return createClient(url, serviceKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
-  } catch {
-    return null;
-  }
-}
-
-export const getOrgConnections = createServerFn({ method: "GET" })
+export const getOrgConnections = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.object({ orgId: z.string().min(1) }).parse(data))
-  .handler(async ({ data }): Promise<ConnectionRecord[]> => {
-    const results: ConnectionRecord[] = [];
-    const supabase = await getSupabaseServiceClient();
+  .handler(async ({ data, context }): Promise<ConnectionRecord[]> => {
+    const { supabase } = context;
+    const orgUuid = await resolveOrgUuid(supabase, data.orgId);
+    if (!orgUuid) return [];
 
-    if (supabase) {
-      try {
-        const orgUuid = getOrgUuid(data.orgId);
-        const searchIds = [data.orgId, orgUuid].filter(Boolean) as string[];
+    const { data: rows, error } = await supabase
+      .from("org_connections")
+      .select("id, from_org_id, to_org_id, status, created_at")
+      .or(`from_org_id.eq.${orgUuid},to_org_id.eq.${orgUuid}`);
+    if (error) throw new Error(error.message);
 
-        const { data: rows, error } = await supabase
-          .from("org_connections")
-          .select("id, from_org_id, to_org_id, status, created_at")
-          .or(`from_org_id.in.(${searchIds.join(",")}),to_org_id.in.(${searchIds.join(",")})`);
-
-        if (!error && rows) {
-          for (const r of rows) {
-            results.push({
-              id: r.id,
-              fromOrgId: canonicalId(r.from_org_id),
-              toOrgId: canonicalId(r.to_org_id),
-              status: r.status as "pending" | "accepted" | "declined",
-              createdAt: r.created_at,
-            });
-          }
-        }
-      } catch {
-        // Fallback to memory
-      }
-    }
-
-    // Merge in-memory fallback records
-    const memList = Array.from(SERVER_CONNECTIONS.values()).filter(
-      (r) => matchesOrg(r.fromOrgId, data.orgId) || matchesOrg(r.toOrgId, data.orgId),
-    );
-
-    for (const m of memList) {
-      if (!results.some((r) => r.id === m.id || (matchesOrg(r.fromOrgId, m.fromOrgId) && matchesOrg(r.toOrgId, m.toOrgId)))) {
-        results.push(m);
-      }
-    }
-
-    return results;
+    return (rows ?? []).map((r) => ({
+      id: r.id as string,
+      fromOrgId: r.from_org_id as string,
+      toOrgId: r.to_org_id as string,
+      status: r.status as ConnectionRecord["status"],
+      createdAt: r.created_at as string,
+    }));
   });
 
 export const sendOrgConnection = createServerFn({ method: "POST" })
-  .inputValidator(
-    (data: unknown) =>
-      z.object({ fromOrgId: z.string().min(1), toOrgId: z.string().min(1) }).parse(data),
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ fromOrgId: z.string().min(1), toOrgId: z.string().min(1) }).parse(data),
   )
-  .handler(async ({ data }): Promise<ConnectionRecord> => {
-    const from = canonicalId(data.fromOrgId);
-    const to = canonicalId(data.toOrgId);
+  .handler(async ({ data, context }): Promise<ConnectionRecord> => {
+    const { supabase, userId } = context;
+    const fromUuid = await resolveOrgUuid(supabase, data.fromOrgId);
+    const toUuid = await resolveOrgUuid(supabase, data.toOrgId);
+    if (!fromUuid || !toUuid) throw new Error("Organization not found");
+    if (fromUuid === toUuid) throw new Error("Cannot connect an organization to itself");
 
-    const fromUuid = getOrgUuid(data.fromOrgId);
-    const toUuid = getOrgUuid(data.toOrgId);
-
-    const supabase = await getSupabaseServiceClient();
-    if (supabase && fromUuid && toUuid) {
-      try {
-        const { data: inserted, error } = await supabase
-          .from("org_connections")
-          .upsert(
-            {
-              from_org_id: fromUuid,
-              to_org_id: toUuid,
-              status: "pending",
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: "from_org_id,to_org_id" },
-          )
-          .select("id, from_org_id, to_org_id, status, created_at")
-          .single();
-
-        if (!error && inserted) {
-          const rec: ConnectionRecord = {
-            id: inserted.id,
-            fromOrgId: from,
-            toOrgId: to,
-            status: inserted.status,
-            createdAt: inserted.created_at,
-          };
-          SERVER_CONNECTIONS.set(rec.id, rec);
-          return rec;
-        }
-      } catch {
-        // Fallback
-      }
-    }
-
-    // In-memory fallback
-    const existing = Array.from(SERVER_CONNECTIONS.values()).find(
-      (r) =>
-        (matchesOrg(r.fromOrgId, from) && matchesOrg(r.toOrgId, to)) ||
-        (matchesOrg(r.fromOrgId, to) && matchesOrg(r.toOrgId, from)),
-    );
+    // Reuse an existing record in either direction so a pair never duplicates.
+    const { data: existing } = await supabase
+      .from("org_connections")
+      .select("id, from_org_id, to_org_id, status, created_at")
+      .or(
+        `and(from_org_id.eq.${fromUuid},to_org_id.eq.${toUuid}),and(from_org_id.eq.${toUuid},to_org_id.eq.${fromUuid})`,
+      )
+      .limit(1)
+      .maybeSingle();
 
     if (existing) {
-      if (existing.status === "declined") {
-        existing.status = "pending";
-        existing.fromOrgId = from;
-        existing.toOrgId = to;
+      if (existing.status === "accepted" || existing.status === "pending") {
+        return {
+          id: existing.id as string,
+          fromOrgId: existing.from_org_id as string,
+          toOrgId: existing.to_org_id as string,
+          status: existing.status as ConnectionRecord["status"],
+          createdAt: existing.created_at as string,
+        };
       }
-      return existing;
+      // Declined requests can be re-sent from this org.
+      const { data: revived, error: revErr } = await supabase
+        .from("org_connections")
+        .update({ status: "pending", requested_by: userId, responded_by: null, responded_at: null })
+        .eq("id", existing.id as string)
+        .select("id, from_org_id, to_org_id, status, created_at")
+        .single();
+      if (revErr) throw new Error(revErr.message);
+      return {
+        id: revived.id as string,
+        fromOrgId: revived.from_org_id as string,
+        toOrgId: revived.to_org_id as string,
+        status: revived.status as ConnectionRecord["status"],
+        createdAt: revived.created_at as string,
+      };
     }
 
-    const newRecord: ConnectionRecord = {
-      id: `conn_${from}_${to}_${Date.now()}`,
-      fromOrgId: from,
-      toOrgId: to,
-      status: "pending",
-      createdAt: new Date().toISOString(),
-    };
+    const { data: inserted, error } = await supabase
+      .from("org_connections")
+      .insert({
+        from_org_id: fromUuid,
+        to_org_id: toUuid,
+        status: "pending",
+        requested_by: userId,
+      })
+      .select("id, from_org_id, to_org_id, status, created_at")
+      .single();
+    if (error) throw new Error(error.message);
 
-    SERVER_CONNECTIONS.set(newRecord.id, newRecord);
-    return newRecord;
+    return {
+      id: inserted.id as string,
+      fromOrgId: inserted.from_org_id as string,
+      toOrgId: inserted.to_org_id as string,
+      status: inserted.status as ConnectionRecord["status"],
+      createdAt: inserted.created_at as string,
+    };
   });
 
 export const respondOrgConnection = createServerFn({ method: "POST" })
-  .inputValidator(
-    (data: unknown) =>
-      z
-        .object({
-          myOrgId: z.string().min(1),
-          otherOrgId: z.string().min(1),
-          status: z.enum(["accepted", "declined"]),
-        })
-        .parse(data),
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        myOrgId: z.string().min(1),
+        otherOrgId: z.string().min(1),
+        status: z.enum(["accepted", "declined"]),
+      })
+      .parse(data),
   )
-  .handler(async ({ data }): Promise<{ success: boolean }> => {
-    const myUuid = getOrgUuid(data.myOrgId);
-    const otherUuid = getOrgUuid(data.otherOrgId);
+  .handler(async ({ data, context }): Promise<{ success: boolean }> => {
+    const { supabase, userId } = context;
+    const myUuid = await resolveOrgUuid(supabase, data.myOrgId);
+    const otherUuid = await resolveOrgUuid(supabase, data.otherOrgId);
+    if (!myUuid || !otherUuid) throw new Error("Organization not found");
 
-    const supabase = await getSupabaseServiceClient();
-    if (supabase && myUuid && otherUuid) {
-      try {
-        await supabase
-          .from("org_connections")
-          .update({ status: data.status, updated_at: new Date().toISOString() })
-          .or(
-            `and(from_org_id.eq.${otherUuid},to_org_id.eq.${myUuid}),and(from_org_id.eq.${myUuid},to_org_id.eq.${otherUuid})`,
-          );
-      } catch {
-        // Fallback
-      }
-    }
+    // Only the recipient organization may accept or decline a pending request.
+    const { data: row } = await supabase
+      .from("org_connections")
+      .select("id")
+      .eq("from_org_id", otherUuid)
+      .eq("to_org_id", myUuid)
+      .eq("status", "pending")
+      .limit(1)
+      .maybeSingle();
+    if (!row) throw new Error("No pending request to respond to");
 
-    const existing = Array.from(SERVER_CONNECTIONS.values()).find(
-      (r) =>
-        (matchesOrg(r.fromOrgId, data.otherOrgId) && matchesOrg(r.toOrgId, data.myOrgId)) ||
-        (matchesOrg(r.fromOrgId, data.myOrgId) && matchesOrg(r.toOrgId, data.otherOrgId)),
-    );
+    const { error } = await supabase
+      .from("org_connections")
+      .update({ status: data.status, responded_by: userId, responded_at: new Date().toISOString() })
+      .eq("id", row.id as string);
+    if (error) throw new Error(error.message);
 
-    if (existing) {
-      existing.status = data.status;
-      return { success: true };
-    }
     return { success: true };
   });
