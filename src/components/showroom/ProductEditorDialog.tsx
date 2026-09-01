@@ -13,11 +13,20 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { makeRef, SHOWROOM_BUCKET } from "@/lib/org-images";
 import type { ShowroomProduct } from "@/lib/showroom.functions";
 import { toast } from "sonner";
-import { Upload, X, Loader2, Plus, Image as ImageIcon } from "lucide-react";
+import {
+  Upload,
+  X,
+  Loader2,
+  Plus,
+  Image as ImageIcon,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
 interface ProductEditorDialogProps {
   open: boolean;
@@ -47,6 +56,20 @@ const MATERIAL_SUGGESTIONS = [
   "Regenerative Wool",
 ];
 
+function SectionTitle({ step, title, hint }: { step: number; title: string; hint?: string }) {
+  return (
+    <div className="flex items-baseline gap-2">
+      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold text-primary">
+        {step}
+      </span>
+      <div>
+        <h3 className="text-sm font-semibold leading-none">{title}</h3>
+        {hint && <p className="mt-1 text-[11px] text-muted-foreground">{hint}</p>}
+      </div>
+    </div>
+  );
+}
+
 export function ProductEditorDialog({
   open,
   onOpenChange,
@@ -63,6 +86,7 @@ export function ProductEditorDialog({
   const [isActive, setIsActive] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [touchedName, setTouchedName] = useState(false);
 
   useEffect(() => {
     if (product) {
@@ -78,14 +102,15 @@ export function ProductEditorDialog({
       setImages([]);
       setIsActive(true);
     }
+    setTouchedName(false);
+    setMaterialInput("");
+    setImageUrlInput("");
   }, [product, open]);
 
   const handleAddMaterial = (mat: string) => {
     const trimmed = mat.trim();
     if (!trimmed) return;
-    if (!materials.includes(trimmed)) {
-      setMaterials([...materials, trimmed]);
-    }
+    if (!materials.includes(trimmed)) setMaterials([...materials, trimmed]);
     setMaterialInput("");
   };
 
@@ -96,8 +121,20 @@ export function ProductEditorDialog({
   const handleAddImageUrl = () => {
     const trimmed = imageUrlInput.trim();
     if (!trimmed) return;
+    if (!/^https?:\/\//i.test(trimmed)) {
+      toast.error("Image links must start with http:// or https://");
+      return;
+    }
     setImages([...images, trimmed]);
     setImageUrlInput("");
+  };
+
+  const moveImage = (index: number, direction: -1 | 1) => {
+    const next = [...images];
+    const target = index + direction;
+    if (target < 0 || target >= next.length) return;
+    [next[index], next[target]] = [next[target], next[index]];
+    setImages(next);
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -108,7 +145,6 @@ export function ProductEditorDialog({
       toast.error("Please select a valid image file (PNG, JPEG, WebP).");
       return;
     }
-
     if (file.size > 5 * 1024 * 1024) {
       toast.error("Image size must be less than 5MB.");
       return;
@@ -127,10 +163,10 @@ export function ProductEditorDialog({
 
       const ref = makeRef(SHOWROOM_BUCKET, filePath);
       setImages((prev) => [...prev, ref]);
-      toast.success("Image uploaded successfully");
+      toast.success("Image uploaded");
     } catch (err) {
       console.warn("Upload failed:", err);
-      toast.error("Could not upload image. You can also paste an image URL directly.");
+      toast.error("Could not upload image. You can also paste an image URL instead.");
     } finally {
       setIsUploading(false);
       if (e.target) e.target.value = "";
@@ -141,8 +177,11 @@ export function ProductEditorDialog({
     setImages(images.filter((_, i) => i !== index));
   };
 
+  const nameError = touchedName && !name.trim();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setTouchedName(true);
     if (!name.trim()) {
       toast.error("Product name is required.");
       return;
@@ -159,8 +198,8 @@ export function ProductEditorDialog({
         isActive,
       });
       onOpenChange(false);
-    } catch (err) {
-      // toast is handled in mutation
+    } catch {
+      // toast handled in mutation
     } finally {
       setIsSubmitting(false);
     }
@@ -168,50 +207,175 @@ export function ProductEditorDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>{product ? "Edit Product" : "Add Product to Showroom"}</DialogTitle>
+            <DialogTitle>{product ? "Edit product" : "Add product to showroom"}</DialogTitle>
             <DialogDescription>
-              Showcase your materials, fabrics, and samples to verified supply chain partners.
+              Showcase your materials and fabrics to verified supply chain partners.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            {/* Product Name */}
-            <div className="space-y-1.5">
-              <Label htmlFor="product-name" className="text-xs font-semibold">
-                Product / Material Name <span className="text-rose-500">*</span>
-              </Label>
-              <Input
-                id="product-name"
-                placeholder="e.g. 100% GOTS Organic Cotton Jersey 180gsm"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
-
-            {/* Description */}
-            <div className="space-y-1.5">
-              <Label htmlFor="product-desc" className="text-xs font-semibold">
-                Description & Specifications
-              </Label>
-              <Textarea
-                id="product-desc"
-                placeholder="Describe weave, weight, dye processes, certifications, MOQ, and sample availability..."
-                rows={3}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </div>
-
-            {/* Materials Tags */}
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold">Materials & Fibers</Label>
-              <div className="flex gap-2">
+          <div className="space-y-6 py-5">
+            {/* 1. Basics */}
+            <section className="space-y-3">
+              <SectionTitle step={1} title="Basics" hint="Name and specification buyers will read." />
+              <div className="space-y-1.5">
+                <Label htmlFor="product-name" className="text-xs font-medium">
+                  Product / material name <span className="text-rose-500">*</span>
+                </Label>
                 <Input
-                  placeholder="Add material (e.g. Organic Cotton) and press Enter"
+                  id="product-name"
+                  placeholder="e.g. GOTS Organic Cotton Jersey 180gsm"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onBlur={() => setTouchedName(true)}
+                  aria-invalid={nameError}
+                  className={nameError ? "border-rose-400 focus-visible:ring-rose-400" : ""}
+                />
+                {nameError && <p className="text-[11px] text-rose-600">Please enter a name.</p>}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="product-desc" className="text-xs font-medium">
+                  Description & specifications
+                </Label>
+                <Textarea
+                  id="product-desc"
+                  placeholder="Weave, weight, dye process, certifications, MOQ, lead time, sample availability…"
+                  rows={4}
+                  maxLength={3000}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+                <p className="text-right text-[10px] text-muted-foreground">
+                  {description.length}/3000
+                </p>
+              </div>
+            </section>
+
+            <Separator />
+
+            {/* 2. Images */}
+            <section className="space-y-3">
+              <SectionTitle
+                step={2}
+                title="Images"
+                hint="The first image is used as the cover across the platform."
+              />
+
+              {images.length > 0 ? (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {images.map((img, idx) => {
+                    const isRef = !/^https?:\/\//i.test(img);
+                    return (
+                      <div
+                        key={`${img}-${idx}`}
+                        className="group relative aspect-video overflow-hidden rounded-md border bg-slate-100 dark:bg-slate-900"
+                      >
+                        {isRef ? (
+                          <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground">
+                            <ImageIcon className="h-5 w-5" />
+                            <span className="text-[10px]">Uploaded image</span>
+                          </div>
+                        ) : (
+                          <img src={img} alt="" className="h-full w-full object-cover" />
+                        )}
+
+                        {idx === 0 && (
+                          <Badge className="absolute left-1.5 top-1.5 bg-slate-900/80 text-[9px] text-white">
+                            Cover
+                          </Badge>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(idx)}
+                          className="absolute right-1 top-1 rounded-full bg-slate-900/80 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                          aria-label="Remove image"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+
+                        <div className="absolute inset-x-1 bottom-1 flex justify-between opacity-0 transition-opacity group-hover:opacity-100">
+                          <button
+                            type="button"
+                            onClick={() => moveImage(idx, -1)}
+                            disabled={idx === 0}
+                            className="rounded-full bg-slate-900/80 p-1 text-white disabled:opacity-30"
+                            aria-label="Move image left"
+                          >
+                            <ChevronLeft className="h-3 w-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveImage(idx, 1)}
+                            disabled={idx === images.length - 1}
+                            className="rounded-full bg-slate-900/80 p-1 text-white disabled:opacity-30"
+                            aria-label="Move image right"
+                          >
+                            <ChevronRight className="h-3 w-3" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="rounded-md border border-dashed p-4 text-center text-[11px] text-muted-foreground">
+                  No images yet — products with photos get significantly more sample requests.
+                </p>
+              )}
+
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <label className="flex cursor-pointer items-center gap-2 rounded-md border border-dashed border-slate-300 bg-slate-50/50 px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+                  {isUploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  ) : (
+                    <Upload className="h-4 w-4 text-muted-foreground" />
+                  )}
+                  <span>{isUploading ? "Uploading…" : "Upload from device"}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileUpload}
+                    disabled={isUploading}
+                  />
+                </label>
+                <span className="text-[11px] text-muted-foreground">PNG, JPG or WebP, up to 5MB</span>
+              </div>
+
+              <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+                <Input
+                  placeholder="…or paste an image URL (https://…)"
+                  value={imageUrlInput}
+                  onChange={(e) => setImageUrlInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddImageUrl();
+                    }
+                  }}
+                />
+                <Button type="button" variant="outline" size="sm" onClick={handleAddImageUrl}>
+                  Add link
+                </Button>
+              </div>
+            </section>
+
+            <Separator />
+
+            {/* 3. Materials */}
+            <section className="space-y-3">
+              <SectionTitle
+                step={3}
+                title="Materials & fibers"
+                hint="Used for search and material filters in the showroom."
+              />
+              <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+                <Input
+                  placeholder="Add a material and press Enter"
                   value={materialInput}
                   onChange={(e) => setMaterialInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -231,24 +395,8 @@ export function ProductEditorDialog({
                 </Button>
               </div>
 
-              {/* Suggestions */}
-              <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                <span className="text-[11px] text-muted-foreground mr-1">Quick add:</span>
-                {MATERIAL_SUGGESTIONS.map((mat) => (
-                  <Badge
-                    key={mat}
-                    variant="outline"
-                    className="cursor-pointer bg-slate-50 text-[10px] text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300"
-                    onClick={() => handleAddMaterial(mat)}
-                  >
-                    + {mat}
-                  </Badge>
-                ))}
-              </div>
-
-              {/* Selected Materials */}
               {materials.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 pt-1">
+                <div className="flex flex-wrap gap-1.5">
                   {materials.map((mat) => (
                     <Badge
                       key={mat}
@@ -260,6 +408,7 @@ export function ProductEditorDialog({
                         type="button"
                         onClick={() => handleRemoveMaterial(mat)}
                         className="hover:text-rose-600"
+                        aria-label={`Remove ${mat}`}
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -267,87 +416,40 @@ export function ProductEditorDialog({
                   ))}
                 </div>
               )}
-            </div>
 
-            {/* Images Upload */}
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold">Product Images</Label>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-[11px] text-muted-foreground mr-1">Quick add:</span>
+                {MATERIAL_SUGGESTIONS.filter((m) => !materials.includes(m)).map((mat) => (
+                  <Badge
+                    key={mat}
+                    variant="outline"
+                    className="cursor-pointer bg-slate-50 text-[10px] font-normal text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300"
+                    onClick={() => handleAddMaterial(mat)}
+                  >
+                    + {mat}
+                  </Badge>
+                ))}
+              </div>
+            </section>
 
-              {/* Image previews grid */}
-              {images.length > 0 && (
-                <div className="grid grid-cols-3 gap-2">
-                  {images.map((img, idx) => (
-                    <div
-                      key={idx}
-                      className="group relative aspect-video overflow-hidden rounded-md border bg-slate-100"
-                    >
-                      <img
-                        src={
-                          img.startsWith("showroom:")
-                            ? `https://placehold.co/400x300?text=Product+Image`
-                            : img
-                        }
-                        alt="Product preview"
-                        className="h-full w-full object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveImage(idx)}
-                        className="absolute right-1 top-1 rounded-full bg-slate-900/80 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
-                  ))}
+            <Separator />
+
+            {/* 4. Availability */}
+            <section className="space-y-3">
+              <SectionTitle step={4} title="Availability" />
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div className="space-y-0.5 pr-4">
+                  <Label htmlFor="active-toggle" className="text-xs font-medium">
+                    Publish to showroom
+                  </Label>
+                  <p className="text-[11px] text-muted-foreground">
+                    Published products are visible to partner organizations, who can request
+                    samples. Hidden products stay visible to your team only.
+                  </p>
                 </div>
-              )}
-
-              <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
-                <Input
-                  placeholder="Paste image URL (https://...)"
-                  value={imageUrlInput}
-                  onChange={(e) => setImageUrlInput(e.target.value)}
-                />
-                <Button type="button" variant="outline" size="sm" onClick={handleAddImageUrl}>
-                  Add URL
-                </Button>
+                <Switch id="active-toggle" checked={isActive} onCheckedChange={setIsActive} />
               </div>
-
-              <div className="flex items-center gap-2">
-                <label className="flex cursor-pointer items-center gap-2 rounded-md border border-dashed border-slate-300 bg-slate-50/50 px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
-                  {isUploading ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  ) : (
-                    <Upload className="h-4 w-4 text-muted-foreground" />
-                  )}
-                  <span>{isUploading ? "Uploading..." : "Upload from device"}</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleFileUpload}
-                    disabled={isUploading}
-                  />
-                </label>
-                <span className="text-[11px] text-muted-foreground">
-                  PNG, JPG, or WebP up to 5MB
-                </span>
-              </div>
-            </div>
-
-            {/* Active Toggle */}
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div className="space-y-0.5">
-                <Label htmlFor="active-toggle" className="text-xs font-semibold">
-                  Publish to Showroom
-                </Label>
-                <p className="text-[11px] text-muted-foreground">
-                  When active, connected supply chain partners can view this product and request
-                  samples.
-                </p>
-              </div>
-              <Switch id="active-toggle" checked={isActive} onCheckedChange={setIsActive} />
-            </div>
+            </section>
           </div>
 
           <DialogFooter>
@@ -363,12 +465,12 @@ export function ProductEditorDialog({
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
+                  Saving…
                 </>
               ) : product ? (
-                "Update Product"
+                "Save changes"
               ) : (
-                "Add Product"
+                "Add product"
               )}
             </Button>
           </DialogFooter>
