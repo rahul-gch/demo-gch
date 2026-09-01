@@ -266,7 +266,152 @@ export const listShowroomProducts = createServerFn({ method: "POST" })
     };
   });
 
+export interface ShowroomProductDetail {
+  product: ShowroomProduct;
+  org: { id: string; name: string; country: string | null; logoUrl: string | null } | null;
+  isOwner: boolean;
+  canManage: boolean;
+  isConnected: boolean;
+}
+
+export const getShowroomProduct = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        orgId: z.string().min(1),
+        productId: z.string().min(1),
+        viewingOrgId: z.string().nullable().optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }): Promise<ShowroomProductDetail> => {
+    initSeedProducts();
+    const { supabase, userId } = context;
+    const targetUuid = resolveOrgUuid(data.orgId) ?? data.orgId;
+    const isUuid = (v: string) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+
+    let isOwner = false;
+    let canManage = false;
+    let isConnected = true;
+
+    if (isUuid(targetUuid)) {
+      const [{ data: isMember }, { data: canEdit }] = await Promise.all([
+        supabase.rpc("is_org_member", { _user: userId, _org: targetUuid }),
+        supabase.rpc("user_can_edit", { _user: userId, _org: targetUuid }),
+      ]);
+      isOwner = Boolean(isMember);
+      canManage = Boolean(canEdit);
+
+      if (!isOwner && data.viewingOrgId && isUuid(data.viewingOrgId)) {
+        const { data: conn } = await supabase.rpc("orgs_are_connected", {
+          _org_a: data.viewingOrgId,
+          _org_b: targetUuid,
+        });
+        isConnected = Boolean(conn);
+      } else if (!isOwner) {
+        isConnected = false;
+      }
+    } else {
+      isOwner = true;
+      canManage = true;
+    }
+
+    let product: ShowroomProduct | null = null;
+
+    if (isUuid(data.productId)) {
+      const { data: row, error } = await supabase
+        .from("showroom_products")
+        .select("id, org_id, name, description, images, materials, is_active, created_at, updated_at")
+        .eq("id", data.productId)
+        .eq("org_id", targetUuid)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      if (row) {
+        const rawImages = Array.isArray(row.images) ? (row.images as string[]) : [];
+        const resolved = await resolveImages(rawImages);
+        product = {
+          id: row.id,
+          orgId: row.org_id,
+          name: row.name,
+          description: row.description,
+          images: resolved.length > 0 ? resolved : rawImages,
+          materials: Array.isArray(row.materials) ? (row.materials as string[]) : [],
+          isActive: row.is_active,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        };
+      }
+    } else {
+      const list = FALLBACK_PRODUCTS.get(targetUuid) ?? FALLBACK_PRODUCTS.get(data.orgId) ?? [];
+      product = list.find((p) => p.id === data.productId) ?? null;
+    }
+
+    if (!product) throw new Error("Product not found.");
+    if (!product.isActive && !isOwner) throw new Error("This product is not published.");
+
+    let org: ShowroomProductDetail["org"] = null;
+    if (isUuid(targetUuid)) {
+      const { data: orgRow } = await supabase
+        .from("orgs")
+        .select("id, name, country, logo_url")
+        .eq("id", targetUuid)
+        .maybeSingle();
+      if (orgRow) {
+        org = {
+          id: orgRow.id,
+          name: orgRow.name,
+          country: orgRow.country ?? null,
+          logoUrl: orgRow.logo_url ?? null,
+        };
+      }
+    }
+
+    return { product, org, isOwner, canManage, isConnected };
+  });
+
+export const setShowroomProductActive = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        orgId: z.string().min(1),
+        productId: z.string().min(1),
+        isActive: z.boolean(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    initSeedProducts();
+    const { supabase } = context;
+    const targetUuid = resolveOrgUuid(data.orgId) ?? data.orgId;
+
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      data.productId,
+    );
+
+    if (isUuid) {
+      const { error } = await supabase
+        .from("showroom_products")
+        .update({ is_active: data.isActive, updated_at: new Date().toISOString() })
+        .eq("id", data.productId)
+        .eq("org_id", targetUuid);
+      if (error) throw new Error(error.message);
+      return { ok: true, isActive: data.isActive };
+    }
+
+    const list = FALLBACK_PRODUCTS.get(targetUuid) ?? [];
+    const found = list.find((p) => p.id === data.productId);
+    if (found) {
+      found.isActive = data.isActive;
+      found.updatedAt = new Date().toISOString();
+    }
+    return { ok: true, isActive: data.isActive };
+  });
+
 export const upsertShowroomProduct = createServerFn({ method: "POST" })
+
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z

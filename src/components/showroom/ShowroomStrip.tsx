@@ -74,8 +74,8 @@ export function ShowroomStrip({ entity }: { entity: Entity }) {
             {products.map((p) => (
               <Link
                 key={p.id}
-                to="/organizations/$id/showroom"
-                params={{ id: entity.id }}
+                to="/organizations/$id/showroom/$productId"
+                params={{ id: entity.id, productId: p.id }}
                 className="group flex gap-3 rounded-lg border bg-card p-3 transition-colors hover:bg-slate-50"
               >
                 <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md bg-slate-100">

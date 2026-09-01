@@ -13,6 +13,7 @@ import {
   useShowroomProducts,
   useUpsertShowroomProduct,
   useDeleteShowroomProduct,
+  useSetShowroomProductActive,
   useSampleOrders,
   useCreateSampleOrder,
   useUpdateSampleOrderStatus,
@@ -58,6 +59,7 @@ export function ShowroomWorkspace({ entity, defaultTab = "products" }: ShowroomW
   );
   const upsertMutation = useUpsertShowroomProduct(targetOrgUuid);
   const deleteMutation = useDeleteShowroomProduct(targetOrgUuid);
+  const activeMutation = useSetShowroomProductActive(targetOrgUuid);
 
   const isOwner = showroom?.isOwner ?? false;
   const canManage = showroom?.canManage ?? false;
@@ -250,6 +252,7 @@ export function ShowroomWorkspace({ entity, defaultTab = "products" }: ShowroomW
                 <ProductCard
                   key={prod.id}
                   product={prod}
+                  orgRouteId={entity.id}
                   isOwner={isOwner}
                   canManage={canManage}
                   isConnected={isConnected}
@@ -258,6 +261,9 @@ export function ShowroomWorkspace({ entity, defaultTab = "products" }: ShowroomW
                     setEditorOpen(true);
                   }}
                   onDelete={() => deleteMutation.mutate(prod.id)}
+                  onToggleActive={(p, next) =>
+                    activeMutation.mutate({ productId: p.id, isActive: next })
+                  }
                   onOrderSample={() => setOrderModalProduct(prod)}
                 />
               ))}
