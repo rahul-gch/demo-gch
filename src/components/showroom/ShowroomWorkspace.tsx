@@ -13,6 +13,7 @@ import {
   useShowroomProducts,
   useUpsertShowroomProduct,
   useDeleteShowroomProduct,
+  useSetShowroomProductActive,
   useSampleOrders,
   useCreateSampleOrder,
   useUpdateSampleOrderStatus,
