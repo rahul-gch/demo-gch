@@ -505,18 +505,9 @@ export const leaveOrganizationFn = createServerFn({ method: "POST" })
     }
 
     if (member.role === "owner") {
-      const { data: otherOwners } = await supabase
-        .from("org_members")
-        .select("id")
-        .eq("org_id", targetOrgId)
-        .eq("role", "owner")
-        .neq("user_id", userId);
-
-      if (!otherOwners || otherOwners.length === 0) {
-        throw new Error(
-          "As the sole owner, you cannot leave this organization. Please transfer ownership to another member or delete the organization in Settings.",
-        );
-      }
+      throw new Error(
+        "As an owner, you cannot leave this organization. Please transfer ownership to another member or delete the organization in Settings.",
+      );
     }
 
     const { error } = await supabase.from("org_members").delete().eq("id", member.id);
