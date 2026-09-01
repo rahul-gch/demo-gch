@@ -38,6 +38,46 @@ export function useShowroomProducts(
   });
 }
 
+export function useShowroomProduct(
+  orgId: string | null | undefined,
+  productId: string | null | undefined,
+  viewingOrgId?: string | null,
+) {
+  const fetchProduct = useServerFn(getShowroomProduct);
+
+  return useQuery({
+    queryKey: ["showroom-product", orgId, productId, viewingOrgId],
+    queryFn: async () => {
+      if (!orgId || !productId) throw new Error("Product not found.");
+      if (!(await hasSession())) throw new Error("Please sign in to view this product.");
+      return fetchProduct({ data: { orgId, productId, viewingOrgId } });
+    },
+    enabled: Boolean(orgId && productId),
+    retry: false,
+    staleTime: 15_000,
+  });
+}
+
+export function useSetShowroomProductActive(orgId: string | null | undefined) {
+  const qc = useQueryClient();
+  const setActive = useServerFn(setShowroomProductActive);
+
+  return useMutation({
+    mutationFn: async (vars: { productId: string; isActive: boolean }) => {
+      if (!orgId) throw new Error("No organization selected.");
+      return setActive({ data: { orgId, productId: vars.productId, isActive: vars.isActive } });
+    },
+    onSuccess: (_, vars) => {
+      toast.success(vars.isActive ? "Product published" : "Product hidden from partners");
+      qc.invalidateQueries({ queryKey: ["showroom-products"] });
+      qc.invalidateQueries({ queryKey: ["showroom-product"] });
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Failed to update visibility");
+    },
+  });
+}
+
 export function useUpsertShowroomProduct(orgId: string | null | undefined) {
   const qc = useQueryClient();
   const saveProduct = useServerFn(upsertShowroomProduct);
