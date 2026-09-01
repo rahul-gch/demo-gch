@@ -149,9 +149,10 @@ export function useOrgConnections(orgId: string | null | undefined) {
 /** Hook to send a connection request */
 export function useRequestConnection() {
   const queryClient = useQueryClient();
+  const send = useServerFn(sendOrgConnection);
   return useMutation({
     mutationFn: ({ fromOrgId, toOrgId }: { fromOrgId: string; toOrgId: string }) =>
-      sendOrgConnection({ data: { fromOrgId, toOrgId } }),
+      send({ data: { fromOrgId, toOrgId } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["org-connections"] });
     },
