@@ -682,7 +682,7 @@ export function PublicOrgProfile({ entity: e }: { entity: Entity }) {
         entity={e}
         open={meetOpen}
         onOpenChange={setMeetOpen}
-        viewerOrgUuid={actingOrgId}
+        viewerOrgUuid={actingOrgUuid}
       />
     </div>
   );
