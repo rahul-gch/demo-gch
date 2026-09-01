@@ -172,7 +172,7 @@ export function useRespondConnection() {
       myOrgId: string;
       otherOrgId: string;
       status: "accepted" | "declined";
-    }) => respondOrgConnection({ data: { myOrgId, otherOrgId, status } }),
+    }) => respond({ data: { myOrgId, otherOrgId, status } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["org-connections"] });
     },
