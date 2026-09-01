@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,7 +40,10 @@ export const Route = createFileRoute("/_authenticated/admin/logs")({
 type SourceFilter = "all" | "browser" | "server";
 
 function AdminLogsPage() {
-  const admin = useQuery({ queryKey: ["platform-admin"], queryFn: () => amIPlatformAdmin() });
+  const checkPlatformAdmin = useServerFn(amIPlatformAdmin);
+  const fetchAppErrors = useServerFn(listAppErrors);
+  const resolveAppErrorFn = useServerFn(resolveAppError);
+  const admin = useQuery({ queryKey: ["platform-admin"], queryFn: () => checkPlatformAdmin() });
   const queryClient = useQueryClient();
 
   const [hours, setHours] = useState(24);
@@ -49,12 +53,12 @@ function AdminLogsPage() {
 
   const logs = useQuery({
     queryKey: ["app-errors", hours, source, unresolvedOnly, search],
-    queryFn: () => listAppErrors({ data: { hours, source, unresolvedOnly, search } }),
+    queryFn: () => fetchAppErrors({ data: { hours, source, unresolvedOnly, search } }),
     enabled: !!admin.data?.isAdmin,
   });
 
   const resolve = useMutation({
-    mutationFn: (id: string) => resolveAppError({ data: { id } }),
+    mutationFn: (id: string) => resolveAppErrorFn({ data: { id } }),
     onSuccess: () => {
       toast.success("Marked as resolved");
       void queryClient.invalidateQueries({ queryKey: ["app-errors"] });
