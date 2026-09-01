@@ -48,8 +48,12 @@ function MessageRow({
       >
         {!isMe && showAuthor && (
           <span className="mb-1 pl-1 text-[11px] font-medium text-muted-foreground">
-            {m.authorName}
-            <span className="ml-1.5 text-muted-foreground/60">{m.authorRole}</span>
+            {entity.name}
+            {m.authorName ? (
+              <span className="ml-1.5 font-normal text-muted-foreground/60">
+                via {m.authorName}
+              </span>
+            ) : null}
           </span>
         )}
         <div
