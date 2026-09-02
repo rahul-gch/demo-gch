@@ -4,6 +4,8 @@ export type OrgRole = "owner" | "admin" | "editor" | "viewer";
 
 export interface UserRoleResult {
   role: OrgRole;
+  /** False when the user has no membership row in this org (and isn't creator/platform admin). */
+  isMember: boolean;
   isOwner: boolean;
   isAdmin: boolean;
   isEditor: boolean;
@@ -69,51 +71,42 @@ export async function getOrgUserRole(
 
     if (member?.role) {
       role = member.role as OrgRole;
-    } else {
-      // If no membership row exists, check if user is the creator or if org has no members
+    } else if (isCreator) {
+      // The org creator is always its owner; backfill the missing membership row.
       const { data: allMembers } = await supabase
         .from("org_members")
         .select("id, role")
         .eq("org_id", targetOrgId);
-
       const hasOtherOwner = (allMembers ?? []).some((m: any) => m.role === "owner");
-
-      if (!hasOtherOwner || isCreator || !org?.created_by) {
-        // Automatically assign and backfill owner
-        role = "owner";
-        await supabase
-          .from("org_members")
-          .insert({
-            org_id: targetOrgId,
-            user_id: userId,
-            role: "owner",
-            display_name: "Owner",
-          })
-          .catch(() => {});
-
-        if (!org?.created_by && targetOrgId) {
-          await supabase.from("orgs").update({ created_by: userId }).eq("id", targetOrgId).catch(() => {});
-        }
+      if (!hasOtherOwner) {
+        const { error } = await supabase.from("org_members").insert({
+          org_id: targetOrgId,
+          user_id: userId,
+          role: "owner",
+          display_name: "Owner",
+        });
+        if (!error) role = "owner";
       }
     }
   } catch {
     // Membership query failed
   }
 
-  // Default to owner for creators/platform admins
-  if (isPlatformAdmin || isCreator || !role) {
-    if (!role || ROLE_RANKS[role] < ROLE_RANKS["owner"]) {
-      role = "owner";
-    }
+  // Platform admins act as owners everywhere. Creators are owners of their org.
+  if (isPlatformAdmin || isCreator) {
+    role = "owner";
   }
 
-  const isOwner = role === "owner" || isPlatformAdmin || isCreator;
-  const isAdmin = isOwner || role === "admin";
-  const isEditor = isAdmin || role === "editor";
-  const isViewer = role === "viewer";
+  const isMember = role !== null;
+  const effectiveRole: OrgRole = role ?? "viewer";
+  const isOwner = effectiveRole === "owner";
+  const isAdmin = isOwner || effectiveRole === "admin";
+  const isEditor = isAdmin || effectiveRole === "editor";
+  const isViewer = effectiveRole === "viewer";
 
   return {
-    role,
+    role: effectiveRole,
+    isMember,
     isOwner,
     isAdmin,
     isEditor,
@@ -141,6 +134,10 @@ export async function assertOrgRole(
 
   if (result.isPlatformAdmin) {
     return result;
+  }
+
+  if (!result.isMember) {
+    throw new Error("Forbidden: You are not a member of this organization.");
   }
 
   const currentRank = ROLE_RANKS[result.role];

@@ -162,23 +162,6 @@ export const createProjectFn = createServerFn({ method: "POST" })
     // Assert minimum role: Editor
     await assertOrgRole(supabase, userId, targetOrgId, "editor");
 
-    // Ensure member row exists for user_can_edit RLS check
-    const { data: memberRow } = await supabase
-      .from("org_members")
-      .select("id, role")
-      .eq("org_id", targetOrgId)
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    if (!memberRow) {
-      await supabase.from("org_members").insert({
-        org_id: targetOrgId,
-        user_id: userId,
-        role: "owner",
-        display_name: "Owner",
-      } as never);
-    }
-
     const { data: project, error } = await supabase
       .from("projects")
       .insert({
@@ -195,7 +178,14 @@ export const createProjectFn = createServerFn({ method: "POST" })
       } as never)
       .select("id")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (error.code === "42501" || /row-level security/i.test(error.message)) {
+        throw new Error(
+          "You need at least Editor access in this organization to create a project.",
+        );
+      }
+      throw new Error(error.message);
+    }
 
     await supabase.from("project_partners").insert({
       project_id: project.id,
