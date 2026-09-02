@@ -48,10 +48,12 @@ function useAuthenticatedSessionReady() {
 
 /** The organization the signed-in user is acting as (their first membership). */
 export function useMyOrgIds() {
+  const hasSession = useAuthenticatedSessionReady();
   const getMemberships = useServerFn(myOrgMemberships);
   const { data } = useQuery({
     queryKey: ["my-org-memberships"],
     queryFn: () => getMemberships(),
+    enabled: hasSession,
     staleTime: 5 * 60_000,
   });
   return useMemo(() => (data ?? []).map((m) => m.org_id as string), [data]);
@@ -59,10 +61,12 @@ export function useMyOrgIds() {
 
 /** Memberships with display names, for the acting-organization switcher. */
 export function useMyOrgs() {
+  const hasSession = useAuthenticatedSessionReady();
   const getMemberships = useServerFn(myOrgMemberships);
   const { data } = useQuery({
     queryKey: ["my-org-memberships"],
     queryFn: () => getMemberships(),
+    enabled: hasSession,
     staleTime: 5 * 60_000,
   });
   return useMemo(
