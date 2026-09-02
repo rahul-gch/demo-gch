@@ -136,6 +136,10 @@ export async function assertOrgRole(
     return result;
   }
 
+  if (!result.isMember) {
+    throw new Error("Forbidden: You are not a member of this organization.");
+  }
+
   const currentRank = ROLE_RANKS[result.role];
   const requiredRank = ROLE_RANKS[minRole];
 
