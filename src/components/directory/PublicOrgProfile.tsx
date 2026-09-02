@@ -9,10 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { UserMenu } from "@/components/UserMenu";
 import { MeetingRequestDialog } from "@/components/MeetingRequestDialog";
 import { useMyOrgs, useSendMessage } from "@/lib/use-comms";
-import { useShowroomProducts, useCreateSampleOrder } from "@/lib/use-showroom";
+import { useShowroomProducts } from "@/lib/use-showroom";
 import { ProductCard } from "@/components/showroom/ProductCard";
-import { SampleOrderDialog } from "@/components/showroom/SampleOrderDialog";
-import type { ShowroomProduct } from "@/lib/showroom.functions";
 import {
   useOrgConnections,
   useRequestConnection,
@@ -67,7 +65,6 @@ export function PublicOrgProfile({ entity: e }: { entity: Entity }) {
   const router = useRouter();
   const [draft, setDraft] = useState("");
   const [meetOpen, setMeetOpen] = useState(false);
-  const [orderModalProduct, setOrderModalProduct] = useState<ShowroomProduct | null>(null);
 
   const myOrgs = useMyOrgs();
   const primaryOrg = myOrgs[0];
@@ -94,7 +91,6 @@ export function PublicOrgProfile({ entity: e }: { entity: Entity }) {
     targetOrgUuid,
     actingOrgUuid,
   );
-  const createOrderMutation = useCreateSampleOrder(actingOrgUuid);
 
 
   const isConnected =
@@ -408,7 +404,7 @@ export function PublicOrgProfile({ entity: e }: { entity: Entity }) {
                 </div>
                 {e.orgUuid && (
                   <Button asChild variant="ghost" size="sm" className="text-xs gap-1">
-                    <Link to="/organizations/$id/showroom" params={{ id: e.id }}>
+                    <Link to="/directory/$id/showroom" params={{ id: e.id }}>
                       View Full Showroom <ArrowUpRight className="h-3.5 w-3.5" />
                     </Link>
                   </Button>
@@ -445,10 +441,17 @@ export function PublicOrgProfile({ entity: e }: { entity: Entity }) {
                         <ProductCard
                           key={prod.id}
                           product={prod}
+                          orgRouteId={e.id}
+                          detailBase="directory"
                           isOwner={false}
                           canManage={false}
                           isConnected={isConnected}
-                          onOrderSample={(p) => setOrderModalProduct(p)}
+                          onOrderSample={(p) =>
+                            navigate({
+                              to: "/directory/$id/showroom/$productId/order",
+                              params: { id: e.id, productId: p.id },
+                            })
+                          }
                           onConnect={handleConnect}
                         />
                       ))}
@@ -661,21 +664,6 @@ export function PublicOrgProfile({ entity: e }: { entity: Entity }) {
           </div>
         </div>
       </main>
-
-      {/* Sample Order Dialog */}
-      {orderModalProduct && (
-        <SampleOrderDialog
-          open={Boolean(orderModalProduct)}
-          onOpenChange={(open) => !open && setOrderModalProduct(null)}
-          product={orderModalProduct}
-          sellerOrgId={targetOrgUuid}
-          sellerName={e.name}
-          onSubmit={async (data) => {
-            await createOrderMutation.mutateAsync(data);
-            setOrderModalProduct(null);
-          }}
-        />
-      )}
 
       {/* Meeting Request Dialog */}
       <MeetingRequestDialog

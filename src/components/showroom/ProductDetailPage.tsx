@@ -7,13 +7,11 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { ProductEditorDialog } from "@/components/showroom/ProductEditorDialog";
-import { SampleOrderDialog } from "@/components/showroom/SampleOrderDialog";
 import {
   useShowroomProduct,
   useUpsertShowroomProduct,
   useDeleteShowroomProduct,
   useSetShowroomProductActive,
-  useCreateSampleOrder,
 } from "@/lib/use-showroom";
 import { useActingOrgId } from "@/lib/use-comms";
 import type { Entity } from "@/seed/types";
@@ -43,9 +41,11 @@ import {
 interface ProductDetailPageProps {
   entity: Entity;
   productId: string;
+  /** "member" = inside the org workspace; "public" = reached via the network directory. */
+  mode?: "member" | "public";
 }
 
-export function ProductDetailPage({ entity, productId }: ProductDetailPageProps) {
+export function ProductDetailPage({ entity, productId, mode = "member" }: ProductDetailPageProps) {
   const navigate = useNavigate();
   const myOrgId = useActingOrgId(null);
   const targetOrgUuid = entity.orgUuid ?? entity.id;
@@ -54,11 +54,9 @@ export function ProductDetailPage({ entity, productId }: ProductDetailPageProps)
   const upsertMutation = useUpsertShowroomProduct(targetOrgUuid);
   const deleteMutation = useDeleteShowroomProduct(targetOrgUuid);
   const activeMutation = useSetShowroomProductActive(targetOrgUuid);
-  const createOrderMutation = useCreateSampleOrder(myOrgId);
 
   const [activeImage, setActiveImage] = useState(0);
   const [editorOpen, setEditorOpen] = useState(false);
-  const [orderOpen, setOrderOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const product = data?.product ?? null;
@@ -68,6 +66,17 @@ export function ProductDetailPage({ entity, productId }: ProductDetailPageProps)
 
   const images = useMemo(() => product?.images ?? [], [product]);
   const cover = images[Math.min(activeImage, Math.max(images.length - 1, 0))] ?? null;
+
+  const backLink =
+    mode === "public" ? (
+      <Link to="/directory/$id/showroom" params={{ id: entity.id }}>
+        <ArrowLeft className="h-4 w-4" /> Back to showroom
+      </Link>
+    ) : (
+      <Link to="/organizations/$id/showroom" params={{ id: entity.id }}>
+        <ArrowLeft className="h-4 w-4" /> Back to showroom
+      </Link>
+    );
 
   if (isLoading) {
     return (
@@ -85,10 +94,8 @@ export function ProductDetailPage({ entity, productId }: ProductDetailPageProps)
         <p className="mt-1 text-sm text-muted-foreground">
           This product may have been removed or is not published.
         </p>
-        <Button asChild variant="outline" size="sm" className="mt-4">
-          <Link to="/organizations/$id/showroom" params={{ id: entity.id }}>
-            Back to showroom
-          </Link>
+        <Button asChild variant="ghost" size="sm" className="mt-4 gap-1.5">
+          {backLink}
         </Button>
       </Card>
     );
@@ -98,9 +105,7 @@ export function ProductDetailPage({ entity, productId }: ProductDetailPageProps)
     <div className="w-full space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Button asChild variant="ghost" size="sm" className="-ml-2 gap-1.5 text-muted-foreground">
-          <Link to="/organizations/$id/showroom" params={{ id: entity.id }}>
-            <ArrowLeft className="h-4 w-4" /> Back to showroom
-          </Link>
+          {backLink}
         </Button>
 
         {canManage && (
@@ -210,17 +215,22 @@ export function ProductDetailPage({ entity, productId }: ProductDetailPageProps)
                 </p>
               ) : isConnected ? (
                 <>
-                  <Button className="w-full gap-2" onClick={() => setOrderOpen(true)}>
-                    <Send className="h-4 w-4" /> Order sample
+                  <Button asChild className="w-full gap-2">
+                    <Link
+                      to="/directory/$id/showroom/$productId/order"
+                      params={{ id: entity.id, productId: product.id }}
+                    >
+                      <Send className="h-4 w-4" /> Order sample
+                    </Link>
                   </Button>
                   <p className="text-center text-[11px] text-muted-foreground">
-                    A conversation thread is created automatically in Messages.
+                    Set quantity and shipping, then track the quote and delivery status.
                   </p>
                 </>
               ) : (
                 <>
                   <Button asChild variant="outline" className="w-full gap-2">
-                    <Link to="/organizations/$id/matchmaking" params={{ id: entity.id }}>
+                    <Link to="/directory/$id" params={{ id: entity.id }}>
                       <Lock className="h-4 w-4" /> Connect to order samples
                     </Link>
                   </Button>
@@ -246,18 +256,6 @@ export function ProductDetailPage({ entity, productId }: ProductDetailPageProps)
           }}
         />
       )}
-
-      <SampleOrderDialog
-        open={orderOpen}
-        onOpenChange={setOrderOpen}
-        product={product}
-        sellerOrgId={targetOrgUuid}
-        sellerName={entity.name}
-        onSubmit={async (orderData) => {
-          await createOrderMutation.mutateAsync(orderData);
-          setOrderOpen(false);
-        }}
-      />
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
