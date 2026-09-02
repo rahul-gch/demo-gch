@@ -93,8 +93,10 @@ export async function getOrgUserRole(
     // Membership query failed
   }
 
-  // Platform admins act as owners everywhere. Creators are owners of their org.
-  if (isPlatformAdmin || isCreator) {
+  // Platform admins act as owners everywhere (the DB policies bypass for them too).
+  // Creators only get owner rights via their org_members row (backfilled above),
+  // so the server-side answer always matches what RLS will enforce.
+  if (isPlatformAdmin) {
     role = "owner";
   }
 
