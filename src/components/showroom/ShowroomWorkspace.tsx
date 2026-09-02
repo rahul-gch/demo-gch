@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ProductCard } from "@/components/showroom/ProductCard";
 import { ProductEditorDialog } from "@/components/showroom/ProductEditorDialog";
-import { SampleOrderDialog } from "@/components/showroom/SampleOrderDialog";
 import { SampleOrdersPanel } from "@/components/showroom/SampleOrdersPanel";
 import {
   useShowroomProducts,
@@ -15,12 +14,11 @@ import {
   useDeleteShowroomProduct,
   useSetShowroomProductActive,
   useSampleOrders,
-  useCreateSampleOrder,
-  useUpdateSampleOrderStatus,
+  useTransitionSampleOrder,
 } from "@/lib/use-showroom";
 import { useActingOrgId } from "@/lib/use-comms";
 import { isOrgsConnected } from "@/lib/org-connections";
-import type { ShowroomProduct, SampleOrderStatus } from "@/lib/showroom.functions";
+import type { ShowroomProduct } from "@/lib/showroom.functions";
 import type { Entity } from "@/seed/types";
 import {
   Store,
@@ -47,7 +45,7 @@ export function ShowroomWorkspace({ entity, defaultTab = "products" }: ShowroomW
   // Dialogs state
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ShowroomProduct | null>(null);
-  const [orderModalProduct, setOrderModalProduct] = useState<ShowroomProduct | null>(null);
+  const navigate = useNavigate();
 
   const myOrgId = useActingOrgId(null);
   const targetOrgUuid = entity.orgUuid ?? entity.id;
@@ -99,8 +97,7 @@ export function ShowroomWorkspace({ entity, defaultTab = "products" }: ShowroomW
       : ordersData.outbound
     : [];
 
-  const createOrderMutation = useCreateSampleOrder(myOrgId);
-  const updateStatusMutation = useUpdateSampleOrderStatus(targetOrgUuid);
+  const transitionMutation = useTransitionSampleOrder(targetOrgUuid);
 
   return (
     <div className="w-full space-y-6">
@@ -264,7 +261,12 @@ export function ShowroomWorkspace({ entity, defaultTab = "products" }: ShowroomW
                   onToggleActive={(p, next) =>
                     activeMutation.mutate({ productId: p.id, isActive: next })
                   }
-                  onOrderSample={() => setOrderModalProduct(prod)}
+                  onOrderSample={() =>
+                    navigate({
+                      to: "/directory/$id/showroom/$productId/order",
+                      params: { id: entity.id, productId: prod.id },
+                    })
+                  }
                 />
               ))}
             </div>
@@ -276,14 +278,8 @@ export function ShowroomWorkspace({ entity, defaultTab = "products" }: ShowroomW
           <SampleOrdersPanel
             inbound={ordersData?.inbound ?? []}
             outbound={ordersData?.outbound ?? []}
-            orgId={targetOrgUuid}
-            onUpdateStatus={async (orderId, status, message) => {
-              await updateStatusMutation.mutateAsync({
-                orderId,
-                status,
-                message,
-              });
-            }}
+            orgRouteId={entity.id}
+            onAction={(orderId, payload) => transitionMutation.mutateAsync({ orderId, ...payload })}
           />
         </TabsContent>
       </Tabs>
@@ -302,20 +298,6 @@ export function ShowroomWorkspace({ entity, defaultTab = "products" }: ShowroomW
         />
       )}
 
-      {/* Order Sample Dialog */}
-      {orderModalProduct && (
-        <SampleOrderDialog
-          open={!!orderModalProduct}
-          onOpenChange={(open) => !open && setOrderModalProduct(null)}
-          product={orderModalProduct}
-          sellerOrgId={targetOrgUuid}
-          sellerName={entity.name}
-          onSubmit={async (orderData) => {
-            await createOrderMutation.mutateAsync(orderData);
-            setOrderModalProduct(null);
-          }}
-        />
-      )}
     </div>
   );
 }

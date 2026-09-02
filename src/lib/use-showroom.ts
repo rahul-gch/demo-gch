@@ -8,9 +8,9 @@ import {
   deleteShowroomProduct,
   createSampleOrder,
   listSampleOrders,
-  updateSampleOrderStatus,
-  type ShowroomProduct,
-  type SampleOrderStatus,
+  getSampleOrder,
+  transitionSampleOrder,
+  type SampleOrderAction,
 } from "@/lib/showroom.functions";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -157,70 +157,91 @@ export function usePendingSampleOrderCount(orgId: string | null | undefined): nu
   return data?.pendingCount ?? 0;
 }
 
-export function useCreateSampleOrder(buyerOrgId: string | null | undefined) {
+export function useSampleOrder(orderId: string | null | undefined, orgId: string | null | undefined) {
+  const fetchOrder = useServerFn(getSampleOrder);
+
+  return useQuery({
+    queryKey: ["sample-order", orderId, orgId],
+    queryFn: async () => {
+      if (!orderId || !orgId) throw new Error("Order not found.");
+      if (!(await hasSession())) throw new Error("Please sign in to view this order.");
+      return fetchOrder({ data: { orderId, orgId } });
+    },
+    enabled: Boolean(orderId && orgId),
+    retry: false,
+    staleTime: 10_000,
+  });
+}
+
+export interface CreateSampleOrderInput {
+  buyerOrgId: string;
+  sellerOrgId: string;
+  productId: string;
+  quantity: number;
+  material?: string | null;
+  notes?: string | null;
+  shippingAddress: string;
+  neededBy?: string | null;
+}
+
+export function useCreateSampleOrder() {
   const qc = useQueryClient();
   const createOrder = useServerFn(createSampleOrder);
 
   return useMutation({
-    mutationFn: async (vars: {
-      sellerOrgId: string;
-      productId: string;
-      quantity: number;
-      material?: string | null;
-      notes?: string | null;
-      shippingAddress: string;
-      neededBy?: string | null;
-    }) => {
-      if (!buyerOrgId) throw new Error("Please select your organization first.");
-      return createOrder({
-        data: {
-          buyerOrgId,
-          sellerOrgId: vars.sellerOrgId,
-          productId: vars.productId,
-          quantity: vars.quantity,
-          material: vars.material,
-          notes: vars.notes,
-          shippingAddress: vars.shippingAddress,
-          neededBy: vars.neededBy,
-        },
-      });
+    mutationFn: async (vars: CreateSampleOrderInput) => {
+      if (!vars.buyerOrgId) throw new Error("Please select the organization you are ordering as.");
+      return createOrder({ data: vars });
     },
     onSuccess: () => {
-      toast.success("Sample order requested! Conversation started in Messages.");
       qc.invalidateQueries({ queryKey: ["sample-orders"] });
       qc.invalidateQueries({ queryKey: ["conversations"] });
       qc.invalidateQueries({ queryKey: ["notifications"] });
     },
     onError: (err) => {
-      toast.error(err instanceof Error ? err.message : "Could not request sample");
+      toast.error(err instanceof Error ? err.message : "Could not place the sample order");
     },
   });
 }
 
-export function useUpdateSampleOrderStatus(orgId: string | null | undefined) {
+const ACTION_LABEL: Record<SampleOrderAction, string> = {
+  quote: "Quote sent to the buyer",
+  decline: "Order declined",
+  confirm: "Quote confirmed",
+  withdraw: "Request withdrawn",
+  ship: "Order marked as shipped",
+  deliver: "Order marked as delivered",
+};
+
+export function useTransitionSampleOrder(orgId: string | null | undefined) {
   const qc = useQueryClient();
-  const updateOrder = useServerFn(updateSampleOrderStatus);
+  const transition = useServerFn(transitionSampleOrder);
 
   return useMutation({
-    mutationFn: async (vars: { orderId: string; status: SampleOrderStatus; message?: string }) => {
+    mutationFn: async (vars: {
+      orderId: string;
+      action: SampleOrderAction;
+      note?: string;
+      quote?: {
+        price: number;
+        currency: string;
+        shippingCost?: number | null;
+        leadTimeDays?: number | null;
+      };
+      trackingRef?: string;
+    }) => {
       if (!orgId) throw new Error("No active organization.");
-      return updateOrder({
-        data: {
-          orderId: vars.orderId,
-          orgId,
-          status: vars.status,
-          message: vars.message,
-        },
-      });
+      return transition({ data: { orgId, ...vars } });
     },
     onSuccess: (_, vars) => {
-      toast.success(`Sample order marked as ${vars.status}`);
+      toast.success(ACTION_LABEL[vars.action]);
       qc.invalidateQueries({ queryKey: ["sample-orders"] });
+      qc.invalidateQueries({ queryKey: ["sample-order"] });
       qc.invalidateQueries({ queryKey: ["conversations"] });
       qc.invalidateQueries({ queryKey: ["notifications"] });
     },
     onError: (err) => {
-      toast.error(err instanceof Error ? err.message : "Failed to update order status");
+      toast.error(err instanceof Error ? err.message : "Failed to update the order");
     },
   });
 }

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { resolveImages } from "@/lib/org-images";
 import { getEntity } from "@/seed/all-entities";
+import type { Database } from "@/integrations/supabase/types";
 
 export interface ShowroomProduct {
   id: string;
@@ -18,13 +19,31 @@ export interface ShowroomProduct {
 
 export type SampleOrderStatus =
   | "requested"
-  | "accepted"
+  | "quoted"
+  | "confirmed"
   | "declined"
-  | "completed"
   | "withdrawn"
-  | "cancelled"
   | "shipped"
   | "delivered";
+
+export type SampleOrderAction = "quote" | "decline" | "confirm" | "withdraw" | "ship" | "deliver";
+
+export interface SampleOrderParty {
+  id: string;
+  name: string;
+  country: string | null;
+  logoUrl: string | null;
+}
+
+export interface SampleOrderEvent {
+  id: string;
+  actorOrgId: string | null;
+  actorUserId: string | null;
+  fromStatus: SampleOrderStatus | null;
+  toStatus: SampleOrderStatus;
+  note: string | null;
+  createdAt: string;
+}
 
 export interface SampleOrder {
   id: string;
@@ -36,19 +55,9 @@ export interface SampleOrder {
     materials: string[];
   } | null;
   sellerOrgId: string;
-  sellerOrg?: {
-    id: string;
-    name: string;
-    country: string | null;
-    logoUrl: string | null;
-  } | null;
+  sellerOrg?: SampleOrderParty | null;
   buyerOrgId: string;
-  buyerOrg?: {
-    id: string;
-    name: string;
-    country: string | null;
-    logoUrl: string | null;
-  } | null;
+  buyerOrg?: SampleOrderParty | null;
   requestedBy: string;
   quantity: number;
   material: string | null;
@@ -57,6 +66,16 @@ export interface SampleOrder {
   neededBy: string | null;
   status: SampleOrderStatus;
   conversationId: string | null;
+  quotedPrice: number | null;
+  quoteCurrency: string;
+  shippingCost: number | null;
+  leadTimeDays: number | null;
+  quoteNote: string | null;
+  trackingRef: string | null;
+  quotedAt: string | null;
+  confirmedAt: string | null;
+  shippedAt: string | null;
+  deliveredAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -69,7 +88,6 @@ export interface ShowroomSummary {
 }
 
 const FALLBACK_PRODUCTS = new Map<string, ShowroomProduct[]>();
-const FALLBACK_SAMPLE_ORDERS: SampleOrder[] = [];
 
 function initSeedProducts() {
   if (FALLBACK_PRODUCTS.size > 0) return;
@@ -152,8 +170,6 @@ function initSeedProducts() {
   for (const item of defaultSeed) {
     FALLBACK_PRODUCTS.set(item.orgKey, item.products);
   }
-
-  // No seeded sample orders: real requests are persisted in the sample_orders table.
 
 }
 
@@ -563,16 +579,101 @@ export const deleteShowroomProduct = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// ---------------------------------------------------------------------------
+// Sample orders — request → quote → confirm → ship → deliver
+// ---------------------------------------------------------------------------
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const isUuidStr = (v: string | null | undefined): v is string => Boolean(v && UUID_RE.test(v));
+
+const ORDER_SELECT =
+  "id, product_id, seller_org_id, buyer_org_id, requested_by, quantity, material, notes, shipping_address, needed_by, status, conversation_id, quoted_price, quote_currency, shipping_cost, lead_time_days, quote_note, tracking_ref, quoted_at, confirmed_at, shipped_at, delivered_at, created_at, updated_at, product:showroom_products(id, name, images, materials), sellerOrg:orgs!sample_orders_seller_org_id_fkey(id, name, country, logo_url), buyerOrg:orgs!sample_orders_buyer_org_id_fkey(id, name, country, logo_url)";
+
+function mapParty(o: any): SampleOrderParty | null {
+  if (!o) return null;
+  const row = Array.isArray(o) ? o[0] : o;
+  if (!row) return null;
+  return { id: row.id, name: row.name, country: row.country ?? null, logoUrl: row.logo_url ?? null };
+}
+
+async function mapOrderRow(r: any): Promise<SampleOrder> {
+  const prod = Array.isArray(r.product) ? r.product[0] : r.product;
+  let productImages: string[] = [];
+  if (prod && Array.isArray(prod.images)) {
+    const resolved = await resolveImages(prod.images as string[]);
+    productImages = resolved.length > 0 ? resolved : (prod.images as string[]);
+  }
+  return {
+    id: r.id,
+    productId: r.product_id,
+    product: prod
+      ? {
+          id: prod.id,
+          name: prod.name,
+          images: productImages,
+          materials: Array.isArray(prod.materials) ? prod.materials : [],
+        }
+      : null,
+    sellerOrgId: r.seller_org_id,
+    sellerOrg: mapParty(r.sellerOrg),
+    buyerOrgId: r.buyer_org_id,
+    buyerOrg: mapParty(r.buyerOrg),
+    requestedBy: r.requested_by ?? "",
+    quantity: r.quantity,
+    material: r.material,
+    notes: r.notes,
+    shippingAddress: r.shipping_address,
+    neededBy: r.needed_by,
+    status: r.status as SampleOrderStatus,
+    conversationId: r.conversation_id,
+    quotedPrice: r.quoted_price === null || r.quoted_price === undefined ? null : Number(r.quoted_price),
+    quoteCurrency: r.quote_currency ?? "EUR",
+    shippingCost: r.shipping_cost === null || r.shipping_cost === undefined ? null : Number(r.shipping_cost),
+    leadTimeDays: r.lead_time_days ?? null,
+    quoteNote: r.quote_note ?? null,
+    trackingRef: r.tracking_ref ?? null,
+    quotedAt: r.quoted_at ?? null,
+    confirmedAt: r.confirmed_at ?? null,
+    shippedAt: r.shipped_at ?? null,
+    deliveredAt: r.delivered_at ?? null,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+async function postOrderMessage(
+  supabase: any,
+  order: { conversationId: string | null },
+  senderOrgId: string,
+  senderName: string,
+  userId: string,
+  body: string,
+) {
+  if (!order.conversationId) return;
+  try {
+    await supabase.from("messages").insert({
+      conversation_id: order.conversationId,
+      sender_org_id: senderOrgId,
+      sender_user_id: userId,
+      author_name: senderName,
+      author_role: "Member",
+      body,
+    });
+  } catch {
+    // messaging is best-effort
+  }
+}
+
 export const createSampleOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z
       .object({
-        buyerOrgId: z.string().min(1),
-        sellerOrgId: z.string().min(1),
-        productId: z.string().min(1),
+        buyerOrgId: z.string().uuid(),
+        sellerOrgId: z.string().uuid(),
+        productId: z.string().uuid(),
         quantity: z.number().int().min(1).max(10000).default(1),
-        material: z.string().trim().nullable().optional(),
+        material: z.string().trim().max(200).nullable().optional(),
         notes: z.string().trim().max(2000).nullable().optional(),
         shippingAddress: z.string().trim().min(3).max(1000),
         neededBy: z.string().nullable().optional(),
@@ -580,152 +681,147 @@ export const createSampleOrder = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    initSeedProducts();
     const { supabase, userId } = context;
 
-    const buyerEntity = getEntity(data.buyerOrgId);
-    const sellerEntity = getEntity(data.sellerOrgId);
-
-    const isUuid = (v: string) =>
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
-
-    let productName = "Showroom Product";
-    let productImages: string[] = [];
-    let productMaterials: string[] = [];
-
-    if (isUuid(data.productId)) {
-      try {
-        const { data: prod } = await supabase
-          .from("showroom_products")
-          .select("name, images, materials")
-          .eq("id", data.productId)
-          .maybeSingle();
-        if (prod) {
-          productName = prod.name;
-          productImages = Array.isArray(prod.images) ? (prod.images as string[]) : [];
-          productMaterials = Array.isArray(prod.materials) ? (prod.materials as string[]) : [];
-        }
-      } catch {
-        // ignore
-      }
-    } else {
-      const sellerProducts = FALLBACK_PRODUCTS.get(data.sellerOrgId) ?? [];
-      const foundProduct = sellerProducts.find((p) => p.id === data.productId);
-      if (foundProduct) {
-        productName = foundProduct.name;
-        productImages = foundProduct.images;
-        productMaterials = foundProduct.materials;
-      }
+    if (data.buyerOrgId === data.sellerOrgId) {
+      throw new Error("You cannot order samples from your own organization.");
     }
 
+    // Never trust the posted buyer id: the caller must be a member of it.
+    const { data: isBuyerMember } = await supabase.rpc("is_org_member", {
+      _user: userId,
+      _org: data.buyerOrgId,
+    });
+    if (!isBuyerMember) throw new Error("You are not a member of the ordering organization.");
+
+    const { data: connected } = await supabase.rpc("orgs_are_connected", {
+      _org_a: data.buyerOrgId,
+      _org_b: data.sellerOrgId,
+    });
+    if (!connected) throw new Error("Connect with this organization before ordering samples.");
+
+    const { data: prod, error: prodErr } = await supabase
+      .from("showroom_products")
+      .select("id, name, org_id, is_active")
+      .eq("id", data.productId)
+      .eq("org_id", data.sellerOrgId)
+      .maybeSingle();
+    if (prodErr) throw new Error(prodErr.message);
+    if (!prod || !prod.is_active) throw new Error("This product is not available for ordering.");
+
+    const [{ data: buyerRow }, { data: sellerRow }] = await Promise.all([
+      supabase.from("orgs").select("name").eq("id", data.buyerOrgId).maybeSingle(),
+      supabase.from("orgs").select("name").eq("id", data.sellerOrgId).maybeSingle(),
+    ]);
 
     let conversationId: string | null = null;
     try {
-      if (
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.buyerOrgId) &&
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.sellerOrgId)
-      ) {
-        const { data: convId } = await supabase.rpc("get_or_create_conversation", {
-          _org_a: data.buyerOrgId,
-          _org_b: data.sellerOrgId,
-        });
-        conversationId = convId as string;
-      }
+      const { data: convId } = await supabase.rpc("get_or_create_conversation", {
+        _org_a: data.buyerOrgId,
+        _org_b: data.sellerOrgId,
+      });
+      conversationId = (convId as string) ?? null;
     } catch {
-      // ignore
+      conversationId = null;
     }
 
-    const newOrder: SampleOrder = {
-      id: `sample-order-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      productId: data.productId,
-      product: {
-        id: data.productId,
-        name: productName,
-        images: productImages,
-        materials: productMaterials,
-      },
-      sellerOrgId: data.sellerOrgId,
-      sellerOrg: {
-        id: data.sellerOrgId,
-        name: sellerEntity?.name ?? "Supplier",
-        country: sellerEntity?.country ?? null,
-        logoUrl: sellerEntity?.logoUrl ?? null,
-      },
-      buyerOrgId: data.buyerOrgId,
-      buyerOrg: {
-        id: data.buyerOrgId,
-        name: buyerEntity?.name ?? "Partner Organization",
-        country: buyerEntity?.country ?? null,
-        logoUrl: buyerEntity?.logoUrl ?? null,
-      },
-      requestedBy: userId ?? "user-1",
-      quantity: data.quantity,
-      material: data.material ?? null,
-      notes: data.notes ?? null,
-      shippingAddress: data.shippingAddress,
-      neededBy: data.neededBy ?? null,
-      status: "requested",
+    const { data: inserted, error } = await supabase
+      .from("sample_orders")
+      .insert({
+        product_id: data.productId,
+        seller_org_id: data.sellerOrgId,
+        buyer_org_id: data.buyerOrgId,
+        requested_by: userId,
+        quantity: data.quantity,
+        material: data.material ?? null,
+        notes: data.notes ?? null,
+        shipping_address: data.shippingAddress,
+        needed_by: data.neededBy ?? null,
+        status: "requested",
+        conversation_id: conversationId,
+      })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+
+    await supabase.from("sample_order_events").insert({
+      order_id: inserted.id,
+      actor_org_id: data.buyerOrgId,
+      actor_user_id: userId,
+      from_status: null,
+      to_status: "requested",
+      note: data.notes ?? null,
+    });
+
+    const materialSnippet = data.material ? ` · Material: ${data.material}` : "";
+    const neededSnippet = data.neededBy ? ` · Needed by: ${data.neededBy}` : "";
+    const notesSnippet = data.notes ? `\n\nNotes: "${data.notes}"` : "";
+    await postOrderMessage(
+      supabase,
+      { conversationId },
+      data.buyerOrgId,
+      buyerRow?.name ?? "Buyer",
+      userId,
+      `📦 Sample order request: ${prod.name} (Qty: ${data.quantity}${materialSnippet}${neededSnippet})\nShip to:\n${data.shippingAddress}${notesSnippet}`,
+    );
+
+    return {
+      orderId: inserted.id as string,
       conversationId,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      sellerName: sellerRow?.name ?? "Supplier",
     };
-
-    // Persist real orders (UUID orgs) to the database.
-    let persisted = false;
-    if (isUuid(data.buyerOrgId) && isUuid(data.sellerOrgId)) {
-      const { data: inserted, error } = await supabase
-        .from("sample_orders")
-        .insert({
-          product_id: isUuid(data.productId) ? data.productId : null,
-          seller_org_id: data.sellerOrgId,
-          buyer_org_id: data.buyerOrgId,
-          requested_by: userId,
-          quantity: data.quantity,
-          material: data.material ?? null,
-          notes: data.notes ?? null,
-          shipping_address: data.shippingAddress,
-          needed_by: data.neededBy ?? null,
-          status: "requested",
-          conversation_id: conversationId,
-        })
-        .select("id")
-        .single();
-
-      if (error) throw new Error(error.message);
-      if (inserted) {
-        newOrder.id = inserted.id;
-        persisted = true;
-      }
-    }
-
-    if (!persisted) {
-      FALLBACK_SAMPLE_ORDERS.unshift(newOrder);
-    }
-
-
-    if (conversationId) {
-      try {
-        const materialSnippet = data.material ? ` · Material: ${data.material}` : "";
-        const neededSnippet = data.neededBy ? ` · Needed by: ${data.neededBy}` : "";
-        const notesSnippet = data.notes ? `\n\nNotes: "${data.notes}"` : "";
-
-        const messageBody = `📦 Sample Order Request: ${productName} (Qty: ${data.quantity}${materialSnippet}${neededSnippet})\nShipping Address:\n${data.shippingAddress}${notesSnippet}`;
-
-        await supabase.from("messages").insert({
-          conversation_id: conversationId,
-          sender_org_id: data.buyerOrgId,
-          sender_user_id: userId,
-          author_name: buyerEntity?.name ?? "Buyer",
-          author_role: "Member",
-          body: messageBody,
-        });
-      } catch {
-        // ignore
-      }
-    }
-
-    return { orderId: newOrder.id, conversationId };
   });
+
+export const getSampleOrder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ orderId: z.string().uuid(), orgId: z.string().min(1) }).parse(d),
+  )
+  .handler(
+    async ({
+      data,
+      context,
+    }): Promise<{
+      order: SampleOrder;
+      events: SampleOrderEvent[];
+      role: "buyer" | "seller";
+    }> => {
+      const { supabase } = context;
+      const orgUuid = resolveOrgUuid(data.orgId) ?? data.orgId;
+
+      const { data: row, error } = await supabase
+        .from("sample_orders")
+        .select(ORDER_SELECT)
+        .eq("id", data.orderId)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      if (!row) throw new Error("Order not found.");
+
+      const order = await mapOrderRow(row);
+      let role: "buyer" | "seller";
+      if (order.sellerOrgId === orgUuid) role = "seller";
+      else if (order.buyerOrgId === orgUuid) role = "buyer";
+      else throw new Error("This order does not belong to your organization.");
+
+      const { data: evRows } = await supabase
+        .from("sample_order_events")
+        .select("id, actor_org_id, actor_user_id, from_status, to_status, note, created_at")
+        .eq("order_id", data.orderId)
+        .order("created_at", { ascending: true });
+
+      const events: SampleOrderEvent[] = (evRows ?? []).map((e: any) => ({
+        id: e.id,
+        actorOrgId: e.actor_org_id,
+        actorUserId: e.actor_user_id,
+        fromStatus: e.from_status,
+        toStatus: e.to_status,
+        note: e.note,
+        createdAt: e.created_at,
+      }));
+
+      return { order, events, role };
+    },
+  );
 
 export const listSampleOrders = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -735,88 +831,32 @@ export const listSampleOrders = createServerFn({ method: "POST" })
       data,
       context,
     }): Promise<{ inbound: SampleOrder[]; outbound: SampleOrder[]; pendingCount: number }> => {
-      initSeedProducts();
       const { supabase } = context;
       const targetUuid = resolveOrgUuid(data.orgId) ?? data.orgId;
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-        targetUuid,
-      );
 
       const inbound: SampleOrder[] = [];
       const outbound: SampleOrder[] = [];
       let pendingCount = 0;
 
-      if (isUuid) {
-        const { data: rows, error } = await supabase
-          .from("sample_orders")
-          .select(
-            "id, product_id, seller_org_id, buyer_org_id, requested_by, quantity, material, notes, shipping_address, needed_by, status, conversation_id, created_at, updated_at, product:showroom_products(id, name, images, materials), sellerOrg:orgs!sample_orders_seller_org_id_fkey(id, name, country, logo_url), buyerOrg:orgs!sample_orders_buyer_org_id_fkey(id, name, country, logo_url)",
-          )
-          .or(`seller_org_id.eq.${targetUuid},buyer_org_id.eq.${targetUuid}`)
-          .order("created_at", { ascending: false });
+      if (!isUuidStr(targetUuid)) return { inbound, outbound, pendingCount };
 
-        if (error) throw new Error(error.message);
+      const { data: rows, error } = await supabase
+        .from("sample_orders")
+        .select(ORDER_SELECT)
+        .or(`seller_org_id.eq.${targetUuid},buyer_org_id.eq.${targetUuid}`)
+        .order("created_at", { ascending: false });
+      if (error) throw new Error(error.message);
 
-        for (const r of (rows ?? []) as any[]) {
-          const mapOrg = (o: any) =>
-            o
-              ? { id: o.id, name: o.name, country: o.country ?? null, logoUrl: o.logo_url ?? null }
-              : null;
-
-          const order: SampleOrder = {
-            id: r.id,
-            productId: r.product_id,
-            product: r.product
-              ? {
-                  id: r.product.id,
-                  name: r.product.name,
-                  images: Array.isArray(r.product.images) ? r.product.images : [],
-                  materials: Array.isArray(r.product.materials) ? r.product.materials : [],
-                }
-              : null,
-            sellerOrgId: r.seller_org_id,
-            sellerOrg: mapOrg(r.sellerOrg),
-            buyerOrgId: r.buyer_org_id,
-            buyerOrg: mapOrg(r.buyerOrg),
-            requestedBy: r.requested_by ?? "",
-            quantity: r.quantity,
-            material: r.material,
-            notes: r.notes,
-            shippingAddress: r.shipping_address,
-            neededBy: r.needed_by,
-            status: r.status as SampleOrderStatus,
-            conversationId: r.conversation_id,
-            createdAt: r.created_at,
-            updatedAt: r.updated_at,
-          };
-
-          if (order.sellerOrgId === targetUuid) {
-            inbound.push(order);
-            if (order.status === "requested") pendingCount += 1;
-          } else {
-            outbound.push(order);
-          }
-        }
-
-        for (const order of FALLBACK_SAMPLE_ORDERS) {
-          if (inbound.some((o) => o.id === order.id) || outbound.some((o) => o.id === order.id)) continue;
-          if (order.sellerOrgId === targetUuid || order.sellerOrgId === data.orgId) {
-            inbound.push(order);
-            if (order.status === "requested") pendingCount += 1;
-          } else if (order.buyerOrgId === targetUuid || order.buyerOrgId === data.orgId) {
-            outbound.push(order);
-          }
-        }
-
-        return { inbound, outbound, pendingCount };
-      }
-
-      for (const order of FALLBACK_SAMPLE_ORDERS) {
-        if (order.sellerOrgId === targetUuid || order.sellerOrgId === data.orgId) {
+      for (const r of (rows ?? []) as any[]) {
+        const order = await mapOrderRow(r);
+        if (order.sellerOrgId === targetUuid) {
           inbound.push(order);
-          if (order.status === "requested") pendingCount += 1;
-        } else if (order.buyerOrgId === targetUuid || order.buyerOrgId === data.orgId) {
+          // Seller has something to do on new requests and confirmed orders.
+          if (order.status === "requested" || order.status === "confirmed") pendingCount += 1;
+        } else {
           outbound.push(order);
+          // Buyer must act on quotes.
+          if (order.status === "quoted") pendingCount += 1;
         }
       }
 
@@ -824,48 +864,136 @@ export const listSampleOrders = createServerFn({ method: "POST" })
     },
   );
 
-export const updateSampleOrderStatus = createServerFn({ method: "POST" })
+const TRANSITIONS: Record<
+  SampleOrderAction,
+  { role: "buyer" | "seller"; from: SampleOrderStatus[]; to: SampleOrderStatus }
+> = {
+  quote: { role: "seller", from: ["requested"], to: "quoted" },
+  decline: { role: "seller", from: ["requested", "quoted", "confirmed"], to: "declined" },
+  confirm: { role: "buyer", from: ["quoted"], to: "confirmed" },
+  withdraw: { role: "buyer", from: ["requested", "quoted"], to: "withdrawn" },
+  ship: { role: "seller", from: ["confirmed"], to: "shipped" },
+  deliver: { role: "seller", from: ["shipped"], to: "delivered" },
+};
+
+export const transitionSampleOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z
       .object({
-        orderId: z.string().min(1),
+        orderId: z.string().uuid(),
         orgId: z.string().min(1),
-        status: z.enum([
-          "requested",
-          "accepted",
-          "declined",
-          "completed",
-          "withdrawn",
-          "cancelled",
-          "shipped",
-          "delivered",
-        ]),
-        message: z.string().trim().max(1000).optional(),
+        action: z.enum(["quote", "decline", "confirm", "withdraw", "ship", "deliver"]),
+        note: z.string().trim().max(1000).optional(),
+        quote: z
+          .object({
+            price: z.number().min(0).max(1_000_000),
+            currency: z.string().trim().min(3).max(3).default("EUR"),
+            shippingCost: z.number().min(0).max(1_000_000).nullable().optional(),
+            leadTimeDays: z.number().int().min(0).max(365).nullable().optional(),
+          })
+          .optional(),
+        trackingRef: z.string().trim().max(200).optional(),
       })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    initSeedProducts();
-    const { supabase } = context;
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-      data.orderId,
-    );
+    const { supabase, userId } = context;
+    const orgUuid = resolveOrgUuid(data.orgId) ?? data.orgId;
 
-    if (isUuid) {
-      const { error } = await supabase
-        .from("sample_orders")
-        .update({ status: data.status, updated_at: new Date().toISOString() })
-        .eq("id", data.orderId);
-      if (error) throw new Error(error.message);
-      return { ok: true, status: data.status };
+    const { data: row, error } = await supabase
+      .from("sample_orders")
+      .select(ORDER_SELECT)
+      .eq("id", data.orderId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!row) throw new Error("Order not found.");
+    const order = await mapOrderRow(row);
+
+    const rule = TRANSITIONS[data.action];
+    const actorRole: "buyer" | "seller" | null =
+      order.sellerOrgId === orgUuid ? "seller" : order.buyerOrgId === orgUuid ? "buyer" : null;
+    if (!actorRole) throw new Error("This order does not belong to your organization.");
+    if (actorRole !== rule.role) {
+      throw new Error(`Only the ${rule.role} can ${data.action} this order.`);
+    }
+    if (!rule.from.includes(order.status)) {
+      throw new Error(`Cannot ${data.action} an order that is ${order.status}.`);
     }
 
-    const order = FALLBACK_SAMPLE_ORDERS.find((o) => o.id === data.orderId);
-    if (order) {
-      order.status = data.status;
-      order.updatedAt = new Date().toISOString();
+    const { data: isMember } = await supabase.rpc("is_org_member", { _user: userId, _org: orgUuid });
+    if (!isMember) throw new Error("You are not a member of this organization.");
+
+    const now = new Date().toISOString();
+    const patch: Database["public"]["Tables"]["sample_orders"]["Update"] = {
+      status: rule.to,
+      updated_at: now,
+    };
+
+    if (data.action === "quote") {
+      if (!data.quote) throw new Error("A quote requires a price.");
+      patch.quoted_price = data.quote.price;
+      patch.quote_currency = data.quote.currency.toUpperCase();
+      patch.shipping_cost = data.quote.shippingCost ?? null;
+      patch.lead_time_days = data.quote.leadTimeDays ?? null;
+      patch.quote_note = data.note ?? null;
+      patch.quoted_at = now;
     }
-    return { ok: true, status: data.status };
+    if (data.action === "confirm") patch.confirmed_at = now;
+    if (data.action === "ship") {
+      patch.shipped_at = now;
+      patch.tracking_ref = data.trackingRef ?? null;
+    }
+    if (data.action === "deliver") patch.delivered_at = now;
+
+    const { error: updErr } = await supabase
+      .from("sample_orders")
+      .update(patch)
+      .eq("id", data.orderId);
+    if (updErr) throw new Error(updErr.message);
+
+    await supabase.from("sample_order_events").insert({
+      order_id: data.orderId,
+      actor_org_id: orgUuid,
+      actor_user_id: userId,
+      from_status: order.status,
+      to_status: rule.to,
+      note: data.note ?? (data.action === "ship" && data.trackingRef ? `Tracking: ${data.trackingRef}` : null),
+    });
+
+    const actorName =
+      (actorRole === "seller" ? order.sellerOrg?.name : order.buyerOrg?.name) ?? "Partner";
+    const productName = order.product?.name ?? "sample order";
+    const fmt = (n: number | null | undefined, cur: string) =>
+      n === null || n === undefined ? null : `${cur} ${n.toFixed(2)}`;
+
+    let body: string;
+    switch (data.action) {
+      case "quote": {
+        const price = fmt(data.quote!.price, data.quote!.currency.toUpperCase());
+        const ship = fmt(data.quote!.shippingCost ?? null, data.quote!.currency.toUpperCase());
+        const lead = data.quote!.leadTimeDays ? ` · Lead time: ${data.quote!.leadTimeDays} days` : "";
+        body = `💬 Quote for ${productName}: ${price}${ship ? ` + shipping ${ship}` : ""}${lead}${data.note ? `\n\n${data.note}` : ""}`;
+        break;
+      }
+      case "confirm":
+        body = `✅ Quote confirmed for ${productName}. Please prepare the samples.${data.note ? `\n\n${data.note}` : ""}`;
+        break;
+      case "decline":
+        body = `❌ Sample order for ${productName} was declined.${data.note ? `\n\n${data.note}` : ""}`;
+        break;
+      case "withdraw":
+        body = `↩️ Sample request for ${productName} was withdrawn.${data.note ? `\n\n${data.note}` : ""}`;
+        break;
+      case "ship":
+        body = `🚚 Samples for ${productName} have shipped.${data.trackingRef ? ` Tracking: ${data.trackingRef}` : ""}${data.note ? `\n\n${data.note}` : ""}`;
+        break;
+      case "deliver":
+      default:
+        body = `📬 Samples for ${productName} marked as delivered.${data.note ? `\n\n${data.note}` : ""}`;
+        break;
+    }
+    await postOrderMessage(supabase, order, orgUuid, actorName, userId, body);
+
+    return { ok: true, status: rule.to };
   });
-

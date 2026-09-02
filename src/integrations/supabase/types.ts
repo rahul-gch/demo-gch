@@ -1386,53 +1386,138 @@ export type Database = {
           },
         ]
       }
+      sample_order_events: {
+        Row: {
+          actor_org_id: string | null
+          actor_user_id: string | null
+          created_at: string
+          from_status: string | null
+          id: string
+          note: string | null
+          order_id: string
+          to_status: string
+        }
+        Insert: {
+          actor_org_id?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          note?: string | null
+          order_id: string
+          to_status: string
+        }
+        Update: {
+          actor_org_id?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          note?: string | null
+          order_id?: string
+          to_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sample_order_events_actor_org_id_fkey"
+            columns: ["actor_org_id"]
+            isOneToOne: false
+            referencedRelation: "org_public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sample_order_events_actor_org_id_fkey"
+            columns: ["actor_org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sample_order_events_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "sample_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sample_orders: {
         Row: {
           buyer_org_id: string
+          confirmed_at: string | null
           conversation_id: string | null
           created_at: string
+          delivered_at: string | null
           id: string
+          lead_time_days: number | null
           material: string | null
           needed_by: string | null
           notes: string | null
           product_id: string | null
           quantity: number
+          quote_currency: string
+          quote_note: string | null
+          quoted_at: string | null
+          quoted_price: number | null
           requested_by: string | null
           seller_org_id: string
+          shipped_at: string | null
           shipping_address: string
+          shipping_cost: number | null
           status: string
+          tracking_ref: string | null
           updated_at: string
         }
         Insert: {
           buyer_org_id: string
+          confirmed_at?: string | null
           conversation_id?: string | null
           created_at?: string
+          delivered_at?: string | null
           id?: string
+          lead_time_days?: number | null
           material?: string | null
           needed_by?: string | null
           notes?: string | null
           product_id?: string | null
           quantity?: number
+          quote_currency?: string
+          quote_note?: string | null
+          quoted_at?: string | null
+          quoted_price?: number | null
           requested_by?: string | null
           seller_org_id: string
+          shipped_at?: string | null
           shipping_address: string
+          shipping_cost?: number | null
           status?: string
+          tracking_ref?: string | null
           updated_at?: string
         }
         Update: {
           buyer_org_id?: string
+          confirmed_at?: string | null
           conversation_id?: string | null
           created_at?: string
+          delivered_at?: string | null
           id?: string
+          lead_time_days?: number | null
           material?: string | null
           needed_by?: string | null
           notes?: string | null
           product_id?: string | null
           quantity?: number
+          quote_currency?: string
+          quote_note?: string | null
+          quoted_at?: string | null
+          quoted_price?: number | null
           requested_by?: string | null
           seller_org_id?: string
+          shipped_at?: string | null
           shipping_address?: string
+          shipping_cost?: number | null
           status?: string
+          tracking_ref?: string | null
           updated_at?: string
         }
         Relationships: [

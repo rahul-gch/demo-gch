@@ -1,8 +1,11 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute, Outlet, notFound } from "@tanstack/react-router";
 import { getEntity } from "@/seed/all-entities";
 import { refreshRegistry } from "@/lib/registry";
-import { PublicOrgProfile } from "@/components/directory/PublicOrgProfile";
 
+/**
+ * Public (network) view of an organization. Parent layout for the profile,
+ * its showroom and product pages, and the sample-order form.
+ */
 export const Route = createFileRoute("/_authenticated/directory/$id")({
   loader: async ({ params, context }) => {
     let entity = getEntity(params.id);
@@ -13,18 +16,7 @@ export const Route = createFileRoute("/_authenticated/directory/$id")({
     if (!entity) throw notFound();
     return { entity };
   },
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: `${loaderData?.entity.name ?? "Organization"} — Network profile | GCH` },
-      {
-        name: "description",
-        content:
-          loaderData?.entity.description ??
-          "Public network profile: capabilities, certifications and contact options.",
-      },
-    ],
-  }),
-  component: DirectoryProfilePage,
+  component: () => <Outlet />,
   notFoundComponent: () => (
     <div className="flex min-h-screen items-center justify-center p-6 text-sm text-muted-foreground">
       Organization not found.
@@ -36,8 +28,3 @@ export const Route = createFileRoute("/_authenticated/directory/$id")({
     </div>
   ),
 });
-
-function DirectoryProfilePage() {
-  const { entity } = Route.useLoaderData();
-  return <PublicOrgProfile entity={entity} />;
-}

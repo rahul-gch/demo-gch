@@ -29,6 +29,8 @@ import {
 interface ProductCardProps {
   product: ShowroomProduct;
   orgRouteId?: string;
+  /** Which route tree the detail page lives in: member workspace or public directory. */
+  detailBase?: "organizations" | "directory";
   isOwner?: boolean;
   canManage?: boolean;
   isConnected?: boolean;
@@ -42,6 +44,7 @@ interface ProductCardProps {
 export function ProductCard({
   product,
   orgRouteId,
+  detailBase = "organizations",
   isOwner,
   canManage,
   isConnected,
@@ -57,14 +60,32 @@ export function ProductCard({
   const images = product.images && product.images.length > 0 ? product.images : [];
   const currentImage = images[activeImageIdx] ?? null;
 
-  const detailLink = orgRouteId ? (
-    <Button asChild variant="ghost" size="sm" className="h-8 gap-1.5 text-xs">
+  const DetailLink = ({ className, children }: { className?: string; children: React.ReactNode }) =>
+    !orgRouteId ? (
+      <span className={className}>{children}</span>
+    ) : detailBase === "directory" ? (
+      <Link
+        to="/directory/$id/showroom/$productId"
+        params={{ id: orgRouteId, productId: product.id }}
+        className={className}
+      >
+        {children}
+      </Link>
+    ) : (
       <Link
         to="/organizations/$id/showroom/$productId"
         params={{ id: orgRouteId, productId: product.id }}
+        className={className}
       >
-        <Eye className="h-3.5 w-3.5" /> View
+        {children}
       </Link>
+    );
+
+  const detailLink = orgRouteId ? (
+    <Button asChild variant="ghost" size="sm" className="h-8 gap-1.5 text-xs">
+      <DetailLink>
+        <Eye className="h-3.5 w-3.5" /> View
+      </DetailLink>
     </Button>
   ) : null;
 
@@ -132,33 +153,13 @@ export function ProductCard({
   return (
     <>
       <Card className="group flex flex-col overflow-hidden transition-all duration-200 hover:shadow-md border-slate-200/80">
-        {orgRouteId ? (
-          <Link
-            to="/organizations/$id/showroom/$productId"
-            params={{ id: orgRouteId, productId: product.id }}
-            className="block"
-          >
-            {media}
-          </Link>
-        ) : (
-          media
-        )}
+        <DetailLink className="block">{media}</DetailLink>
 
         <CardHeader className="p-4 pb-2">
           <div className="flex items-start justify-between gap-2">
-            {orgRouteId ? (
-              <Link
-                to="/organizations/$id/showroom/$productId"
-                params={{ id: orgRouteId, productId: product.id }}
-                className="line-clamp-1 text-base font-semibold tracking-tight text-slate-900 hover:underline dark:text-slate-100"
-              >
-                {product.name}
-              </Link>
-            ) : (
-              <h3 className="line-clamp-1 text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-                {product.name}
-              </h3>
-            )}
+            <h3 className="line-clamp-1 text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+              <DetailLink className={orgRouteId ? "hover:underline" : undefined}>{product.name}</DetailLink>
+            </h3>
           </div>
           {product.description && (
             <p className="line-clamp-2 text-xs text-muted-foreground mt-1">{product.description}</p>
