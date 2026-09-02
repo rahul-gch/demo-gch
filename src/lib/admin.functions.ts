@@ -10,14 +10,35 @@ async function assertAdmin(context: { supabase: any; userId: string }) {
   if (!data) throw new Error("Forbidden — platform admins only.");
 }
 
-export const amIPlatformAdmin = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data } = await context.supabase.rpc("is_platform_admin", {
-      _user: context.userId,
-    });
-    return { isAdmin: !!data };
+/**
+ * A soft-auth status probe used by protected route guards and shared shells.
+ * During initial client hydration the auth session can still be restoring, so
+ * a missing bearer token must resolve to "not an admin" rather than blanking
+ * the application. All privileged admin operations below remain protected by
+ * requireSupabaseAuth and assertAdmin.
+ */
+export const amIPlatformAdmin = createServerFn({ method: "GET" }).handler(async () => {
+  const { getRequest } = await import("@tanstack/react-start/server");
+  const authHeader = getRequest()?.headers.get("authorization") ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  const url = process.env["SUPABASE_URL"];
+  const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
+
+  if (!token || !url || !key) return { isAdmin: false };
+
+  const { createClient } = await import("@supabase/supabase-js");
+  const supabase = createClient(url, key, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
   });
+  const { data: claims, error: claimsError } = await supabase.auth.getClaims(token);
+  const userId = claims?.claims?.sub;
+  if (claimsError || !userId) return { isAdmin: false };
+
+  const { data, error } = await supabase.rpc("is_platform_admin", { _user: userId });
+  if (error) return { isAdmin: false };
+  return { isAdmin: Boolean(data) };
+});
 
 export const listRecentSignups = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
