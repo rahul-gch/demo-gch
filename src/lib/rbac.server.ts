@@ -4,6 +4,8 @@ export type OrgRole = "owner" | "admin" | "editor" | "viewer";
 
 export interface UserRoleResult {
   role: OrgRole;
+  /** False when the user has no membership row in this org (and isn't creator/platform admin). */
+  isMember: boolean;
   isOwner: boolean;
   isAdmin: boolean;
   isEditor: boolean;
