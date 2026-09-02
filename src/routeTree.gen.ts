@@ -32,10 +32,10 @@ import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated.f
 import { Route as AuthenticatedOrganizationsIndexRouteImport } from './routes/_authenticated.organizations.index'
 import { Route as OnboardingOrgIdRouteImport } from './routes/onboarding.org.$id'
 import { Route as AuthenticatedOrganizationsIdRouteImport } from './routes/_authenticated.organizations.$id'
-import { Route as AuthenticatedDirectoryIdRouteImport } from './routes/_authenticated.directory.$id'
 import { Route as AuthenticatedAdminOrganizationsRouteImport } from './routes/_authenticated.admin.organizations'
 import { Route as AuthenticatedAdminLogsRouteImport } from './routes/_authenticated.admin.logs'
 import { Route as AuthenticatedOrganizationsIdIndexRouteImport } from './routes/_authenticated.organizations.$id.index'
+import { Route as AuthenticatedDirectoryIdIndexRouteImport } from './routes/_authenticated.directory.$id.index'
 import { Route as AuthenticatedOrganizationsIdSupplyChainRouteImport } from './routes/_authenticated.organizations.$id.supply-chain'
 import { Route as AuthenticatedOrganizationsIdSettingsRouteImport } from './routes/_authenticated.organizations.$id.settings'
 import { Route as AuthenticatedOrganizationsIdResearchRouteImport } from './routes/_authenticated.organizations.$id.research'
@@ -178,12 +178,6 @@ const AuthenticatedOrganizationsIdRoute =
     path: '/$id',
     getParentRoute: () => AuthenticatedOrganizationsRoute,
   } as any)
-const AuthenticatedDirectoryIdRoute =
-  AuthenticatedDirectoryIdRouteImport.update({
-    id: '/directory/$id',
-    path: '/directory/$id',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
 const AuthenticatedAdminOrganizationsRoute =
   AuthenticatedAdminOrganizationsRouteImport.update({
     id: '/admin/organizations',
@@ -200,6 +194,12 @@ const AuthenticatedOrganizationsIdIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedOrganizationsIdRoute,
+  } as any)
+const AuthenticatedDirectoryIdIndexRoute =
+  AuthenticatedDirectoryIdIndexRouteImport.update({
+    id: '/directory/$id/',
+    path: '/directory/$id/',
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedOrganizationsIdSupplyChainRoute =
   AuthenticatedOrganizationsIdSupplyChainRouteImport.update({
@@ -362,7 +362,6 @@ export interface FileRoutesByFullPath {
   '/onboarding/': typeof OnboardingIndexRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
-  '/directory/$id': typeof AuthenticatedDirectoryIdRoute
   '/organizations/$id': typeof AuthenticatedOrganizationsIdRouteWithChildren
   '/onboarding/org/$id': typeof OnboardingOrgIdRoute
   '/organizations/': typeof AuthenticatedOrganizationsIndexRoute
@@ -377,6 +376,7 @@ export interface FileRoutesByFullPath {
   '/organizations/$id/research': typeof AuthenticatedOrganizationsIdResearchRoute
   '/organizations/$id/settings': typeof AuthenticatedOrganizationsIdSettingsRoute
   '/organizations/$id/supply-chain': typeof AuthenticatedOrganizationsIdSupplyChainRoute
+  '/directory/$id/': typeof AuthenticatedDirectoryIdIndexRoute
   '/organizations/$id/': typeof AuthenticatedOrganizationsIdIndexRoute
   '/organizations/$id/projects/$projectId': typeof AuthenticatedOrganizationsIdProjectsProjectIdRouteWithChildren
   '/organizations/$id/showroom/$productId': typeof AuthenticatedOrganizationsIdShowroomProductIdRoute
@@ -412,7 +412,6 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingIndexRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
-  '/directory/$id': typeof AuthenticatedDirectoryIdRoute
   '/onboarding/org/$id': typeof OnboardingOrgIdRoute
   '/organizations': typeof AuthenticatedOrganizationsIndexRoute
   '/organizations/$id/compliance': typeof AuthenticatedOrganizationsIdComplianceRoute
@@ -425,6 +424,7 @@ export interface FileRoutesByTo {
   '/organizations/$id/research': typeof AuthenticatedOrganizationsIdResearchRoute
   '/organizations/$id/settings': typeof AuthenticatedOrganizationsIdSettingsRoute
   '/organizations/$id/supply-chain': typeof AuthenticatedOrganizationsIdSupplyChainRoute
+  '/directory/$id': typeof AuthenticatedDirectoryIdIndexRoute
   '/organizations/$id': typeof AuthenticatedOrganizationsIdIndexRoute
   '/organizations/$id/showroom/$productId': typeof AuthenticatedOrganizationsIdShowroomProductIdRoute
   '/organizations/$id/projects': typeof AuthenticatedOrganizationsIdProjectsIndexRoute
@@ -462,7 +462,6 @@ export interface FileRoutesById {
   '/onboarding/': typeof OnboardingIndexRoute
   '/_authenticated/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/_authenticated/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
-  '/_authenticated/directory/$id': typeof AuthenticatedDirectoryIdRoute
   '/_authenticated/organizations/$id': typeof AuthenticatedOrganizationsIdRouteWithChildren
   '/onboarding/org/$id': typeof OnboardingOrgIdRoute
   '/_authenticated/organizations/': typeof AuthenticatedOrganizationsIndexRoute
@@ -477,6 +476,7 @@ export interface FileRoutesById {
   '/_authenticated/organizations/$id/research': typeof AuthenticatedOrganizationsIdResearchRoute
   '/_authenticated/organizations/$id/settings': typeof AuthenticatedOrganizationsIdSettingsRoute
   '/_authenticated/organizations/$id/supply-chain': typeof AuthenticatedOrganizationsIdSupplyChainRoute
+  '/_authenticated/directory/$id/': typeof AuthenticatedDirectoryIdIndexRoute
   '/_authenticated/organizations/$id/': typeof AuthenticatedOrganizationsIdIndexRoute
   '/_authenticated/organizations/$id/projects/$projectId': typeof AuthenticatedOrganizationsIdProjectsProjectIdRouteWithChildren
   '/_authenticated/organizations/$id/showroom/$productId': typeof AuthenticatedOrganizationsIdShowroomProductIdRoute
@@ -515,7 +515,6 @@ export interface FileRouteTypes {
     | '/onboarding/'
     | '/admin/logs'
     | '/admin/organizations'
-    | '/directory/$id'
     | '/organizations/$id'
     | '/onboarding/org/$id'
     | '/organizations/'
@@ -530,6 +529,7 @@ export interface FileRouteTypes {
     | '/organizations/$id/research'
     | '/organizations/$id/settings'
     | '/organizations/$id/supply-chain'
+    | '/directory/$id/'
     | '/organizations/$id/'
     | '/organizations/$id/projects/$projectId'
     | '/organizations/$id/showroom/$productId'
@@ -565,7 +565,6 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/admin/logs'
     | '/admin/organizations'
-    | '/directory/$id'
     | '/onboarding/org/$id'
     | '/organizations'
     | '/organizations/$id/compliance'
@@ -578,6 +577,7 @@ export interface FileRouteTypes {
     | '/organizations/$id/research'
     | '/organizations/$id/settings'
     | '/organizations/$id/supply-chain'
+    | '/directory/$id'
     | '/organizations/$id'
     | '/organizations/$id/showroom/$productId'
     | '/organizations/$id/projects'
@@ -614,7 +614,6 @@ export interface FileRouteTypes {
     | '/onboarding/'
     | '/_authenticated/admin/logs'
     | '/_authenticated/admin/organizations'
-    | '/_authenticated/directory/$id'
     | '/_authenticated/organizations/$id'
     | '/onboarding/org/$id'
     | '/_authenticated/organizations/'
@@ -629,6 +628,7 @@ export interface FileRouteTypes {
     | '/_authenticated/organizations/$id/research'
     | '/_authenticated/organizations/$id/settings'
     | '/_authenticated/organizations/$id/supply-chain'
+    | '/_authenticated/directory/$id/'
     | '/_authenticated/organizations/$id/'
     | '/_authenticated/organizations/$id/projects/$projectId'
     | '/_authenticated/organizations/$id/showroom/$productId'
@@ -821,13 +821,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrganizationsIdRouteImport
       parentRoute: typeof AuthenticatedOrganizationsRoute
     }
-    '/_authenticated/directory/$id': {
-      id: '/_authenticated/directory/$id'
-      path: '/directory/$id'
-      fullPath: '/directory/$id'
-      preLoaderRoute: typeof AuthenticatedDirectoryIdRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/admin/organizations': {
       id: '/_authenticated/admin/organizations'
       path: '/admin/organizations'
@@ -848,6 +841,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/organizations/$id/'
       preLoaderRoute: typeof AuthenticatedOrganizationsIdIndexRouteImport
       parentRoute: typeof AuthenticatedOrganizationsIdRoute
+    }
+    '/_authenticated/directory/$id/': {
+      id: '/_authenticated/directory/$id/'
+      path: '/directory/$id'
+      fullPath: '/directory/$id/'
+      preLoaderRoute: typeof AuthenticatedDirectoryIdIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/organizations/$id/supply-chain': {
       id: '/_authenticated/organizations/$id/supply-chain'
@@ -1150,7 +1150,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedAdminLogsRoute: typeof AuthenticatedAdminLogsRoute
   AuthenticatedAdminOrganizationsRoute: typeof AuthenticatedAdminOrganizationsRoute
-  AuthenticatedDirectoryIdRoute: typeof AuthenticatedDirectoryIdRoute
+  AuthenticatedDirectoryIdIndexRoute: typeof AuthenticatedDirectoryIdIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -1165,7 +1165,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedAdminLogsRoute: AuthenticatedAdminLogsRoute,
   AuthenticatedAdminOrganizationsRoute: AuthenticatedAdminOrganizationsRoute,
-  AuthenticatedDirectoryIdRoute: AuthenticatedDirectoryIdRoute,
+  AuthenticatedDirectoryIdIndexRoute: AuthenticatedDirectoryIdIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

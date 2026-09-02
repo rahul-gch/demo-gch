@@ -1,43 +1,34 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
-import { getEntity } from "@/seed/all-entities";
-import { refreshRegistry } from "@/lib/registry";
+import { createFileRoute, getRouteApi } from "@tanstack/react-router";
 import { PublicOrgProfile } from "@/components/directory/PublicOrgProfile";
 
-export const Route = createFileRoute("/_authenticated/directory/$id")({
-  loader: async ({ params, context }) => {
-    let entity = getEntity(params.id);
-    if (!entity) {
-      await refreshRegistry(context.queryClient);
-      entity = getEntity(params.id);
-    }
-    if (!entity) throw notFound();
-    return { entity };
+const parent = getRouteApi("/_authenticated/directory/$id");
+
+export const Route = createFileRoute("/_authenticated/directory/$id/")({
+  head: ({ match }) => {
+    const entity = (match.context as { entity?: { name?: string; description?: string } })?.entity;
+    return {
+      meta: [
+        { title: `${entity?.name ?? "Organization"} — Network profile | Global Chain Hub` },
+        {
+          name: "description",
+          content:
+            entity?.description ??
+            "Public network profile: capabilities, certifications and contact options.",
+        },
+        { property: "og:title", content: `${entity?.name ?? "Organization"} on Global Chain Hub` },
+        {
+          property: "og:description",
+          content: "Capabilities, certifications, showroom and contact options.",
+        },
+        { property: "og:type", content: "website" },
+        { name: "twitter:card", content: "summary_large_image" },
+      ],
+    };
   },
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: `${loaderData?.entity.name ?? "Organization"} — Network profile | GCH` },
-      {
-        name: "description",
-        content:
-          loaderData?.entity.description ??
-          "Public network profile: capabilities, certifications and contact options.",
-      },
-    ],
-  }),
   component: DirectoryProfilePage,
-  notFoundComponent: () => (
-    <div className="flex min-h-screen items-center justify-center p-6 text-sm text-muted-foreground">
-      Organization not found.
-    </div>
-  ),
-  errorComponent: ({ error }) => (
-    <div className="flex min-h-screen items-center justify-center p-6 text-sm text-muted-foreground">
-      {error.message}
-    </div>
-  ),
 });
 
 function DirectoryProfilePage() {
-  const { entity } = Route.useLoaderData();
+  const { entity } = parent.useLoaderData();
   return <PublicOrgProfile entity={entity} />;
 }
