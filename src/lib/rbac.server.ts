@@ -72,21 +72,22 @@ export async function getOrgUserRole(
     if (member?.role) {
       role = member.role as OrgRole;
     } else if (isCreator) {
-      // The org creator is always its owner; backfill the missing membership row.
+      // The org creator must have a real membership row: the database policies
+      // (user_can_edit / user_can_manage) only look at org_members, so a
+      // creator without a row would pass here but be rejected by RLS.
       const { data: allMembers } = await supabase
         .from("org_members")
         .select("id, role")
         .eq("org_id", targetOrgId);
       const hasOtherOwner = (allMembers ?? []).some((m: any) => m.role === "owner");
-      if (!hasOtherOwner) {
-        const { error } = await supabase.from("org_members").insert({
-          org_id: targetOrgId,
-          user_id: userId,
-          role: "owner",
-          display_name: "Owner",
-        });
-        if (!error) role = "owner";
-      }
+      const backfillRole: OrgRole = hasOtherOwner ? "admin" : "owner";
+      const { error } = await supabase.from("org_members").insert({
+        org_id: targetOrgId,
+        user_id: userId,
+        role: backfillRole,
+        display_name: backfillRole === "owner" ? "Owner" : "Admin",
+      });
+      if (!error) role = backfillRole;
     }
   } catch {
     // Membership query failed
