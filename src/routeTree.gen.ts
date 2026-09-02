@@ -32,6 +32,7 @@ import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated.f
 import { Route as AuthenticatedOrganizationsIndexRouteImport } from './routes/_authenticated.organizations.index'
 import { Route as OnboardingOrgIdRouteImport } from './routes/onboarding.org.$id'
 import { Route as AuthenticatedOrganizationsIdRouteImport } from './routes/_authenticated.organizations.$id'
+import { Route as AuthenticatedDirectoryIdRouteImport } from './routes/_authenticated.directory.$id'
 import { Route as AuthenticatedAdminOrganizationsRouteImport } from './routes/_authenticated.admin.organizations'
 import { Route as AuthenticatedAdminLogsRouteImport } from './routes/_authenticated.admin.logs'
 import { Route as AuthenticatedOrganizationsIdIndexRouteImport } from './routes/_authenticated.organizations.$id.index'
@@ -49,9 +50,12 @@ import { Route as AuthenticatedOrganizationsIdFeedRouteImport } from './routes/_
 import { Route as AuthenticatedOrganizationsIdComplianceRouteImport } from './routes/_authenticated.organizations.$id.compliance'
 import { Route as AuthenticatedOrganizationsIdShowroomIndexRouteImport } from './routes/_authenticated.organizations.$id.showroom.index'
 import { Route as AuthenticatedOrganizationsIdProjectsIndexRouteImport } from './routes/_authenticated.organizations.$id.projects.index'
+import { Route as AuthenticatedDirectoryIdShowroomIndexRouteImport } from './routes/_authenticated.directory.$id.showroom.index'
 import { Route as AuthenticatedOrganizationsIdShowroomProductIdRouteImport } from './routes/_authenticated.organizations.$id.showroom.$productId'
 import { Route as AuthenticatedOrganizationsIdProjectsProjectIdRouteImport } from './routes/_authenticated.organizations.$id.projects.$projectId'
 import { Route as AuthenticatedOrganizationsIdProjectsProjectIdIndexRouteImport } from './routes/_authenticated.organizations.$id.projects.$projectId.index'
+import { Route as AuthenticatedDirectoryIdShowroomProductIdIndexRouteImport } from './routes/_authenticated.directory.$id.showroom.$productId.index'
+import { Route as AuthenticatedOrganizationsIdShowroomOrdersOrderIdRouteImport } from './routes/_authenticated.organizations.$id.showroom.orders.$orderId'
 import { Route as AuthenticatedOrganizationsIdProjectsProjectIdRequestsRouteImport } from './routes/_authenticated.organizations.$id.projects.$projectId.requests'
 import { Route as AuthenticatedOrganizationsIdProjectsProjectIdPermissionsRouteImport } from './routes/_authenticated.organizations.$id.projects.$projectId.permissions'
 import { Route as AuthenticatedOrganizationsIdProjectsProjectIdPartnersRouteImport } from './routes/_authenticated.organizations.$id.projects.$projectId.partners'
@@ -59,6 +63,7 @@ import { Route as AuthenticatedOrganizationsIdProjectsProjectIdMeetingsRouteImpo
 import { Route as AuthenticatedOrganizationsIdProjectsProjectIdDocumentsRouteImport } from './routes/_authenticated.organizations.$id.projects.$projectId.documents'
 import { Route as AuthenticatedOrganizationsIdProjectsProjectIdDiscussionsRouteImport } from './routes/_authenticated.organizations.$id.projects.$projectId.discussions'
 import { Route as AuthenticatedOrganizationsIdProjectsProjectIdActivityRouteImport } from './routes/_authenticated.organizations.$id.projects.$projectId.activity'
+import { Route as AuthenticatedDirectoryIdShowroomProductIdOrderRouteImport } from './routes/_authenticated.directory.$id.showroom.$productId.order'
 
 const WelcomeRoute = WelcomeRouteImport.update({
   id: '/welcome',
@@ -178,6 +183,12 @@ const AuthenticatedOrganizationsIdRoute =
     path: '/$id',
     getParentRoute: () => AuthenticatedOrganizationsRoute,
   } as any)
+const AuthenticatedDirectoryIdRoute =
+  AuthenticatedDirectoryIdRouteImport.update({
+    id: '/directory/$id',
+    path: '/directory/$id',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedAdminOrganizationsRoute =
   AuthenticatedAdminOrganizationsRouteImport.update({
     id: '/admin/organizations',
@@ -197,9 +208,9 @@ const AuthenticatedOrganizationsIdIndexRoute =
   } as any)
 const AuthenticatedDirectoryIdIndexRoute =
   AuthenticatedDirectoryIdIndexRouteImport.update({
-    id: '/directory/$id/',
-    path: '/directory/$id/',
-    getParentRoute: () => AuthenticatedRoute,
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedDirectoryIdRoute,
   } as any)
 const AuthenticatedOrganizationsIdSupplyChainRoute =
   AuthenticatedOrganizationsIdSupplyChainRouteImport.update({
@@ -279,6 +290,12 @@ const AuthenticatedOrganizationsIdProjectsIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedOrganizationsIdProjectsRoute,
   } as any)
+const AuthenticatedDirectoryIdShowroomIndexRoute =
+  AuthenticatedDirectoryIdShowroomIndexRouteImport.update({
+    id: '/showroom/',
+    path: '/showroom/',
+    getParentRoute: () => AuthenticatedDirectoryIdRoute,
+  } as any)
 const AuthenticatedOrganizationsIdShowroomProductIdRoute =
   AuthenticatedOrganizationsIdShowroomProductIdRouteImport.update({
     id: '/showroom/$productId',
@@ -296,6 +313,18 @@ const AuthenticatedOrganizationsIdProjectsProjectIdIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedOrganizationsIdProjectsProjectIdRoute,
+  } as any)
+const AuthenticatedDirectoryIdShowroomProductIdIndexRoute =
+  AuthenticatedDirectoryIdShowroomProductIdIndexRouteImport.update({
+    id: '/showroom/$productId/',
+    path: '/showroom/$productId/',
+    getParentRoute: () => AuthenticatedDirectoryIdRoute,
+  } as any)
+const AuthenticatedOrganizationsIdShowroomOrdersOrderIdRoute =
+  AuthenticatedOrganizationsIdShowroomOrdersOrderIdRouteImport.update({
+    id: '/showroom/orders/$orderId',
+    path: '/showroom/orders/$orderId',
+    getParentRoute: () => AuthenticatedOrganizationsIdRoute,
   } as any)
 const AuthenticatedOrganizationsIdProjectsProjectIdRequestsRoute =
   AuthenticatedOrganizationsIdProjectsProjectIdRequestsRouteImport.update({
@@ -339,6 +368,12 @@ const AuthenticatedOrganizationsIdProjectsProjectIdActivityRoute =
     path: '/activity',
     getParentRoute: () => AuthenticatedOrganizationsIdProjectsProjectIdRoute,
   } as any)
+const AuthenticatedDirectoryIdShowroomProductIdOrderRoute =
+  AuthenticatedDirectoryIdShowroomProductIdOrderRouteImport.update({
+    id: '/showroom/$productId/order',
+    path: '/showroom/$productId/order',
+    getParentRoute: () => AuthenticatedDirectoryIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -362,6 +397,7 @@ export interface FileRoutesByFullPath {
   '/onboarding/': typeof OnboardingIndexRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
+  '/directory/$id': typeof AuthenticatedDirectoryIdRouteWithChildren
   '/organizations/$id': typeof AuthenticatedOrganizationsIdRouteWithChildren
   '/onboarding/org/$id': typeof OnboardingOrgIdRoute
   '/organizations/': typeof AuthenticatedOrganizationsIndexRoute
@@ -380,8 +416,10 @@ export interface FileRoutesByFullPath {
   '/organizations/$id/': typeof AuthenticatedOrganizationsIdIndexRoute
   '/organizations/$id/projects/$projectId': typeof AuthenticatedOrganizationsIdProjectsProjectIdRouteWithChildren
   '/organizations/$id/showroom/$productId': typeof AuthenticatedOrganizationsIdShowroomProductIdRoute
+  '/directory/$id/showroom/': typeof AuthenticatedDirectoryIdShowroomIndexRoute
   '/organizations/$id/projects/': typeof AuthenticatedOrganizationsIdProjectsIndexRoute
   '/organizations/$id/showroom/': typeof AuthenticatedOrganizationsIdShowroomIndexRoute
+  '/directory/$id/showroom/$productId/order': typeof AuthenticatedDirectoryIdShowroomProductIdOrderRoute
   '/organizations/$id/projects/$projectId/activity': typeof AuthenticatedOrganizationsIdProjectsProjectIdActivityRoute
   '/organizations/$id/projects/$projectId/discussions': typeof AuthenticatedOrganizationsIdProjectsProjectIdDiscussionsRoute
   '/organizations/$id/projects/$projectId/documents': typeof AuthenticatedOrganizationsIdProjectsProjectIdDocumentsRoute
@@ -389,6 +427,8 @@ export interface FileRoutesByFullPath {
   '/organizations/$id/projects/$projectId/partners': typeof AuthenticatedOrganizationsIdProjectsProjectIdPartnersRoute
   '/organizations/$id/projects/$projectId/permissions': typeof AuthenticatedOrganizationsIdProjectsProjectIdPermissionsRoute
   '/organizations/$id/projects/$projectId/requests': typeof AuthenticatedOrganizationsIdProjectsProjectIdRequestsRoute
+  '/organizations/$id/showroom/orders/$orderId': typeof AuthenticatedOrganizationsIdShowroomOrdersOrderIdRoute
+  '/directory/$id/showroom/$productId/': typeof AuthenticatedDirectoryIdShowroomProductIdIndexRoute
   '/organizations/$id/projects/$projectId/': typeof AuthenticatedOrganizationsIdProjectsProjectIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -427,8 +467,10 @@ export interface FileRoutesByTo {
   '/directory/$id': typeof AuthenticatedDirectoryIdIndexRoute
   '/organizations/$id': typeof AuthenticatedOrganizationsIdIndexRoute
   '/organizations/$id/showroom/$productId': typeof AuthenticatedOrganizationsIdShowroomProductIdRoute
+  '/directory/$id/showroom': typeof AuthenticatedDirectoryIdShowroomIndexRoute
   '/organizations/$id/projects': typeof AuthenticatedOrganizationsIdProjectsIndexRoute
   '/organizations/$id/showroom': typeof AuthenticatedOrganizationsIdShowroomIndexRoute
+  '/directory/$id/showroom/$productId/order': typeof AuthenticatedDirectoryIdShowroomProductIdOrderRoute
   '/organizations/$id/projects/$projectId/activity': typeof AuthenticatedOrganizationsIdProjectsProjectIdActivityRoute
   '/organizations/$id/projects/$projectId/discussions': typeof AuthenticatedOrganizationsIdProjectsProjectIdDiscussionsRoute
   '/organizations/$id/projects/$projectId/documents': typeof AuthenticatedOrganizationsIdProjectsProjectIdDocumentsRoute
@@ -436,6 +478,8 @@ export interface FileRoutesByTo {
   '/organizations/$id/projects/$projectId/partners': typeof AuthenticatedOrganizationsIdProjectsProjectIdPartnersRoute
   '/organizations/$id/projects/$projectId/permissions': typeof AuthenticatedOrganizationsIdProjectsProjectIdPermissionsRoute
   '/organizations/$id/projects/$projectId/requests': typeof AuthenticatedOrganizationsIdProjectsProjectIdRequestsRoute
+  '/organizations/$id/showroom/orders/$orderId': typeof AuthenticatedOrganizationsIdShowroomOrdersOrderIdRoute
+  '/directory/$id/showroom/$productId': typeof AuthenticatedDirectoryIdShowroomProductIdIndexRoute
   '/organizations/$id/projects/$projectId': typeof AuthenticatedOrganizationsIdProjectsProjectIdIndexRoute
 }
 export interface FileRoutesById {
@@ -462,6 +506,7 @@ export interface FileRoutesById {
   '/onboarding/': typeof OnboardingIndexRoute
   '/_authenticated/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/_authenticated/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
+  '/_authenticated/directory/$id': typeof AuthenticatedDirectoryIdRouteWithChildren
   '/_authenticated/organizations/$id': typeof AuthenticatedOrganizationsIdRouteWithChildren
   '/onboarding/org/$id': typeof OnboardingOrgIdRoute
   '/_authenticated/organizations/': typeof AuthenticatedOrganizationsIndexRoute
@@ -480,8 +525,10 @@ export interface FileRoutesById {
   '/_authenticated/organizations/$id/': typeof AuthenticatedOrganizationsIdIndexRoute
   '/_authenticated/organizations/$id/projects/$projectId': typeof AuthenticatedOrganizationsIdProjectsProjectIdRouteWithChildren
   '/_authenticated/organizations/$id/showroom/$productId': typeof AuthenticatedOrganizationsIdShowroomProductIdRoute
+  '/_authenticated/directory/$id/showroom/': typeof AuthenticatedDirectoryIdShowroomIndexRoute
   '/_authenticated/organizations/$id/projects/': typeof AuthenticatedOrganizationsIdProjectsIndexRoute
   '/_authenticated/organizations/$id/showroom/': typeof AuthenticatedOrganizationsIdShowroomIndexRoute
+  '/_authenticated/directory/$id/showroom/$productId/order': typeof AuthenticatedDirectoryIdShowroomProductIdOrderRoute
   '/_authenticated/organizations/$id/projects/$projectId/activity': typeof AuthenticatedOrganizationsIdProjectsProjectIdActivityRoute
   '/_authenticated/organizations/$id/projects/$projectId/discussions': typeof AuthenticatedOrganizationsIdProjectsProjectIdDiscussionsRoute
   '/_authenticated/organizations/$id/projects/$projectId/documents': typeof AuthenticatedOrganizationsIdProjectsProjectIdDocumentsRoute
@@ -489,6 +536,8 @@ export interface FileRoutesById {
   '/_authenticated/organizations/$id/projects/$projectId/partners': typeof AuthenticatedOrganizationsIdProjectsProjectIdPartnersRoute
   '/_authenticated/organizations/$id/projects/$projectId/permissions': typeof AuthenticatedOrganizationsIdProjectsProjectIdPermissionsRoute
   '/_authenticated/organizations/$id/projects/$projectId/requests': typeof AuthenticatedOrganizationsIdProjectsProjectIdRequestsRoute
+  '/_authenticated/organizations/$id/showroom/orders/$orderId': typeof AuthenticatedOrganizationsIdShowroomOrdersOrderIdRoute
+  '/_authenticated/directory/$id/showroom/$productId/': typeof AuthenticatedDirectoryIdShowroomProductIdIndexRoute
   '/_authenticated/organizations/$id/projects/$projectId/': typeof AuthenticatedOrganizationsIdProjectsProjectIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -515,6 +564,7 @@ export interface FileRouteTypes {
     | '/onboarding/'
     | '/admin/logs'
     | '/admin/organizations'
+    | '/directory/$id'
     | '/organizations/$id'
     | '/onboarding/org/$id'
     | '/organizations/'
@@ -533,8 +583,10 @@ export interface FileRouteTypes {
     | '/organizations/$id/'
     | '/organizations/$id/projects/$projectId'
     | '/organizations/$id/showroom/$productId'
+    | '/directory/$id/showroom/'
     | '/organizations/$id/projects/'
     | '/organizations/$id/showroom/'
+    | '/directory/$id/showroom/$productId/order'
     | '/organizations/$id/projects/$projectId/activity'
     | '/organizations/$id/projects/$projectId/discussions'
     | '/organizations/$id/projects/$projectId/documents'
@@ -542,6 +594,8 @@ export interface FileRouteTypes {
     | '/organizations/$id/projects/$projectId/partners'
     | '/organizations/$id/projects/$projectId/permissions'
     | '/organizations/$id/projects/$projectId/requests'
+    | '/organizations/$id/showroom/orders/$orderId'
+    | '/directory/$id/showroom/$productId/'
     | '/organizations/$id/projects/$projectId/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -580,8 +634,10 @@ export interface FileRouteTypes {
     | '/directory/$id'
     | '/organizations/$id'
     | '/organizations/$id/showroom/$productId'
+    | '/directory/$id/showroom'
     | '/organizations/$id/projects'
     | '/organizations/$id/showroom'
+    | '/directory/$id/showroom/$productId/order'
     | '/organizations/$id/projects/$projectId/activity'
     | '/organizations/$id/projects/$projectId/discussions'
     | '/organizations/$id/projects/$projectId/documents'
@@ -589,6 +645,8 @@ export interface FileRouteTypes {
     | '/organizations/$id/projects/$projectId/partners'
     | '/organizations/$id/projects/$projectId/permissions'
     | '/organizations/$id/projects/$projectId/requests'
+    | '/organizations/$id/showroom/orders/$orderId'
+    | '/directory/$id/showroom/$productId'
     | '/organizations/$id/projects/$projectId'
   id:
     | '__root__'
@@ -614,6 +672,7 @@ export interface FileRouteTypes {
     | '/onboarding/'
     | '/_authenticated/admin/logs'
     | '/_authenticated/admin/organizations'
+    | '/_authenticated/directory/$id'
     | '/_authenticated/organizations/$id'
     | '/onboarding/org/$id'
     | '/_authenticated/organizations/'
@@ -632,8 +691,10 @@ export interface FileRouteTypes {
     | '/_authenticated/organizations/$id/'
     | '/_authenticated/organizations/$id/projects/$projectId'
     | '/_authenticated/organizations/$id/showroom/$productId'
+    | '/_authenticated/directory/$id/showroom/'
     | '/_authenticated/organizations/$id/projects/'
     | '/_authenticated/organizations/$id/showroom/'
+    | '/_authenticated/directory/$id/showroom/$productId/order'
     | '/_authenticated/organizations/$id/projects/$projectId/activity'
     | '/_authenticated/organizations/$id/projects/$projectId/discussions'
     | '/_authenticated/organizations/$id/projects/$projectId/documents'
@@ -641,6 +702,8 @@ export interface FileRouteTypes {
     | '/_authenticated/organizations/$id/projects/$projectId/partners'
     | '/_authenticated/organizations/$id/projects/$projectId/permissions'
     | '/_authenticated/organizations/$id/projects/$projectId/requests'
+    | '/_authenticated/organizations/$id/showroom/orders/$orderId'
+    | '/_authenticated/directory/$id/showroom/$productId/'
     | '/_authenticated/organizations/$id/projects/$projectId/'
   fileRoutesById: FileRoutesById
 }
@@ -821,6 +884,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrganizationsIdRouteImport
       parentRoute: typeof AuthenticatedOrganizationsRoute
     }
+    '/_authenticated/directory/$id': {
+      id: '/_authenticated/directory/$id'
+      path: '/directory/$id'
+      fullPath: '/directory/$id'
+      preLoaderRoute: typeof AuthenticatedDirectoryIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/admin/organizations': {
       id: '/_authenticated/admin/organizations'
       path: '/admin/organizations'
@@ -844,10 +914,10 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/directory/$id/': {
       id: '/_authenticated/directory/$id/'
-      path: '/directory/$id'
+      path: '/'
       fullPath: '/directory/$id/'
       preLoaderRoute: typeof AuthenticatedDirectoryIdIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
+      parentRoute: typeof AuthenticatedDirectoryIdRoute
     }
     '/_authenticated/organizations/$id/supply-chain': {
       id: '/_authenticated/organizations/$id/supply-chain'
@@ -940,6 +1010,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrganizationsIdProjectsIndexRouteImport
       parentRoute: typeof AuthenticatedOrganizationsIdProjectsRoute
     }
+    '/_authenticated/directory/$id/showroom/': {
+      id: '/_authenticated/directory/$id/showroom/'
+      path: '/showroom'
+      fullPath: '/directory/$id/showroom/'
+      preLoaderRoute: typeof AuthenticatedDirectoryIdShowroomIndexRouteImport
+      parentRoute: typeof AuthenticatedDirectoryIdRoute
+    }
     '/_authenticated/organizations/$id/showroom/$productId': {
       id: '/_authenticated/organizations/$id/showroom/$productId'
       path: '/showroom/$productId'
@@ -960,6 +1037,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/organizations/$id/projects/$projectId/'
       preLoaderRoute: typeof AuthenticatedOrganizationsIdProjectsProjectIdIndexRouteImport
       parentRoute: typeof AuthenticatedOrganizationsIdProjectsProjectIdRoute
+    }
+    '/_authenticated/directory/$id/showroom/$productId/': {
+      id: '/_authenticated/directory/$id/showroom/$productId/'
+      path: '/showroom/$productId'
+      fullPath: '/directory/$id/showroom/$productId/'
+      preLoaderRoute: typeof AuthenticatedDirectoryIdShowroomProductIdIndexRouteImport
+      parentRoute: typeof AuthenticatedDirectoryIdRoute
+    }
+    '/_authenticated/organizations/$id/showroom/orders/$orderId': {
+      id: '/_authenticated/organizations/$id/showroom/orders/$orderId'
+      path: '/showroom/orders/$orderId'
+      fullPath: '/organizations/$id/showroom/orders/$orderId'
+      preLoaderRoute: typeof AuthenticatedOrganizationsIdShowroomOrdersOrderIdRouteImport
+      parentRoute: typeof AuthenticatedOrganizationsIdRoute
     }
     '/_authenticated/organizations/$id/projects/$projectId/requests': {
       id: '/_authenticated/organizations/$id/projects/$projectId/requests'
@@ -1009,6 +1100,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/organizations/$id/projects/$projectId/activity'
       preLoaderRoute: typeof AuthenticatedOrganizationsIdProjectsProjectIdActivityRouteImport
       parentRoute: typeof AuthenticatedOrganizationsIdProjectsProjectIdRoute
+    }
+    '/_authenticated/directory/$id/showroom/$productId/order': {
+      id: '/_authenticated/directory/$id/showroom/$productId/order'
+      path: '/showroom/$productId/order'
+      fullPath: '/directory/$id/showroom/$productId/order'
+      preLoaderRoute: typeof AuthenticatedDirectoryIdShowroomProductIdOrderRouteImport
+      parentRoute: typeof AuthenticatedDirectoryIdRoute
     }
   }
 }
@@ -1082,6 +1180,7 @@ interface AuthenticatedOrganizationsIdRouteChildren {
   AuthenticatedOrganizationsIdIndexRoute: typeof AuthenticatedOrganizationsIdIndexRoute
   AuthenticatedOrganizationsIdShowroomProductIdRoute: typeof AuthenticatedOrganizationsIdShowroomProductIdRoute
   AuthenticatedOrganizationsIdShowroomIndexRoute: typeof AuthenticatedOrganizationsIdShowroomIndexRoute
+  AuthenticatedOrganizationsIdShowroomOrdersOrderIdRoute: typeof AuthenticatedOrganizationsIdShowroomOrdersOrderIdRoute
 }
 
 const AuthenticatedOrganizationsIdRouteChildren: AuthenticatedOrganizationsIdRouteChildren =
@@ -1114,6 +1213,8 @@ const AuthenticatedOrganizationsIdRouteChildren: AuthenticatedOrganizationsIdRou
       AuthenticatedOrganizationsIdShowroomProductIdRoute,
     AuthenticatedOrganizationsIdShowroomIndexRoute:
       AuthenticatedOrganizationsIdShowroomIndexRoute,
+    AuthenticatedOrganizationsIdShowroomOrdersOrderIdRoute:
+      AuthenticatedOrganizationsIdShowroomOrdersOrderIdRoute,
   }
 
 const AuthenticatedOrganizationsIdRouteWithChildren =
@@ -1138,6 +1239,29 @@ const AuthenticatedOrganizationsRouteWithChildren =
     AuthenticatedOrganizationsRouteChildren,
   )
 
+interface AuthenticatedDirectoryIdRouteChildren {
+  AuthenticatedDirectoryIdIndexRoute: typeof AuthenticatedDirectoryIdIndexRoute
+  AuthenticatedDirectoryIdShowroomIndexRoute: typeof AuthenticatedDirectoryIdShowroomIndexRoute
+  AuthenticatedDirectoryIdShowroomProductIdOrderRoute: typeof AuthenticatedDirectoryIdShowroomProductIdOrderRoute
+  AuthenticatedDirectoryIdShowroomProductIdIndexRoute: typeof AuthenticatedDirectoryIdShowroomProductIdIndexRoute
+}
+
+const AuthenticatedDirectoryIdRouteChildren: AuthenticatedDirectoryIdRouteChildren =
+  {
+    AuthenticatedDirectoryIdIndexRoute: AuthenticatedDirectoryIdIndexRoute,
+    AuthenticatedDirectoryIdShowroomIndexRoute:
+      AuthenticatedDirectoryIdShowroomIndexRoute,
+    AuthenticatedDirectoryIdShowroomProductIdOrderRoute:
+      AuthenticatedDirectoryIdShowroomProductIdOrderRoute,
+    AuthenticatedDirectoryIdShowroomProductIdIndexRoute:
+      AuthenticatedDirectoryIdShowroomProductIdIndexRoute,
+  }
+
+const AuthenticatedDirectoryIdRouteWithChildren =
+  AuthenticatedDirectoryIdRoute._addFileChildren(
+    AuthenticatedDirectoryIdRouteChildren,
+  )
+
 interface AuthenticatedRouteChildren {
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
   AuthenticatedMapRoute: typeof AuthenticatedMapRoute
@@ -1150,7 +1274,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedAdminLogsRoute: typeof AuthenticatedAdminLogsRoute
   AuthenticatedAdminOrganizationsRoute: typeof AuthenticatedAdminOrganizationsRoute
-  AuthenticatedDirectoryIdIndexRoute: typeof AuthenticatedDirectoryIdIndexRoute
+  AuthenticatedDirectoryIdRoute: typeof AuthenticatedDirectoryIdRouteWithChildren
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -1165,7 +1289,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedAdminLogsRoute: AuthenticatedAdminLogsRoute,
   AuthenticatedAdminOrganizationsRoute: AuthenticatedAdminOrganizationsRoute,
-  AuthenticatedDirectoryIdIndexRoute: AuthenticatedDirectoryIdIndexRoute,
+  AuthenticatedDirectoryIdRoute: AuthenticatedDirectoryIdRouteWithChildren,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

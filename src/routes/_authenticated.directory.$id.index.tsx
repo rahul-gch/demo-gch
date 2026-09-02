@@ -1,11 +1,13 @@
 import { createFileRoute, getRouteApi } from "@tanstack/react-router";
+import { getEntity } from "@/seed/all-entities";
 import { PublicOrgProfile } from "@/components/directory/PublicOrgProfile";
 
 const parent = getRouteApi("/_authenticated/directory/$id");
 
 export const Route = createFileRoute("/_authenticated/directory/$id/")({
-  head: ({ match }) => {
-    const entity = (match.context as { entity?: { name?: string; description?: string } })?.entity;
+  loader: ({ params }) => ({ entity: getEntity(params.id) ?? null }),
+  head: ({ loaderData }) => {
+    const entity = loaderData?.entity;
     return {
       meta: [
         { title: `${entity?.name ?? "Organization"} — Network profile | Global Chain Hub` },
