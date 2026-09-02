@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { resolveImages } from "@/lib/org-images";
 import { getEntity } from "@/seed/all-entities";
+import type { Database } from "@/integrations/supabase/types";
 
 export interface ShowroomProduct {
   id: string;
@@ -924,7 +925,10 @@ export const transitionSampleOrder = createServerFn({ method: "POST" })
     if (!isMember) throw new Error("You are not a member of this organization.");
 
     const now = new Date().toISOString();
-    const patch: Record<string, unknown> = { status: rule.to, updated_at: now };
+    const patch: Database["public"]["Tables"]["sample_orders"]["Update"] = {
+      status: rule.to,
+      updated_at: now,
+    };
 
     if (data.action === "quote") {
       if (!data.quote) throw new Error("A quote requires a price.");
