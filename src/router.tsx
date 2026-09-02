@@ -17,6 +17,5 @@ export const getRouter = () => {
     defaultNotFoundComponent: () => <RouteNotFoundFallback />,
   });
 
-  if (typeof window !== "undefined") (window as any).__router = router; // DEBUG-TMP
   return router;
 };
