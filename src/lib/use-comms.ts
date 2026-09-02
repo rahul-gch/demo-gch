@@ -84,11 +84,12 @@ export interface ConversationView extends ConversationSummary {
 export function useConversations(orgId: string | null) {
   const queryClient = useQueryClient();
   const instanceId = useId();
+  const hasSession = useAuthenticatedSessionReady();
   const getConversations = useServerFn(listConversations);
 
   const query = useQuery({
     queryKey: ["conversations", orgId],
-    enabled: !!orgId,
+    enabled: !!orgId && hasSession,
     queryFn: () => {
       if (!orgId) return [];
       return getConversations({ data: { orgId } });
