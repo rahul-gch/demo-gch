@@ -131,10 +131,11 @@ export function useConversations(orgId: string | null) {
 }
 
 export function useThread(conversationId: string | null, myOrgId: string | null) {
+  const hasSession = useAuthenticatedSessionReady();
   const getMessages = useServerFn(listMessages);
   const query = useQuery({
     queryKey: ["thread", conversationId],
-    enabled: !!conversationId,
+    enabled: !!conversationId && hasSession,
     queryFn: () => {
       if (!conversationId) return [];
       return getMessages({ data: { conversationId } });
