@@ -48,10 +48,12 @@ function useAuthenticatedSessionReady() {
 
 /** The organization the signed-in user is acting as (their first membership). */
 export function useMyOrgIds() {
+  const hasSession = useAuthenticatedSessionReady();
   const getMemberships = useServerFn(myOrgMemberships);
   const { data } = useQuery({
     queryKey: ["my-org-memberships"],
     queryFn: () => getMemberships(),
+    enabled: hasSession,
     staleTime: 5 * 60_000,
   });
   return useMemo(() => (data ?? []).map((m) => m.org_id as string), [data]);
@@ -59,10 +61,12 @@ export function useMyOrgIds() {
 
 /** Memberships with display names, for the acting-organization switcher. */
 export function useMyOrgs() {
+  const hasSession = useAuthenticatedSessionReady();
   const getMemberships = useServerFn(myOrgMemberships);
   const { data } = useQuery({
     queryKey: ["my-org-memberships"],
     queryFn: () => getMemberships(),
+    enabled: hasSession,
     staleTime: 5 * 60_000,
   });
   return useMemo(
@@ -84,11 +88,12 @@ export interface ConversationView extends ConversationSummary {
 export function useConversations(orgId: string | null) {
   const queryClient = useQueryClient();
   const instanceId = useId();
+  const hasSession = useAuthenticatedSessionReady();
   const getConversations = useServerFn(listConversations);
 
   const query = useQuery({
     queryKey: ["conversations", orgId],
-    enabled: !!orgId,
+    enabled: !!orgId && hasSession,
     queryFn: () => {
       if (!orgId) return [];
       return getConversations({ data: { orgId } });
@@ -131,10 +136,11 @@ export function useConversations(orgId: string | null) {
 }
 
 export function useThread(conversationId: string | null, myOrgId: string | null) {
+  const hasSession = useAuthenticatedSessionReady();
   const getMessages = useServerFn(listMessages);
   const query = useQuery({
     queryKey: ["thread", conversationId],
-    enabled: !!conversationId,
+    enabled: !!conversationId && hasSession,
     queryFn: () => {
       if (!conversationId) return [];
       return getMessages({ data: { conversationId } });
