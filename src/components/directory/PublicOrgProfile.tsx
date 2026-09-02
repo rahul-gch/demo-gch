@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Link, useRouter } from "@tanstack/react-router";
+import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import type { Entity } from "@/seed/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -99,6 +99,8 @@ export function PublicOrgProfile({ entity: e }: { entity: Entity }) {
 
   const connectionStatus = actingOrgId ? getConnectionStatus(e.id) : "none";
   const products = showroom?.products ?? [];
+
+  const navigate = useNavigate();
 
   const handleConnect = () => {
     if (!actingOrgId) {
