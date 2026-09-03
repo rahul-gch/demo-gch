@@ -148,9 +148,12 @@ function FeedPage() {
 }
 
 function ActivityStream() {
+  const hasSession = useAuthenticatedSessionReady();
+  const fetchActivity = useServerFn(listPlatformActivity);
   const { data: allData } = useQuery({
     queryKey: ["platform-activity"],
-    queryFn: () => listPlatformActivity(),
+    queryFn: () => fetchActivity(),
+    enabled: hasSession,
     staleTime: 30_000,
   });
   const all = useMemo(() => allData ?? [], [allData]);
