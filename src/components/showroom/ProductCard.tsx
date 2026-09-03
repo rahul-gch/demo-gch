@@ -223,7 +223,7 @@ export function ProductCard({
                   onClick={() => onOrderSample?.(product)}
                 >
                   <Send className="h-3.5 w-3.5" />
-                  Order Sample
+                  Request sample
                 </Button>
               ) : (
                 <Button
@@ -247,7 +247,7 @@ export function ProductCard({
             <AlertDialogTitle>Delete product from showroom?</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete &ldquo;{product.name}&rdquo;? Connected partners will
-              no longer be able to see or order samples of this product.
+              no longer be able to see or request samples of this product.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

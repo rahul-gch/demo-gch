@@ -59,7 +59,7 @@ export function PublicShowroomPage({ entity }: { entity: Entity }) {
           <h1 className="text-2xl font-bold tracking-tight">{entity.name} — Showroom</h1>
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
-          Browse published products and order physical samples.
+          Browse published products and request physical samples.
         </p>
       </div>
 
@@ -69,10 +69,10 @@ export function PublicShowroomPage({ entity }: { entity: Entity }) {
             <Lock className="mt-0.5 h-5 w-5 text-amber-600" />
             <div>
               <h2 className="text-sm font-semibold text-amber-900 dark:text-amber-200">
-                Connect with {entity.name} to order samples
+                Connect with {entity.name} to request samples
               </h2>
               <p className="mt-0.5 text-xs text-amber-800/80 dark:text-amber-300/80">
-                You can browse the catalogue now; sample ordering unlocks once you are connected.
+                You can browse the catalogue now; sample requests unlock once you are connected.
               </p>
             </div>
           </div>
