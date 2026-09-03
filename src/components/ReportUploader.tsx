@@ -75,7 +75,7 @@ export function ReportUploader({ entity }: { entity: Entity }) {
     }
     toast.success(`Uploaded ${file.name}`);
     void logSecurityEvent("document.uploaded", {
-      orgId: entity.id,
+      orgId: entity.orgUuid ?? entity.id,
       targetType: "reports",
       targetId: path,
       detail: { size_bytes: file.size },
