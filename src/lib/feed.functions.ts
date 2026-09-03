@@ -40,7 +40,7 @@ export const listFeedPosts = createServerFn({ method: "POST" })
     let q = supabase
       .from("feed_posts")
       .select(
-        "id, org_id, author_name, author_role, kind, title, body, media, event_at, created_at",
+        "id, org_id, author_user_id, author_name, author_role, kind, title, body, media, event_at, created_at",
       )
       .order("created_at", { ascending: false })
       .limit(data.limit ?? 100);
@@ -53,7 +53,8 @@ export const listFeedPosts = createServerFn({ method: "POST" })
     const ids = rows.map((r) => r.id);
     const orgIds = Array.from(new Set(rows.map((r) => r.org_id)));
 
-    const [{ data: likes }, { data: comments }, { data: orgs }] = await Promise.all([
+    const [{ data: likes }, { data: comments }, { data: orgs }, { data: manageRows }, { data: platformAdmin }] =
+      await Promise.all([
       supabase.from("feed_likes").select("post_id, user_id").in("post_id", ids),
       supabase
         .from("feed_comments")
@@ -61,7 +62,17 @@ export const listFeedPosts = createServerFn({ method: "POST" })
         .in("post_id", ids)
         .order("created_at", { ascending: true }),
       supabase.from("orgs").select("id, name, legacy_id").in("id", orgIds),
+      supabase
+        .from("org_members")
+        .select("org_id, role")
+        .eq("user_id", userId)
+        .in("org_id", orgIds)
+        .in("role", ["owner", "admin"]),
+      supabase.rpc("is_platform_admin", { _user: userId }),
     ]);
+
+    const managedOrgs = new Set((manageRows ?? []).map((m) => m.org_id));
+    const isPlatformAdmin = platformAdmin === true;
 
     const orgById = new Map((orgs ?? []).map((o) => [o.id, o]));
     const likeCount = new Map<string, number>();
@@ -92,6 +103,8 @@ export const listFeedPosts = createServerFn({ method: "POST" })
         authorName: r.author_name,
         authorRole: r.author_role ?? "",
         authorOrg: org?.name ?? "Organization",
+        canDelete:
+          isPlatformAdmin || r.author_user_id === userId || managedOrgs.has(r.org_id),
         kind: (KINDS as readonly string[]).includes(r.kind) ? (r.kind as FeedKind) : "update",
         title: r.title ?? undefined,
         body: r.body,
