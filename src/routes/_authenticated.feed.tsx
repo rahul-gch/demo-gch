@@ -30,6 +30,8 @@ import {
 import { CommunityFeed } from "@/components/feed/CommunityFeed";
 import { useQuery } from "@tanstack/react-query";
 import { listPlatformActivity } from "@/lib/activity.functions";
+import { useServerFn } from "@tanstack/react-start";
+import { useAuthenticatedSessionReady } from "@/lib/use-comms";
 
 export const Route = createFileRoute("/_authenticated/feed")({
   validateSearch: (search: Record<string, unknown>): { tab?: "activity" | "community" } =>
