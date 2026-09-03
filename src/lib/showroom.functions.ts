@@ -26,7 +26,7 @@ export type SampleOrderStatus =
   | "shipped"
   | "delivered";
 
-export type SampleOrderAction = "quote" | "decline" | "confirm" | "withdraw" | "ship" | "deliver";
+export type SampleOrderAction = "quote" | "unquote" | "decline" | "confirm" | "withdraw" | "ship" | "deliver";
 
 export interface SampleOrderParty {
   id: string;
