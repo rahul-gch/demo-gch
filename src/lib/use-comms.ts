@@ -46,6 +46,17 @@ export function useAuthenticatedSessionReady() {
   return hasSession;
 }
 
+/**
+ * Last-moment guard for query functions: the session can disappear (expiry,
+ * sign-out in another tab) between the `enabled` check and the actual call.
+ * Returns `fallback` instead of hitting the server without a bearer token.
+ */
+export async function withSession<T>(run: () => Promise<T>, fallback: T): Promise<T> {
+  const { data } = await supabase.auth.getSession();
+  if (!data.session?.access_token) return fallback;
+  return run();
+}
+
 /** The organization the signed-in user is acting as (their first membership). */
 export function useMyOrgIds() {
   const hasSession = useAuthenticatedSessionReady();
