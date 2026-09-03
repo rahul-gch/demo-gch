@@ -144,21 +144,21 @@ function RootComponent() {
           // keeps any in-flight client fetch (which already carries the
           // bearer) alive — cancelling it would reject the route guard's
           // await with a CancelledError on fresh-tab loads.
-          void queryClient.invalidateQueries({
-            queryKey: ["entities", "registry"],
-            cancelRefetch: false,
-          });
+          void queryClient.invalidateQueries(
+            { queryKey: ["entities", "registry"] },
+            { cancelRefetch: false },
+          );
           // Membership/admin answers fetched before the bearer was attached
           // must not survive into the signed-in session — mark them stale
           // without cancelling a guard lookup that is still running.
-          void queryClient.invalidateQueries({
-            queryKey: ["my-org-memberships-gate"],
-            cancelRefetch: false,
-          });
-          void queryClient.invalidateQueries({
-            queryKey: ["am-i-platform-admin"],
-            cancelRefetch: false,
-          });
+          void queryClient.invalidateQueries(
+            { queryKey: ["my-org-memberships-gate"] },
+            { cancelRefetch: false },
+          );
+          void queryClient.invalidateQueries(
+            { queryKey: ["am-i-platform-admin"] },
+            { cancelRefetch: false },
+          );
           return;
         }
         if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
