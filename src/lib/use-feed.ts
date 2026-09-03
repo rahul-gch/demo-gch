@@ -13,7 +13,7 @@ import {
   listFeedPosts,
   toggleFeedLike,
 } from "@/lib/feed.functions";
-import { useAuthenticatedSessionReady } from "@/lib/use-comms";
+import { useAuthenticatedSessionReady, withSession } from "@/lib/use-comms";
 
 const EMPTY: FeedPost[] = [];
 
@@ -51,7 +51,7 @@ export function useFeed(entity: Entity): { posts: FeedPost[]; isLoading: boolean
   useFeedRealtime(orgUuid);
   const { data, isLoading } = useQuery({
     queryKey: key(orgUuid),
-    queryFn: () => fetchPosts({ data: { orgId: orgUuid } }),
+    queryFn: () => withSession(() => fetchPosts({ data: { orgId: orgUuid } }), EMPTY),
     enabled: !!orgUuid && hasSession,
     staleTime: 15_000,
   });
@@ -65,7 +65,7 @@ export function useCommunityFeed(): { posts: FeedPost[]; isLoading: boolean } {
   useFeedRealtime(null);
   const { data, isLoading } = useQuery({
     queryKey: key(null),
-    queryFn: () => fetchPosts({ data: { orgId: null, limit: 200 } }),
+    queryFn: () => withSession(() => fetchPosts({ data: { orgId: null, limit: 200 } }), EMPTY),
     enabled: hasSession,
     staleTime: 15_000,
   });
