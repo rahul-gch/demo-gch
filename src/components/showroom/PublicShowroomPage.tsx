@@ -53,15 +53,15 @@ export function PublicShowroomPage({ entity }: { entity: Entity }) {
         </Link>
       </Button>
 
-      <div>
-        <div className="flex items-center gap-2">
-          <Store className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold tracking-tight">{entity.name} — Showroom</h1>
-        </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Browse published products and request physical samples.
+      <header className="border-b pb-6">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+          {entity.name}
         </p>
-      </div>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Fabric Showroom</h1>
+        <p className="mt-2 max-w-xl text-sm text-muted-foreground sm:text-base">
+          Explore our collection of fabrics and request physical samples.
+        </p>
+      </header>
 
       {!isConnected && products.length > 0 && (
         <Card className="flex flex-col gap-3 border-amber-200 bg-amber-50/50 p-4 dark:border-amber-900 dark:bg-amber-950/20 sm:flex-row sm:items-center sm:justify-between">

@@ -139,9 +139,6 @@ export function ProductCard({
               <DetailLink className={orgRouteId ? "hover:underline" : undefined}>{product.name}</DetailLink>
             </h3>
           </div>
-          {product.description && (
-            <p className="line-clamp-2 text-xs text-muted-foreground mt-1">{product.description}</p>
-          )}
         </CardHeader>
 
         <CardContent className="flex-1 p-4 pt-1">
