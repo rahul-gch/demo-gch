@@ -23,6 +23,7 @@ import {
 import type { Entity } from "@/seed/types";
 import type { FeedKind, FeedMedia, FeedPost } from "@/lib/feed-types";
 import { useFeed, useFeedActions } from "@/lib/use-feed";
+import { PostMenu } from "@/components/feed/PostMenu";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -404,7 +405,7 @@ function MediaFallback({
 }
 
 function PostCard({ entity, post }: { entity: Entity; post: FeedPost }) {
-  const { toggleLike, addComment } = useFeedActions(entity.orgUuid ?? null);
+  const { toggleLike, addComment, deletePost } = useFeedActions(entity.orgUuid ?? null);
   const meta = KIND_META[post.kind];
   const Icon = meta.icon;
   const [showComments, setShowComments] = useState(false);
@@ -442,10 +443,13 @@ function PostCard({ entity, post }: { entity: Entity; post: FeedPost }) {
               </div>
             </div>
           </div>
-          <Badge variant="outline" className={meta.className}>
-            <Icon className="mr-1 h-3 w-3" />
-            {meta.label}
-          </Badge>
+          <div className="flex shrink-0 items-center gap-1">
+            <Badge variant="outline" className={meta.className}>
+              <Icon className="mr-1 h-3 w-3" />
+              {meta.label}
+            </Badge>
+            <PostMenu canDelete={post.canDelete} onDelete={() => deletePost(post.id)} />
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">

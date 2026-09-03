@@ -31,6 +31,7 @@ import {
 import { ALL_ENTITIES } from "@/seed/all-entities";
 import type { FeedKind, FeedMedia, FeedPost } from "@/lib/feed-types";
 import { useCommunityFeed, useFeedActions } from "@/lib/use-feed";
+import { PostMenu } from "@/components/feed/PostMenu";
 import { formatRelative } from "@/lib/admin-feed";
 
 const KIND_META: Record<FeedKind, { label: string; icon: typeof Rss; className: string }> = {
@@ -165,7 +166,7 @@ export function CommunityFeed() {
 }
 
 function PostRow({ post }: { post: Row }) {
-  const { toggleLike } = useFeedActions(post.orgUuid);
+  const { toggleLike, deletePost } = useFeedActions(post.orgUuid);
   const meta = KIND_META[post.kind];
   const Icon = meta.icon;
   const initials = post.authorOrg
@@ -207,10 +208,13 @@ function PostRow({ post }: { post: Row }) {
               </div>
             </div>
           </div>
-          <Badge variant="outline" className={`shrink-0 whitespace-nowrap ${meta.className}`}>
-            <Icon className="mr-1 h-3 w-3" />
-            {meta.label}
-          </Badge>
+          <div className="flex shrink-0 items-center gap-1">
+            <Badge variant="outline" className={`whitespace-nowrap ${meta.className}`}>
+              <Icon className="mr-1 h-3 w-3" />
+              {meta.label}
+            </Badge>
+            <PostMenu canDelete={post.canDelete} onDelete={() => deletePost(post.id)} />
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
