@@ -120,9 +120,9 @@ export function PublicShowroomPage({ entity }: { entity: Entity }) {
       )}
 
       {isLoading ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((n) => (
-            <Card key={n} className="h-80 animate-pulse bg-muted/40" />
+            <Card key={n} className="h-72 animate-pulse bg-muted/40" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
@@ -136,7 +136,7 @@ export function PublicShowroomPage({ entity }: { entity: Entity }) {
           </CardDescription>
         </Card>
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((p) => (
             <ProductCard
               key={p.id}
