@@ -82,7 +82,7 @@ export function OrderPage({ entity, productId }: { entity: Entity; productId: st
       shippingAddress: address.trim(),
       neededBy: neededBy || null,
     });
-    toast.success(`Sample order sent to ${result.sellerName}`, {
+    toast.success(`Sample request sent to ${result.sellerName}`, {
       description: `Placed as ${buyerOrg?.name ?? "your organization"}. Track it under Showroom → Outbound orders.`,
     });
     if (buyerRouteId) {
@@ -134,7 +134,7 @@ export function OrderPage({ entity, productId }: { entity: Entity; productId: st
       </Button>
 
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Order a sample</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Request a sample</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {entity.name} will review your request and reply with a quote. Nothing is charged on the
           platform.
@@ -188,7 +188,7 @@ export function OrderPage({ entity, productId }: { entity: Entity; productId: st
                 </div>
               )}
               {isOwner && (
-                <p className="mt-3 text-xs text-rose-600">You cannot order samples from your own showroom.</p>
+                <p className="mt-3 text-xs text-rose-600">You cannot request samples from your own showroom.</p>
               )}
             </CardContent>
           </Card>
@@ -365,7 +365,7 @@ export function OrderPage({ entity, productId }: { entity: Entity; productId: st
                 ) : (
                   <Send className="h-4 w-4" />
                 )}
-                Send sample order
+                Send sample request
               </Button>
               <p className="text-center text-[11px] text-muted-foreground">
                 Status: Requested → Quoted → Confirmed → Shipped → Delivered

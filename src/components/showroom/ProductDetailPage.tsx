@@ -105,40 +105,38 @@ export function ProductDetailPage({ entity, productId, mode = "member" }: Produc
   }
 
   const actionCard = (
-    <Card className="border-slate-200/80 shadow-sm">
-      <CardContent className="space-y-3 p-4">
-        {isOwner ? (
-          <p className="text-xs leading-relaxed text-muted-foreground">
-            This is your own listing. Connected partners can request samples from this page.
+    <div className="flex flex-col items-end gap-1.5 pt-2">
+      {isOwner ? (
+        <p className="text-right text-xs leading-relaxed text-muted-foreground">
+          This is your own listing. Connected partners can request samples from this page.
+        </p>
+      ) : isConnected ? (
+        <>
+          <Button asChild size="lg" className="gap-2 px-6 shadow-sm">
+            <Link
+              to="/directory/$id/showroom/$productId/order"
+              params={{ id: entity.id, productId: product.id }}
+            >
+              <Send className="h-4 w-4" /> Request sample
+            </Link>
+          </Button>
+          <p className="text-right text-[11px] text-muted-foreground">
+            Set quantity and shipping, then track the quote and delivery status.
           </p>
-        ) : isConnected ? (
-          <>
-            <Button asChild className="w-full gap-2">
-              <Link
-                to="/directory/$id/showroom/$productId/order"
-                params={{ id: entity.id, productId: product.id }}
-              >
-                <Send className="h-4 w-4" /> Order sample
-              </Link>
-            </Button>
-            <p className="text-center text-[11px] text-muted-foreground">
-              Set quantity and shipping, then track the quote and delivery status.
-            </p>
-          </>
-        ) : (
-          <>
-            <Button asChild variant="outline" className="w-full gap-2">
-              <Link to="/directory/$id" params={{ id: entity.id }}>
-                <Lock className="h-4 w-4" /> Connect to order samples
-              </Link>
-            </Button>
-            <p className="text-center text-[11px] text-muted-foreground">
-              Sample ordering is reserved for connected partner organizations.
-            </p>
-          </>
-        )}
-      </CardContent>
-    </Card>
+        </>
+      ) : (
+        <>
+          <Button asChild variant="outline" size="lg" className="gap-2 px-6">
+            <Link to="/directory/$id" params={{ id: entity.id }}>
+              <Lock className="h-4 w-4" /> Connect to request samples
+            </Link>
+          </Button>
+          <p className="text-right text-[11px] text-muted-foreground">
+            Sample requests are reserved for connected partner organizations.
+          </p>
+        </>
+      )}
+    </div>
   );
 
   return (
@@ -236,8 +234,6 @@ export function ProductDetailPage({ entity, productId, mode = "member" }: Produc
             )}
           </div>
 
-          {actionCard}
-
           <Separator />
 
           <section className="space-y-2">
@@ -275,6 +271,8 @@ export function ProductDetailPage({ entity, productId, mode = "member" }: Produc
               </dl>
             </section>
           )}
+
+          {actionCard}
         </div>
       </div>
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import type { Entity } from "@/seed/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -62,7 +62,6 @@ function getInitials(name: string): string {
 }
 
 export function PublicOrgProfile({ entity: e }: { entity: Entity }) {
-  const router = useRouter();
   const [draft, setDraft] = useState("");
   const [meetOpen, setMeetOpen] = useState(false);
 
@@ -167,9 +166,11 @@ export function PublicOrgProfile({ entity: e }: { entity: Entity }) {
       {/* Top Navigation Bar */}
       <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b bg-background/90 px-4 backdrop-blur sm:px-6">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => router.history.back()} className="gap-1 text-xs">
-            <ArrowLeft className="h-4 w-4" />
-            Back
+          <Button asChild variant="ghost" size="sm" className="gap-1 text-xs">
+            <Link to="/">
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Link>
           </Button>
           <span className="text-muted-foreground">/</span>
           <div className="text-sm font-medium text-foreground truncate max-w-xs sm:max-w-md flex items-center gap-2">
