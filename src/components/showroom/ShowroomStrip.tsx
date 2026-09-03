@@ -72,30 +72,32 @@ export function ShowroomStrip({ entity }: { entity: Entity }) {
           </div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {products.map((p) => (
-              <Link
-                key={p.id}
-                to="/organizations/$id/showroom/$productId"
-                params={{ id: entity.id, productId: p.id }}
-                className="group flex gap-3 rounded-lg border bg-card p-3 transition-colors hover:bg-slate-50"
-              >
-                <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md bg-slate-100">
-                  <ProductImage src={p.images?.[0] ?? null} alt={p.name} placeholderLabel={null} />
-                </div>
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-medium leading-5 text-slate-800">
-                    {p.name}
+            {products.map((p) => {
+              const meta =
+                p.materials && p.materials.length > 0
+                  ? p.materials.slice(0, 2).join(" · ")
+                  : null;
+              return (
+                <Link
+                  key={p.id}
+                  to="/organizations/$id/showroom/$productId"
+                  params={{ id: entity.id, productId: p.id }}
+                  className="group flex gap-3 rounded-lg border border-border/60 bg-card p-3 transition-colors hover:border-primary/30 hover:bg-accent/50"
+                >
+                  <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md bg-muted">
+                    <ProductImage src={p.images?.[0] ?? null} alt={p.name} placeholderLabel={null} />
                   </div>
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {(p.materials ?? []).slice(0, 2).map((m) => (
-                      <Badge key={m} variant="secondary" className="text-[10px] font-normal">
-                        {m}
-                      </Badge>
-                    ))}
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-medium leading-5 text-foreground">
+                      {p.name}
+                    </div>
+                    {meta && (
+                      <p className="mt-0.5 line-clamp-1 text-[11px] text-muted-foreground">{meta}</p>
+                    )}
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         )}
       </CardContent>
