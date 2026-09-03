@@ -25,9 +25,18 @@ type ImageClient = Parameters<typeof resolveImagesWith>[0];
 
 /** Resolve stored image values with the caller's authenticated client. Unresolvable refs are dropped. */
 async function resolveProductImages(client: ImageClient, raw: unknown): Promise<{ images: string[]; imageRefs: string[] }> {
-  const imageRefs = Array.isArray(raw) ? (raw as unknown[]).filter((v): v is string => typeof v === "string" && v.length > 0) : [];
-  const resolved = await resolveImagesWith(client, imageRefs);
-  return { images: resolved.filter((u): u is string => !!u), imageRefs };
+  const allRefs = Array.isArray(raw) ? (raw as unknown[]).filter((v): v is string => typeof v === "string" && v.length > 0) : [];
+  const resolved = await resolveImagesWith(client, allRefs);
+  // Keep both arrays positionally aligned: drop refs that could not be resolved.
+  const images: string[] = [];
+  const imageRefs: string[] = [];
+  resolved.forEach((url, i) => {
+    if (url) {
+      images.push(url);
+      imageRefs.push(allRefs[i]);
+    }
+  });
+  return { images, imageRefs };
 }
 
 export type SampleOrderStatus =
