@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { ensureRegistry } from "@/lib/registry";
+import { ensureRegistry, retryOnCancel } from "@/lib/registry";
 import { myOrgMemberships } from "@/lib/orgs.functions";
 import { amIPlatformAdmin } from "@/lib/admin.functions";
 
@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_authenticated")({
     }
 
     // Users without any organization must first create or join one.
-    const [memberships, admin] = await Promise.all([
+    const [memberships, admin] = await retryOnCancel(() => Promise.all([
       context.queryClient.ensureQueryData({
         queryKey: ["my-org-memberships-gate", data.user.id],
         queryFn: () =>
@@ -29,7 +29,7 @@ export const Route = createFileRoute("/_authenticated")({
         queryFn: () => amIPlatformAdmin().catch(() => ({ isAdmin: false })),
         staleTime: 60_000,
       }),
-    ]);
+    ]));
     if (!admin?.isAdmin && (memberships?.length ?? 0) === 0) {
       throw redirect({ to: "/welcome", replace: true });
     }

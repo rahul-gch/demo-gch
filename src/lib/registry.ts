@@ -43,7 +43,7 @@ export const entitiesQueryOptions = queryOptions({
 
 /** Ensures the in-memory organization registry is populated (safe to call repeatedly). */
 export async function ensureRegistry(queryClient: QueryClient) {
-  const entities = await queryClient.ensureQueryData(entitiesQueryOptions);
+  const entities = await retryOnCancel(() => queryClient.ensureQueryData(entitiesQueryOptions));
   if (!isRegistryHydrated() && entities.length) hydrateEntities(entities);
   return entities;
 }
@@ -55,7 +55,7 @@ export async function ensureRegistry(queryClient: QueryClient) {
  */
 export async function refreshRegistry(queryClient: QueryClient) {
   await queryClient.invalidateQueries({ queryKey: entitiesQueryOptions.queryKey });
-  const entities = await queryClient.fetchQuery(entitiesQueryOptions);
+  const entities = await retryOnCancel(() => queryClient.fetchQuery(entitiesQueryOptions));
   if (entities.length) hydrateEntities(entities);
   return entities;
 }
