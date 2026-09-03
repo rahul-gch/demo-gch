@@ -6,15 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import type { ShowroomProduct } from "@/lib/showroom.functions";
 import { ProductImage } from "@/components/showroom/ProductImage";
-import {
-  Edit2,
-  Trash2,
-  Send,
-  Lock,
-  ChevronLeft,
-  ChevronRight,
-  Eye,
-} from "lucide-react";
+import { Edit2, Trash2, Send, Lock, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -81,13 +73,6 @@ export function ProductCard({
       </Link>
     );
 
-  const detailLink = orgRouteId ? (
-    <Button asChild variant="ghost" size="sm" className="h-8 gap-1.5 text-xs">
-      <DetailLink>
-        <Eye className="h-3.5 w-3.5" /> View
-      </DetailLink>
-    </Button>
-  ) : null;
 
   const media = (
     <div className="relative aspect-video w-full overflow-hidden bg-slate-100 dark:bg-slate-900">
