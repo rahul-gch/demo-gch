@@ -5,17 +5,13 @@ import type { Database } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertOrgRole } from "@/lib/rbac.server";
 
-// Public lookup — anon-friendly; uses server publishable client and the
-// SECURITY DEFINER RPC.
+// Public lookup — token-gated. Runs server-side only via the privileged client,
+// so the RPC itself no longer needs to be executable by anonymous callers.
 export const lookupInvite = createServerFn({ method: "GET" })
   .inputValidator((data: unknown) => z.object({ token: z.string().min(4).max(200) }).parse(data))
   .handler(async ({ data }) => {
-    const supabase = createClient<Database>(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_PUBLISHABLE_KEY!,
-      { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } },
-    );
-    const { data: rows, error } = await supabase.rpc("get_invite_by_token", {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin.rpc("get_invite_by_token", {
       _token: data.token,
     });
     if (error) throw new Error(error.message);
