@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { reportClientError } from "@/lib/error-log";
+import { isCancelled } from "@/lib/registry";
 
 export function errorMessage(error: unknown): string {
   if (error instanceof Error && error.message) return error.message;
