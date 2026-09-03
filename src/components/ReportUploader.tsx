@@ -23,7 +23,9 @@ export function ReportUploader({ entity }: { entity: Entity }) {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  const folder = entity.id;
+  // Storage policies expect the org UUID as the top-level folder; entity.id
+  // can be a slug/legacy id (e.g. "sharabati") which fails the UUID cast.
+  const folder = entity.orgUuid ?? entity.id;
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
