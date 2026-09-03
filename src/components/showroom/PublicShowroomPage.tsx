@@ -8,7 +8,7 @@ import { ProductCard } from "@/components/showroom/ProductCard";
 import { useShowroomProducts } from "@/lib/use-showroom";
 import { useActingOrgId } from "@/lib/use-comms";
 import type { Entity } from "@/seed/types";
-import { ArrowLeft, Filter, Lock, Package, Search, Store } from "lucide-react";
+import { ArrowLeft, Filter, Lock, Package, Search } from "lucide-react";
 
 /** Read-only showroom of another organization, reached from its network profile. */
 export function PublicShowroomPage({ entity }: { entity: Entity }) {
