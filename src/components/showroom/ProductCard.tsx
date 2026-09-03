@@ -5,8 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import type { ShowroomProduct } from "@/lib/showroom.functions";
+import { ProductImage } from "@/components/showroom/ProductImage";
 import {
-  Package,
   Edit2,
   Trash2,
   Send,
@@ -91,18 +91,11 @@ export function ProductCard({
 
   const media = (
     <div className="relative aspect-video w-full overflow-hidden bg-slate-100 dark:bg-slate-900">
-      {currentImage ? (
-        <img
-          src={currentImage}
-          alt={product.name}
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-        />
-      ) : (
-        <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-muted-foreground">
-          <Package className="h-10 w-10 stroke-[1.25] text-slate-400" />
-          <span className="text-xs">No image provided</span>
-        </div>
-      )}
+      <ProductImage
+        src={currentImage}
+        alt={product.name}
+        className="transition-transform duration-300 group-hover:scale-105"
+      />
 
       {images.length > 1 && (
         <div className="absolute inset-0 flex items-center justify-between p-1 opacity-0 transition-opacity group-hover:opacity-100">

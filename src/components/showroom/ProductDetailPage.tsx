@@ -7,6 +7,8 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { ProductEditorDialog } from "@/components/showroom/ProductEditorDialog";
+import { ProductImage } from "@/components/showroom/ProductImage";
+import { parseProductDescription } from "@/lib/product-description";
 import {
   useShowroomProduct,
   useUpsertShowroomProduct,
@@ -66,6 +68,7 @@ export function ProductDetailPage({ entity, productId, mode = "member" }: Produc
 
   const images = useMemo(() => product?.images ?? [], [product]);
   const cover = images[Math.min(activeImage, Math.max(images.length - 1, 0))] ?? null;
+  const parsed = useMemo(() => parseProductDescription(product?.description), [product?.description]);
 
   const backLink =
     mode === "public" ? (
@@ -101,8 +104,45 @@ export function ProductDetailPage({ entity, productId, mode = "member" }: Produc
     );
   }
 
+  const actionCard = (
+    <Card className="border-slate-200/80 shadow-sm">
+      <CardContent className="space-y-3 p-4">
+        {isOwner ? (
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            This is your own listing. Connected partners can request samples from this page.
+          </p>
+        ) : isConnected ? (
+          <>
+            <Button asChild className="w-full gap-2">
+              <Link
+                to="/directory/$id/showroom/$productId/order"
+                params={{ id: entity.id, productId: product.id }}
+              >
+                <Send className="h-4 w-4" /> Order sample
+              </Link>
+            </Button>
+            <p className="text-center text-[11px] text-muted-foreground">
+              Set quantity and shipping, then track the quote and delivery status.
+            </p>
+          </>
+        ) : (
+          <>
+            <Button asChild variant="outline" className="w-full gap-2">
+              <Link to="/directory/$id" params={{ id: entity.id }}>
+                <Lock className="h-4 w-4" /> Connect to order samples
+              </Link>
+            </Button>
+            <p className="text-center text-[11px] text-muted-foreground">
+              Sample ordering is reserved for connected partner organizations.
+            </p>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+
   return (
-    <div className="w-full space-y-6">
+    <div className="mx-auto w-full max-w-6xl space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Button asChild variant="ghost" size="sm" className="-ml-2 gap-1.5 text-muted-foreground">
           {backLink}
@@ -110,7 +150,7 @@ export function ProductDetailPage({ entity, productId, mode = "member" }: Produc
 
         {canManage && (
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-2 rounded-md border px-3 py-1.5">
+            <div className="flex h-9 items-center gap-2 rounded-md border px-3">
               {product.isActive ? (
                 <Eye className="h-3.5 w-3.5 text-emerald-600" />
               ) : (
@@ -143,35 +183,32 @@ export function ProductDetailPage({ entity, productId, mode = "member" }: Produc
         )}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+      <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
         {/* Gallery */}
         <div className="space-y-3">
-          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border bg-muted">
-            {cover ? (
-              <img src={cover} alt={product.name} className="h-full w-full object-cover" />
-            ) : (
-              <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-muted-foreground">
-                <Package className="h-10 w-10 stroke-[1.25]" />
-                <span className="text-xs">No image provided</span>
-              </div>
-            )}
+          <div className="relative aspect-square w-full overflow-hidden rounded-xl border bg-muted">
+            <ProductImage src={cover} alt={product.name} fit="contain" />
             {!product.isActive && (
               <Badge className="absolute left-3 top-3 bg-slate-800 text-white">Hidden</Badge>
             )}
           </div>
 
           {images.length > 1 && (
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-5 gap-2 sm:grid-cols-6">
               {images.map((img, idx) => (
                 <button
                   key={`${img}-${idx}`}
                   type="button"
                   onClick={() => setActiveImage(idx)}
-                  className={`h-16 w-20 overflow-hidden rounded-md border transition ${
-                    idx === activeImage ? "ring-2 ring-primary" : "opacity-80 hover:opacity-100"
+                  aria-label={`Show image ${idx + 1}`}
+                  aria-pressed={idx === activeImage}
+                  className={`aspect-square overflow-hidden rounded-md border bg-muted transition ${
+                    idx === activeImage
+                      ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                      : "opacity-70 hover:opacity-100"
                   }`}
                 >
-                  <img src={img} alt="" className="h-full w-full object-cover" />
+                  <ProductImage src={img} alt="" placeholderLabel={null} />
                 </button>
               ))}
             </div>
@@ -179,68 +216,65 @@ export function ProductDetailPage({ entity, productId, mode = "member" }: Produc
         </div>
 
         {/* Details */}
-        <div className="space-y-5">
-          <div>
+        <div className="space-y-6 lg:sticky lg:top-6">
+          <div className="space-y-3">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Building2 className="h-3.5 w-3.5" />
               <span>{data?.org?.name ?? entity.name}</span>
             </div>
-            <h1 className="mt-1.5 text-2xl font-bold tracking-tight">{product.name}</h1>
+            <h1 className="text-2xl font-bold leading-tight tracking-tight sm:text-3xl">
+              {product.name}
+            </h1>
+            {product.materials.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {product.materials.map((m) => (
+                  <Badge key={m} variant="outline" className="font-normal">
+                    {m}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
 
-          {product.materials.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {product.materials.map((m) => (
-                <Badge key={m} variant="outline" className="font-normal">
-                  {m}
-                </Badge>
-              ))}
-            </div>
-          )}
+          {actionCard}
 
           <Separator />
 
-          <div className="space-y-2">
-            <h2 className="text-sm font-semibold">Description & specifications</h2>
-            <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
-              {product.description || "No description provided for this product yet."}
-            </p>
-          </div>
-
-          <Card>
-            <CardContent className="space-y-3 p-4">
-              {isOwner ? (
-                <p className="text-xs text-muted-foreground">
-                  This is your own listing. Connected partners can request samples from this page.
+          <section className="space-y-2">
+            <h2 className="text-sm font-semibold">Description</h2>
+            {parsed.prose.length > 0 ? (
+              parsed.prose.map((para, i) => (
+                <p key={i} className="text-sm leading-relaxed text-muted-foreground">
+                  {para}
                 </p>
-              ) : isConnected ? (
-                <>
-                  <Button asChild className="w-full gap-2">
-                    <Link
-                      to="/directory/$id/showroom/$productId/order"
-                      params={{ id: entity.id, productId: product.id }}
-                    >
-                      <Send className="h-4 w-4" /> Order sample
-                    </Link>
-                  </Button>
-                  <p className="text-center text-[11px] text-muted-foreground">
-                    Set quantity and shipping, then track the quote and delivery status.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <Button asChild variant="outline" className="w-full gap-2">
-                    <Link to="/directory/$id" params={{ id: entity.id }}>
-                      <Lock className="h-4 w-4" /> Connect to order samples
-                    </Link>
-                  </Button>
-                  <p className="text-center text-[11px] text-muted-foreground">
-                    Sample ordering is reserved for connected partner organizations.
-                  </p>
-                </>
-              )}
-            </CardContent>
-          </Card>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                {parsed.specs.length > 0
+                  ? "See specifications below."
+                  : "No description provided for this product yet."}
+              </p>
+            )}
+          </section>
+
+          {parsed.specs.length > 0 && (
+            <section className="space-y-2">
+              <h2 className="text-sm font-semibold">Specifications</h2>
+              <dl className="overflow-hidden rounded-lg border text-sm">
+                {parsed.specs.map((row, i) => (
+                  <div
+                    key={`${row.label}-${i}`}
+                    className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3 border-b px-3 py-2 last:border-b-0 odd:bg-muted/40"
+                  >
+                    <dt className="min-w-0 truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      {row.label}
+                    </dt>
+                    <dd className="min-w-0 break-words text-foreground">{row.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+          )}
         </div>
       </div>
 

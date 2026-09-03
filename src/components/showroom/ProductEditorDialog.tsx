@@ -15,7 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
-import { makeRef, SHOWROOM_BUCKET } from "@/lib/org-images";
+import { makeRef, resolveImage, SHOWROOM_BUCKET } from "@/lib/org-images";
 import type { ShowroomProduct } from "@/lib/showroom.functions";
 import { toast } from "sonner";
 import {
@@ -81,7 +81,10 @@ export function ProductEditorDialog({
   const [description, setDescription] = useState("");
   const [materials, setMaterials] = useState<string[]>([]);
   const [materialInput, setMaterialInput] = useState("");
+  /** Raw stored values (refs or https links) — this is what gets saved. */
   const [images, setImages] = useState<string[]>([]);
+  /** Display URL per raw value, for previews only. */
+  const [previews, setPreviews] = useState<Record<string, string>>({});
   const [imageUrlInput, setImageUrlInput] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
@@ -93,13 +96,21 @@ export function ProductEditorDialog({
       setName(product.name);
       setDescription(product.description ?? "");
       setMaterials(product.materials ?? []);
-      setImages(product.images ?? []);
+      const refs = product.imageRefs ?? product.images ?? [];
+      setImages(refs);
+      const map: Record<string, string> = {};
+      refs.forEach((ref, i) => {
+        const url = product.images?.[i];
+        if (url) map[ref] = url;
+      });
+      setPreviews(map);
       setIsActive(product.isActive ?? true);
     } else {
       setName("");
       setDescription("");
       setMaterials([]);
       setImages([]);
+      setPreviews({});
       setIsActive(true);
     }
     setTouchedName(false);
@@ -163,6 +174,9 @@ export function ProductEditorDialog({
 
       const ref = makeRef(SHOWROOM_BUCKET, filePath);
       setImages((prev) => [...prev, ref]);
+      void resolveImage(ref).then((url) => {
+        if (url) setPreviews((prev) => ({ ...prev, [ref]: url }));
+      });
       toast.success("Image uploaded");
     } catch (err) {
       console.warn("Upload failed:", err);
@@ -267,19 +281,19 @@ export function ProductEditorDialog({
               {images.length > 0 ? (
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {images.map((img, idx) => {
-                    const isRef = !/^https?:\/\//i.test(img);
+                    const previewUrl = /^https?:\/\//i.test(img) ? img : previews[img];
                     return (
                       <div
                         key={`${img}-${idx}`}
                         className="group relative aspect-video overflow-hidden rounded-md border bg-slate-100 dark:bg-slate-900"
                       >
-                        {isRef ? (
+                        {previewUrl ? (
+                          <img src={previewUrl} alt="" className="h-full w-full object-cover" />
+                        ) : (
                           <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground">
                             <ImageIcon className="h-5 w-5" />
                             <span className="text-[10px]">Uploaded image</span>
                           </div>
-                        ) : (
-                          <img src={img} alt="" className="h-full w-full object-cover" />
                         )}
 
                         {idx === 0 && (

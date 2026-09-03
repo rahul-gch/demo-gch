@@ -7,6 +7,7 @@ import { useActingOrgId } from "@/lib/use-comms";
 import type { Entity } from "@/seed/types";
 import { isManufacturerOrg } from "@/lib/org-types";
 import { Package, Plus, Store, ArrowRight } from "lucide-react";
+import { ProductImage } from "@/components/showroom/ProductImage";
 
 /**
  * Compact product row shown on a manufacturer's dashboard overview and public
@@ -79,13 +80,7 @@ export function ShowroomStrip({ entity }: { entity: Entity }) {
                 className="group flex gap-3 rounded-lg border bg-card p-3 transition-colors hover:bg-slate-50"
               >
                 <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md bg-slate-100">
-                  {p.images?.[0] ? (
-                    <img src={p.images[0]} alt={p.name} className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                      <Package className="h-5 w-5 text-slate-300" />
-                    </div>
-                  )}
+                  <ProductImage src={p.images?.[0] ?? null} alt={p.name} placeholderLabel={null} />
                 </div>
                 <div className="min-w-0">
                   <div className="truncate text-sm font-medium leading-5 text-slate-800">
