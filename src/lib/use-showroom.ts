@@ -206,6 +206,7 @@ export function useCreateSampleOrder() {
 
 const ACTION_LABEL: Record<SampleOrderAction, string> = {
   quote: "Quote sent to the buyer",
+  unquote: "Quote withdrawn — you can send a revised quote",
   decline: "Order declined",
   confirm: "Quote confirmed",
   withdraw: "Request withdrawn",
