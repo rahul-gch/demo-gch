@@ -30,6 +30,12 @@ const COPY: Record<SampleOrderAction, { title: string; description: string; cta:
     description: "Tell the buyer what the samples and shipping will cost and when they can ship.",
     cta: "Send quote",
   },
+  unquote: {
+    title: "Withdraw your quote",
+    description:
+      "Retract the quote you sent. The order goes back to “Requested” so you can send a revised quote. The order is not cancelled.",
+    cta: "Withdraw quote",
+  },
   decline: {
     title: "Decline this order",
     description: "Let the buyer know why you cannot fulfil this sample request.",
