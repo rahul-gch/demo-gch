@@ -1,6 +1,29 @@
-import { queryOptions, type QueryClient } from "@tanstack/react-query";
+import { CancelledError, queryOptions, type QueryClient } from "@tanstack/react-query";
 import { listEntities } from "@/lib/entities.functions";
 import { hydrateEntities, isRegistryHydrated } from "@/seed/all-entities";
+
+/** True when a query promise was cancelled (e.g. invalidated while in flight). */
+export function isCancelled(error: unknown): boolean {
+  return (
+    error instanceof CancelledError ||
+    (typeof error === "object" &&
+      error !== null &&
+      (error as { name?: string }).name === "CancelledError")
+  );
+}
+
+/**
+ * Runs a query-backed lookup and retries once if the in-flight fetch was
+ * cancelled by a cache invalidation (session restore racing a route guard).
+ */
+export async function retryOnCancel<T>(run: () => Promise<T>): Promise<T> {
+  try {
+    return await run();
+  } catch (error) {
+    if (!isCancelled(error)) throw error;
+    return run();
+  }
+}
 
 export const entitiesQueryOptions = queryOptions({
   queryKey: ["entities", "registry"],
@@ -20,7 +43,7 @@ export const entitiesQueryOptions = queryOptions({
 
 /** Ensures the in-memory organization registry is populated (safe to call repeatedly). */
 export async function ensureRegistry(queryClient: QueryClient) {
-  const entities = await queryClient.ensureQueryData(entitiesQueryOptions);
+  const entities = await retryOnCancel(() => queryClient.ensureQueryData(entitiesQueryOptions));
   if (!isRegistryHydrated() && entities.length) hydrateEntities(entities);
   return entities;
 }
@@ -32,7 +55,7 @@ export async function ensureRegistry(queryClient: QueryClient) {
  */
 export async function refreshRegistry(queryClient: QueryClient) {
   await queryClient.invalidateQueries({ queryKey: entitiesQueryOptions.queryKey });
-  const entities = await queryClient.fetchQuery(entitiesQueryOptions);
+  const entities = await retryOnCancel(() => queryClient.fetchQuery(entitiesQueryOptions));
   if (entities.length) hydrateEntities(entities);
   return entities;
 }

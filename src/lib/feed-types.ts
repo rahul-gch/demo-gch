@@ -36,6 +36,8 @@ export interface FeedPost {
   authorName: string;
   authorRole: string;
   authorOrg: string;
+  /** Whether the signed-in user may delete this post (author, or org owner/admin). */
+  canDelete?: boolean;
   kind: FeedKind;
   title?: string;
   body: string;
