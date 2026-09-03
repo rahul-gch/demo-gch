@@ -163,18 +163,15 @@ export function ProductCard({
         <CardFooter className="flex flex-col gap-2 border-t bg-slate-50/50 p-3 dark:bg-slate-900/50">
           {canManage ? (
             <>
-              <div className="flex w-full items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={product.isActive}
-                    onCheckedChange={(checked) => onToggleActive?.(product, checked)}
-                    aria-label="Toggle published"
-                  />
-                  <span className="text-[11px] text-muted-foreground">
-                    {product.isActive ? "Visible to partners" : "Hidden"}
-                  </span>
-                </div>
-                {detailLink}
+              <div className="flex w-full items-center gap-2">
+                <Switch
+                  checked={product.isActive}
+                  onCheckedChange={(checked) => onToggleActive?.(product, checked)}
+                  aria-label="Toggle published"
+                />
+                <span className="text-[11px] text-muted-foreground">
+                  {product.isActive ? "Visible to partners" : "Hidden"}
+                </span>
               </div>
               <div className="flex w-full items-center justify-end gap-2">
                 <Button
@@ -199,7 +196,6 @@ export function ProductCard({
             </>
           ) : (
             <div className="flex w-full items-center gap-2">
-              {detailLink}
               {isConnected ? (
                 <Button
                   variant="default"
