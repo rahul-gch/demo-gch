@@ -181,7 +181,10 @@ function initSeedProducts() {
   ];
 
   for (const item of defaultSeed) {
-    FALLBACK_PRODUCTS.set(item.orgKey, item.products);
+    FALLBACK_PRODUCTS.set(
+      item.orgKey,
+      item.products.map((p) => ({ ...p, imageRefs: p.images })),
+    );
   }
 
 }
