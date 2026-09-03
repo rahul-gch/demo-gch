@@ -940,6 +940,13 @@ export const transitionSampleOrder = createServerFn({ method: "POST" })
       patch.quote_note = data.note ?? null;
       patch.quoted_at = now;
     }
+    if (data.action === "unquote") {
+      patch.quoted_price = null;
+      patch.shipping_cost = null;
+      patch.lead_time_days = null;
+      patch.quote_note = null;
+      patch.quoted_at = null;
+    }
     if (data.action === "confirm") patch.confirmed_at = now;
     if (data.action === "ship") {
       patch.shipped_at = now;
