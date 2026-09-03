@@ -24,16 +24,44 @@ export function parseRef(value: string): { bucket: string; path: string } | null
   return { bucket, path };
 }
 
-export async function resolveImage(value: string): Promise<string | null> {
+type StorageClient = {
+  storage: {
+    from: (bucket: string) => {
+      createSignedUrl: (
+        path: string,
+        expiresIn: number,
+      ) => Promise<{ data: { signedUrl: string } | null; error: unknown }>;
+    };
+  };
+};
+
+/** Resolve a stored value using an explicit client (browser or authenticated server client). */
+export async function resolveImageWith(client: StorageClient, value: string): Promise<string | null> {
   if (!value) return null;
   if (/^https?:\/\//i.test(value)) return value;
   const ref = parseRef(value);
   if (!ref) return null;
-  const { data } = await supabase.storage.from(ref.bucket).createSignedUrl(ref.path, 60 * 60);
-  return data?.signedUrl ?? null;
+  try {
+    const { data } = await client.storage.from(ref.bucket).createSignedUrl(ref.path, 60 * 60);
+    return data?.signedUrl ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Resolve many values; keeps array positions (null when a value cannot be resolved). */
+export async function resolveImagesWith(
+  client: StorageClient,
+  values: string[],
+): Promise<(string | null)[]> {
+  return Promise.all(values.map((v) => resolveImageWith(client, v)));
+}
+
+export async function resolveImage(value: string): Promise<string | null> {
+  return resolveImageWith(supabase, value);
 }
 
 export async function resolveImages(values: string[]): Promise<string[]> {
-  const out = await Promise.all(values.map((v) => resolveImage(v)));
+  const out = await resolveImagesWith(supabase, values);
   return out.filter((u): u is string => !!u);
 }
