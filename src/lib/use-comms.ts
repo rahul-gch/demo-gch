@@ -23,7 +23,7 @@ export type { ThreadMessage, MeetingRequest } from "@/lib/comms-types";
  * still restoring its session. Wait for that restoration before invoking a
  * server function so its global middleware always has a bearer token to send.
  */
-function useAuthenticatedSessionReady() {
+export function useAuthenticatedSessionReady() {
   const [hasSession, setHasSession] = useState(false);
 
   useEffect(() => {
