@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import type { ShowroomProduct } from "@/lib/showroom.functions";
 import { ProductImage } from "@/components/showroom/ProductImage";
-import { Edit2, Trash2, Send, Lock, ChevronLeft, ChevronRight } from "lucide-react";
+import { Edit2, Trash2, Send, Lock, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -73,9 +73,15 @@ export function ProductCard({
       </Link>
     );
 
+  const metadataLine =
+    product.materials && product.materials.length > 0
+      ? product.materials.slice(0, 2).join(" · ")
+      : product.description
+        ? `${product.description.slice(0, 60)}${product.description.length > 60 ? "…" : ""}`
+        : null;
 
   const media = (
-    <div className="relative aspect-video w-full overflow-hidden bg-slate-100 dark:bg-slate-900">
+    <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
       <ProductImage
         src={currentImage}
         alt={product.name}
@@ -130,74 +136,58 @@ export function ProductCard({
 
   return (
     <>
-      <Card className="group flex flex-col overflow-hidden transition-all duration-200 hover:shadow-md border-slate-200/80">
+      <Card className="group flex flex-col overflow-hidden border border-border/60 shadow-none transition-colors hover:border-primary/30">
         <DetailLink className="block">{media}</DetailLink>
 
-        <CardHeader className="p-4 pb-2">
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="line-clamp-1 text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-              <DetailLink className={orgRouteId ? "hover:underline" : undefined}>{product.name}</DetailLink>
-            </h3>
-          </div>
-        </CardHeader>
+        <div className="flex flex-col p-3">
+          <h3 className="line-clamp-1 text-sm font-semibold leading-tight text-foreground">
+            <DetailLink className={orgRouteId ? "hover:underline" : undefined}>{product.name}</DetailLink>
+          </h3>
 
-        <CardContent className="flex-1 p-4 pt-1">
-          {product.materials && product.materials.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1">
-              {product.materials.map((mat) => (
-                <Badge
-                  key={mat}
-                  variant="outline"
-                  className="bg-slate-50 text-[11px] font-normal text-slate-600 dark:bg-slate-800 dark:text-slate-300"
-                >
-                  {mat}
-                </Badge>
-              ))}
-            </div>
+          {metadataLine && (
+            <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">{metadataLine}</p>
           )}
-        </CardContent>
 
-        <CardFooter className="flex flex-col gap-2 border-t bg-slate-50/50 p-3 dark:bg-slate-900/50">
           {canManage ? (
-            <>
-              <div className="flex w-full items-center gap-2">
+            <div className="mt-3 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
                 <Switch
                   checked={product.isActive}
                   onCheckedChange={(checked) => onToggleActive?.(product, checked)}
                   aria-label="Toggle published"
                 />
                 <span className="text-[11px] text-muted-foreground">
-                  {product.isActive ? "Visible to partners" : "Hidden"}
+                  {product.isActive ? "Visible" : "Hidden"}
                 </span>
               </div>
-              <div className="flex w-full items-center justify-end gap-2">
+              <div className="flex items-center gap-1">
                 <Button
                   variant="ghost"
-                  size="sm"
-                  className="h-8 text-xs"
+                  size="icon"
+                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
                   onClick={() => onEdit?.(product)}
+                  aria-label="Edit product"
                 >
-                  <Edit2 className="mr-1.5 h-3.5 w-3.5" />
-                  Edit
+                  <Edit2 className="h-3.5 w-3.5" />
                 </Button>
                 <Button
                   variant="ghost"
-                  size="sm"
-                  className="h-8 text-xs text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50"
+                  size="icon"
+                  className="h-7 w-7 text-destructive hover:bg-destructive/10"
                   onClick={() => setDeleteConfirm(true)}
+                  aria-label="Delete product"
                 >
-                  <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                  Delete
+                  <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
-            </>
+            </div>
           ) : (
-            <div className="flex w-full items-center gap-2">
+            <div className="mt-3 flex flex-col gap-2">
               {isConnected ? (
                 <Button
                   variant="default"
                   size="sm"
-                  className="flex-1 gap-1.5 text-xs font-medium shadow-sm"
+                  className="h-8 w-full gap-1.5 text-xs font-medium"
                   onClick={() => onOrderSample?.(product)}
                 >
                   <Send className="h-3.5 w-3.5" />
@@ -207,16 +197,22 @@ export function ProductCard({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1 gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900"
+                  className="h-8 w-full gap-1.5 text-xs font-medium"
                   onClick={onConnect}
                 >
-                  <Lock className="h-3.5 w-3.5 text-slate-400" />
+                  <Lock className="h-3.5 w-3.5" />
                   Connect to Order
                 </Button>
               )}
+              <div className="flex justify-end">
+                <DetailLink className="inline-flex items-center gap-1 text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
+                  <Eye className="h-3 w-3" />
+                  View details
+                </DetailLink>
+              </div>
             </div>
           )}
-        </CardFooter>
+        </div>
       </Card>
 
       <AlertDialog open={deleteConfirm} onOpenChange={setDeleteConfirm}>
@@ -231,7 +227,7 @@ export function ProductCard({
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-rose-600 text-white hover:bg-rose-700"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => {
                 onDelete?.(product.id);
                 setDeleteConfirm(false);
