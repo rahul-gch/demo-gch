@@ -26,7 +26,7 @@ export type SampleOrderStatus =
   | "shipped"
   | "delivered";
 
-export type SampleOrderAction = "quote" | "decline" | "confirm" | "withdraw" | "ship" | "deliver";
+export type SampleOrderAction = "quote" | "unquote" | "decline" | "confirm" | "withdraw" | "ship" | "deliver";
 
 export interface SampleOrderParty {
   id: string;
@@ -869,6 +869,7 @@ const TRANSITIONS: Record<
   { role: "buyer" | "seller"; from: SampleOrderStatus[]; to: SampleOrderStatus }
 > = {
   quote: { role: "seller", from: ["requested"], to: "quoted" },
+  unquote: { role: "seller", from: ["quoted"], to: "requested" },
   decline: { role: "seller", from: ["requested", "quoted", "confirmed"], to: "declined" },
   confirm: { role: "buyer", from: ["quoted"], to: "confirmed" },
   withdraw: { role: "buyer", from: ["requested", "quoted"], to: "withdrawn" },
@@ -883,7 +884,7 @@ export const transitionSampleOrder = createServerFn({ method: "POST" })
       .object({
         orderId: z.string().uuid(),
         orgId: z.string().min(1),
-        action: z.enum(["quote", "decline", "confirm", "withdraw", "ship", "deliver"]),
+        action: z.enum(["quote", "unquote", "decline", "confirm", "withdraw", "ship", "deliver"]),
         note: z.string().trim().max(1000).optional(),
         quote: z
           .object({
@@ -939,6 +940,13 @@ export const transitionSampleOrder = createServerFn({ method: "POST" })
       patch.quote_note = data.note ?? null;
       patch.quoted_at = now;
     }
+    if (data.action === "unquote") {
+      patch.quoted_price = null;
+      patch.shipping_cost = null;
+      patch.lead_time_days = null;
+      patch.quote_note = null;
+      patch.quoted_at = null;
+    }
     if (data.action === "confirm") patch.confirmed_at = now;
     if (data.action === "ship") {
       patch.shipped_at = now;
@@ -978,6 +986,9 @@ export const transitionSampleOrder = createServerFn({ method: "POST" })
       }
       case "confirm":
         body = `✅ Quote confirmed for ${productName}. Please prepare the samples.${data.note ? `\n\n${data.note}` : ""}`;
+        break;
+      case "unquote":
+        body = `↩️ ${actorName} withdrew their quote for ${productName}. A revised quote will follow.${data.note ? `\n\n${data.note}` : ""}`;
         break;
       case "decline":
         body = `❌ Sample order for ${productName} was declined.${data.note ? `\n\n${data.note}` : ""}`;

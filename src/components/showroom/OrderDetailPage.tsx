@@ -63,7 +63,10 @@ export function OrderDetailPage({ entity, orderId }: { entity: Entity; orderId: 
     if (order.status === "requested") {
       actions.push({ action: "quote", label: "Send quote" }, { action: "decline", label: "Decline", variant: "ghost" });
     } else if (order.status === "quoted") {
-      actions.push({ action: "decline", label: "Withdraw quote", variant: "ghost" });
+      actions.push(
+        { action: "unquote", label: "Withdraw quote", variant: "outline" },
+        { action: "decline", label: "Decline order", variant: "ghost" },
+      );
     } else if (order.status === "confirmed") {
       actions.push({ action: "ship", label: "Mark shipped" });
     } else if (order.status === "shipped") {
