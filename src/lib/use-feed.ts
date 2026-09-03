@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Entity } from "@/seed/types";
@@ -12,6 +13,7 @@ import {
   listFeedPosts,
   toggleFeedLike,
 } from "@/lib/feed.functions";
+import { useAuthenticatedSessionReady } from "@/lib/use-comms";
 
 const EMPTY: FeedPost[] = [];
 
@@ -44,11 +46,13 @@ function useFeedRealtime(orgUuid: string | null) {
 /** Posts for one organization. */
 export function useFeed(entity: Entity): { posts: FeedPost[]; isLoading: boolean } {
   const orgUuid = entity.orgUuid ?? null;
+  const hasSession = useAuthenticatedSessionReady();
+  const fetchPosts = useServerFn(listFeedPosts);
   useFeedRealtime(orgUuid);
   const { data, isLoading } = useQuery({
     queryKey: key(orgUuid),
-    queryFn: () => listFeedPosts({ data: { orgId: orgUuid } }),
-    enabled: !!orgUuid,
+    queryFn: () => fetchPosts({ data: { orgId: orgUuid } }),
+    enabled: !!orgUuid && hasSession,
     staleTime: 15_000,
   });
   return { posts: data ?? EMPTY, isLoading: orgUuid ? isLoading : false };
@@ -56,10 +60,13 @@ export function useFeed(entity: Entity): { posts: FeedPost[]; isLoading: boolean
 
 /** Platform-wide community feed. */
 export function useCommunityFeed(): { posts: FeedPost[]; isLoading: boolean } {
+  const hasSession = useAuthenticatedSessionReady();
+  const fetchPosts = useServerFn(listFeedPosts);
   useFeedRealtime(null);
   const { data, isLoading } = useQuery({
     queryKey: key(null),
-    queryFn: () => listFeedPosts({ data: { orgId: null, limit: 200 } }),
+    queryFn: () => fetchPosts({ data: { orgId: null, limit: 200 } }),
+    enabled: hasSession,
     staleTime: 15_000,
   });
   return { posts: data ?? EMPTY, isLoading };
