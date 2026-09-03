@@ -105,7 +105,7 @@ const FALLBACK_PRODUCTS = new Map<string, ShowroomProduct[]>();
 function initSeedProducts() {
   if (FALLBACK_PRODUCTS.size > 0) return;
 
-  const defaultSeed = [
+  const defaultSeed: { orgKey: string; products: Omit<ShowroomProduct, "imageRefs">[] }[] = [
     {
       orgKey: "gch-nike",
       products: [
@@ -521,6 +521,7 @@ export const upsertShowroomProduct = createServerFn({ method: "POST" })
         name: data.product.name,
         description: data.product.description ?? null,
         images: data.product.images ?? [],
+        imageRefs: data.product.images ?? [],
         materials: data.product.materials ?? [],
         isActive: data.product.isActive ?? true,
         createdAt: idx >= 0 ? existingList[idx].createdAt : new Date().toISOString(),
@@ -538,6 +539,7 @@ export const upsertShowroomProduct = createServerFn({ method: "POST" })
         name: data.product.name,
         description: data.product.description ?? null,
         images: data.product.images ?? [],
+        imageRefs: data.product.images ?? [],
         materials: data.product.materials ?? [],
         isActive: data.product.isActive ?? true,
         createdAt: new Date().toISOString(),
@@ -809,7 +811,7 @@ export const getSampleOrder = createServerFn({ method: "POST" })
       if (error) throw new Error(error.message);
       if (!row) throw new Error("Order not found.");
 
-      const order = await mapOrderRow(row);
+      const order = await mapOrderRow(supabase, row);
       let role: "buyer" | "seller";
       if (order.sellerOrgId === orgUuid) role = "seller";
       else if (order.buyerOrgId === orgUuid) role = "buyer";
@@ -860,7 +862,7 @@ export const listSampleOrders = createServerFn({ method: "POST" })
       if (error) throw new Error(error.message);
 
       for (const r of (rows ?? []) as any[]) {
-        const order = await mapOrderRow(r);
+        const order = await mapOrderRow(supabase, r);
         if (order.sellerOrgId === targetUuid) {
           inbound.push(order);
           // Seller has something to do on new requests and confirmed orders.
@@ -921,7 +923,7 @@ export const transitionSampleOrder = createServerFn({ method: "POST" })
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!row) throw new Error("Order not found.");
-    const order = await mapOrderRow(row);
+    const order = await mapOrderRow(supabase, row);
 
     const rule = TRANSITIONS[data.action];
     const actorRole: "buyer" | "seller" | null =
