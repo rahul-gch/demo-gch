@@ -987,6 +987,9 @@ export const transitionSampleOrder = createServerFn({ method: "POST" })
       case "confirm":
         body = `✅ Quote confirmed for ${productName}. Please prepare the samples.${data.note ? `\n\n${data.note}` : ""}`;
         break;
+      case "unquote":
+        body = `↩️ ${actorName} withdrew their quote for ${productName}. A revised quote will follow.${data.note ? `\n\n${data.note}` : ""}`;
+        break;
       case "decline":
         body = `❌ Sample order for ${productName} was declined.${data.note ? `\n\n${data.note}` : ""}`;
         break;
