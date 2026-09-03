@@ -98,7 +98,7 @@ export function ReportUploader({ entity }: { entity: Entity }) {
     }
     toast.success("File removed");
     void logSecurityEvent("document.deleted", {
-      orgId: entity.id,
+      orgId: entity.orgUuid ?? entity.id,
       targetType: "reports",
       targetId: `${folder}/${name}`,
     });
@@ -118,7 +118,7 @@ export function ReportUploader({ entity }: { entity: Entity }) {
       return;
     }
     void logSecurityEvent("document.downloaded", {
-      orgId: entity.id,
+      orgId: entity.orgUuid ?? entity.id,
       targetType: "reports",
       targetId: `${folder}/${name}`,
     });
