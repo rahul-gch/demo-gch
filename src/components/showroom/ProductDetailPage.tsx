@@ -7,6 +7,8 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { ProductEditorDialog } from "@/components/showroom/ProductEditorDialog";
+import { ProductImage } from "@/components/showroom/ProductImage";
+import { parseProductDescription } from "@/lib/product-description";
 import {
   useShowroomProduct,
   useUpsertShowroomProduct,
@@ -66,6 +68,7 @@ export function ProductDetailPage({ entity, productId, mode = "member" }: Produc
 
   const images = useMemo(() => product?.images ?? [], [product]);
   const cover = images[Math.min(activeImage, Math.max(images.length - 1, 0))] ?? null;
+  const parsed = useMemo(() => parseProductDescription(product?.description), [product?.description]);
 
   const backLink =
     mode === "public" ? (
