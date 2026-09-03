@@ -47,27 +47,34 @@ function splitSpecLine(line: string): { label: string; value: string } | null {
   const trimmed = line.trim();
   if (!trimmed) return null;
 
-  // "Label: value" or "Label - value" forms.
-  const sep = trimmed.match(/^([^:–—-]{2,40})\s*[:–—-]\s+(.+)$/);
+  // "Label: value" form (short label, explicit colon).
+  const sep = trimmed.match(/^([^:]{2,40}):\s+(.+)$/);
   if (sep && sep[1].trim().split(/\s+/).length <= 5) {
     return { label: sep[1].trim(), value: sep[2].trim() };
   }
 
   if (!LABEL_RE.test(trimmed)) return null;
 
-  // Label = leading uppercase-ish tokens (letters, dots, parentheses, %, ², slashes),
-  // value = rest. Handles "WEIGHT B.W. (OZ/YD²) 7,5", "ELASTICITY% 42", "COMPOSITION 97CO + 3EA".
-  const m = trimmed.match(/^([A-Z][A-Z .%²\/()-]*?)\s+(.+)$/);
-  if (m) {
-    const label = m[1].replace(/\s*%\s*$/, " (%)").trim();
-    return { label, value: m[2].trim() };
+  // Label = leading run of all-caps tokens without digits (e.g. "WEIGHT B.W. (OZ/YD²)", "SHRINKAGE WEFT%"),
+  // value = everything after. Handles "ELASTICITY% 42", "COMPOSITION 97CO + 3EA", "WIDTH 150 CM / 59"".
+  const tokens = trimmed.split(/\s+/);
+  const labelTokens: string[] = [];
+  let i = 0;
+  while (i < tokens.length) {
+    const t = tokens[i];
+    const isLabelToken = /^[A-Z][A-Z.%²\/()-]*$/.test(t) || /^\([A-Z\/²%]+\)$/.test(t);
+    if (!isLabelToken) break;
+    labelTokens.push(t);
+    i += 1;
   }
+  if (labelTokens.length === 0 || i >= tokens.length) return null;
 
-  // "ELASTICITY%42" with no space.
-  const m2 = trimmed.match(/^([A-Z][A-Z .\/()-]*?)%\s*(.+)$/);
-  if (m2) return { label: `${m2[1].trim()} (%)`, value: m2[2].trim() };
-
-  return null;
+  const label = labelTokens
+    .join(" ")
+    .replace(/%$/, " (%)")
+    .replace(/\s+/g, " ")
+    .trim();
+  return { label, value: tokens.slice(i).join(" ").trim() };
 }
 
 /** Split a free-text description into prose paragraphs and key/value spec rows. */
