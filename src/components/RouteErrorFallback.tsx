@@ -9,10 +9,24 @@ export function errorMessage(error: unknown): string {
   return "Something went wrong while loading this page.";
 }
 
+const RELOAD_FLAG = "gch:cancelled-reload";
+
 export function RouteErrorFallback({ error }: { error?: unknown }) {
+  const cancelled = isCancelled(error);
+
   useEffect(() => {
+    // A cancelled load (session restore racing a route guard) is transient:
+    // reload once instead of showing the error card.
+    if (cancelled && !sessionStorage.getItem(RELOAD_FLAG)) {
+      sessionStorage.setItem(RELOAD_FLAG, "1");
+      window.location.reload();
+      return;
+    }
+    sessionStorage.removeItem(RELOAD_FLAG);
     reportClientError(error);
-  }, [error]);
+  }, [error, cancelled]);
+
+  if (cancelled) return null;
 
   return (
     <div className="flex min-h-screen items-center justify-center p-6">
