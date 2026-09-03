@@ -73,13 +73,6 @@ export function ProductCard({
       </Link>
     );
 
-  const metadataLine =
-    product.materials && product.materials.length > 0
-      ? product.materials.slice(0, 2).join(" · ")
-      : product.description
-        ? `${product.description.slice(0, 60)}${product.description.length > 60 ? "…" : ""}`
-        : null;
-
   const media = (
     <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
       <ProductImage
@@ -143,10 +136,6 @@ export function ProductCard({
           <h3 className="line-clamp-1 text-sm font-semibold leading-tight text-foreground">
             <DetailLink className={orgRouteId ? "hover:underline" : undefined}>{product.name}</DetailLink>
           </h3>
-
-          {metadataLine && (
-            <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">{metadataLine}</p>
-          )}
 
           {canManage ? (
             <div className="mt-3 flex items-center justify-between gap-2">
