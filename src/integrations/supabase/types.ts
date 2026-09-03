@@ -1800,6 +1800,7 @@ export type Database = {
         Args: { _conversation: string; _user: string }
         Returns: boolean
       }
+      is_network_user: { Args: { _user: string }; Returns: boolean }
       is_org_member: { Args: { _org: string; _user: string }; Returns: boolean }
       is_platform_admin: { Args: { _user: string }; Returns: boolean }
       is_project_member: {

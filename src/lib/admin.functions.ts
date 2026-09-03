@@ -201,25 +201,12 @@ export const revokePlatformInvite = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-// Public lookup of an onboarding invite (anon-friendly through the RPC)
+// Public lookup of an onboarding invite — token-gated, server-side only.
 export const lookupPlatformInvite = createServerFn({ method: "GET" })
   .inputValidator((data: unknown) => z.object({ token: z.string().min(4).max(200) }).parse(data))
   .handler(async ({ data }) => {
-    const { createClient } = await import("@supabase/supabase-js");
-    const key = process.env.SUPABASE_PUBLISHABLE_KEY!;
-    const client = createClient(process.env.SUPABASE_URL!, key, {
-      auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
-      global: {
-        fetch: (input: any, init: any) => {
-          const h = new Headers(init?.headers);
-          if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`)
-            h.delete("Authorization");
-          h.set("apikey", key);
-          return fetch(input, { ...init, headers: h });
-        },
-      },
-    });
-    const { data: rows, error } = await client.rpc("get_platform_invite_by_token", {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin.rpc("get_platform_invite_by_token", {
       _token: data.token,
     });
     if (error) throw new Error(error.message);
