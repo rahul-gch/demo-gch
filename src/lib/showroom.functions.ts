@@ -884,7 +884,7 @@ export const transitionSampleOrder = createServerFn({ method: "POST" })
       .object({
         orderId: z.string().uuid(),
         orgId: z.string().min(1),
-        action: z.enum(["quote", "decline", "confirm", "withdraw", "ship", "deliver"]),
+        action: z.enum(["quote", "unquote", "decline", "confirm", "withdraw", "ship", "deliver"]),
         note: z.string().trim().max(1000).optional(),
         quote: z
           .object({
