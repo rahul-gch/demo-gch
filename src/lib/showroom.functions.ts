@@ -869,6 +869,7 @@ const TRANSITIONS: Record<
   { role: "buyer" | "seller"; from: SampleOrderStatus[]; to: SampleOrderStatus }
 > = {
   quote: { role: "seller", from: ["requested"], to: "quoted" },
+  unquote: { role: "seller", from: ["quoted"], to: "requested" },
   decline: { role: "seller", from: ["requested", "quoted", "confirmed"], to: "declined" },
   confirm: { role: "buyer", from: ["quoted"], to: "confirmed" },
   withdraw: { role: "buyer", from: ["requested", "quoted"], to: "withdrawn" },
