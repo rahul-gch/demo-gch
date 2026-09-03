@@ -22,7 +22,9 @@ export function ChainUploader({ entity }: { entity: Entity }) {
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const folder = `${entity.id}/supply-chain`;
+  // Bucket policies cast the top-level folder to a UUID — use the org UUID,
+  // not the route slug/legacy id.
+  const folder = `${entity.orgUuid ?? entity.id}/supply-chain`;
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));

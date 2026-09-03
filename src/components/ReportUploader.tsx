@@ -23,7 +23,9 @@ export function ReportUploader({ entity }: { entity: Entity }) {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  const folder = entity.id;
+  // Storage policies expect the org UUID as the top-level folder; entity.id
+  // can be a slug/legacy id (e.g. "sharabati") which fails the UUID cast.
+  const folder = entity.orgUuid ?? entity.id;
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
@@ -73,7 +75,7 @@ export function ReportUploader({ entity }: { entity: Entity }) {
     }
     toast.success(`Uploaded ${file.name}`);
     void logSecurityEvent("document.uploaded", {
-      orgId: entity.id,
+      orgId: entity.orgUuid ?? entity.id,
       targetType: "reports",
       targetId: path,
       detail: { size_bytes: file.size },
@@ -96,7 +98,7 @@ export function ReportUploader({ entity }: { entity: Entity }) {
     }
     toast.success("File removed");
     void logSecurityEvent("document.deleted", {
-      orgId: entity.id,
+      orgId: entity.orgUuid ?? entity.id,
       targetType: "reports",
       targetId: `${folder}/${name}`,
     });
@@ -116,7 +118,7 @@ export function ReportUploader({ entity }: { entity: Entity }) {
       return;
     }
     void logSecurityEvent("document.downloaded", {
-      orgId: entity.id,
+      orgId: entity.orgUuid ?? entity.id,
       targetType: "reports",
       targetId: `${folder}/${name}`,
     });
