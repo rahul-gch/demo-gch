@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { resolveImages } from "@/lib/org-images";
+import { resolveImagesWith } from "@/lib/org-images";
 import { getEntity } from "@/seed/all-entities";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -10,11 +10,24 @@ export interface ShowroomProduct {
   orgId: string;
   name: string;
   description: string | null;
+  /** Display URLs (signed links for uploaded files, or external https links). */
   images: string[];
+  /** Raw stored values (`showroom:<path>` refs or https links) — use these when editing. */
+  imageRefs: string[];
   materials: string[];
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+
+type ImageClient = Parameters<typeof resolveImagesWith>[0];
+
+/** Resolve stored image values with the caller's authenticated client. Unresolvable refs are dropped. */
+async function resolveProductImages(client: ImageClient, raw: unknown): Promise<{ images: string[]; imageRefs: string[] }> {
+  const imageRefs = Array.isArray(raw) ? (raw as unknown[]).filter((v): v is string => typeof v === "string" && v.length > 0) : [];
+  const resolved = await resolveImagesWith(client, imageRefs);
+  return { images: resolved.filter((u): u is string => !!u), imageRefs };
 }
 
 export type SampleOrderStatus =
@@ -246,14 +259,14 @@ export const listShowroomProducts = createServerFn({ method: "POST" })
       if (!error && rows) {
         const products: ShowroomProduct[] = await Promise.all(
           rows.map(async (r: any) => {
-            const rawImages = Array.isArray(r.images) ? (r.images as string[]) : [];
-            const resolved = await resolveImages(rawImages);
+            const imgs = await resolveProductImages(supabase, r.images);
             return {
               id: r.id,
               orgId: r.org_id,
               name: r.name,
               description: r.description,
-              images: resolved.length > 0 ? resolved : rawImages,
+              images: imgs.images,
+          imageRefs: imgs.imageRefs,
               materials: Array.isArray(r.materials) ? (r.materials as string[]) : [],
               isActive: r.is_active,
               createdAt: r.created_at,
@@ -345,14 +358,14 @@ export const getShowroomProduct = createServerFn({ method: "POST" })
         .maybeSingle();
       if (error) throw new Error(error.message);
       if (row) {
-        const rawImages = Array.isArray(row.images) ? (row.images as string[]) : [];
-        const resolved = await resolveImages(rawImages);
+        const imgs = await resolveProductImages(supabase, row.images);
         product = {
           id: row.id,
           orgId: row.org_id,
           name: row.name,
           description: row.description,
-          images: resolved.length > 0 ? resolved : rawImages,
+          images: imgs.images,
+          imageRefs: imgs.imageRefs,
           materials: Array.isArray(row.materials) ? (row.materials as string[]) : [],
           isActive: row.is_active,
           createdAt: row.created_at,
@@ -479,14 +492,14 @@ export const upsertShowroomProduct = createServerFn({ method: "POST" })
       }
 
       if (result) {
-        const rawImages = Array.isArray(result.images) ? (result.images as string[]) : [];
-        const resolved = await resolveImages(rawImages);
+        const imgs = await resolveProductImages(supabase, result.images);
         return {
           id: result.id,
           orgId: result.org_id,
           name: result.name,
           description: result.description,
-          images: resolved.length > 0 ? resolved : rawImages,
+          images: imgs.images,
+          imageRefs: imgs.imageRefs,
           materials: Array.isArray(result.materials) ? (result.materials as string[]) : [],
           isActive: result.is_active,
           createdAt: result.created_at,
@@ -596,12 +609,11 @@ function mapParty(o: any): SampleOrderParty | null {
   return { id: row.id, name: row.name, country: row.country ?? null, logoUrl: row.logo_url ?? null };
 }
 
-async function mapOrderRow(r: any): Promise<SampleOrder> {
+async function mapOrderRow(client: ImageClient, r: any): Promise<SampleOrder> {
   const prod = Array.isArray(r.product) ? r.product[0] : r.product;
   let productImages: string[] = [];
   if (prod && Array.isArray(prod.images)) {
-    const resolved = await resolveImages(prod.images as string[]);
-    productImages = resolved.length > 0 ? resolved : (prod.images as string[]);
+    productImages = (await resolveProductImages(client, prod.images)).images;
   }
   return {
     id: r.id,
