@@ -73,13 +73,6 @@ export function ProductCard({
       </Link>
     );
 
-  const metadataLine =
-    product.materials && product.materials.length > 0
-      ? product.materials.slice(0, 2).join(" · ")
-      : product.description
-        ? `${product.description.slice(0, 60)}${product.description.length > 60 ? "…" : ""}`
-        : null;
-
   const media = (
     <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
       <ProductImage
