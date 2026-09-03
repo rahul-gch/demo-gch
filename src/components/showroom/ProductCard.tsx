@@ -137,10 +137,6 @@ export function ProductCard({
             <DetailLink className={orgRouteId ? "hover:underline" : undefined}>{product.name}</DetailLink>
           </h3>
 
-          {metadataLine && (
-            <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">{metadataLine}</p>
-          )}
-
           {canManage ? (
             <div className="mt-3 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
