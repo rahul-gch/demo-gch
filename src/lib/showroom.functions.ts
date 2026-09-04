@@ -107,6 +107,8 @@ export interface ShowroomSummary {
   isConnected: boolean;
   isOwner: boolean;
   canManage: boolean;
+  /** True when the viewer is not connected to this org and may not see its products. */
+  locked?: boolean;
 }
 
 const FALLBACK_PRODUCTS = new Map<string, ShowroomProduct[]>();
@@ -337,11 +339,12 @@ export const listShowroomProducts = createServerFn({ method: "POST" })
   });
 
 export interface ShowroomProductDetail {
-  product: ShowroomProduct;
+  product: ShowroomProduct | null;
   org: { id: string; name: string; country: string | null; logoUrl: string | null } | null;
   isOwner: boolean;
   canManage: boolean;
   isConnected: boolean;
+  locked?: boolean;
 }
 
 export const getShowroomProduct = createServerFn({ method: "POST" })
@@ -359,33 +362,19 @@ export const getShowroomProduct = createServerFn({ method: "POST" })
     initSeedProducts();
     const { supabase, userId } = context;
     const targetUuid = resolveOrgUuid(data.orgId) ?? data.orgId;
-    const isUuid = (v: string) =>
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+    const isUuid = (v: string) => UUID_RE.test(v);
 
-    let isOwner = false;
-    let canManage = false;
-    let isConnected = true;
-
-    if (isUuid(targetUuid)) {
-      const [{ data: isMember }, { data: canEdit }] = await Promise.all([
-        supabase.rpc("is_org_member", { _user: userId, _org: targetUuid }),
-        supabase.rpc("user_can_edit", { _user: userId, _org: targetUuid }),
-      ]);
-      isOwner = Boolean(isMember);
-      canManage = Boolean(canEdit);
-
-      if (!isOwner && data.viewingOrgId && isUuid(data.viewingOrgId)) {
-        const { data: conn } = await supabase.rpc("orgs_are_connected", {
-          _org_a: data.viewingOrgId,
-          _org_b: targetUuid,
-        });
-        isConnected = Boolean(conn);
-      } else if (!isOwner) {
-        isConnected = false;
-      }
-    } else {
-      isOwner = true;
-      canManage = true;
+    const access = await resolveShowroomAccess(supabase, userId, targetUuid, data.viewingOrgId);
+    const { isOwner, canManage, isConnected } = access;
+    if (access.locked) {
+      return {
+        product: null,
+        org: null,
+        isOwner: false,
+        canManage: false,
+        isConnected: false,
+        locked: true,
+      };
     }
 
     let product: ShowroomProduct | null = null;
@@ -639,7 +628,6 @@ export const deleteShowroomProduct = createServerFn({ method: "POST" })
 // Sample orders — request → quote → confirm → ship → deliver
 // ---------------------------------------------------------------------------
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const isUuidStr = (v: string | null | undefined): v is string => Boolean(v && UUID_RE.test(v));
 
 const ORDER_SELECT =
