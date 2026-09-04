@@ -29,7 +29,7 @@ export function useShowroomProducts(
   return useQuery({
     queryKey: ["showroom-products", orgId, viewingOrgId],
     queryFn: async () => {
-      const empty = { products: [], isConnected: false, isOwner: false, canManage: false };
+      const empty: ShowroomSummary = { products: [], isConnected: false, isOwner: false, canManage: false };
       if (!orgId || !(await hasSession())) return empty;
       return listProducts({ data: { orgId, viewingOrgId } });
     },
