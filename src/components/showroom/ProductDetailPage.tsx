@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { ProductEditorDialog } from "@/components/showroom/ProductEditorDialog";
 import { ProductImage } from "@/components/showroom/ProductImage";
 import { parseProductDescription } from "@/lib/product-description";
+import { ShowroomLocked } from "@/components/showroom/ShowroomLocked";
 import {
   useShowroomProduct,
   useUpsertShowroomProduct,
@@ -85,6 +86,14 @@ export function ProductDetailPage({ entity, productId, mode = "member" }: Produc
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (data?.locked) {
+    return (
+      <div className="mx-auto max-w-2xl p-4 sm:p-6">
+        <ShowroomLocked entity={entity} />
       </div>
     );
   }

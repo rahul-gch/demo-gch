@@ -11,6 +11,7 @@ import { MeetingRequestDialog } from "@/components/MeetingRequestDialog";
 import { useMyOrgs, useSendMessage } from "@/lib/use-comms";
 import { useShowroomProducts } from "@/lib/use-showroom";
 import { ProductCard } from "@/components/showroom/ProductCard";
+import { ShowroomLocked } from "@/components/showroom/ShowroomLocked";
 import {
   useOrgConnections,
   useRequestConnection,
@@ -394,6 +395,27 @@ export function PublicOrgProfile({ entity: e }: { entity: Entity }) {
             </div>
 
             {/* Product Showroom & Materials Preview */}
+            {!showroomLoading && showroom?.locked ? (
+              <ShowroomLocked
+                entity={e}
+                variant="card"
+                connectAction={
+                  connectionStatus === "sent_pending" ? (
+                    <Button size="sm" variant="outline" disabled>
+                      Request pending
+                    </Button>
+                  ) : connectionStatus === "received_pending" ? (
+                    <Button size="sm" onClick={handleAcceptConnection}>
+                      Accept connection
+                    </Button>
+                  ) : (
+                    <Button size="sm" onClick={handleConnect} disabled={requestMutation.isPending}>
+                      Connect with {e.name}
+                    </Button>
+                  )
+                }
+              />
+            ) : (
             <Card className="shadow-sm">
               <CardHeader className="flex flex-row items-center justify-between pb-3">
                 <div className="space-y-1">
@@ -421,44 +443,25 @@ export function PublicOrgProfile({ entity: e }: { entity: Entity }) {
                     ))}
                   </div>
                 ) : products.length > 0 ? (
-                  <div className="space-y-4">
-                    {!isConnected && (
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg bg-amber-50/80 p-3.5 text-xs text-amber-900 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-200 dark:border-amber-900">
-                        <span className="flex items-center gap-2">
-                          <Lock className="h-4 w-4 text-amber-600 shrink-0" />
-                          <span>Physical sample swatch ordering is unlocked for verified connected partners.</span>
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="default"
-                          className="h-8 text-xs shrink-0"
-                          onClick={handleConnect}
-                        >
-                          Connect to Unlock Samples
-                        </Button>
-                      </div>
-                    )}
-
-                    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-                      {products.map((prod) => (
-                        <ProductCard
-                          key={prod.id}
-                          product={prod}
-                          orgRouteId={e.id}
-                          detailBase="directory"
-                          isOwner={false}
-                          canManage={false}
-                          isConnected={isConnected}
-                          onOrderSample={(p) =>
-                            navigate({
-                              to: "/directory/$id/showroom/$productId/order",
-                              params: { id: e.id, productId: p.id },
-                            })
-                          }
-                          onConnect={handleConnect}
-                        />
-                      ))}
-                    </div>
+                  <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+                    {products.map((prod) => (
+                      <ProductCard
+                        key={prod.id}
+                        product={prod}
+                        orgRouteId={e.id}
+                        detailBase="directory"
+                        isOwner={false}
+                        canManage={false}
+                        isConnected={isConnected}
+                        onOrderSample={(p) =>
+                          navigate({
+                            to: "/directory/$id/showroom/$productId/order",
+                            params: { id: e.id, productId: p.id },
+                          })
+                        }
+                        onConnect={handleConnect}
+                      />
+                    ))}
                   </div>
                 ) : (
                   <div className="py-10 text-center text-xs text-muted-foreground border border-dashed rounded-lg">
@@ -468,6 +471,7 @@ export function PublicOrgProfile({ entity: e }: { entity: Entity }) {
                 )}
               </CardContent>
             </Card>
+            )}
 
             {/* Verified Certifications & Sustainability Standards */}
             <Card className="shadow-sm">
