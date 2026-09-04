@@ -32,7 +32,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { Entity } from "@/seed/types";
 import type { Project } from "@/lib/projects-types";
-import { useProjects, createProject } from "@/lib/use-projects";
+import { useProjects, createProject, isEntityRef } from "@/lib/use-projects";
 import { ProjectStatusBadge } from "./ProjectShell";
 import { useOrgRole } from "@/lib/use-org-role";
 import { DeleteProjectDialog } from "./ProjectActions";
@@ -168,12 +168,12 @@ export function ProjectsIndex({ entity }: { entity: Entity }) {
                       {p.name}
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      Owner: {p.ownerOrgId === entity.id ? "You" : p.ownerOrgId}
+                      Owner: {isEntityRef(entity, p.ownerOrgId) ? "You" : p.ownerOrgId}
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
                     <ProjectStatusBadge status={p.status} />
-                    {canManage && p.ownerOrgId === entity.id && (
+                    {canManage && isEntityRef(entity, p.ownerOrgId) && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button

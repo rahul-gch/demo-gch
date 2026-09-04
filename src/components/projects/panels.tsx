@@ -72,6 +72,7 @@ import {
   setRequestStatus,
   toggleActionItem,
   uploadDocument,
+  isEntityRef,
 } from "@/lib/use-projects";
 import {
   PERMISSION_LABELS,
@@ -395,9 +396,9 @@ function QuickActions({ entity, project }: { entity: Entity; project: Project })
 // ============================================================
 
 export function PartnersPanel({ entity, project }: { entity: Entity; project: Project }) {
-  const isOwnerOrg = project.ownerOrgId === entity.id;
+  const isOwnerOrg = isEntityRef(entity, project.ownerOrgId);
   const { canManage } = useOrgRole(entity.orgUuid ?? entity.id);
-  const myPerms = project.partners.find((p) => p.orgId === entity.id)?.permissions;
+  const myPerms = project.partners.find((p) => isEntityRef(entity, p.orgId))?.permissions;
   const canRemove = (isOwnerOrg && canManage) || (canManage && !!myPerms?.invite);
   const [removing, setRemoving] = useState<ProjectPartner | null>(null);
 
@@ -1564,7 +1565,7 @@ export function ActivityPanel({ project }: { project: Project }) {
 // ============================================================
 
 export function PermissionsPanel({ entity, project }: { entity: Entity; project: Project }) {
-  const isOwner = project.ownerOrgId === entity.id;
+  const isOwner = isEntityRef(entity, project.ownerOrgId);
   const { canManage } = useOrgRole(entity.orgUuid ?? entity.id);
   const keys = Object.keys(PERMISSION_LABELS) as PermissionKey[];
 

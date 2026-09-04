@@ -34,6 +34,20 @@ import {
 
 const orgUuid = (entity: Entity) => entity.orgUuid ?? entity.id;
 
+/**
+ * True when `ref` (a project org reference — legacy id like "gch-135", a slug,
+ * or a uuid) points at `entity`. Project rows carry the legacy id while routes
+ * use the slug, so a plain `===` against `entity.id` misses.
+ */
+export function isEntityRef(entity: Entity, ref: string | null | undefined): boolean {
+  if (!ref) return false;
+  const r = ref.toLowerCase();
+  return [entity.id, entity.slug, entity.orgUuid, entity.gchNumber]
+    .filter((v): v is string => Boolean(v))
+    .some((v) => v.toLowerCase() === r);
+}
+
+
 export const projectsKey = (orgId: string) => ["projects", orgId] as const;
 export const orgRequestsKey = (orgId: string) => ["project-requests", orgId] as const;
 
