@@ -138,6 +138,7 @@ export interface ActivityEvent {
   type:
     | "partner-joined"
     | "partner-invited"
+    | "partner-removed"
     | "request-created"
     | "request-completed"
     | "document-uploaded"

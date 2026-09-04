@@ -313,7 +313,7 @@ export const removePartnerFn = createServerFn({ method: "POST" })
 
     // Owner-org managers may remove anyone; other partners need the "invite" permission.
     const ownerRole = await getOrgUserRole(supabase, userId, project.owner_org_id as string);
-    const isOwnerManager = ownerRole === "owner" || ownerRole === "admin";
+    const isOwnerManager = ownerRole.isMember && (ownerRole.isOwner || ownerRole.isAdmin);
     if (!isOwnerManager) {
       await assertOrgRole(supabase, userId, actorUuid, "admin");
       const { data: me } = await supabase
