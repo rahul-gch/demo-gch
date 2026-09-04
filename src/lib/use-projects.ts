@@ -18,10 +18,12 @@ import {
   addRequestCommentFn,
   createProjectFn,
   createRequestFn,
+  deleteProjectFn,
   invitePartnerFn,
   listOrgRequests,
   listProjects,
   reactDiscussionFn,
+  removePartnerFn,
   replyDiscussionFn,
   scheduleMeetingFn,
   setPartnerPermissionFn,
@@ -103,6 +105,38 @@ export function createProject(
       },
     }),
   );
+}
+
+/** Deletes a project (and everything inside it). Resolves true on success. */
+export async function deleteProject(entity: Entity, projectId: string): Promise<boolean> {
+  try {
+    await deleteProjectFn({ data: { projectId, actorOrgId: orgUuid(entity) } });
+    invalidate(entity);
+    toast.success("Project deleted");
+    return true;
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : "Could not delete the project");
+    return false;
+  }
+}
+
+/** Removes a partner organization from a project. Resolves true on success. */
+export async function removePartner(
+  entity: Entity,
+  projectId: string,
+  partnerOrgId: string,
+): Promise<boolean> {
+  try {
+    await removePartnerFn({
+      data: { projectId, actorOrgId: orgUuid(entity), partnerRef: partnerOrgId },
+    });
+    invalidate(entity);
+    toast.success("Partner removed from the project");
+    return true;
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : "Could not remove the partner");
+    return false;
+  }
 }
 
 export function invitePartner(entity: Entity, projectId: string, partner: ProjectPartner) {

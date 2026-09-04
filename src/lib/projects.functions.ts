@@ -255,6 +255,97 @@ export const invitePartnerFn = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const deleteProjectFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ projectId: z.string().uuid(), actorOrgId: z.string().min(1) }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: project } = await supabase
+      .from("projects")
+      .select("id, owner_org_id, name")
+      .eq("id", data.projectId)
+      .maybeSingle();
+    if (!project) throw new Error("Project not found");
+
+    // Only owners/admins of the organization that owns the project may delete it.
+    await assertOrgRole(supabase, userId, project.owner_org_id as string, "admin");
+
+    const { error } = await supabase.from("projects").delete().eq("id", project.id);
+    if (error) {
+      if (error.code === "42501" || /row-level security/i.test(error.message)) {
+        throw new Error("Only owners and admins of the owning organization can delete this project.");
+      }
+      throw new Error(error.message);
+    }
+    return { ok: true };
+  });
+
+export const removePartnerFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        projectId: z.string().uuid(),
+        actorOrgId: z.string().min(1),
+        partnerRef: z.string().min(1),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const actorUuid = (await resolveOrgRow(supabase, data.actorOrgId))?.id ?? data.actorOrgId;
+
+    const idx = await loadOrgIndex(supabase);
+    const partnerUuid = idx.toUuid(data.partnerRef);
+    if (!partnerUuid) throw new Error("Unknown organization");
+
+    const { data: project } = await supabase
+      .from("projects")
+      .select("id, owner_org_id")
+      .eq("id", data.projectId)
+      .maybeSingle();
+    if (!project) throw new Error("Project not found");
+    if ((project.owner_org_id as string) === partnerUuid) {
+      throw new Error("The organization that owns the project cannot be removed.");
+    }
+
+    // Owner-org managers may remove anyone; other partners need the "invite" permission.
+    const ownerRole = await getOrgUserRole(supabase, userId, project.owner_org_id as string);
+    const isOwnerManager = ownerRole.isMember && (ownerRole.isOwner || ownerRole.isAdmin);
+    if (!isOwnerManager) {
+      await assertOrgRole(supabase, userId, actorUuid, "admin");
+      const { data: me } = await supabase
+        .from("project_partners")
+        .select("permissions")
+        .eq("project_id", data.projectId)
+        .eq("org_id", actorUuid)
+        .maybeSingle();
+      const perms = (me?.permissions ?? {}) as Record<string, boolean>;
+      if (!perms.invite) {
+        throw new Error("You need the invite permission on this project to remove partners.");
+      }
+    }
+
+    const { error, count } = await supabase
+      .from("project_partners")
+      .delete({ count: "exact" })
+      .eq("project_id", data.projectId)
+      .eq("org_id", partnerUuid);
+    if (error) throw new Error(error.message);
+    if (!count) throw new Error("Partner not found on this project");
+
+    await supabase.from("project_activity").insert({
+      project_id: data.projectId,
+      type: "partner-removed",
+      actor_org_id: actorUuid,
+      actor_user_id: userId,
+      message: `${idx.name(actorUuid)} removed ${idx.name(partnerUuid)} from the project`,
+    } as never);
+    return { ok: true };
+  });
+
 export const setPartnerPermissionFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
