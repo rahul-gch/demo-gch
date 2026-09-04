@@ -11,6 +11,7 @@ import {
   getSampleOrder,
   transitionSampleOrder,
   type SampleOrderAction,
+  type ShowroomSummary,
 } from "@/lib/showroom.functions";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
