@@ -209,6 +209,60 @@ function resolveOrgUuid(idOrSlug: string): string | null {
   return entity?.orgUuid ?? idOrSlug;
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+interface ShowroomAccess {
+  isOwner: boolean;
+  canManage: boolean;
+  isConnected: boolean;
+  isAdmin: boolean;
+  /** True when the viewer may not see this showroom at all. */
+  locked: boolean;
+}
+
+/**
+ * Resolve what the current user may see of an org's showroom. Showrooms are
+ * visible to members, platform admins and organizations with an accepted
+ * connection; everyone else is locked out (fail closed).
+ */
+async function resolveShowroomAccess(
+  supabase: any,
+  userId: string,
+  targetUuid: string,
+  viewingOrgId: string | null | undefined,
+): Promise<ShowroomAccess> {
+  // Seeded showcase orgs (non-UUID ids) have no real ownership rows.
+  if (!UUID_RE.test(targetUuid)) {
+    return { isOwner: true, canManage: true, isConnected: true, isAdmin: false, locked: false };
+  }
+  try {
+    const [{ data: isMember }, { data: canEdit }, { data: admin }] = await Promise.all([
+      supabase.rpc("is_org_member", { _user: userId, _org: targetUuid }),
+      supabase.rpc("user_can_edit", { _user: userId, _org: targetUuid }),
+      supabase.rpc("is_platform_admin", { _user: userId }),
+    ]);
+    const isOwner = Boolean(isMember);
+    const isAdmin = Boolean(admin);
+    let isConnected = isOwner;
+    if (!isOwner && viewingOrgId && UUID_RE.test(viewingOrgId)) {
+      const { data: conn } = await supabase.rpc("orgs_are_connected", {
+        _org_a: viewingOrgId,
+        _org_b: targetUuid,
+      });
+      isConnected = Boolean(conn);
+    }
+    return {
+      isOwner,
+      canManage: Boolean(canEdit),
+      isConnected,
+      isAdmin,
+      locked: !(isOwner || isConnected || isAdmin),
+    };
+  } catch {
+    return { isOwner: false, canManage: false, isConnected: false, isAdmin: false, locked: true };
+  }
+}
+
 export const listShowroomProducts = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
@@ -225,35 +279,10 @@ export const listShowroomProducts = createServerFn({ method: "POST" })
     const rawOrgId = data.orgId;
     const targetUuid = resolveOrgUuid(rawOrgId) ?? rawOrgId;
 
-    let isOwner = false;
-    let canManage = false;
-    let isConnected = true;
-
-    try {
-      if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetUuid)) {
-        const [{ data: isMember }, { data: canEdit }] = await Promise.all([
-          supabase.rpc("is_org_member", { _user: userId, _org: targetUuid }),
-          supabase.rpc("user_can_edit", { _user: userId, _org: targetUuid }),
-        ]);
-        isOwner = Boolean(isMember);
-        canManage = Boolean(canEdit);
-
-        if (!isOwner && data.viewingOrgId) {
-          const { data: conn } = await supabase.rpc("orgs_are_connected", {
-            _org_a: data.viewingOrgId,
-            _org_b: targetUuid,
-          });
-          isConnected = conn !== null ? Boolean(conn) : true;
-        }
-      } else {
-        isOwner = true;
-        canManage = true;
-        isConnected = true;
-      }
-    } catch {
-      isOwner = true;
-      canManage = true;
-      isConnected = true;
+    const access = await resolveShowroomAccess(supabase, userId, targetUuid, data.viewingOrgId);
+    const { isOwner, canManage, isConnected } = access;
+    if (access.locked) {
+      return { products: [], isConnected: false, isOwner: false, canManage: false, locked: true };
     }
 
     try {
