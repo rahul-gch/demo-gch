@@ -11,6 +11,7 @@ import { MeetingRequestDialog } from "@/components/MeetingRequestDialog";
 import { useMyOrgs, useSendMessage } from "@/lib/use-comms";
 import { useShowroomProducts } from "@/lib/use-showroom";
 import { ProductCard } from "@/components/showroom/ProductCard";
+import { ShowroomLocked } from "@/components/showroom/ShowroomLocked";
 import {
   useOrgConnections,
   useRequestConnection,
@@ -399,11 +400,11 @@ export function PublicOrgProfile({ entity: e }: { entity: Entity }) {
                 entity={e}
                 variant="card"
                 connectAction={
-                  connectionStatus === "pending_out" ? (
+                  connectionStatus === "sent_pending" ? (
                     <Button size="sm" variant="outline" disabled>
                       Request pending
                     </Button>
-                  ) : connectionStatus === "pending_in" ? (
+                  ) : connectionStatus === "received_pending" ? (
                     <Button size="sm" onClick={handleAcceptConnection}>
                       Accept connection
                     </Button>
