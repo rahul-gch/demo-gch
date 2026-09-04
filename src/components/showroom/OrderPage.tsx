@@ -20,6 +20,7 @@ import { getEntity } from "@/seed/all-entities";
 import type { Entity } from "@/seed/types";
 import { toast } from "sonner";
 import {
+import { ShowroomLocked } from "@/components/showroom/ShowroomLocked";
   ArrowLeft,
   Building2,
   Calendar,
@@ -99,6 +100,14 @@ export function OrderPage({ entity, productId }: { entity: Entity; productId: st
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (data?.locked) {
+    return (
+      <div className="mx-auto max-w-2xl p-4 sm:p-6">
+        <ShowroomLocked entity={entity} />
       </div>
     );
   }

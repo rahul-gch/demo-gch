@@ -8,7 +8,8 @@ import { ProductCard } from "@/components/showroom/ProductCard";
 import { useShowroomProducts } from "@/lib/use-showroom";
 import { useActingOrgId } from "@/lib/use-comms";
 import type { Entity } from "@/seed/types";
-import { ArrowLeft, Filter, Lock, Package, Search } from "lucide-react";
+import { ArrowLeft, Filter, Package, Search } from "lucide-react";
+import { ShowroomLocked } from "@/components/showroom/ShowroomLocked";
 
 /** Read-only showroom of another organization, reached from its network profile. */
 export function PublicShowroomPage({ entity }: { entity: Entity }) {
@@ -21,6 +22,7 @@ export function PublicShowroomPage({ entity }: { entity: Entity }) {
 
   const products = data?.products ?? [];
   const isConnected = data?.isConnected ?? false;
+  const locked = !isLoading && (data?.locked ?? false);
 
   const materials = useMemo(() => {
     const set = new Set<string>();
@@ -63,27 +65,10 @@ export function PublicShowroomPage({ entity }: { entity: Entity }) {
         </p>
       </header>
 
-      {!isConnected && products.length > 0 && (
-        <Card className="flex flex-col gap-3 border-amber-200 bg-amber-50/50 p-4 dark:border-amber-900 dark:bg-amber-950/20 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-3">
-            <Lock className="mt-0.5 h-5 w-5 text-amber-600" />
-            <div>
-              <h2 className="text-sm font-semibold text-amber-900 dark:text-amber-200">
-                Connect with {entity.name} to request samples
-              </h2>
-              <p className="mt-0.5 text-xs text-amber-800/80 dark:text-amber-300/80">
-                You can browse the catalogue now; sample requests unlock once you are connected.
-              </p>
-            </div>
-          </div>
-          <Button asChild size="sm" variant="outline" className="shrink-0">
-            <Link to="/directory/$id" params={{ id: entity.id }}>
-              Send connection request
-            </Link>
-          </Button>
-        </Card>
-      )}
-
+      {locked ? (
+        <ShowroomLocked entity={entity} />
+      ) : (
+        <>
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
@@ -151,6 +136,8 @@ export function PublicShowroomPage({ entity }: { entity: Entity }) {
             />
           ))}
         </div>
+      )}
+        </>
       )}
     </div>
   );

@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { ProductEditorDialog } from "@/components/showroom/ProductEditorDialog";
 import { ProductImage } from "@/components/showroom/ProductImage";
 import { parseProductDescription } from "@/lib/product-description";
+import { ShowroomLocked } from "@/components/showroom/ShowroomLocked";
 import {
   useShowroomProduct,
   useUpsertShowroomProduct,
