@@ -19,8 +19,8 @@ import { useMyOrgs } from "@/lib/use-comms";
 import { getEntity } from "@/seed/all-entities";
 import type { Entity } from "@/seed/types";
 import { toast } from "sonner";
-import {
 import { ShowroomLocked } from "@/components/showroom/ShowroomLocked";
+import {
   ArrowLeft,
   Building2,
   Calendar,
