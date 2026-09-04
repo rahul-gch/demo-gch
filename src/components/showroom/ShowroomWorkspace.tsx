@@ -128,8 +128,8 @@ export function ShowroomWorkspace({ entity, defaultTab = "products" }: ShowroomW
         )}
       </div>
 
-      {/* Non-connected Visitor Notification Banner */}
-      {!isOwner && !isConnected && (
+      {/* Non-connected Visitor Notification Banner (only once access is known) */}
+      {!productsLoading && showroom && !isOwner && !isConnected && (
         <Card className="border-amber-200 bg-amber-50/50 p-4 dark:border-amber-900 dark:bg-amber-950/20">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-3">
@@ -163,11 +163,11 @@ export function ShowroomWorkspace({ entity, defaultTab = "products" }: ShowroomW
         <TabsList className="grid w-full grid-cols-2 max-w-sm">
           <TabsTrigger value="products" className="gap-2">
             <Boxes className="h-4 w-4" />
-            Products ({products.length})
+            Products{productsLoading ? "" : ` (${products.length})`}
           </TabsTrigger>
           <TabsTrigger value="orders" className="gap-2">
             <Inbox className="h-4 w-4" />
-            Sample Orders ({orders.length})
+            Sample Orders{ordersLoading ? "" : ` (${orders.length})`}
           </TabsTrigger>
         </TabsList>
 
