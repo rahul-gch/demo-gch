@@ -1,6 +1,15 @@
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Plus, Search, ArrowRight, Users, Inbox, CalendarDays, Eye } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Users,
+  Inbox,
+  CalendarDays,
+  Eye,
+  MoreHorizontal,
+  Trash2,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,18 +22,27 @@ import {
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { Entity } from "@/seed/types";
+import type { Project } from "@/lib/projects-types";
 import { useProjects, createProject } from "@/lib/use-projects";
 import { ProjectStatusBadge } from "./ProjectShell";
 import { useOrgRole } from "@/lib/use-org-role";
+import { DeleteProjectDialog } from "./ProjectActions";
 
 export function ProjectsIndex({ entity }: { entity: Entity }) {
   const projects = useProjects(entity);
-  const { canEdit } = useOrgRole(entity.orgUuid ?? entity.id);
+  const { canEdit, canManage } = useOrgRole(entity.orgUuid ?? entity.id);
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
+  const [deleting, setDeleting] = useState<Project | null>(null);
   const [form, setForm] = useState({ name: "", description: "", tags: "" });
 
   const filtered = useMemo(() => {
@@ -150,10 +168,42 @@ export function ProjectsIndex({ entity }: { entity: Entity }) {
                       {p.name}
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      Owner: {p.ownerOrgId === (entity.orgUuid || entity.id) ? "You" : p.ownerOrgId}
+                      Owner: {p.ownerOrgId === entity.id ? "You" : p.ownerOrgId}
                     </p>
                   </div>
-                  <ProjectStatusBadge status={p.status} />
+                  <div className="flex shrink-0 items-center gap-1">
+                    <ProjectStatusBadge status={p.status} />
+                    {canManage && p.ownerOrgId === entity.id && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7"
+                            aria-label={`More actions for ${p.name}`}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setDeleting(p);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" /> Delete project
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
                 </div>
 
                 <p className="line-clamp-2 text-xs text-muted-foreground">
@@ -221,6 +271,17 @@ export function ProjectsIndex({ entity }: { entity: Entity }) {
             )}
           </CardContent>
         </Card>
+      )}
+
+      {deleting && (
+        <DeleteProjectDialog
+          entity={entity}
+          project={deleting}
+          open={!!deleting}
+          onOpenChange={(o) => {
+            if (!o) setDeleting(null);
+          }}
+        />
       )}
     </div>
   );
