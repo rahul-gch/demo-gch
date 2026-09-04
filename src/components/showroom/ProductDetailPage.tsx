@@ -89,6 +89,14 @@ export function ProductDetailPage({ entity, productId, mode = "member" }: Produc
     );
   }
 
+  if (data?.locked) {
+    return (
+      <div className="mx-auto max-w-2xl p-4 sm:p-6">
+        <ShowroomLocked entity={entity} />
+      </div>
+    );
+  }
+
   if (error || !product) {
     return (
       <Card className="mx-auto max-w-lg border-dashed p-10 text-center">
