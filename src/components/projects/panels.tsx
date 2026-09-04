@@ -11,7 +11,8 @@ import {
   CalendarDays,
   Activity,
   Building2,
-  Mail,
+  MoreHorizontal,
+  UserMinus,
   ExternalLink,
   CheckCircle2,
   Clock,
@@ -48,7 +49,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { useOrgRole } from "@/lib/use-org-role";
+import { ProjectDangerZone, RemovePartnerDialog } from "./ProjectActions";
 import type { Entity } from "@/seed/types";
 import { ALL_ENTITIES } from "@/seed/all-entities";
 import {
@@ -386,6 +395,12 @@ function QuickActions({ entity, project }: { entity: Entity; project: Project })
 // ============================================================
 
 export function PartnersPanel({ entity, project }: { entity: Entity; project: Project }) {
+  const isOwnerOrg = project.ownerOrgId === entity.id;
+  const { canManage } = useOrgRole(entity.orgUuid ?? entity.id);
+  const myPerms = project.partners.find((p) => p.orgId === entity.id)?.permissions;
+  const canRemove = (isOwnerOrg && canManage) || (canManage && !!myPerms?.invite);
+  const [removing, setRemoving] = useState<ProjectPartner | null>(null);
+
   return (
     <div className="space-y-5">
       <PanelHeader
@@ -400,44 +415,76 @@ export function PartnersPanel({ entity, project }: { entity: Entity; project: Pr
         }
       />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {project.partners.map((p) => (
-          <Card key={p.orgId}>
-            <CardContent className="space-y-3 p-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-semibold text-primary">
-                  {initials(p.name)}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium">{p.name}</div>
-                  <div className="truncate text-[11px] text-muted-foreground">
-                    {p.orgType} · {p.country}
+        {project.partners.map((p) => {
+          const isProjectOwner = p.orgId === project.ownerOrgId;
+          return (
+            <Card key={p.orgId}>
+              <CardContent className="space-y-3 p-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-semibold text-primary">
+                    {initials(p.name)}
                   </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium">{p.name}</div>
+                    <div className="truncate text-[11px] text-muted-foreground">
+                      {p.orgType} · {p.country}
+                    </div>
+                  </div>
+                  <StatusPill status={p.status} />
+                  {canRemove && !isProjectOwner && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7 shrink-0"
+                          aria-label={`More actions for ${p.name}`}
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => setRemoving(p)}
+                        >
+                          <UserMinus className="h-4 w-4" /> Remove from project
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
-                <StatusPill status={p.status} />
-              </div>
-              <div className="rounded-md bg-muted/50 px-2.5 py-1.5 text-[11px] text-muted-foreground">
-                <span className="font-medium text-foreground">Role: </span>
-                {p.role}
-              </div>
-              <div className="flex gap-2">
-                <Button asChild size="sm" variant="outline" className="flex-1">
-                  <a href={`/organizations/${p.orgId}`}>
-                    <Building2 className="h-3.5 w-3.5" /> Profile
-                  </a>
-                </Button>
-                <Button asChild size="sm" variant="outline" className="flex-1">
-                  <a href={`/organizations/${entity.id}/messages`}>
-                    <MessageCircle className="h-3.5 w-3.5" /> Message
-                  </a>
-                </Button>
-                <Button size="sm" variant="outline" className="flex-1">
-                  <Mail className="h-3.5 w-3.5" /> Contact
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                <div className="rounded-md bg-muted/50 px-2.5 py-1.5 text-[11px] text-muted-foreground">
+                  <span className="font-medium text-foreground">Role: </span>
+                  {p.role}
+                  {isProjectOwner && " · Project owner"}
+                </div>
+                <div className="flex gap-2">
+                  <Button asChild size="sm" variant="outline" className="flex-1">
+                    <a href={`/organizations/${p.orgId}`}>
+                      <Building2 className="h-3.5 w-3.5" /> Profile
+                    </a>
+                  </Button>
+                  <Button asChild size="sm" variant="outline" className="flex-1">
+                    <a href={`/organizations/${entity.id}/messages`}>
+                      <MessageCircle className="h-3.5 w-3.5" /> Message
+                    </a>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
+      <RemovePartnerDialog
+        entity={entity}
+        project={project}
+        partner={removing}
+        open={!!removing}
+        onOpenChange={(o) => {
+          if (!o) setRemoving(null);
+        }}
+      />
     </div>
   );
 }
@@ -1518,6 +1565,7 @@ export function ActivityPanel({ project }: { project: Project }) {
 
 export function PermissionsPanel({ entity, project }: { entity: Entity; project: Project }) {
   const isOwner = project.ownerOrgId === entity.id;
+  const { canManage } = useOrgRole(entity.orgUuid ?? entity.id);
   const keys = Object.keys(PERMISSION_LABELS) as PermissionKey[];
 
   return (
@@ -1530,6 +1578,7 @@ export function PermissionsPanel({ entity, project }: { entity: Entity; project:
             : "Only the project owner can change permissions."
         }
       />
+      {isOwner && canManage && <ProjectDangerZone entity={entity} project={project} />}
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
