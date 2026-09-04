@@ -35,18 +35,54 @@ type StorageClient = {
   };
 };
 
+const SIGNED_URL_CACHE = new Map<string, { url: string; expiresAt: number }>();
+const IN_FLIGHT_URLS = new Map<string, Promise<string | null>>();
+
+export function clearImageCache(refValue?: string) {
+  if (refValue) {
+    SIGNED_URL_CACHE.delete(refValue);
+  } else {
+    SIGNED_URL_CACHE.clear();
+  }
+}
+
 /** Resolve a stored value using an explicit client (browser or authenticated server client). */
 export async function resolveImageWith(client: StorageClient, value: string): Promise<string | null> {
   if (!value) return null;
   if (/^https?:\/\//i.test(value)) return value;
   const ref = parseRef(value);
   if (!ref) return null;
-  try {
-    const { data } = await client.storage.from(ref.bucket).createSignedUrl(ref.path, 60 * 60);
-    return data?.signedUrl ?? null;
-  } catch {
-    return null;
+
+  const cacheKey = `${ref.bucket}:${ref.path}`;
+  const now = Date.now();
+  const cached = SIGNED_URL_CACHE.get(cacheKey);
+  if (cached && cached.expiresAt > now) {
+    return cached.url;
   }
+
+  const inFlight = IN_FLIGHT_URLS.get(cacheKey);
+  if (inFlight) {
+    return inFlight;
+  }
+
+  const promise = (async () => {
+    try {
+      // 1 hour validity; cache for 50 minutes so it stays valid and avoids cache-busting
+      const { data } = await client.storage.from(ref.bucket).createSignedUrl(ref.path, 60 * 60);
+      const url = data?.signedUrl ?? null;
+      if (url) {
+        SIGNED_URL_CACHE.set(cacheKey, { url, expiresAt: Date.now() + 50 * 60 * 1000 });
+      }
+      return url;
+    } catch {
+      return null;
+    } finally {
+      IN_FLIGHT_URLS.delete(cacheKey);
+    }
+  })();
+
+  IN_FLIGHT_URLS.set(cacheKey, promise);
+  return promise;
 }
 
 /** Resolve many values; keeps array positions (null when a value cannot be resolved). */

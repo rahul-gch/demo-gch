@@ -35,7 +35,8 @@ export function useShowroomProducts(
       return listProducts({ data: { orgId, viewingOrgId } });
     },
     enabled: Boolean(orgId),
-    staleTime: 30_000,
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -55,7 +56,8 @@ export function useShowroomProduct(
     },
     enabled: Boolean(orgId && productId),
     retry: false,
-    staleTime: 15_000,
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -149,7 +151,8 @@ export function useSampleOrders(orgId: string | null | undefined) {
       return listOrders({ data: { orgId } });
     },
     enabled: Boolean(orgId),
-    staleTime: 15_000,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
 }
 

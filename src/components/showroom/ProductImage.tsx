@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, memo } from "react";
 import { Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +15,7 @@ interface ProductImageProps {
  * Image with a graceful placeholder for missing or broken sources.
  * Never renders browser alt-text fallbacks.
  */
-export function ProductImage({
+export const ProductImage = memo(function ProductImage({
   src,
   alt,
   className,
@@ -23,7 +23,12 @@ export function ProductImage({
   placeholderLabel = "No image provided",
 }: ProductImageProps) {
   const [failed, setFailed] = useState(false);
-  useEffect(() => setFailed(false), [src]);
+  const [prevSrc, setPrevSrc] = useState(src);
+
+  if (prevSrc !== src) {
+    setPrevSrc(src);
+    setFailed(false);
+  }
 
   if (!src || failed) {
     return (
@@ -45,9 +50,9 @@ export function ProductImage({
     <img
       src={src}
       alt={alt}
-      loading="lazy"
+      decoding="async"
       onError={() => setFailed(true)}
       className={cn("h-full w-full", fit === "cover" ? "object-cover" : "object-contain", className)}
     />
   );
-}
+});

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Link } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -33,7 +33,7 @@ interface ProductCardProps {
   onConnect?: () => void;
 }
 
-export function ProductCard({
+export const ProductCard = memo(function ProductCard({
   product,
   orgRouteId,
   detailBase = "organizations",
@@ -229,4 +229,4 @@ export function ProductCard({
       </AlertDialog>
     </>
   );
-}
+});

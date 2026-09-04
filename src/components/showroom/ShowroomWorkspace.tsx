@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
@@ -99,6 +99,26 @@ export function ShowroomWorkspace({ entity, defaultTab = "products" }: ShowroomW
 
   const transitionMutation = useTransitionSampleOrder(targetOrgUuid);
 
+  const handleEdit = useCallback((prod: ShowroomProduct) => {
+    setEditingProduct(prod);
+    setEditorOpen(true);
+  }, []);
+
+  const handleDelete = useCallback((id: string) => {
+    deleteMutation.mutate(id);
+  }, [deleteMutation]);
+
+  const handleToggleActive = useCallback((prod: ShowroomProduct, next: boolean) => {
+    activeMutation.mutate({ productId: prod.id, isActive: next });
+  }, [activeMutation]);
+
+  const handleOrderSample = useCallback((prod: ShowroomProduct) => {
+    navigate({
+      to: "/directory/$id/showroom/$productId/order",
+      params: { id: entity.id, productId: prod.id },
+    });
+  }, [navigate, entity.id]);
+
   return (
     <div className="w-full space-y-6">
       {/* Header */}
@@ -172,7 +192,11 @@ export function ShowroomWorkspace({ entity, defaultTab = "products" }: ShowroomW
         </TabsList>
 
         {/* Tab 1: Products Catalogue */}
-        <TabsContent value="products" className="space-y-6">
+        <TabsContent
+          value="products"
+          forceMount
+          className="space-y-6 data-[state=inactive]:hidden"
+        >
           {/* Search & Filter Bar */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative flex-1">
@@ -253,20 +277,10 @@ export function ShowroomWorkspace({ entity, defaultTab = "products" }: ShowroomW
                   isOwner={isOwner}
                   canManage={canManage}
                   isConnected={isConnected}
-                  onEdit={() => {
-                    setEditingProduct(prod);
-                    setEditorOpen(true);
-                  }}
-                  onDelete={() => deleteMutation.mutate(prod.id)}
-                  onToggleActive={(p, next) =>
-                    activeMutation.mutate({ productId: p.id, isActive: next })
-                  }
-                  onOrderSample={() =>
-                    navigate({
-                      to: "/directory/$id/showroom/$productId/order",
-                      params: { id: entity.id, productId: prod.id },
-                    })
-                  }
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  onToggleActive={handleToggleActive}
+                  onOrderSample={handleOrderSample}
                 />
               ))}
             </div>
@@ -274,7 +288,11 @@ export function ShowroomWorkspace({ entity, defaultTab = "products" }: ShowroomW
         </TabsContent>
 
         {/* Tab 2: Sample Orders Management */}
-        <TabsContent value="orders" className="space-y-6">
+        <TabsContent
+          value="orders"
+          forceMount
+          className="space-y-6 data-[state=inactive]:hidden"
+        >
           <SampleOrdersPanel
             inbound={ordersData?.inbound ?? []}
             outbound={ordersData?.outbound ?? []}
