@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import type { ShowroomProduct } from "@/lib/showroom.functions";
 import { ProductImage } from "@/components/showroom/ProductImage";
 import { useSampleCart } from "@/lib/use-sample-cart";
-import { Edit2, Trash2, Send, Lock, ChevronLeft, ChevronRight, ShoppingBag } from "lucide-react";
+import { Edit2, Trash2, Send, Lock, ChevronLeft, ChevronRight, Eye, ShoppingBag } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,

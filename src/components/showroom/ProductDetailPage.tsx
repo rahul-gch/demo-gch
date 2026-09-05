@@ -37,6 +37,8 @@ import {
   Trash2,
   Send,
   Lock,
+  Eye,
+  EyeOff,
   Loader2,
   Building2,
   ShoppingBag,
