@@ -34,7 +34,7 @@ export function GrowthKpis({
               <div className="mt-1 text-2xl font-semibold tabular-nums">{k.total}</div>
               <div className="mt-1 text-xs text-muted-foreground">
                 <span className="font-medium text-foreground">+{k.last30}</span> last 30 days
-                {k.prev30 > 0 || diff !== 0 ? (
+                {k.prev30 > 0 && k.last30 > 0 ? (
                   <span className={`ml-1 font-medium ${tone}`}>
                     ({diff > 0 ? "+" : ""}
                     {diff} vs prior)
