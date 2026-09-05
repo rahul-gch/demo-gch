@@ -40,6 +40,130 @@ export const amIPlatformAdmin = createServerFn({ method: "GET" }).handler(async 
   return { isAdmin: Boolean(data) };
 });
 
+export interface AdminDashboardStats {
+  orgs: number;
+  countries: number;
+  members: number;
+  membersByRole: { role: string; count: number }[];
+  activeProjects: number;
+  pendingConnections: number;
+  pendingMeetings: number;
+  ordersAwaitingQuote: number;
+  ordersAwaitingConfirmation: number;
+  openInvites: number;
+  unclaimedOrgs: number;
+  incompleteOnboarding: number;
+  unresolvedErrors: number;
+  errors24h: number;
+  growth: { id: string; label: string; total: number; last30: number; prev30: number }[];
+}
+
+export const getAdminDashboardStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<AdminDashboardStats> => {
+    await assertAdmin(context);
+    const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+    const now = Date.now();
+    const d30 = new Date(now - 30 * 86400_000).toISOString();
+    const d60 = new Date(now - 60 * 86400_000).toISOString();
+    const d1 = new Date(now - 86400_000).toISOString();
+    const nowIso = new Date(now).toISOString();
+
+    const count = async (table: string, apply?: (q: any) => any) => {
+      let q: any = db.from(table as any).select("id", { count: "exact", head: true });
+      if (apply) q = apply(q);
+      const { count: c, error } = await q;
+      if (error) throw new Error(`${table}: ${error.message}`);
+      return (c as number | null) ?? 0;
+    };
+    const windowed = async (table: string, apply?: (q: any) => any) => {
+      const base = (q: any) => (apply ? apply(q) : q);
+      const [total, last30, prev30] = await Promise.all([
+        count(table, apply),
+        count(table, (q) => base(q).gte("created_at", d30)),
+        count(table, (q) => base(q).gte("created_at", d60).lt("created_at", d30)),
+      ]);
+      return { total, last30, prev30 };
+    };
+
+    const [
+      orgCountries,
+      memberRoles,
+      activeProjects,
+      pendingConnections,
+      pendingMeetings,
+      ordersAwaitingQuote,
+      ordersAwaitingConfirmation,
+      openInvites,
+      claimedOrgIds,
+      incompleteOnboarding,
+      unresolvedErrors,
+      errors24h,
+      gOrgs,
+      gMembers,
+      gMessages,
+      gPosts,
+      gConnections,
+    ] = await Promise.all([
+      db.from("orgs").select("id, country"),
+      db.from("org_members").select("role"),
+      count("projects", (q) => q.eq("status", "Active")),
+      count("org_connections", (q) => q.eq("status", "pending")),
+      count("meeting_requests", (q) => q.eq("status", "pending")),
+      count("sample_orders", (q) => q.eq("status", "requested")),
+      count("sample_orders", (q) => q.eq("status", "quoted")),
+      count("platform_invites", (q) =>
+        q.is("revoked_at", null).is("accepted_at", null).gt("expires_at", nowIso),
+      ),
+      db.from("org_members").select("org_id"),
+      count("orgs", (q) => q.is("onboarding_completed_at", null)),
+      count("app_errors", (q) => q.is("resolved_at", null)),
+      count("app_errors", (q) => q.gte("occurred_at", d1)),
+      windowed("orgs"),
+      windowed("org_members", (q) => q.not("user_id", "is", null)),
+      windowed("messages"),
+      windowed("feed_posts"),
+      windowed("org_connections", (q) => q.eq("status", "accepted")),
+    ]);
+
+    const orgRows = orgCountries.data ?? [];
+    const countries = new Set(orgRows.map((o) => o.country).filter(Boolean)).size;
+    const claimed = new Set((claimedOrgIds.data ?? []).map((m) => m.org_id));
+    const roleCounts = new Map<string, number>();
+    for (const m of memberRoles.data ?? []) {
+      roleCounts.set(m.role, (roleCounts.get(m.role) ?? 0) + 1);
+    }
+    const membersByRole = ["owner", "admin", "editor", "viewer"].map((role) => ({
+      role: role.charAt(0).toUpperCase() + role.slice(1) + "s",
+      count: roleCounts.get(role) ?? 0,
+    }));
+
+    return {
+      orgs: orgRows.length,
+      countries,
+      members: (memberRoles.data ?? []).length,
+      membersByRole,
+      activeProjects,
+      pendingConnections,
+      pendingMeetings,
+      ordersAwaitingQuote,
+      ordersAwaitingConfirmation,
+      openInvites,
+      unclaimedOrgs: orgRows.filter((o) => !claimed.has(o.id)).length,
+      incompleteOnboarding,
+      unresolvedErrors,
+      errors24h,
+      growth: [
+        { id: "orgs", label: "Organizations", ...gOrgs },
+        { id: "members", label: "Members", ...gMembers },
+        { id: "messages", label: "Messages", ...gMessages },
+        { id: "posts", label: "Feed posts", ...gPosts },
+        { id: "connections", label: "Connections", ...gConnections },
+      ],
+    };
+  });
+
+
 export const listRecentSignups = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
