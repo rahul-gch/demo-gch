@@ -7,6 +7,7 @@ import {
   upsertShowroomProduct,
   deleteShowroomProduct,
   createSampleOrder,
+  createBatchSampleOrders,
   listSampleOrders,
   getSampleOrder,
   transitionSampleOrder,
@@ -181,7 +182,9 @@ export interface CreateSampleOrderInput {
   buyerOrgId: string;
   sellerOrgId: string;
   productId: string;
-  quantity: number;
+  quantity?: number;
+  hangerQty?: number;
+  metersQty?: number;
   material?: string | null;
   notes?: string | null;
   shippingAddress: string;
@@ -204,6 +207,43 @@ export function useCreateSampleOrder() {
     },
     onError: (err) => {
       toast.error(err instanceof Error ? err.message : "Could not place the sample order");
+    },
+  });
+}
+
+export interface BatchSampleOrderItemInput {
+  productId: string;
+  hangerQty: number;
+  metersQty: number;
+  material?: string | null;
+}
+
+export interface CreateBatchSampleOrderInput {
+  buyerOrgId: string;
+  sellerOrgId: string;
+  items: BatchSampleOrderItemInput[];
+  notes?: string | null;
+  shippingAddress: string;
+  neededBy?: string | null;
+}
+
+export function useCreateBatchSampleOrders() {
+  const qc = useQueryClient();
+  const createBatch = useServerFn(createBatchSampleOrders);
+
+  return useMutation({
+    mutationFn: async (vars: CreateBatchSampleOrderInput) => {
+      if (!vars.buyerOrgId) throw new Error("Please select the organization you are ordering as.");
+      if (!vars.items || vars.items.length === 0) throw new Error("No sample items to order.");
+      return createBatch({ data: vars });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["sample-orders"] });
+      qc.invalidateQueries({ queryKey: ["conversations"] });
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Could not place the batch sample order");
     },
   });
 }

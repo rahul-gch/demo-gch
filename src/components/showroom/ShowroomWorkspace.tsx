@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ProductCard } from "@/components/showroom/ProductCard";
 import { ProductEditorDialog } from "@/components/showroom/ProductEditorDialog";
 import { SampleOrdersPanel } from "@/components/showroom/SampleOrdersPanel";
+import { SampleCartDrawer } from "@/components/showroom/SampleCartDrawer";
 import {
   useShowroomProducts,
   useUpsertShowroomProduct,
@@ -240,8 +241,8 @@ export function ShowroomWorkspace({ entity, defaultTab = "products" }: ShowroomW
 
           {/* Product Grid */}
           {productsLoading ? (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {[1, 2, 3].map((n) => (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
+              {[1, 2, 3, 4].map((n) => (
                 <Card key={n} className="h-80 animate-pulse bg-muted/40" />
               ))}
             </div>
@@ -268,7 +269,7 @@ export function ShowroomWorkspace({ entity, defaultTab = "products" }: ShowroomW
               )}
             </Card>
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
               {filteredProducts.map((prod) => (
                 <ProductCard
                   key={prod.id}
@@ -316,6 +317,8 @@ export function ShowroomWorkspace({ entity, defaultTab = "products" }: ShowroomW
         />
       )}
 
+      {/* Sample Cart Floating Drawer */}
+      {!isOwner && <SampleCartDrawer sellerEntity={entity} canOrder={isConnected} />}
     </div>
   );
 }

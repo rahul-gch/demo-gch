@@ -142,14 +142,23 @@ export function OrderDetailPage({ entity, orderId }: { entity: Entity; orderId: 
                 <div className="text-xs text-muted-foreground">Product</div>
                 <div className="text-base font-semibold">{order.product?.name ?? "Showroom product"}</div>
                 <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-xs sm:grid-cols-3">
-                  <div>
-                    <div className="text-muted-foreground">Quantity</div>
-                    <div className="font-medium">{order.quantity} units</div>
-                  </div>
-                  <div>
-                    <div className="text-muted-foreground">Material / colorway</div>
-                    <div className="font-medium">{order.material || "—"}</div>
-                  </div>
+                  {(() => {
+                    const matchPkg = order.material?.match(/\((1 Hanger[^)]*|\d+ Meter[^)]*|\d+m)\)/i);
+                    const pkgText = matchPkg ? matchPkg[1] : `${order.quantity} unit${order.quantity > 1 ? "s" : ""}`;
+                    const cleanMaterial = matchPkg ? order.material?.replace(matchPkg[0], "").trim() : order.material;
+                    return (
+                      <>
+                        <div>
+                          <div className="text-muted-foreground">Sample package</div>
+                          <div className="font-semibold text-primary">{pkgText}</div>
+                        </div>
+                        <div>
+                          <div className="text-muted-foreground">Material / colorway</div>
+                          <div className="font-medium">{cleanMaterial || "—"}</div>
+                        </div>
+                      </>
+                    );
+                  })()}
                   <div>
                     <div className="text-muted-foreground">Needed by</div>
                     <div className="font-medium">{order.neededBy || "Flexible"}</div>

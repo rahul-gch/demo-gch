@@ -10,6 +10,8 @@ import { ProductEditorDialog } from "@/components/showroom/ProductEditorDialog";
 import { ProductImage } from "@/components/showroom/ProductImage";
 import { parseProductDescription } from "@/lib/product-description";
 import { ShowroomLocked } from "@/components/showroom/ShowroomLocked";
+import { useSampleCart } from "@/lib/use-sample-cart";
+import { SampleCartDrawer } from "@/components/showroom/SampleCartDrawer";
 import {
   useShowroomProduct,
   useUpsertShowroomProduct,
@@ -35,10 +37,9 @@ import {
   Trash2,
   Send,
   Lock,
-  Eye,
-  EyeOff,
   Loader2,
   Building2,
+  ShoppingBag,
 } from "lucide-react";
 
 interface ProductDetailPageProps {
@@ -57,6 +58,9 @@ export function ProductDetailPage({ entity, productId, mode = "member" }: Produc
   const upsertMutation = useUpsertShowroomProduct(targetOrgUuid);
   const deleteMutation = useDeleteShowroomProduct(targetOrgUuid);
   const activeMutation = useSetShowroomProductActive(targetOrgUuid);
+
+  const cart = useSampleCart(targetOrgUuid);
+  const inCart = data?.product ? cart.isInCart(data.product.id) : false;
 
   const [activeImage, setActiveImage] = useState(0);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -121,16 +125,33 @@ export function ProductDetailPage({ entity, productId, mode = "member" }: Produc
         </p>
       ) : isConnected ? (
         <>
-          <Button asChild size="lg" className="gap-2 px-6 shadow-sm">
-            <Link
-              to="/directory/$id/showroom/$productId/order"
-              params={{ id: entity.id, productId: product.id }}
+          <div className="flex flex-wrap items-center gap-2 justify-end">
+            <Button
+              variant={inCart ? "secondary" : "outline"}
+              size="lg"
+              className="gap-2 px-5 shadow-sm"
+              onClick={() => {
+                if (inCart) {
+                  cart.removeItem(product.id);
+                } else {
+                  cart.addItem(product);
+                }
+              }}
             >
-              <Send className="h-4 w-4" /> Request sample
-            </Link>
-          </Button>
+              <ShoppingBag className="h-4 w-4" />
+              {inCart ? "In Sample Cart" : "Add to Sample Cart"}
+            </Button>
+            <Button asChild size="lg" className="gap-2 px-6 shadow-sm">
+              <Link
+                to="/directory/$id/showroom/$productId/order"
+                params={{ id: entity.id, productId: product.id }}
+              >
+                <Send className="h-4 w-4" /> Request sample directly
+              </Link>
+            </Button>
+          </div>
           <p className="text-right text-[11px] text-muted-foreground">
-            Set quantity and shipping, then track the quote and delivery status.
+            Order single sample or add multiple fabrics to your cart for a combined request.
           </p>
         </>
       ) : (
@@ -321,6 +342,8 @@ export function ProductDetailPage({ entity, productId, mode = "member" }: Produc
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <SampleCartDrawer sellerEntity={entity} canOrder={isConnected} />
     </div>
   );
 }

@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import type { ShowroomProduct } from "@/lib/showroom.functions";
 import { ProductImage } from "@/components/showroom/ProductImage";
-import { Edit2, Trash2, Send, Lock, ChevronLeft, ChevronRight, Eye } from "lucide-react";
+import { useSampleCart } from "@/lib/use-sample-cart";
+import { Edit2, Trash2, Send, Lock, ChevronLeft, ChevronRight, ShoppingBag } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,6 +49,9 @@ export const ProductCard = memo(function ProductCard({
 }: ProductCardProps) {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
+
+  const cart = useSampleCart(product.orgId);
+  const inCart = cart.isInCart(product.id);
 
   const images = product.images && product.images.length > 0 ? product.images : [];
   const currentImage = images[activeImageIdx] ?? null;
@@ -173,15 +177,38 @@ export const ProductCard = memo(function ProductCard({
           ) : (
             <div className="mt-3 flex flex-col gap-2">
               {isConnected ? (
-                <Button
-                  variant="default"
-                  size="sm"
-                  className="h-8 w-full gap-1.5 text-xs font-medium"
-                  onClick={() => onOrderSample?.(product)}
-                >
-                  <Send className="h-3.5 w-3.5" />
-                  Request sample
-                </Button>
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    variant={inCart ? "secondary" : "default"}
+                    size="sm"
+                    className="h-8 flex-1 gap-1.5 text-xs font-medium"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (inCart) {
+                        cart.removeItem(product.id);
+                      } else {
+                        cart.addItem(product);
+                      }
+                    }}
+                  >
+                    <ShoppingBag className="h-3.5 w-3.5" />
+                    {inCart ? "In Sample Cart" : "+ Sample Cart"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-2.5 text-xs text-muted-foreground hover:text-foreground"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onOrderSample?.(product);
+                    }}
+                    title="Request single sample directly"
+                  >
+                    <Send className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               ) : (
                 <Button
                   variant="outline"

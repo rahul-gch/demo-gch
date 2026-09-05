@@ -20,6 +20,8 @@ import { getEntity } from "@/seed/all-entities";
 import type { Entity } from "@/seed/types";
 import { toast } from "sonner";
 import { ShowroomLocked } from "@/components/showroom/ShowroomLocked";
+import { formatSamplePackage } from "@/lib/showroom.functions";
+import { SampleOptionSelector } from "@/components/showroom/SampleOptionSelector";
 import {
   ArrowLeft,
   Building2,
@@ -27,9 +29,7 @@ import {
   Loader2,
   Lock,
   MapPin,
-  Minus,
   Package,
-  Plus,
   Send,
 } from "lucide-react";
 
@@ -56,7 +56,8 @@ export function OrderPage({ entity, productId }: { entity: Entity; productId: st
 
   const create = useCreateSampleOrder();
 
-  const [quantity, setQuantity] = useState(1);
+  const [hangerQty, setHangerQty] = useState<number>(1);
+  const [metersQty, setMetersQty] = useState<number>(0);
   const [material, setMaterial] = useState("");
   const [neededBy, setNeededBy] = useState("");
   const [address, setAddress] = useState("");
@@ -64,11 +65,24 @@ export function OrderPage({ entity, productId }: { entity: Entity; productId: st
 
   const cover = product?.images?.[0] ?? null;
   const addressOk = address.trim().length >= 3;
-  const canSubmit = Boolean(product && buyerOrgId && isConnected && !isOwner && addressOk && !create.isPending);
+  const sampleSelected = hangerQty > 0 || metersQty > 0;
+  const canSubmit = Boolean(
+    product &&
+      buyerOrgId &&
+      isConnected &&
+      !isOwner &&
+      addressOk &&
+      sampleSelected &&
+      !create.isPending,
+  );
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!product || !buyerOrgId) return;
+    if (!sampleSelected) {
+      toast.error("Please select at least 1 hanger or 1 to 3 meters.");
+      return;
+    }
     if (!addressOk) {
       toast.error("Please enter the shipping destination.");
       return;
@@ -77,7 +91,9 @@ export function OrderPage({ entity, productId }: { entity: Entity; productId: st
       buyerOrgId,
       sellerOrgId: sellerUuid,
       productId: product.id,
-      quantity: Math.max(1, quantity),
+      quantity: metersQty > 0 ? metersQty : hangerQty,
+      hangerQty,
+      metersQty,
       material: material.trim() || null,
       notes: notes.trim() || null,
       shippingAddress: address.trim(),
@@ -210,42 +226,20 @@ export function OrderPage({ entity, productId }: { entity: Entity; productId: st
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium">Quantity (units / yards)</Label>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="h-9 w-9"
-                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                      aria-label="Decrease quantity"
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                    <Input
-                      type="number"
-                      min={1}
-                      max={10000}
-                      value={quantity}
-                      onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                      className="w-24 text-center"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="h-9 w-9"
-                      onClick={() => setQuantity((q) => Math.min(10000, q + 1))}
-                      aria-label="Increase quantity"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="needed-by" className="flex items-center gap-1 text-xs font-medium">
+              {/* Sample Package Options: 1 Hanger and up to 3 Meters */}
+              <div className="rounded-lg border bg-card p-4 space-y-4">
+                <SampleOptionSelector
+                  hangerQty={hangerQty}
+                  metersQty={metersQty}
+                  onChange={({ hangerQty: h, metersQty: m }) => {
+                    setHangerQty(h);
+                    setMetersQty(m);
+                  }}
+                />
+
+                {/* Needed by date */}
+                <div className="pt-2 border-t">
+                  <Label htmlFor="needed-by" className="flex items-center gap-1 text-xs font-medium mb-1.5">
                     <Calendar className="h-3.5 w-3.5 text-muted-foreground" /> Needed by (optional)
                   </Label>
                   <Input
@@ -351,8 +345,10 @@ export function OrderPage({ entity, productId }: { entity: Entity; productId: st
                   <span className="font-medium">{buyerOrg?.name ?? "—"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Quantity</span>
-                  <span className="font-medium">{quantity}</span>
+                  <span className="text-muted-foreground">Sample package</span>
+                  <span className="font-semibold text-primary">
+                    {sampleSelected ? formatSamplePackage(hangerQty, metersQty) : "None selected"}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Material</span>

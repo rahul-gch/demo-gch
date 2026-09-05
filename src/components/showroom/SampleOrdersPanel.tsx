@@ -72,28 +72,35 @@ export function SampleOrdersPanel({ inbound, outbound, orgRouteId, onAction }: S
               <OrderStatusBadge status={order.status} />
             </div>
 
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1 font-medium text-foreground/80">
-                <Building2 className="h-3.5 w-3.5 text-primary" />
-                {side === "inbound" ? "From" : "Supplier"}: {counterpart?.name ?? "Organization"}
-              </span>
-              <span>
-                Qty <strong className="text-foreground">{order.quantity}</strong>
-              </span>
-              {order.material && (
-                <span>
-                  Material <strong className="text-foreground">{order.material}</strong>
-                </span>
-              )}
-              {order.neededBy && (
-                <span className="flex items-center gap-1 text-amber-700 dark:text-amber-400">
-                  <Calendar className="h-3.5 w-3.5" /> Needed by {order.neededBy}
-                </span>
-              )}
-              <span className="flex items-center gap-1">
-                <Calendar className="h-3.5 w-3.5" /> {fmtDate(order.createdAt)}
-              </span>
-            </div>
+            {(() => {
+              const matchPkg = order.material?.match(/\((1 Hanger[^)]*|\d+ Meter[^)]*|\d+m)\)/i);
+              const pkgText = matchPkg ? matchPkg[1] : `${order.quantity} units`;
+              const cleanMaterial = matchPkg ? order.material?.replace(matchPkg[0], "").trim() : order.material;
+              return (
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1 font-medium text-foreground/80">
+                    <Building2 className="h-3.5 w-3.5 text-primary" />
+                    {side === "inbound" ? "From" : "Supplier"}: {counterpart?.name ?? "Organization"}
+                  </span>
+                  <span>
+                    Sample <strong className="text-primary font-semibold">{pkgText}</strong>
+                  </span>
+                  {cleanMaterial && (
+                    <span>
+                      Material <strong className="text-foreground">{cleanMaterial}</strong>
+                    </span>
+                  )}
+                  {order.neededBy && (
+                    <span className="flex items-center gap-1 text-amber-700 dark:text-amber-400">
+                      <Calendar className="h-3.5 w-3.5" /> Needed by {order.neededBy}
+                    </span>
+                  )}
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3.5 w-3.5" /> {fmtDate(order.createdAt)}
+                  </span>
+                </div>
+              );
+            })()}
 
             {side === "outbound" && (
               <div className="text-[11px] text-muted-foreground">

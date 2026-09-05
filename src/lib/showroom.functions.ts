@@ -707,6 +707,19 @@ async function postOrderMessage(
   }
 }
 
+export function formatSamplePackage(
+  hangerQty?: number | null,
+  metersQty?: number | null,
+  fallbackQty = 1,
+): string {
+  const h = hangerQty ?? 0;
+  const m = metersQty ?? 0;
+  if (h > 0 && m > 0) return `1 Hanger + ${m}m`;
+  if (h > 0) return `1 Hanger`;
+  if (m > 0) return `${m} Meter${m > 1 ? "s" : ""}`;
+  return `${fallbackQty} unit${fallbackQty > 1 ? "s" : ""}`;
+}
+
 export const createSampleOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
@@ -716,6 +729,8 @@ export const createSampleOrder = createServerFn({ method: "POST" })
         sellerOrgId: z.string().uuid(),
         productId: z.string().uuid(),
         quantity: z.number().int().min(1).max(10000).default(1),
+        hangerQty: z.number().int().min(0).max(1).optional(),
+        metersQty: z.number().int().min(0).max(3).optional(),
         material: z.string().trim().max(200).nullable().optional(),
         notes: z.string().trim().max(2000).nullable().optional(),
         shippingAddress: z.string().trim().min(3).max(1000),
@@ -728,6 +743,14 @@ export const createSampleOrder = createServerFn({ method: "POST" })
 
     if (data.buyerOrgId === data.sellerOrgId) {
       throw new Error("You cannot order samples from your own organization.");
+    }
+
+    if (
+      (data.hangerQty !== undefined || data.metersQty !== undefined) &&
+      (data.hangerQty ?? 0) <= 0 &&
+      (data.metersQty ?? 0) <= 0
+    ) {
+      throw new Error("Please select at least 1 hanger or at least 1 meter.");
     }
 
     // Never trust the posted buyer id: the caller must be a member of it.
@@ -768,6 +791,20 @@ export const createSampleOrder = createServerFn({ method: "POST" })
       conversationId = null;
     }
 
+    const hasSpecificUnit = data.hangerQty !== undefined || data.metersQty !== undefined;
+    const samplePkg = hasSpecificUnit
+      ? formatSamplePackage(data.hangerQty, data.metersQty, data.quantity)
+      : null;
+    const effectiveQty =
+      (data.metersQty && data.metersQty > 0)
+        ? data.metersQty
+        : (data.hangerQty && data.hangerQty > 0 ? data.hangerQty : data.quantity);
+    const materialLabel = data.material
+      ? samplePkg
+        ? `${data.material} (${samplePkg})`
+        : data.material
+      : samplePkg ?? null;
+
     const { data: inserted, error } = await supabase
       .from("sample_orders")
       .insert({
@@ -775,8 +812,8 @@ export const createSampleOrder = createServerFn({ method: "POST" })
         seller_org_id: data.sellerOrgId,
         buyer_org_id: data.buyerOrgId,
         requested_by: userId,
-        quantity: data.quantity,
-        material: data.material ?? null,
+        quantity: effectiveQty,
+        material: materialLabel,
         notes: data.notes ?? null,
         shipping_address: data.shippingAddress,
         needed_by: data.neededBy ?? null,
@@ -796,7 +833,8 @@ export const createSampleOrder = createServerFn({ method: "POST" })
       note: data.notes ?? null,
     });
 
-    const materialSnippet = data.material ? ` · Material: ${data.material}` : "";
+    const packageSummary = samplePkg ? ` (${samplePkg})` : ` (Qty: ${data.quantity})`;
+    const materialSnippet = data.material ? ` · Colorway/Material: ${data.material}` : "";
     const neededSnippet = data.neededBy ? ` · Needed by: ${data.neededBy}` : "";
     const notesSnippet = data.notes ? `\n\nNotes: "${data.notes}"` : "";
     await postOrderMessage(
@@ -805,13 +843,152 @@ export const createSampleOrder = createServerFn({ method: "POST" })
       data.buyerOrgId,
       buyerRow?.name ?? "Buyer",
       userId,
-      `📦 Sample order request: ${prod.name} (Qty: ${data.quantity}${materialSnippet}${neededSnippet})\nShip to:\n${data.shippingAddress}${notesSnippet}`,
+      `📦 Sample order request: ${prod.name}${packageSummary}${materialSnippet}${neededSnippet}\nShip to:\n${data.shippingAddress}${notesSnippet}`,
     );
 
     return {
       orderId: inserted.id as string,
       conversationId,
       sellerName: sellerRow?.name ?? "Supplier",
+    };
+  });
+
+export const createBatchSampleOrders = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        buyerOrgId: z.string().uuid(),
+        sellerOrgId: z.string().uuid(),
+        items: z
+          .array(
+            z.object({
+              productId: z.string().uuid(),
+              hangerQty: z.number().int().min(0).max(1).default(0),
+              metersQty: z.number().int().min(0).max(3).default(0),
+              material: z.string().trim().max(200).nullable().optional(),
+            }),
+          )
+          .min(1)
+          .max(50),
+        notes: z.string().trim().max(2000).nullable().optional(),
+        shippingAddress: z.string().trim().min(3).max(1000),
+        neededBy: z.string().nullable().optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    if (data.buyerOrgId === data.sellerOrgId) {
+      throw new Error("You cannot order samples from your own organization.");
+    }
+
+    const { data: isBuyerMember } = await supabase.rpc("is_org_member", {
+      _user: userId,
+      _org: data.buyerOrgId,
+    });
+    if (!isBuyerMember) throw new Error("You are not a member of the ordering organization.");
+
+    const { data: connected } = await supabase.rpc("orgs_are_connected", {
+      _org_a: data.buyerOrgId,
+      _org_b: data.sellerOrgId,
+    });
+    if (!connected) throw new Error("Connect with this organization before ordering samples.");
+
+    const [{ data: buyerRow }, { data: sellerRow }] = await Promise.all([
+      supabase.from("orgs").select("name").eq("id", data.buyerOrgId).maybeSingle(),
+      supabase.from("orgs").select("name").eq("id", data.sellerOrgId).maybeSingle(),
+    ]);
+
+    let conversationId: string | null = null;
+    try {
+      const { data: convId } = await supabase.rpc("get_or_create_conversation", {
+        _org_a: data.buyerOrgId,
+        _org_b: data.sellerOrgId,
+      });
+      conversationId = (convId as string) ?? null;
+    } catch {
+      conversationId = null;
+    }
+
+    const orderIds: string[] = [];
+    const itemSummaries: string[] = [];
+
+    for (const item of data.items) {
+      if ((item.hangerQty ?? 0) <= 0 && (item.metersQty ?? 0) <= 0) {
+        throw new Error("Each sample item must have at least 1 hanger or at least 1 meter requested.");
+      }
+
+      const { data: prod } = await supabase
+        .from("showroom_products")
+        .select("id, name, org_id, is_active")
+        .eq("id", item.productId)
+        .eq("org_id", data.sellerOrgId)
+        .maybeSingle();
+
+      if (!prod || !prod.is_active) continue;
+
+      const samplePkg = formatSamplePackage(item.hangerQty, item.metersQty, 1);
+      const effectiveQty = item.metersQty > 0 ? item.metersQty : item.hangerQty > 0 ? item.hangerQty : 1;
+      const materialLabel = item.material ? `${item.material} (${samplePkg})` : samplePkg;
+
+      const { data: inserted, error } = await supabase
+        .from("sample_orders")
+        .insert({
+          product_id: item.productId,
+          seller_org_id: data.sellerOrgId,
+          buyer_org_id: data.buyerOrgId,
+          requested_by: userId,
+          quantity: effectiveQty,
+          material: materialLabel,
+          notes: data.notes ?? null,
+          shipping_address: data.shippingAddress,
+          needed_by: data.neededBy ?? null,
+          status: "requested",
+          conversation_id: conversationId,
+        })
+        .select("id")
+        .single();
+
+      if (!error && inserted) {
+        orderIds.push(inserted.id as string);
+        await supabase.from("sample_order_events").insert({
+          order_id: inserted.id,
+          actor_org_id: data.buyerOrgId,
+          actor_user_id: userId,
+          from_status: null,
+          to_status: "requested",
+          note: data.notes ?? null,
+        });
+        const colorSnippet = item.material ? ` · ${item.material}` : "";
+        itemSummaries.push(`• ${prod.name}: ${samplePkg}${colorSnippet}`);
+      }
+    }
+
+    if (orderIds.length === 0) {
+      throw new Error("Could not place sample order for the selected products.");
+    }
+
+    const neededSnippet = data.neededBy ? ` · Needed by: ${data.neededBy}` : "";
+    const notesSnippet = data.notes ? `\n\nNotes: "${data.notes}"` : "";
+    const msg = `📦 Sample batch request (${orderIds.length} fabric${orderIds.length > 1 ? "s" : ""}):\n${itemSummaries.join("\n")}${neededSnippet}\n\nShip to:\n${data.shippingAddress}${notesSnippet}`;
+
+    await postOrderMessage(
+      supabase,
+      { conversationId },
+      data.buyerOrgId,
+      buyerRow?.name ?? "Buyer",
+      userId,
+      msg,
+    );
+
+    return {
+      orderIds,
+      firstOrderId: orderIds[0],
+      conversationId,
+      sellerName: sellerRow?.name ?? "Supplier",
+      count: orderIds.length,
     };
   });
 
