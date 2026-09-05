@@ -1,33 +1,33 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { liveActivity, type ActivityKind, type ActivityRow } from "@/lib/ops-derive";
-import { Upload, CheckCircle2, Sparkles, FolderKanban, ShieldCheck, Activity } from "lucide-react";
+import { formatRelative, type AdminFeedEvent, type FeedEventKind } from "@/lib/admin-feed";
+import { Activity } from "lucide-react";
 
-const ICONS: Record<ActivityKind, React.ComponentType<{ className?: string }>> = {
-  upload: Upload,
-  approval: CheckCircle2,
-  ai: Sparkles,
-  project: FolderKanban,
-  verification: ShieldCheck,
-};
-
-const FILTERS: { id: "all" | ActivityKind; label: string }[] = [
+const FILTERS: { id: "all" | FeedEventKind; label: string }[] = [
   { id: "all", label: "All" },
   { id: "upload", label: "Uploads" },
-  { id: "approval", label: "Approvals" },
-  { id: "ai", label: "AI" },
+  { id: "certification", label: "Certifications" },
   { id: "project", label: "Projects" },
+  { id: "partnership", label: "Meetings" },
+  { id: "message", label: "Feed" },
 ];
 
-export function LiveActivity() {
-  const [filter, setFilter] = useState<"all" | ActivityKind>("all");
-  const rows = liveActivity().filter((r: ActivityRow) => filter === "all" || r.kind === filter);
+export function LiveActivity({
+  events,
+  loading,
+}: {
+  events: AdminFeedEvent[];
+  loading?: boolean;
+}) {
+  const [filter, setFilter] = useState<"all" | FeedEventKind>("all");
+  const rows = events.filter((r) => filter === "all" || r.kind === filter).slice(0, 12);
   return (
     <Card className="shadow-sm">
       <CardHeader className="flex flex-col gap-3 space-y-0 sm:flex-row sm:items-start sm:justify-between">
         <CardTitle className="flex items-center gap-2 text-base font-semibold">
-          <Activity className="h-4 w-4 shrink-0 text-slate-600" /> Live activity
+          <Activity className="h-4 w-4 shrink-0 text-slate-600" /> Recent activity
         </CardTitle>
         <div className="flex flex-wrap gap-1">
           {FILTERS.map((f) => (
@@ -47,38 +47,56 @@ export function LiveActivity() {
         </div>
       </CardHeader>
       <CardContent>
-        <ul className="space-y-3 border-l border-slate-200 pl-4">
-          {rows.map((r, i) => {
-            const Icon = ICONS[r.kind];
-            return (
-              <li key={i} className="relative">
-                <div className="absolute -left-[21px] top-1.5 grid h-3 w-3 place-items-center rounded-full border border-slate-300 bg-white">
-                  <Icon className="h-2 w-2 text-slate-500" />
-                </div>
+        {loading ? (
+          <div className="space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="h-5 animate-pulse rounded bg-slate-100" />
+            ))}
+          </div>
+        ) : (
+          <ul className="space-y-3 border-l border-slate-200 pl-4">
+            {rows.map((r) => (
+              <li key={r.id} className="relative">
+                <div className="absolute -left-[21px] top-1.5 h-3 w-3 rounded-full border border-slate-300 bg-white" />
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-start gap-2 text-sm text-slate-700">
                     <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded bg-slate-900 text-[10px] font-semibold text-white">
-                      {r.org.charAt(0)}
+                      {r.orgName.charAt(0)}
                     </span>
                     <span className="min-w-0">
-                      <span className="font-medium">{r.org}</span>{" "}
-                      <span className="text-slate-600">{r.text}</span>
+                      {r.orgId ? (
+                        <Link
+                          to="/organizations/$id"
+                          params={{ id: r.orgId }}
+                          className="font-medium hover:underline"
+                        >
+                          {r.orgName}
+                        </Link>
+                      ) : (
+                        <span className="font-medium">{r.orgName}</span>
+                      )}{" "}
+                      <span className="text-slate-600">{r.title}</span>
+                      {r.detail && (
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {r.detail}
+                        </span>
+                      )}
                     </span>
                   </div>
                   <Badge
                     variant="outline"
                     className="shrink-0 whitespace-nowrap text-[10px] tabular-nums"
                   >
-                    {r.time}
+                    {formatRelative(r.at)}
                   </Badge>
                 </div>
               </li>
-            );
-          })}
-          {rows.length === 0 && (
-            <li className="text-xs text-muted-foreground">No activity for this filter.</li>
-          )}
-        </ul>
+            ))}
+            {rows.length === 0 && (
+              <li className="text-xs text-muted-foreground">No activity yet.</li>
+            )}
+          </ul>
+        )}
       </CardContent>
     </Card>
   );
