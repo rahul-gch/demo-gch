@@ -1,6 +1,14 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { amIPlatformAdmin } from "@/lib/admin.functions";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import {
+  amIPlatformAdmin,
+  getAdminDashboardStats,
+  listRecentSignups,
+  type AdminDashboardStats,
+} from "@/lib/admin.functions";
 import { myOrgMemberships } from "@/lib/orgs.functions";
+import { listPlatformActivity } from "@/lib/activity.functions";
 
 import { AppShell } from "@/components/AppShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,30 +24,17 @@ import {
 } from "@/components/ui/table";
 import { VerificationBadge } from "@/components/StatusBadge";
 import { EcosystemGoogleMap } from "@/components/EcosystemGoogleMap";
-import {
-  ALL_ENTITIES as ENTITIES,
-  ENTITY_TYPE_BREAKDOWN,
-  summaryMetrics,
-  getEntity,
-} from "@/seed/all-entities";
-import { PassportCards } from "@/components/dashboard/PassportCards";
-import { COMPANY_BENCHMARK } from "@/seed/kpi";
+import { ALL_ENTITIES as ENTITIES, ENTITY_TYPE_BREAKDOWN, getEntity } from "@/seed/all-entities";
 import { platformNhriAggregate, bandBadgeClasses, computeNhri } from "@/lib/nhri";
-import { ArrowUpRight, TrendingUp } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { PriorityList } from "@/components/ops/PriorityList";
 import { QuickActions } from "@/components/ops/QuickActions";
-import { PlatformAlerts } from "@/components/ops/PlatformAlerts";
-import { PendingApprovals } from "@/components/ops/PendingApprovals";
-import { AIOperations } from "@/components/ops/AIOperations";
 import { LiveActivity } from "@/components/ops/LiveActivity";
 import { GrowthKpis } from "@/components/ops/GrowthKpis";
 import { CountryOverview } from "@/components/ops/CountryOverview";
-import { SystemStatus } from "@/components/ops/SystemStatus";
 import { UserOverview } from "@/components/ops/UserOverview";
-import { RecentRequests } from "@/components/ops/RecentRequests";
-import { ScheduledJobs } from "@/components/ops/ScheduledJobs";
-import { OpsFooter } from "@/components/ops/OpsFooter";
-import { platformCounts, todaysPriorities, platformAlerts } from "@/lib/ops-derive";
+import { RecentSignups } from "@/components/ops/RecentSignups";
+import type { PriorityItem } from "@/lib/ops-derive";
 
 import { refreshRegistry } from "@/lib/registry";
 
