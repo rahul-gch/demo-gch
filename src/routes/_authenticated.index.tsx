@@ -89,17 +89,85 @@ function SectionDivider({ label }: { label: string }) {
   );
 }
 
-function OpsHero() {
+
+function OpsHero({ stats, loading }: { stats?: AdminDashboardStats; loading: boolean }) {
   const p = platformNhriAggregate();
-  const counts = platformCounts(p.avg);
-  const priorities = todaysPriorities();
-  const stats = [
-    { label: "Organizations", value: counts.organizations },
-    { label: "Countries", value: counts.countries },
-    { label: "Active projects", value: counts.activeProjects },
-    { label: "Verification requests", value: counts.verificationRequests },
-    { label: "Platform health", value: `${counts.healthPct}%` },
+  const openRequests = stats
+    ? stats.pendingConnections +
+      stats.pendingMeetings +
+      stats.ordersAwaitingQuote +
+      stats.ordersAwaitingConfirmation
+    : null;
+  const tiles = [
+    { label: "Organizations", value: stats?.orgs ?? ENTITIES.length },
+    { label: "Countries", value: stats?.countries ?? "—" },
+    { label: "Members", value: stats?.members ?? "—" },
+    { label: "Active projects", value: stats?.activeProjects ?? "—" },
+    { label: "Open requests", value: openRequests ?? "—" },
+    { label: "Errors (24h)", value: stats?.errors24h ?? "—" },
   ];
+  const queue: PriorityItem[] = stats
+    ? [
+        {
+          id: "connections",
+          tone: "info",
+          label: "pending connection requests",
+          count: stats.pendingConnections,
+          to: "/organizations",
+        },
+        {
+          id: "meetings",
+          tone: "info",
+          label: "pending meeting requests",
+          count: stats.pendingMeetings,
+          to: "/meetings",
+        },
+        {
+          id: "quotes",
+          tone: "warning",
+          label: "sample orders awaiting a quote",
+          count: stats.ordersAwaitingQuote,
+          to: "/organizations",
+        },
+        {
+          id: "confirm",
+          tone: "info",
+          label: "sample orders awaiting buyer confirmation",
+          count: stats.ordersAwaitingConfirmation,
+          to: "/organizations",
+        },
+        {
+          id: "unclaimed",
+          tone: "warning",
+          label: "organizations without any member",
+          count: stats.unclaimedOrgs,
+          to: "/admin/organizations",
+          search: { tab: "invites" },
+        },
+        {
+          id: "onboarding",
+          tone: "warning",
+          label: "organizations that never finished onboarding",
+          count: stats.incompleteOnboarding,
+          to: "/admin/organizations",
+        },
+        {
+          id: "invites",
+          tone: "info",
+          label: "open onboarding links",
+          count: stats.openInvites,
+          to: "/admin/organizations",
+          search: { tab: "invites" },
+        },
+        {
+          id: "errors",
+          tone: "critical",
+          label: "unresolved application errors",
+          count: stats.unresolvedErrors,
+          to: "/admin/logs",
+        },
+      ]
+    : [];
   return (
     <section className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-6 text-slate-100 shadow-lg">
       <div className="pointer-events-none absolute -right-16 -top-16 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl" />
@@ -112,11 +180,11 @@ function OpsHero() {
             Global Chain Hub · Admin
           </h1>
           <p className="mt-2 max-w-xl text-sm text-slate-300">
-            Monitor platform health, review pending approvals, and act on AI-surfaced signals across
-            the network.
+            Live view of the network: what needs attention today, who joined, and how the
+            platform is growing. Average readiness across profiles: {p.avg}%.
           </p>
-          <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-            {stats.map((s) => (
+          <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+            {tiles.map((s) => (
               <div
                 key={s.label}
                 className="min-w-0 rounded-lg border border-white/10 bg-white/5 p-3"
@@ -124,59 +192,18 @@ function OpsHero() {
                 <div className="truncate text-[10px] uppercase tracking-wider text-slate-300">
                   {s.label}
                 </div>
-                <div className="mt-1 text-xl font-semibold tabular-nums">{s.value}</div>
+                <div
+                  className={`mt-1 text-xl font-semibold tabular-nums ${loading ? "animate-pulse" : ""}`}
+                >
+                  {s.value}
+                </div>
               </div>
             ))}
           </div>
         </div>
-        <PriorityList items={priorities} />
+        <PriorityList items={queue} loading={loading} />
       </div>
     </section>
-  );
-}
-
-function BenchmarkIntelligence() {
-  const picks = [
-    COMPANY_BENCHMARK.find((r) => r.company === "H&M Group" && r.kpiId === "KPI004"),
-    COMPANY_BENCHMARK.find((r) => r.company === "H&M Group" && r.kpiId === "KPI010"),
-    COMPANY_BENCHMARK.find((r) => r.company === "H&M Group" && r.kpiId === "KPI002"),
-    COMPANY_BENCHMARK.find((r) => r.company === "Inditex" && r.kpiId === "KPI002"),
-  ].filter(Boolean) as typeof COMPANY_BENCHMARK;
-
-  return (
-    <Card className="shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0">
-        <div>
-          <CardTitle className="text-base font-semibold">Benchmark intelligence</CardTitle>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Sector reference from Inditex, H&amp;M, Nike, Adidas, Puma, Patagonia, Primark, M&amp;S,
-            Zalando, Levi&apos;s.
-          </p>
-        </div>
-        <Badge variant="outline" className="gap-1">
-          <TrendingUp className="h-3 w-3" /> KPI dataset v0.1
-        </Badge>
-      </CardHeader>
-      <CardContent>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {picks.map((r, i) => (
-            <div key={i} className="rounded-lg border bg-slate-50/50 p-4">
-              <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                {r.company} · {r.year}
-              </div>
-              <div className="mt-1 text-sm font-medium">{r.kpiName}</div>
-              <div className="mt-2 text-2xl font-semibold tabular-nums">
-                {r.normalizedValue}
-                <span className="ml-1 text-xs font-normal text-muted-foreground">{r.unit}</span>
-              </div>
-              <div className="mt-1 text-[10px] text-muted-foreground">
-                Confidence {r.confidence}% · {r.confidenceLabel}
-              </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
   );
 }
 
@@ -226,96 +253,53 @@ function TopMovers() {
 function DashboardPage() {
   const preview = ENTITIES.slice(0, 5);
   const breakdown = ENTITY_TYPE_BREAKDOWN;
-  const alerts = platformAlerts();
 
-  const featured = [
-    { id: "gch-nike" },
-    { id: "gch-hm" },
-    { id: "gch-mands" },
-    { id: "gch-primark" },
-    { id: "gch-170" },
-    { id: "gch-123" },
-  ]
-    .map((f) => getEntity(f.id))
-    .filter(Boolean);
+  const fetchStats = useServerFn(getAdminDashboardStats);
+  const fetchActivity = useServerFn(listPlatformActivity);
+  const fetchSignups = useServerFn(listRecentSignups);
+
+  const statsQ = useQuery({
+    queryKey: ["admin", "dashboard-stats"],
+    queryFn: () => fetchStats(),
+    staleTime: 60_000,
+  });
+  const activityQ = useQuery({
+    queryKey: ["admin", "platform-activity"],
+    queryFn: () => fetchActivity(),
+    staleTime: 60_000,
+  });
+  const signupsQ = useQuery({
+    queryKey: ["admin", "recent-signups", 8],
+    queryFn: () => fetchSignups({ data: { limit: 8 } }),
+    staleTime: 60_000,
+  });
 
   return (
     <AppShell>
       <div className="w-full space-y-8">
-        <OpsHero />
+        <OpsHero stats={statsQ.data} loading={statsQ.isLoading} />
+        {statsQ.isError && (
+          <p className="text-sm text-red-600">
+            Could not load platform statistics. {(statsQ.error as Error)?.message}
+          </p>
+        )}
         <QuickActions />
 
-        <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
-          <PlatformAlerts items={alerts} />
-          <PendingApprovals />
+        <section className="grid gap-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+          <LiveActivity events={activityQ.data ?? []} loading={activityQ.isLoading} />
+          <RecentSignups rows={(signupsQ.data ?? []) as never} loading={signupsQ.isLoading} />
         </section>
 
-        <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
-          <AIOperations />
-          <LiveActivity />
-        </section>
-
-        <SectionDivider label="Growth" />
-        <GrowthKpis />
+        <SectionDivider label="Growth · last 30 days" />
+        <GrowthKpis items={statsQ.data?.growth ?? []} loading={statsQ.isLoading} />
 
         <section className="grid gap-4 lg:grid-cols-3">
           <CountryOverview />
-          <SystemStatus />
-          <UserOverview />
-        </section>
-
-        <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
-          <RecentRequests />
-          <ScheduledJobs />
-        </section>
-
-        <SectionDivider label="Passports" />
-        <section className="space-y-3">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div className="min-w-0">
-              <h2 className="text-base font-semibold tracking-tight">Featured Network Passports</h2>
-              <p className="text-xs text-muted-foreground">
-                Live profile previews sourced from real published sustainability reports.
-              </p>
-            </div>
-            {featured[0] && (
-              <Button asChild variant="ghost" size="sm" className="shrink-0">
-                <Link to="/organizations/$id" params={{ id: featured[0]!.id }}>
-                  Open profile <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
-                </Link>
-              </Button>
-            )}
-          </div>
-          {featured[0] && <PassportCards entity={featured[0]!} />}
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {featured.slice(1).map((e) => (
-              <Link
-                key={e!.id}
-                to="/organizations/$id"
-                params={{ id: e!.id }}
-                className="group rounded-lg border bg-slate-50/50 p-4 transition hover:border-slate-300 hover:bg-white"
-              >
-                <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                  Featured passport
-                </div>
-                <div className="mt-1 flex items-center justify-between">
-                  <div className="text-sm font-semibold">{e!.name}</div>
-                  <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground" />
-                </div>
-                <div className="mt-1 text-xs text-muted-foreground">
-                  {e!.entityType} · {e!.country}
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <SectionDivider label="Performance" />
-        <BenchmarkIntelligence />
-
-        <SectionDivider label="Network" />
-        <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-          <TopMovers />
+          <UserOverview
+            rows={statsQ.data?.membersByRole ?? []}
+            total={statsQ.data?.members ?? 0}
+            loading={statsQ.isLoading}
+          />
           <Card className="shadow-sm">
             <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
               <CardTitle className="min-w-0 truncate text-base font-semibold">
@@ -326,13 +310,14 @@ function DashboardPage() {
               </Button>
             </CardHeader>
             <CardContent>
-              <EcosystemGoogleMap entities={ENTITIES} height={300} compact showLegend />
+              <EcosystemGoogleMap entities={ENTITIES} height={260} compact showLegend />
             </CardContent>
           </Card>
         </section>
 
-        <SectionDivider label="Registry preview" />
-        <section className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <SectionDivider label="Network" />
+        <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+          <TopMovers />
           <Card className="shadow-sm">
             <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
               <CardTitle className="min-w-0 truncate text-base font-semibold">
@@ -381,7 +366,9 @@ function DashboardPage() {
               </Table>
             </CardContent>
           </Card>
+        </section>
 
+        <section className="grid gap-6 lg:grid-cols-3">
           <Card className="shadow-sm">
             <CardHeader>
               <CardTitle className="text-base font-semibold">Entity type breakdown</CardTitle>
@@ -399,9 +386,6 @@ function DashboardPage() {
           </Card>
         </section>
 
-        <OpsFooter />
-        {/* Prevent unused import warnings for summaryMetrics used indirectly via ops-derive */}
-        <span className="hidden">{summaryMetrics.total}</span>
       </div>
     </AppShell>
   );
