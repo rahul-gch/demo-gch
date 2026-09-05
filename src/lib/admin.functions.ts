@@ -40,6 +40,67 @@ export const amIPlatformAdmin = createServerFn({ method: "GET" }).handler(async 
   return { isAdmin: Boolean(data) };
 });
 
+export interface AdminDashboardStats {
+  orgs: number;
+  countries: number;
+  members: number;
+  membersByRole: { role: string; count: number }[];
+  activeProjects: number;
+  pendingConnections: number;
+  pendingMeetings: number;
+  ordersAwaitingQuote: number;
+  ordersAwaitingConfirmation: number;
+  openInvites: number;
+  unclaimedOrgs: number;
+  incompleteOnboarding: number;
+  unresolvedErrors: number;
+  errors24h: number;
+  growth: { id: string; label: string; total: number; last30: number; prev30: number }[];
+}
+
+export const getAdminDashboardStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<AdminDashboardStats> => {
+    await assertAdmin(context);
+    const { data, error } = await (context.supabase as any).rpc("admin_dashboard_stats");
+    if (error) throw new Error(error.message);
+    const raw = (data ?? {}) as Record<string, any>;
+    const n = (v: unknown) => Number(v ?? 0);
+    const byRole = (raw.membersByRole ?? {}) as Record<string, number>;
+    const g = (raw.growth ?? {}) as Record<string, { total: number; last30: number; prev30: number }>;
+    const win = (k: string) => ({
+      total: n(g[k]?.total),
+      last30: n(g[k]?.last30),
+      prev30: n(g[k]?.prev30),
+    });
+    return {
+      orgs: n(raw.orgs),
+      countries: n(raw.countries),
+      members: n(raw.members),
+      membersByRole: ["owner", "admin", "editor", "viewer"].map((role) => ({
+        role: role.charAt(0).toUpperCase() + role.slice(1) + "s",
+        count: n(byRole[role]),
+      })),
+      activeProjects: n(raw.activeProjects),
+      pendingConnections: n(raw.pendingConnections),
+      pendingMeetings: n(raw.pendingMeetings),
+      ordersAwaitingQuote: n(raw.ordersAwaitingQuote),
+      ordersAwaitingConfirmation: n(raw.ordersAwaitingConfirmation),
+      openInvites: n(raw.openInvites),
+      unclaimedOrgs: n(raw.unclaimedOrgs),
+      incompleteOnboarding: n(raw.incompleteOnboarding),
+      unresolvedErrors: n(raw.unresolvedErrors),
+      errors24h: n(raw.errors24h),
+      growth: [
+        { id: "orgs", label: "Organizations", ...win("orgs") },
+        { id: "members", label: "Members", ...win("members") },
+        { id: "messages", label: "Messages", ...win("messages") },
+        { id: "posts", label: "Feed posts", ...win("posts") },
+        { id: "connections", label: "Connections", ...win("connections") },
+      ],
+    };
+  });
+
 export const listRecentSignups = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>

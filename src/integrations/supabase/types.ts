@@ -1768,6 +1768,7 @@ export type Database = {
         Args: { _display_name?: string; _token: string }
         Returns: string
       }
+      admin_dashboard_stats: { Args: never; Returns: Json }
       get_invite_by_token: {
         Args: { _token: string }
         Returns: {
