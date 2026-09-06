@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import type { SampleOrder, SampleOrderAction } from "@/lib/showroom.functions";
 import { OrderActionDialog, type OrderActionPayload } from "@/components/showroom/OrderActionDialog";
 import { OrderStatusBadge, formatMoney, quoteTotal } from "@/components/showroom/order-status";
+import { getOptimizedThumbnailUrl } from "@/lib/org-images";
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -45,7 +46,8 @@ export function SampleOrdersPanel({ inbound, outbound, orgRouteId, onAction }: S
   const renderOrder = (order: SampleOrder, side: "inbound" | "outbound") => {
     const counterpart = side === "inbound" ? order.buyerOrg : order.sellerOrg;
     const total = quoteTotal(order.quotedPrice, order.shippingCost);
-    const cover = order.product?.images?.[0] ?? null;
+    const rawCover = order.product?.images?.[0] ?? null;
+    const cover = rawCover ? getOptimizedThumbnailUrl(rawCover, { width: 160 }) ?? rawCover : null;
 
     return (
       <Card key={order.id} className="p-4 transition-colors hover:border-slate-300">

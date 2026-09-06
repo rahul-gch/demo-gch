@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { ProductEditorDialog } from "@/components/showroom/ProductEditorDialog";
 import { ProductImage } from "@/components/showroom/ProductImage";
+import { getOptimizedThumbnailUrl } from "@/lib/org-images";
 import { parseProductDescription } from "@/lib/product-description";
 import { ShowroomLocked } from "@/components/showroom/ShowroomLocked";
 import { useSampleCart } from "@/lib/use-sample-cart";
@@ -225,22 +226,28 @@ export function ProductDetailPage({ entity, productId, mode = "member" }: Produc
 
           {images.length > 1 && (
             <div className="grid grid-cols-5 gap-2 sm:grid-cols-6">
-              {images.map((img, idx) => (
-                <button
-                  key={`${img}-${idx}`}
-                  type="button"
-                  onClick={() => setActiveImage(idx)}
-                  aria-label={`Show image ${idx + 1}`}
-                  aria-pressed={idx === activeImage}
-                  className={`aspect-square overflow-hidden rounded-md border bg-muted transition ${
-                    idx === activeImage
-                      ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
-                      : "opacity-70 hover:opacity-100"
-                  }`}
-                >
-                  <ProductImage src={img} alt="" placeholderLabel={null} />
-                </button>
-              ))}
+              {images.map((img, idx) => {
+                const thumb =
+                  product.thumbnails?.[idx] ??
+                  getOptimizedThumbnailUrl(img, { width: 160 }) ??
+                  img;
+                return (
+                  <button
+                    key={`${img}-${idx}`}
+                    type="button"
+                    onClick={() => setActiveImage(idx)}
+                    aria-label={`Show image ${idx + 1}`}
+                    aria-pressed={idx === activeImage}
+                    className={`aspect-square overflow-hidden rounded-md border bg-muted transition ${
+                      idx === activeImage
+                        ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                        : "opacity-70 hover:opacity-100"
+                    }`}
+                  >
+                    <ProductImage src={thumb} alt="" placeholderLabel={null} />
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>

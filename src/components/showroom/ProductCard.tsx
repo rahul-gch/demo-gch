@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import type { ShowroomProduct } from "@/lib/showroom.functions";
 import { ProductImage } from "@/components/showroom/ProductImage";
+import { getOptimizedThumbnailUrl } from "@/lib/org-images";
 import { useSampleCart } from "@/lib/use-sample-cart";
 import { Edit2, Trash2, Send, Lock, ChevronLeft, ChevronRight, Eye, ShoppingBag } from "lucide-react";
 import {
@@ -54,7 +55,12 @@ export const ProductCard = memo(function ProductCard({
   const inCart = cart.isInCart(product.id);
 
   const images = product.images && product.images.length > 0 ? product.images : [];
+  const thumbnails = product.thumbnails && product.thumbnails.length > 0 ? product.thumbnails : [];
   const currentImage = images[activeImageIdx] ?? null;
+  const currentThumbnail =
+    thumbnails[activeImageIdx] ??
+    (currentImage ? getOptimizedThumbnailUrl(currentImage, { width: 480 }) : null) ??
+    currentImage;
 
   const DetailLink = ({ className, children }: { className?: string; children: React.ReactNode }) =>
     !orgRouteId ? (
@@ -80,9 +86,9 @@ export const ProductCard = memo(function ProductCard({
   const media = (
     <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
       <ProductImage
-        src={currentImage}
+        src={currentThumbnail}
         alt={product.name}
-        className="transition-transform duration-300 group-hover:scale-105"
+        className="transition-transform duration-300 group-hover:scale-105 will-change-transform"
       />
 
       {images.length > 1 && (

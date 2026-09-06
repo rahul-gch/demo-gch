@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { useShowroomProduct, useCreateSampleOrder } from "@/lib/use-showroom";
 import { useMyOrgs } from "@/lib/use-comms";
+import { getOptimizedThumbnailUrl } from "@/lib/org-images";
 import { getEntity } from "@/seed/all-entities";
 import type { Entity } from "@/seed/types";
 import { toast } from "sonner";
@@ -62,8 +63,8 @@ export function OrderPage({ entity, productId }: { entity: Entity; productId: st
   const [neededBy, setNeededBy] = useState("");
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
-
-  const cover = product?.images?.[0] ?? null;
+  const rawCover = product?.images?.[0] ?? null;
+  const cover = product?.thumbnails?.[0] ?? (rawCover ? getOptimizedThumbnailUrl(rawCover, { width: 160 }) : null) ?? rawCover;
   const addressOk = address.trim().length >= 3;
   const sampleSelected = hangerQty > 0 || metersQty > 0;
   const canSubmit = Boolean(

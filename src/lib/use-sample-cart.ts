@@ -100,7 +100,7 @@ export function useSampleCart(sellerOrgId?: string | null) {
         const newItem: SampleCartItem = {
           productId: product.id,
           productName: product.name,
-          image: product.images?.[0] ?? null,
+          image: product.thumbnails?.[0] ?? product.images?.[0] ?? null,
           availableMaterials: product.materials ?? [],
           selectedMaterial: defaultMaterial,
           hangerQty: Math.min(1, Math.max(0, hangerQty)),

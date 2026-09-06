@@ -8,6 +8,7 @@ import { useSampleOrder, useTransitionSampleOrder } from "@/lib/use-showroom";
 import { OrderTimeline } from "@/components/showroom/OrderTimeline";
 import { OrderActionDialog } from "@/components/showroom/OrderActionDialog";
 import { OrderStatusBadge, STATUS_META, formatMoney, quoteTotal } from "@/components/showroom/order-status";
+import { getOptimizedThumbnailUrl } from "@/lib/org-images";
 import type { SampleOrderAction } from "@/lib/showroom.functions";
 import type { Entity } from "@/seed/types";
 import {
@@ -55,7 +56,8 @@ export function OrderDetailPage({ entity, orderId }: { entity: Entity; orderId: 
   const { order, events, role } = data;
   const counterpart = role === "seller" ? order.buyerOrg : order.sellerOrg;
   const total = quoteTotal(order.quotedPrice, order.shippingCost);
-  const cover = order.product?.images?.[0] ?? null;
+  const rawCover = order.product?.images?.[0] ?? null;
+  const cover = rawCover ? getOptimizedThumbnailUrl(rawCover, { width: 240 }) ?? rawCover : null;
   const meta = STATUS_META[order.status];
 
   const actions: Array<{ action: SampleOrderAction; label: string; variant?: "default" | "outline" | "ghost" }> = [];

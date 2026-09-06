@@ -8,6 +8,7 @@ import type { Entity } from "@/seed/types";
 import { isManufacturerOrg } from "@/lib/org-types";
 import { Package, Plus, Store, ArrowRight } from "lucide-react";
 import { ProductImage } from "@/components/showroom/ProductImage";
+import { getOptimizedThumbnailUrl } from "@/lib/org-images";
 
 /**
  * Compact product row shown on a manufacturer's dashboard overview and public
@@ -77,6 +78,11 @@ export function ShowroomStrip({ entity }: { entity: Entity }) {
                 p.materials && p.materials.length > 0
                   ? p.materials.slice(0, 2).join(" · ")
                   : null;
+              const thumb =
+                p.thumbnails?.[0] ??
+                (p.images?.[0] ? getOptimizedThumbnailUrl(p.images[0], { width: 160 }) : null) ??
+                p.images?.[0] ??
+                null;
               return (
                 <Link
                   key={p.id}
@@ -85,7 +91,7 @@ export function ShowroomStrip({ entity }: { entity: Entity }) {
                   className="group flex gap-3 rounded-lg border border-border/60 bg-card p-3 transition-colors hover:border-primary/30 hover:bg-accent/50"
                 >
                   <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md bg-muted">
-                    <ProductImage src={p.images?.[0] ?? null} alt={p.name} placeholderLabel={null} />
+                    <ProductImage src={thumb} alt={p.name} placeholderLabel={null} />
                   </div>
                   <div className="min-w-0">
                     <div className="truncate text-sm font-medium leading-5 text-foreground">

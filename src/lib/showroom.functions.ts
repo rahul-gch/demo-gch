@@ -1,7 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { resolveImagesWith } from "@/lib/org-images";
+import {
+  resolveImagesWith,
+  resolveThumbnailsWith,
+  getOptimizedThumbnailUrl,
+  getOptimizedHighResUrl,
+} from "@/lib/org-images";
 import { getEntity } from "@/seed/all-entities";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -10,8 +15,10 @@ export interface ShowroomProduct {
   orgId: string;
   name: string;
   description: string | null;
-  /** Display URLs (signed links for uploaded files, or external https links). */
+  /** Display URLs (signed links for uploaded files, or external https links) - high resolution for detail page. */
   images: string[];
+  /** Optimized thumbnail URLs for showroom cards and preview grids (prevents moiré distortion). */
+  thumbnails?: string[];
   /** Raw stored values (`showroom:<path>` refs or https links) — use these when editing. */
   imageRefs: string[];
   materials: string[];
@@ -24,19 +31,33 @@ export interface ShowroomProduct {
 type ImageClient = Parameters<typeof resolveImagesWith>[0];
 
 /** Resolve stored image values with the caller's authenticated client. Unresolvable refs are dropped. */
-async function resolveProductImages(client: ImageClient, raw: unknown): Promise<{ images: string[]; imageRefs: string[] }> {
-  const allRefs = Array.isArray(raw) ? (raw as unknown[]).filter((v): v is string => typeof v === "string" && v.length > 0) : [];
-  const resolved = await resolveImagesWith(client, allRefs);
-  // Keep both arrays positionally aligned: drop refs that could not be resolved.
+async function resolveProductImages(
+  client: ImageClient,
+  raw: unknown,
+): Promise<{ images: string[]; thumbnails: string[]; imageRefs: string[] }> {
+  const allRefs = Array.isArray(raw)
+    ? (raw as unknown[]).filter((v): v is string => typeof v === "string" && v.length > 0)
+    : [];
+  const [resolvedImages, resolvedThumbnails] = await Promise.all([
+    resolveImagesWith(client, allRefs),
+    resolveThumbnailsWith(client, allRefs, 480),
+  ]);
+
+  // Keep all arrays positionally aligned: drop refs that could not be resolved.
   const images: string[] = [];
+  const thumbnails: string[] = [];
   const imageRefs: string[] = [];
-  resolved.forEach((url, i) => {
+  resolvedImages.forEach((url, i) => {
     if (url) {
-      images.push(url);
+      // Ensure high-resolution display URL for detail view
+      const highRes = getOptimizedHighResUrl(url) ?? url;
+      const thumb = resolvedThumbnails[i] ?? getOptimizedThumbnailUrl(url, { width: 480 }) ?? url;
+      images.push(highRes);
+      thumbnails.push(thumb);
       imageRefs.push(allRefs[i]);
     }
   });
-  return { images, imageRefs };
+  return { images, thumbnails, imageRefs };
 }
 
 export type SampleOrderStatus =
@@ -127,8 +148,12 @@ function initSeedProducts() {
           description:
             "Engineered circular knit made with 100% recycled post-consumer polyester. High tensile strength, zero-waste seam construction, moisture-wicking finish.",
           images: [
-            "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=800&auto=format&fit=crop&q=60",
-            "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800&auto=format&fit=crop&q=60",
+            "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=1400&auto=format&fit=max&q=85",
+            "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=1400&auto=format&fit=max&q=85",
+          ],
+          thumbnails: [
+            "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=480&auto=format&fit=max&q=80",
+            "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=480&auto=format&fit=max&q=80",
           ],
           materials: ["Recycled Polyester", "Elastane"],
           isActive: true,
@@ -142,7 +167,10 @@ function initSeedProducts() {
           description:
             "Heavyweight 380gsm brushed back fleece combining regenerative organic cotton and breathable hemp fibers with low-impact botanical reactive dyes.",
           images: [
-            "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=800&auto=format&fit=crop&q=60",
+            "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=1400&auto=format&fit=max&q=85",
+          ],
+          thumbnails: [
+            "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=480&auto=format&fit=max&q=80",
           ],
           materials: ["Organic Cotton", "Hemp"],
           isActive: true,
@@ -161,7 +189,10 @@ function initSeedProducts() {
           description:
             "Rigid twill denim woven with 50% Circulose pulp made from worn-out cotton textiles and 50% GOTS organic cotton. Cradle-to-Cradle Gold certified.",
           images: [
-            "https://images.unsplash.com/photo-1582418702059-97ebafb35d09?w=800&auto=format&fit=crop&q=60",
+            "https://images.unsplash.com/photo-1582418702059-97ebafb35d09?w=1400&auto=format&fit=max&q=85",
+          ],
+          thumbnails: [
+            "https://images.unsplash.com/photo-1582418702059-97ebafb35d09?w=480&auto=format&fit=max&q=80",
           ],
           materials: ["Circulose", "Organic Cotton"],
           isActive: true,
@@ -180,7 +211,10 @@ function initSeedProducts() {
           description:
             "Physical fiber token sample kit with embedded QR and NFC forensic markers for chain-of-custody verification from farm to retail store.",
           images: [
-            "https://images.unsplash.com/photo-1544816155-12df9643f363?w=800&auto=format&fit=crop&q=60",
+            "https://images.unsplash.com/photo-1544816155-12df9643f363?w=1400&auto=format&fit=max&q=85",
+          ],
+          thumbnails: [
+            "https://images.unsplash.com/photo-1544816155-12df9643f363?w=480&auto=format&fit=max&q=80",
           ],
           materials: ["Traceable Fiber", "NFC Tag"],
           isActive: true,
@@ -194,7 +228,17 @@ function initSeedProducts() {
   for (const item of defaultSeed) {
     FALLBACK_PRODUCTS.set(
       item.orgKey,
-      item.products.map((p) => ({ ...p, imageRefs: p.images })),
+      item.products.map((p) => {
+        const highResImages = p.images.map((img) => getOptimizedHighResUrl(img) ?? img);
+        const thumbnails =
+          p.thumbnails ?? p.images.map((img) => getOptimizedThumbnailUrl(img, { width: 480 }) ?? img);
+        return {
+          ...p,
+          images: highResImages,
+          thumbnails,
+          imageRefs: p.images,
+        };
+      }),
     );
   }
 
@@ -309,7 +353,8 @@ export const listShowroomProducts = createServerFn({ method: "POST" })
               name: r.name,
               description: r.description,
               images: imgs.images,
-          imageRefs: imgs.imageRefs,
+              thumbnails: imgs.thumbnails,
+              imageRefs: imgs.imageRefs,
               materials: Array.isArray(r.materials) ? (r.materials as string[]) : [],
               isActive: r.is_active,
               createdAt: r.created_at,
@@ -395,6 +440,7 @@ export const getShowroomProduct = createServerFn({ method: "POST" })
           name: row.name,
           description: row.description,
           images: imgs.images,
+          thumbnails: imgs.thumbnails,
           imageRefs: imgs.imageRefs,
           materials: Array.isArray(row.materials) ? (row.materials as string[]) : [],
           isActive: row.is_active,
@@ -529,6 +575,7 @@ export const upsertShowroomProduct = createServerFn({ method: "POST" })
           name: result.name,
           description: result.description,
           images: imgs.images,
+          thumbnails: imgs.thumbnails,
           imageRefs: imgs.imageRefs,
           materials: Array.isArray(result.materials) ? (result.materials as string[]) : [],
           isActive: result.is_active,
@@ -551,6 +598,9 @@ export const upsertShowroomProduct = createServerFn({ method: "POST" })
         name: data.product.name,
         description: data.product.description ?? null,
         images: data.product.images ?? [],
+        thumbnails: (data.product.images ?? []).map(
+          (img) => getOptimizedThumbnailUrl(img, { width: 480 }) ?? img,
+        ),
         imageRefs: data.product.images ?? [],
         materials: data.product.materials ?? [],
         isActive: data.product.isActive ?? true,
@@ -569,6 +619,9 @@ export const upsertShowroomProduct = createServerFn({ method: "POST" })
         name: data.product.name,
         description: data.product.description ?? null,
         images: data.product.images ?? [],
+        thumbnails: (data.product.images ?? []).map(
+          (img) => getOptimizedThumbnailUrl(img, { width: 480 }) ?? img,
+        ),
         imageRefs: data.product.images ?? [],
         materials: data.product.materials ?? [],
         isActive: data.product.isActive ?? true,

@@ -4,33 +4,44 @@ import { cn } from "@/lib/utils";
 
 interface ProductImageProps {
   src?: string | null;
+  /** Optimized thumbnail source for showroom cards and preview grids to prevent moiré distortion. */
+  thumbnailSrc?: string | null;
   alt: string;
   className?: string;
   /** "cover" crops to fill; "contain" shows the whole photo on a muted background. */
   fit?: "cover" | "contain";
   placeholderLabel?: string | null;
+  srcSet?: string;
+  sizes?: string;
+  loading?: "lazy" | "eager";
 }
 
 /**
  * Image with a graceful placeholder for missing or broken sources.
+ * Supports optimized thumbnails to eliminate moiré artifacts on textured fabrics.
  * Never renders browser alt-text fallbacks.
  */
 export const ProductImage = memo(function ProductImage({
   src,
+  thumbnailSrc,
   alt,
   className,
   fit = "cover",
   placeholderLabel = "No image provided",
+  srcSet,
+  sizes,
+  loading = "lazy",
 }: ProductImageProps) {
+  const effectiveSrc = thumbnailSrc || src;
   const [failed, setFailed] = useState(false);
-  const [prevSrc, setPrevSrc] = useState(src);
+  const [prevSrc, setPrevSrc] = useState(effectiveSrc);
 
-  if (prevSrc !== src) {
-    setPrevSrc(src);
+  if (prevSrc !== effectiveSrc) {
+    setPrevSrc(effectiveSrc);
     setFailed(false);
   }
 
-  if (!src || failed) {
+  if (!effectiveSrc || failed) {
     return (
       <div
         className={cn(
@@ -48,11 +59,23 @@ export const ProductImage = memo(function ProductImage({
 
   return (
     <img
-      src={src}
+      src={effectiveSrc}
+      srcSet={srcSet}
+      sizes={sizes}
       alt={alt}
+      loading={loading}
       decoding="async"
       onError={() => setFailed(true)}
-      className={cn("h-full w-full", fit === "cover" ? "object-cover" : "object-contain", className)}
+      style={{
+        imageRendering: "auto",
+        backfaceVisibility: "hidden",
+      }}
+      className={cn(
+        "h-full w-full transform-gpu",
+        fit === "cover" ? "object-cover" : "object-contain",
+        className,
+      )}
     />
   );
 });
+
