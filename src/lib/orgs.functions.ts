@@ -424,15 +424,14 @@ export const saveOrgProfileAnswers = createServerFn({ method: "POST" })
 
     const { data: org, error: orgErr } = await supabase
       .from("orgs")
-      .select(
-        "id, type, entity_type, description, website, city, country, logo_url, profile_answers",
-      )
+      .select("id, type, entity_type, description, website, city, country, logo_url")
       .eq("id", data.orgId)
       .single();
     if (orgErr) throw new Error(orgErr.message);
 
-    const existing = ((org as { profile_answers?: unknown }).profile_answers ??
-      {}) as ProfileAnswers;
+    const { data: privateRows } = await supabase.rpc("org_private_details", { _org: data.orgId });
+    const existing = ((Array.isArray(privateRows) ? privateRows[0] : privateRows)
+      ?.profile_answers ?? {}) as ProfileAnswers;
     const merged: ProfileAnswers = { ...existing, ...(data.answers as ProfileAnswers) };
 
     const entityType = (org.entity_type as string | null) || (org.type as string | null) || "";
