@@ -367,13 +367,8 @@ export const updateOrgProfile = createServerFn({ method: "POST" })
     }
 
     if (data.operatingCountries !== undefined) {
-      const { data: orgData } = await supabase
-        .from("orgs")
-        .select("profile_answers")
-        .eq("id", data.orgId)
-        .maybeSingle();
-      const currentAnswers =
-        ((orgData as { profile_answers?: Record<string, unknown> } | null)?.profile_answers ??
+      const { data: details } = await supabase.rpc("org_private_details", { _org: data.orgId });
+      const currentAnswers = ((Array.isArray(details) ? details[0] : details)?.profile_answers ??
         {}) as Record<string, unknown>;
       patch.profile_answers = {
         ...currentAnswers,
@@ -429,15 +424,14 @@ export const saveOrgProfileAnswers = createServerFn({ method: "POST" })
 
     const { data: org, error: orgErr } = await supabase
       .from("orgs")
-      .select(
-        "id, type, entity_type, description, website, city, country, logo_url, profile_answers",
-      )
+      .select("id, type, entity_type, description, website, city, country, logo_url")
       .eq("id", data.orgId)
       .single();
     if (orgErr) throw new Error(orgErr.message);
 
-    const existing = ((org as { profile_answers?: unknown }).profile_answers ??
-      {}) as ProfileAnswers;
+    const { data: privateRows } = await supabase.rpc("org_private_details", { _org: data.orgId });
+    const existing = ((Array.isArray(privateRows) ? privateRows[0] : privateRows)
+      ?.profile_answers ?? {}) as ProfileAnswers;
     const merged: ProfileAnswers = { ...existing, ...(data.answers as ProfileAnswers) };
 
     const entityType = (org.entity_type as string | null) || (org.type as string | null) || "";
@@ -510,18 +504,23 @@ export const getOrgProfileAnswers = createServerFn({ method: "GET" })
     const { data: org, error } = await context.supabase
       .from("orgs")
       .select(
-        "id, name, type, entity_type, description, website, city, country, logo_url, profile_answers, profile_score",
+        "id, name, type, entity_type, description, website, city, country, logo_url, profile_score",
       )
       .eq("id", data.orgId)
       .single();
     if (error) throw new Error(error.message);
+    const { data: privateRows } = await context.supabase.rpc("org_private_details", {
+      _org: data.orgId,
+    });
+    const answers = ((Array.isArray(privateRows) ? privateRows[0] : privateRows)?.profile_answers ??
+      {}) as ProfileAnswers;
     return {
       orgId: org.id as string,
       name: (org.name as string) ?? "",
       entityType: ((org.entity_type as string | null) ||
         (org.type as string | null) ||
         "") as string,
-      answers: ((org as { profile_answers?: unknown }).profile_answers ?? {}) as ProfileAnswers,
+      answers,
       score: ((org as { profile_score?: number }).profile_score ?? 0) as number,
       core: {
         description: (org.description as string | null) ?? "",
@@ -571,4 +570,38 @@ export const leaveOrganizationFn = createServerFn({ method: "POST" })
     const { error } = await supabase.from("org_members").delete().eq("id", member.id);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+/**
+ * Private organization fields (contacts, comments, governance, traceability
+ * notes). Restricted at the database level to the org's own members, orgs with
+ * an accepted connection, and platform admins.
+ */
+export const getOrgPrivateDetails = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ orgId: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { data: rows } = await context.supabase.rpc("org_private_details", {
+      _org: data.orgId,
+    });
+    const row = (Array.isArray(rows) ? rows[0] : rows) as
+      | {
+          contacts?: unknown;
+          comments?: string | null;
+          governance?: string | null;
+          traceability_notes?: string | null;
+        }
+      | null
+      | undefined;
+    return {
+      contacts: (Array.isArray(row?.contacts) ? row?.contacts : []) as Array<{
+        name?: string;
+        role?: string;
+        email?: string;
+        phone?: string;
+      }>,
+      comments: row?.comments ?? "",
+      governance: row?.governance ?? "",
+      traceabilityNotes: row?.traceability_notes ?? "",
+    };
   });

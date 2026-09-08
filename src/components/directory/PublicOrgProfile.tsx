@@ -1,5 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getOrgPrivateDetails } from "@/lib/orgs.functions";
 import type { Entity } from "@/seed/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -86,6 +89,18 @@ export function PublicOrgProfile({ entity: e }: { entity: Entity }) {
 
   const sendMessage = useSendMessage(actingOrgUuid);
   const targetOrgUuid = e.orgUuid ?? e.id;
+
+  // Contact details are private: only members, connected orgs and platform
+  // admins get them back from the server.
+  const fetchPrivateDetails = useServerFn(getOrgPrivateDetails);
+  const isUuid = /^[0-9a-f-]{36}$/i.test(targetOrgUuid);
+  const { data: privateDetails } = useQuery({
+    queryKey: ["org-private-details", targetOrgUuid],
+    queryFn: () => fetchPrivateDetails({ data: { orgId: targetOrgUuid } }),
+    enabled: isUuid,
+    staleTime: 60_000,
+  });
+  const contacts = privateDetails?.contacts ?? [];
 
   const { data: showroom, isLoading: showroomLoading } = useShowroomProducts(
     targetOrgUuid,
@@ -677,8 +692,8 @@ export function PublicOrgProfile({ entity: e }: { entity: Entity }) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-xs">
-                {e.contacts && e.contacts.length > 0 ? (
-                  e.contacts.map((c, i) => (
+                {contacts.length > 0 ? (
+                  contacts.map((c, i) => (
                     <div key={i} className="rounded-lg border bg-muted/20 p-3 space-y-1.5">
                       <div className="flex items-center justify-between">
                         <span className="font-semibold text-foreground">{c.name}</span>
