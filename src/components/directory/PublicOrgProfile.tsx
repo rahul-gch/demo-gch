@@ -87,6 +87,18 @@ export function PublicOrgProfile({ entity: e }: { entity: Entity }) {
   const sendMessage = useSendMessage(actingOrgUuid);
   const targetOrgUuid = e.orgUuid ?? e.id;
 
+  // Contact details are private: only members, connected orgs and platform
+  // admins get them back from the server.
+  const fetchPrivateDetails = useServerFn(getOrgPrivateDetails);
+  const isUuid = /^[0-9a-f-]{36}$/i.test(targetOrgUuid);
+  const { data: privateDetails } = useQuery({
+    queryKey: ["org-private-details", targetOrgUuid],
+    queryFn: () => fetchPrivateDetails({ data: { orgId: targetOrgUuid } }),
+    enabled: isUuid,
+    staleTime: 60_000,
+  });
+  const contacts = privateDetails?.contacts ?? [];
+
   const { data: showroom, isLoading: showroomLoading } = useShowroomProducts(
     targetOrgUuid,
     actingOrgUuid,
