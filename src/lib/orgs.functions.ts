@@ -326,12 +326,16 @@ export const updateOrgProfile = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => profileSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: canManage, error: roleErr } = await supabase.rpc("user_can_manage", {
-      _user: userId,
-      _org: data.orgId,
-    });
+    const [{ data: canManage, error: roleErr }, { data: isAdmin, error: adminErr }] =
+      await Promise.all([
+        supabase.rpc("user_can_manage", { _user: userId, _org: data.orgId }),
+        supabase.rpc("is_platform_admin", { _user: userId }),
+      ]);
     if (roleErr) throw new Error(roleErr.message);
-    if (!canManage) throw new Error("Only organization owners and admins can edit the profile.");
+    if (adminErr) throw new Error(adminErr.message);
+    if (!canManage && !isAdmin) {
+      throw new Error("Only organization owners and admins can edit the profile.");
+    }
 
     const map: Record<string, string> = {
       name: "name",
