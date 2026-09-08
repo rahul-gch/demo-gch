@@ -47,13 +47,14 @@ function matchesOrg(recordOrgId: string, queryOrgId: string): boolean {
 export function useOrgConnections(orgId: string | null | undefined) {
   const normOrgId = orgId ? canonicalId(orgId) : null;
   const fetchConnections = useServerFn(getOrgConnections);
+  const hasSession = useAuthenticatedSessionReady();
 
   const { data: records = [], isLoading, refetch } = useQuery({
     queryKey: ["org-connections", normOrgId],
-    enabled: !!normOrgId,
+    enabled: !!normOrgId && hasSession,
     queryFn: () => fetchConnections({ data: { orgId: normOrgId! } }),
     staleTime: 10_000,
-    refetchInterval: 15_000, // Background poll for live updates
+    refetchInterval: hasSession ? 15_000 : false, // Background poll for live updates
   });
 
   const connectedEntities = useMemo(() => {
