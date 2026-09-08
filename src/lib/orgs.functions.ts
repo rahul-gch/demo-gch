@@ -520,7 +520,7 @@ export const getOrgProfileAnswers = createServerFn({ method: "GET" })
       entityType: ((org.entity_type as string | null) ||
         (org.type as string | null) ||
         "") as string,
-      answers: ((org as { profile_answers?: unknown }).profile_answers ?? {}) as ProfileAnswers,
+      answers,
       score: ((org as { profile_score?: number }).profile_score ?? 0) as number,
       core: {
         description: (org.description as string | null) ?? "",
