@@ -1,15 +1,19 @@
 import { createServerFn } from "@tanstack/react-start";
 import type { Entity } from "@/seed/types";
 
+// Private columns (contacts, comments, governance, traceability_notes,
+// profile_answers) are deliberately excluded: they are restricted at the
+// database level to members, connected orgs and platform admins, and are read
+// through the `org_private_details` lookup instead.
 const BASE_COLUMNS = `
   id, legacy_id, gch_number, slug, name, type, entity_type, raw_entity_type, organization_type,
-  tier, country, region, city, address, zip_code, latitude, longitude, description, comments,
+  tier, country, region, city, address, zip_code, latitude, longitude, description,
   website, logo_url, banner_urls, materials, capabilities, certifications, product_categories,
-  product_types, specializations, capacity, moq, lead_time_days, contacts, certification_details,
-  governance, traceability_notes, confidence_score, risk_level, evidence_count, verified_cert_count,
+  product_types, specializations, capacity, moq, lead_time_days, certification_details,
+  confidence_score, risk_level, evidence_count, verified_cert_count,
   expired_cert_count, missing_data_count, profile_completeness, verification_status,
   preferred_channel, kpi_readiness, traceability_readiness, matchmaking_readiness, missing_fields,
-  recommended_next_action, rating, on_time_rate, avg_delay_days, delivery_timeframe_days, profile_answers
+  recommended_next_action, rating, on_time_rate, avg_delay_days, delivery_timeframe_days
 `;
 
 type OrgRow = Record<string, unknown>;
