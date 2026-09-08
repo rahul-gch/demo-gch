@@ -141,7 +141,7 @@ export const listEntities = createServerFn({ method: "GET" }).handler(
       }
 
       if (res.error) throw new Error(res.error.message);
-      const rows = (res.data ?? []) as OrgRow[];
+      const rows = (res.data ?? []) as unknown as OrgRow[];
       all.push(...rows.map(rowToEntity));
       if (rows.length < pageSize) break;
     }
