@@ -21,10 +21,22 @@ function overlap<T>(a: T[], b: T[]): number {
   return a.filter((x) => setB.has(x)).length;
 }
 
-function regionProximity(a: Entity, b: Entity): number {
-  if (a.country && a.country === b.country) return 1;
-  if (a.region && a.region === b.region) return 0.6;
-  return 0.2;
+function getEntityCountries(e: Entity): string[] {
+  const arr = [e.country, ...(e.operatingCountries || [])]
+    .map((c) => c?.trim())
+    .filter(Boolean) as string[];
+  return Array.from(new Set(arr));
+}
+
+function regionProximity(a: Entity, b: Entity): { score: number; matchedCountry?: string } {
+  const ac = getEntityCountries(a);
+  const bc = getEntityCountries(b);
+  const matched = ac.find((c1) => bc.some((c2) => c1.toLowerCase() === c2.toLowerCase()));
+  if (matched) return { score: 1, matchedCountry: matched };
+  if (a.region && b.region && a.region.toLowerCase() === b.region.toLowerCase()) {
+    return { score: 0.6 };
+  }
+  return { score: 0.2 };
 }
 
 function kpiCompatibility(a: Entity, b: Entity): number {
@@ -79,7 +91,8 @@ export function scoreMatch(a: Entity, b: Entity): MatchScore {
   const matN = overlap(a.materials || [], b.materials || []);
   const certN = overlap(a.certifications || [], b.certifications || []);
   const tier = tierComplementarity(a, b);
-  const region = regionProximity(a, b);
+  const regionRes = regionProximity(a, b);
+  const region = regionRes.score;
   const kpi = kpiCompatibility(a, b);
   const cap = capacityFit(a, b);
   const delivery = deliveryFit(a, b);
@@ -111,8 +124,15 @@ export function scoreMatch(a: Entity, b: Entity): MatchScore {
   if (certN) reasons.push(`${certN} shared certification${certN > 1 ? "s" : ""}`);
   if (tier >= 1) reasons.push("Adjacent tier — direct supply fit");
   else if (tier >= 0.6) reasons.push("Near-tier — viable two-step fit");
-  if (region === 1) reasons.push(`Same country (${a.country})`);
-  else if (region >= 0.6) reasons.push("Same region");
+  if (regionRes.score === 1 && regionRes.matchedCountry) {
+    reasons.push(
+      a.country && b.country && a.country.toLowerCase() === b.country.toLowerCase()
+        ? `Same country (${a.country})`
+        : `Shared operating country (${regionRes.matchedCountry})`,
+    );
+  } else if (region >= 0.6) {
+    reasons.push("Same region");
+  }
   if (kpi >= 0.5) reasons.push("Strong KPI category overlap");
   if (delivery >= 0.7) reasons.push("Reliable delivery & matched lead time");
   else if (delivery >= 0.45) reasons.push("Compatible lead times");

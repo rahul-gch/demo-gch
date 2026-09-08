@@ -16,7 +16,10 @@ const createOrgSchema = z.object({
     .regex(/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/, "Slug must be lowercase letters, numbers, hyphens"),
   type: z.string().trim().min(2).max(80),
   country: z.string().trim().max(80).optional().nullable(),
+  operatingCountries: z.array(z.string().trim().max(80)).max(50).optional().nullable(),
   city: z.string().trim().max(80).optional().nullable(),
+  address: z.string().trim().max(255).optional().nullable(),
+  zipCode: z.string().trim().max(30).optional().nullable(),
 
   website: z.string().trim().url().max(255).optional().or(z.literal("")).nullable(),
   description: z.string().trim().max(2000).optional().nullable(),
@@ -96,35 +99,58 @@ export const createOrg = createServerFn({ method: "POST" })
       },
     ];
 
-    const { data: org, error: insErr } = await adminSb
+    const insertData: Record<string, unknown> = {
+      created_by: userId,
+      name: data.name,
+      slug,
+      type: data.type,
+      country: data.country || null,
+      city: data.city || null,
+      address: data.address || null,
+      zip_code: data.zipCode || null,
+      contacts: initialContacts,
+      profile_answers: {
+        operating_countries:
+          data.operatingCountries ?? (data.country ? [data.country] : []),
+      },
+      website: data.website || null,
+      description: data.description || null,
+      size: data.size || null,
+      region: data.region || null,
+      tier: data.tier ?? null,
+      certifications: data.certifications ?? [],
+      logo_url: logoUrl,
+      moq: data.moq || null,
+      lead_time_days: data.leadTimeDays ?? null,
+      capacity: data.capacity || null,
+      on_time_rate: data.onTimeRate ?? null,
+      materials: data.materials ?? [],
+      capabilities: data.capabilities ?? [],
+      product_categories: data.productCategories ?? [],
+      product_types: data.productTypes ?? [],
+      specializations: data.specializations ?? [],
+    };
+    if (data.operatingCountries || data.country) {
+      insertData.operating_countries =
+        data.operatingCountries ?? (data.country ? [data.country] : []);
+    }
+
+    let { data: org, error: insErr } = await adminSb
       .from("orgs")
-      .insert({
-        created_by: userId,
-        name: data.name,
-        slug,
-        type: data.type,
-        country: data.country || null,
-        city: data.city || null,
-        contacts: initialContacts,
-        website: data.website || null,
-        description: data.description || null,
-        size: data.size || null,
-        region: data.region || null,
-        tier: data.tier ?? null,
-        certifications: data.certifications ?? [],
-        logo_url: logoUrl,
-        moq: data.moq || null,
-        lead_time_days: data.leadTimeDays ?? null,
-        capacity: data.capacity || null,
-        on_time_rate: data.onTimeRate ?? null,
-        materials: data.materials ?? [],
-        capabilities: data.capabilities ?? [],
-        product_categories: data.productCategories ?? [],
-        product_types: data.productTypes ?? [],
-        specializations: data.specializations ?? [],
-      })
+      .insert(insertData)
       .select("id, slug")
       .single();
+
+    if (insErr && insErr.message.includes("operating_countries")) {
+      delete insertData.operating_countries;
+      const retry = await adminSb
+        .from("orgs")
+        .insert(insertData)
+        .select("id, slug")
+        .single();
+      org = retry.data;
+      insErr = retry.error;
+    }
     if (insErr) throw new Error(insErr.message);
 
     const { error: memErr } = await adminSb.from("org_members").insert({
@@ -270,8 +296,11 @@ const profileSchema = z.object({
   name: z.string().trim().min(2).max(120).optional(),
   type: z.string().trim().min(2).max(80).optional(),
   country: z.string().trim().max(80).optional().nullable(),
+  operatingCountries: z.array(z.string().trim().max(80)).max(50).optional().nullable(),
   region: z.string().trim().max(80).optional().nullable(),
   city: z.string().trim().max(80).optional().nullable(),
+  address: z.string().trim().max(255).optional().nullable(),
+  zipCode: z.string().trim().max(30).optional().nullable(),
   website: z.string().trim().max(255).optional().nullable(),
   description: z.string().trim().max(4000).optional().nullable(),
   size: z.string().trim().max(40).optional().nullable(),
@@ -308,8 +337,11 @@ export const updateOrgProfile = createServerFn({ method: "POST" })
       name: "name",
       type: "type",
       country: "country",
+      operatingCountries: "operating_countries",
       region: "region",
       city: "city",
+      address: "address",
+      zipCode: "zip_code",
       website: "website",
       description: "description",
       size: "size",
@@ -333,12 +365,38 @@ export const updateOrgProfile = createServerFn({ method: "POST" })
       const value = (data as Record<string, unknown>)[key];
       if (value !== undefined) patch[column] = value;
     }
+
+    if (data.operatingCountries !== undefined) {
+      const { data: orgData } = await supabase
+        .from("orgs")
+        .select("profile_answers")
+        .eq("id", data.orgId)
+        .maybeSingle();
+      const currentAnswers =
+        ((orgData as { profile_answers?: Record<string, unknown> } | null)?.profile_answers ??
+        {}) as Record<string, unknown>;
+      patch.profile_answers = {
+        ...currentAnswers,
+        operating_countries: data.operatingCountries,
+      };
+    }
+
     if (Object.keys(patch).length === 0) return { ok: true };
 
-    const { error } = await supabase
+    let { error } = await supabase
       .from("orgs")
       .update(patch as never)
       .eq("id", data.orgId);
+
+    if (error && error.message.includes("operating_countries")) {
+      delete patch["operating_countries"];
+      const retry = await supabase
+        .from("orgs")
+        .update(patch as never)
+        .eq("id", data.orgId);
+      error = retry.error;
+    }
+
     if (error) throw new Error(error.message);
     return { ok: true };
   });

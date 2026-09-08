@@ -43,5 +43,5 @@ docs_gch/
 # Tests & Test Results
 test/
 test-results/
-test-results
-
+# Supabase CLI temp
+supabase/.temp/

@@ -111,9 +111,25 @@ function whyThisMatch(viewer: Entity | null | undefined, e: Entity): string[] {
     );
   }
 
-  if (viewer && viewer.country === e.country) {
+  const vCountries = viewer
+    ? [viewer.country, ...(viewer.operatingCountries || [])]
+        .map((c) => c?.trim())
+        .filter(Boolean) as string[]
+    : [];
+  const eCountries = [e.country, ...(e.operatingCountries || [])]
+    .map((c) => c?.trim())
+    .filter(Boolean) as string[];
+  const sharedCountry = vCountries.find((vc) =>
+    eCountries.some((ec) => ec.toLowerCase() === vc.toLowerCase()),
+  );
+
+  if (viewer && sharedCountry) {
+    const isSameHq =
+      viewer.country && e.country && viewer.country.toLowerCase() === e.country.toLowerCase();
     lines.push(
-      `Same country (${e.country}) shortens logistics, simplifies customs, and enables in-person audits within one working day.`,
+      isSameHq
+        ? `Same country (${e.country}) shortens logistics, simplifies customs, and enables in-person audits within one working day.`
+        : `Shared operating presence in ${sharedCountry} enables localized production and regional fulfillment, reducing cross-border friction.`,
     );
   } else if (viewer && viewer.region === e.region) {
     lines.push(
@@ -267,6 +283,19 @@ export function MatchProfileSheet({
                 <MapPin className="mr-1 h-3 w-3" />
                 {[e.city, e.country].filter(Boolean).join(", ")}
               </Badge>
+              {e.operatingCountries &&
+                e.operatingCountries.filter(
+                  (c) => c.toLowerCase() !== (e.country || "").toLowerCase(),
+                ).length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1 w-full pt-1">
+                    <span className="text-[11px] text-muted-foreground font-medium">Operating in:</span>
+                    {e.operatingCountries.map((c) => (
+                      <Badge key={c} variant="secondary" className="text-[10px] px-1.5 py-0 font-normal">
+                        {c}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
             </SheetDescription>
           </SheetHeader>
 

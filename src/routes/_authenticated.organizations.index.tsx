@@ -81,7 +81,10 @@ function OrganizationsPage() {
   const registry = useQuery({ ...entitiesQueryOptions, refetchOnMount: "always" });
   const ENTITIES = registry.data?.length ? registry.data : ALL_ENTITIES;
 
-  const countries = useMemo(() => uniq(ENTITIES.map((e) => e.country)), [ENTITIES]);
+  const countries = useMemo(
+    () => uniq(ENTITIES.flatMap((e) => [e.country, ...(e.operatingCountries || [])])),
+    [ENTITIES],
+  );
   const actors = useMemo(() => uniq(ENTITIES.map((e) => e.actorType)), [ENTITIES]);
   const certs = useMemo(() => uniq(ENTITIES.flatMap((e) => e.certifications)), [ENTITIES]);
 
@@ -90,7 +93,12 @@ function OrganizationsPage() {
     return ENTITIES.filter((e) => {
       if (entityType !== ALL && e.entityType !== entityType) return false;
       if (actorType !== ALL && e.actorType !== actorType) return false;
-      if (country !== ALL && e.country !== country) return false;
+      if (country !== ALL) {
+        const orgCountries = [e.country, ...(e.operatingCountries || [])].map((c) =>
+          c?.toLowerCase(),
+        );
+        if (!orgCountries.includes(country.toLowerCase())) return false;
+      }
       if (certification !== ALL && !e.certifications.includes(certification)) return false;
       if (risk !== ALL && e.riskLevel !== risk) return false;
       if (verification !== ALL && e.verificationStatus !== verification) return false;
@@ -105,7 +113,11 @@ function OrganizationsPage() {
         const hay = [
           e.name,
           e.country,
+          ...(e.operatingCountries || []),
           e.region,
+          e.city,
+          e.address,
+          e.zipCode,
           e.actorType,
           ...e.materials,
           ...e.capabilities,
@@ -245,7 +257,26 @@ function OrganizationsPage() {
                       </TableCell>
                       <TableCell className="text-muted-foreground">{e.entityType}</TableCell>
                       <TableCell className="text-muted-foreground">{e.actorType}</TableCell>
-                      <TableCell className="text-muted-foreground">{e.country}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        <div className="font-medium text-foreground">{e.country}</div>
+                        {e.operatingCountries &&
+                          e.operatingCountries.filter(
+                            (c) => c.toLowerCase() !== (e.country || "").toLowerCase(),
+                          ).length > 0 && (
+                            <div className="text-[10px] text-muted-foreground flex flex-wrap gap-1 mt-0.5">
+                              <span>+</span>
+                              {e.operatingCountries
+                                .filter(
+                                  (c) => c.toLowerCase() !== (e.country || "").toLowerCase(),
+                                )
+                                .map((c) => (
+                                  <span key={c} className="text-primary font-medium">
+                                    {c}
+                                  </span>
+                                ))}
+                            </div>
+                          )}
+                      </TableCell>
                       <TableCell className="text-muted-foreground">{e.region}</TableCell>
                       <TableCell>
                         <TagList items={e.materials} />

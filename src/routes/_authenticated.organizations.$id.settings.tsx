@@ -16,7 +16,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Eye } from "lucide-react";
+import { Eye, Plus, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { getEntity } from "@/seed/all-entities";
 import { updateOrgProfile } from "@/lib/orgs.functions";
 import { refreshRegistry } from "@/lib/registry";
@@ -24,10 +25,24 @@ import { MembersPanel } from "@/components/settings/MembersPanel";
 import { EntityProfilePanel } from "@/components/settings/EntityProfilePanel";
 import { BrandingPanel } from "@/components/settings/BrandingPanel";
 import { useOrgRole } from "@/lib/use-org-role";
+import { CountrySelect } from "@/components/CountrySelect";
 
 import { ORG_TYPES } from "@/lib/org-types";
 
 const SIZE_OPTIONS = ["1-10", "11-50", "51-200", "201-1000", "1000+"];
+const COMMON_COUNTRIES = [
+  "Egypt",
+  "Turkey",
+  "Portugal",
+  "India",
+  "Pakistan",
+  "Germany",
+  "China",
+  "Bangladesh",
+  "Vietnam",
+  "Italy",
+  "USA",
+];
 
 export const Route = createFileRoute("/_authenticated/organizations/$id/settings")({
   loader: async ({ params, context }) => {
@@ -61,8 +76,17 @@ function OrgSettingsPage() {
   const [name, setName] = useState(e.name);
   const [type, setType] = useState(e.organizationType || e.rawEntityType || "");
   const [country, setCountry] = useState(e.country);
+  const [operatingCountries, setOperatingCountries] = useState<string[]>(
+    e.operatingCountries && e.operatingCountries.length > 0
+      ? e.operatingCountries
+      : e.country
+        ? [e.country]
+        : [],
+  );
   const [region, setRegion] = useState(e.region);
   const [city, setCity] = useState(e.city);
+  const [address, setAddress] = useState(e.address ?? "");
+  const [zipCode, setZipCode] = useState(e.zipCode ?? "");
   const [website, setWebsite] = useState(e.website ?? "");
   const [description, setDescription] = useState(e.description ?? "");
   const [size, setSize] = useState<string>("");
@@ -81,6 +105,18 @@ function OrgSettingsPage() {
   const [productTypes, setProductTypes] = useState(csv(e.productTypes ?? []));
   const [saving, setSaving] = useState(false);
 
+  const addOperatingCountry = (val: string) => {
+    const trimmed = val.trim();
+    if (!trimmed) return;
+    if (!operatingCountries.some((c) => c.toLowerCase() === trimmed.toLowerCase())) {
+      setOperatingCountries([...operatingCountries, trimmed]);
+    }
+  };
+
+  const removeOperatingCountry = (val: string) => {
+    setOperatingCountries(operatingCountries.filter((c) => c.toLowerCase() !== val.toLowerCase()));
+  };
+
   const save = async () => {
     if (isViewer) {
       toast.error("You have view-only permissions in this organization.");
@@ -98,8 +134,16 @@ function OrgSettingsPage() {
           name: name.trim(),
           type: type.trim() || undefined,
           country: country.trim() || null,
+          operatingCountries:
+            operatingCountries.length > 0
+              ? operatingCountries
+              : country.trim()
+                ? [country.trim()]
+                : [],
           region: region.trim() || null,
           city: city.trim() || null,
+          address: address.trim() || null,
+          zipCode: zipCode.trim() || null,
           website: website.trim() || null,
           description: description.trim() || null,
           size: size || null,
@@ -189,14 +233,41 @@ function OrgSettingsPage() {
                   </SelectContent>
                 </Select>
               </Row>
-              <Row label="Country">
-                <Input value={country} onChange={(ev) => setCountry(ev.target.value)} disabled={isViewer} />
+              <Row label="Headquarters country">
+                <CountrySelect
+                  value={country}
+                  onChange={(newCountry) => {
+                    setCountry(newCountry);
+                    if (
+                      newCountry.trim() &&
+                      !operatingCountries.some((c) => c.toLowerCase() === newCountry.trim().toLowerCase())
+                    ) {
+                      setOperatingCountries((prev) => [...prev, newCountry.trim()]);
+                    }
+                  }}
+                  placeholder="Select headquarters country..."
+                  disabled={isViewer}
+                />
               </Row>
               <Row label="Region / State">
-                <Input value={region} onChange={(ev) => setRegion(ev.target.value)} disabled={isViewer} />
+                <Input value={region} onChange={(ev) => setRegion(ev.target.value)} placeholder="e.g. Marmara" disabled={isViewer} />
               </Row>
               <Row label="City">
-                <Input value={city} onChange={(ev) => setCity(ev.target.value)} disabled={isViewer} />
+                <Input value={city} onChange={(ev) => setCity(ev.target.value)} placeholder="e.g. Istanbul" disabled={isViewer} />
+              </Row>
+              <Row label="Postal / ZIP code">
+                <Input value={zipCode} onChange={(ev) => setZipCode(ev.target.value)} placeholder="e.g. 34100" disabled={isViewer} />
+              </Row>
+              <Row label="Street address (physical facility or HQ)" className="md:col-span-2">
+                <Input
+                  value={address}
+                  onChange={(ev) => setAddress(ev.target.value)}
+                  placeholder="e.g. Organize Sanayi Bolgesi, 4. Cadde No: 12"
+                  disabled={isViewer}
+                />
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Full physical address of your facility or headquarters for customs clearance, official audits, and partner verification.
+                </p>
               </Row>
               <Row label="Website">
                 <Input
@@ -206,7 +277,7 @@ function OrgSettingsPage() {
                   disabled={isViewer}
                 />
               </Row>
-              <Row label="Company size (employees)" className="md:col-span-2">
+              <Row label="Company size (employees)">
                 <Select value={size} onValueChange={setSize} disabled={isViewer}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select size" />
@@ -220,6 +291,74 @@ function OrgSettingsPage() {
                   </SelectContent>
                 </Select>
               </Row>
+              <div className="md:col-span-2 rounded-lg border bg-slate-50/70 dark:bg-muted/30 p-4 space-y-3">
+                <div>
+                  <Label className="text-sm font-semibold">Operating & Production Countries</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    List all countries where your organization maintains manufacturing facilities, mills, or regional offices (e.g. HQ in Turkey, facility in Egypt). Buyers filtering or searching for any of these countries will match with your profile.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {operatingCountries.map((c) => (
+                    <Badge
+                      key={c}
+                      variant="secondary"
+                      className="px-2.5 py-1 text-xs gap-1.5 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/15"
+                    >
+                      <span>{c}</span>
+                      {!isViewer && (
+                        <button
+                          type="button"
+                          onClick={() => removeOperatingCountry(c)}
+                          className="text-primary/70 hover:text-primary transition-colors focus:outline-none"
+                          title={`Remove ${c}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
+                    </Badge>
+                  ))}
+                  {operatingCountries.length === 0 && (
+                    <span className="text-xs text-muted-foreground italic">
+                      No additional operating countries specified. Primary country ({country || "none"}) is used.
+                    </span>
+                  )}
+                </div>
+                {!isViewer && (
+                  <div className="space-y-2 pt-1 border-t border-border/60">
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      <div className="w-64">
+                        <CountrySelect
+                          value=""
+                          onChange={(val) => {
+                            if (val) addOperatingCountry(val);
+                          }}
+                          placeholder="Select country to add..."
+                          disabled={isViewer}
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                      <span className="text-[11px] text-muted-foreground">Quick add:</span>
+                      {COMMON_COUNTRIES.filter(
+                        (c) => !operatingCountries.some((oc) => oc.toLowerCase() === c.toLowerCase()),
+                      )
+                        .slice(0, 8)
+                        .map((c) => (
+                          <button
+                            key={c}
+                            type="button"
+                            onClick={() => addOperatingCountry(c)}
+                            className="text-[11px] px-2 py-0.5 rounded-full border border-dashed border-muted-foreground/30 text-muted-foreground hover:text-foreground hover:border-foreground/50 transition-colors"
+                          >
+                            + {c}
+                          </button>
+                        ))}
+                    </div>
+                  </div>
+                )}
+              </div>
               <Row label="About / Description" className="md:col-span-2">
                 <Textarea
                   value={description}

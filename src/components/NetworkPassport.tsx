@@ -110,6 +110,18 @@ export function NetworkPassport({ entity: e }: { entity: Entity }) {
                 label="Origin"
                 value={[e.city, e.country].filter(Boolean).join(", ") || e.country}
               />
+              {e.operatingCountries && e.operatingCountries.length > 0 && (
+                <PassportField
+                  label="Operating Countries"
+                  value={e.operatingCountries.join(", ")}
+                />
+              )}
+              {e.address && (
+                <PassportField
+                  label="Registered Address"
+                  value={[e.address, e.zipCode].filter(Boolean).join(", ")}
+                />
+              )}
               <PassportField label="GCH ID" value={e.gchNumber} />
               <PassportField label="Tier" value={e.actorType} />
               <PassportField

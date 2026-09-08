@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import type { Entity } from "@/seed/types";
 
-const ORG_COLUMNS = `
+const BASE_COLUMNS = `
   id, legacy_id, gch_number, slug, name, type, entity_type, raw_entity_type, organization_type,
   tier, country, region, city, address, zip_code, latitude, longitude, description, comments,
   website, logo_url, banner_urls, materials, capabilities, certifications, product_categories,
@@ -9,7 +9,7 @@ const ORG_COLUMNS = `
   governance, traceability_notes, confidence_score, risk_level, evidence_count, verified_cert_count,
   expired_cert_count, missing_data_count, profile_completeness, verification_status,
   preferred_channel, kpi_readiness, traceability_readiness, matchmaking_readiness, missing_fields,
-  recommended_next_action, rating, on_time_rate, avg_delay_days, delivery_timeframe_days
+  recommended_next_action, rating, on_time_rate, avg_delay_days, delivery_timeframe_days, profile_answers
 `;
 
 type OrgRow = Record<string, unknown>;
@@ -21,6 +21,12 @@ const list = (v: unknown): string[] => (Array.isArray(v) ? (v as string[]) : [])
 
 export function rowToEntity(row: OrgRow): Entity {
   const tier = row.tier as number | null;
+  const profileAnswers = (row.profile_answers as Record<string, unknown> | undefined) ?? {};
+  const operatingCountries =
+    list(row.operating_countries).length > 0
+      ? list(row.operating_countries)
+      : list(profileAnswers.operating_countries);
+
   return {
     id: str(row.slug) || str(row.legacy_id) || str(row.id),
     isSeeded: !!str(row.legacy_id),
@@ -38,6 +44,7 @@ export function rowToEntity(row: OrgRow): Entity {
       ? "Tier 1"
       : `Tier ${tier}`) as Entity["actorType"],
     country: str(row.country),
+    operatingCountries,
     region: str(row.region),
     city: str(row.city),
     address: str(row.address),
@@ -115,14 +122,26 @@ export const listEntities = createServerFn({ method: "GET" }).handler(
 
     const all: Entity[] = [];
     const pageSize = 1000;
+    let queryCols = `${BASE_COLUMNS}, operating_countries`;
+
     for (let page = 0; page < 10; page++) {
-      const { data, error } = await supabase
+      let res = await supabase
         .from("orgs")
-        .select(ORG_COLUMNS)
+        .select(queryCols)
         .order("name", { ascending: true })
         .range(page * pageSize, page * pageSize + pageSize - 1);
-      if (error) throw new Error(error.message);
-      const rows = (data ?? []) as OrgRow[];
+
+      if (res.error && res.error.message.includes("operating_countries")) {
+        queryCols = BASE_COLUMNS;
+        res = await supabase
+          .from("orgs")
+          .select(queryCols)
+          .order("name", { ascending: true })
+          .range(page * pageSize, page * pageSize + pageSize - 1);
+      }
+
+      if (res.error) throw new Error(res.error.message);
+      const rows = (res.data ?? []) as OrgRow[];
       all.push(...rows.map(rowToEntity));
       if (rows.length < pageSize) break;
     }

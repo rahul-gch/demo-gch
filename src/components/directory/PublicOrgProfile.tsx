@@ -352,6 +352,21 @@ export function PublicOrgProfile({ entity: e }: { entity: Entity }) {
                   {e.actorType}
                 </Badge>
               </div>
+
+              {e.operatingCountries && e.operatingCountries.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  <span className="text-xs text-muted-foreground font-medium">Operating in:</span>
+                  {e.operatingCountries.map((c) => (
+                    <Badge
+                      key={c}
+                      variant="secondary"
+                      className="text-[11px] px-2 py-0.5 font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                    >
+                      {c}
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
 
             {e.description && (
@@ -609,9 +624,38 @@ export function PublicOrgProfile({ entity: e }: { entity: Entity }) {
                   <span className="font-semibold text-foreground">{e.actorType}</span>
                 </div>
                 <div className="flex justify-between py-1 border-b">
-                  <span className="text-muted-foreground">Country / Region</span>
-                  <span className="font-medium text-foreground">{[e.country, e.region].filter(Boolean).join(", ") || "Global"}</span>
+                  <span className="text-muted-foreground">Headquarters</span>
+                  <span className="font-medium text-foreground">
+                    {[e.city, e.region, e.country].filter(Boolean).join(", ") || "Global"}
+                  </span>
                 </div>
+                {e.address && (
+                  <div className="flex justify-between py-1 border-b">
+                    <span className="text-muted-foreground">Registered Address</span>
+                    <span
+                      className="font-medium text-foreground text-right max-w-[200px] truncate"
+                      title={`${e.address}${e.zipCode ? ` (${e.zipCode})` : ""}`}
+                    >
+                      {e.address}{e.zipCode ? `, ${e.zipCode}` : ""}
+                    </span>
+                  </div>
+                )}
+                {e.operatingCountries && e.operatingCountries.length > 0 && (
+                  <div className="py-2 border-b space-y-1.5">
+                    <span className="text-muted-foreground block">Operating Countries</span>
+                    <div className="flex flex-wrap gap-1">
+                      {e.operatingCountries.map((c) => (
+                        <Badge
+                          key={c}
+                          variant="secondary"
+                          className="text-[10px] px-2 py-0.5 font-medium bg-slate-100 dark:bg-slate-800"
+                        >
+                          {c}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div className="flex justify-between py-1 border-b">
                   <span className="text-muted-foreground">Org Type</span>
                   <span className="font-medium text-foreground">{e.organizationType || e.entityType}</span>

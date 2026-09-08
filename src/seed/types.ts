@@ -61,6 +61,7 @@ export interface Entity extends ReliabilityFields {
   organizationType: string;
   actorType: ActorType;
   country: string;
+  operatingCountries?: string[];
   region: string;
   city: string;
   address: string;

@@ -261,20 +261,22 @@ export function MembersPanel({ orgId }: { orgId: string }) {
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       {!isRevoked && !isExpired && (
                         <>
                           <Button
-                            size="sm"
+                            size="icon"
                             variant="ghost"
+                            className="h-8 w-8"
                             onClick={() => copy(inv.token)}
                             title="Copy link"
                           >
                             <Copy className="h-4 w-4" />
                           </Button>
                           <Button
-                            size="sm"
+                            size="icon"
                             variant="ghost"
+                            className="h-8 w-8 text-destructive/80 hover:text-destructive hover:bg-destructive/10"
                             onClick={() => revokeMut.mutate(inv.id)}
                             title="Revoke"
                           >
@@ -331,7 +333,7 @@ export function MembersPanel({ orgId }: { orgId: string }) {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       {canModifyThisMember ? (
                         <Select
                           value={m.role}
@@ -355,16 +357,21 @@ export function MembersPanel({ orgId }: { orgId: string }) {
                         </Badge>
                       )}
 
-                      {canModifyThisMember && !isTargetOwner && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => removeMut.mutate(m.id)}
-                          disabled={removeMut.isPending}
-                          title="Remove member"
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive/80 hover:text-destructive" />
-                        </Button>
+                      {canManage && (
+                        canModifyThisMember && !isTargetOwner ? (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 shrink-0 text-destructive/80 hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => removeMut.mutate(m.id)}
+                            disabled={removeMut.isPending}
+                            title="Remove member"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          <div className="h-8 w-8 shrink-0" aria-hidden="true" />
+                        )
                       )}
                     </div>
                   </li>

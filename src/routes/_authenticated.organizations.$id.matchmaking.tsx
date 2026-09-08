@@ -78,13 +78,15 @@ function OrgMatchmakingPage() {
       const matchingAll = ALL_ENTITIES.filter((e) => {
         if (e.id === entity.id) return false;
         const name = e.name?.toLowerCase() || "";
-        const country = e.country?.toLowerCase() || "";
+        const countries = [e.country, ...(e.operatingCountries || [])].join(" ").toLowerCase();
+        const address = [e.address, e.city, e.region, e.zipCode].filter(Boolean).join(" ").toLowerCase();
         const materials = e.materials?.join(" ").toLowerCase() || "";
         const actor = e.actorType?.toLowerCase() || "";
         const entityType = e.entityType?.toLowerCase() || "";
         return (
           name.includes(q) ||
-          country.includes(q) ||
+          countries.includes(q) ||
+          address.includes(q) ||
           materials.includes(q) ||
           actor.includes(q) ||
           entityType.includes(q)
@@ -124,8 +126,14 @@ function OrgMatchmakingPage() {
       list = [...list].sort((a, b) => {
         let aScore = a.score;
         let bScore = b.score;
-        if (userPrefs.targetCountries.some((c) => a.entity.country?.toLowerCase() === c.toLowerCase())) aScore += 15;
-        if (userPrefs.targetCountries.some((c) => b.entity.country?.toLowerCase() === c.toLowerCase())) bScore += 15;
+        const aCountries = [a.entity.country, ...(a.entity.operatingCountries || [])]
+          .map((c) => c?.toLowerCase())
+          .filter(Boolean);
+        const bCountries = [b.entity.country, ...(b.entity.operatingCountries || [])]
+          .map((c) => c?.toLowerCase())
+          .filter(Boolean);
+        if (userPrefs.targetCountries.some((c) => aCountries.includes(c.toLowerCase()))) aScore += 15;
+        if (userPrefs.targetCountries.some((c) => bCountries.includes(c.toLowerCase()))) bScore += 15;
         if (a.entity.materials?.some((m) => userPrefs.targetMaterials.includes(m))) aScore += 10;
         if (b.entity.materials?.some((m) => userPrefs.targetMaterials.includes(m))) bScore += 10;
         return bScore - aScore;
@@ -277,8 +285,18 @@ function OrgMatchmakingPage() {
                       >
                         <TableCell>
                           <div className="font-medium hover:underline">{m.entity.name}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {m.entity.entityType} · {m.entity.country}
+                          <div className="text-xs text-muted-foreground flex items-center gap-1.5 flex-wrap">
+                            <span>{m.entity.entityType} · {m.entity.country}</span>
+                            {m.entity.operatingCountries &&
+                              m.entity.operatingCountries.filter(
+                                (c) => c.toLowerCase() !== (m.entity.country || "").toLowerCase(),
+                              ).length > 0 && (
+                                <span className="text-[10px] text-primary/80 font-medium">
+                                  (+{m.entity.operatingCountries.filter(
+                                    (c) => c.toLowerCase() !== (m.entity.country || "").toLowerCase(),
+                                  ).join(", ")})
+                                </span>
+                              )}
                           </div>
                         </TableCell>
                         <TableCell>
