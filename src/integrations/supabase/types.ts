@@ -701,7 +701,6 @@ export type Database = {
           name: string
           on_time_rate: number | null
           onboarding_completed_at: string | null
-          operating_countries: string[]
           organization_type: string | null
           preferred_channel: string | null
           product_categories: string[]
@@ -764,7 +763,6 @@ export type Database = {
           name: string
           on_time_rate?: number | null
           onboarding_completed_at?: string | null
-          operating_countries?: string[]
           organization_type?: string | null
           preferred_channel?: string | null
           product_categories?: string[]
@@ -827,7 +825,6 @@ export type Database = {
           name?: string
           on_time_rate?: number | null
           onboarding_completed_at?: string | null
-          operating_countries?: string[]
           organization_type?: string | null
           preferred_channel?: string | null
           product_categories?: string[]
