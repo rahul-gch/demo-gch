@@ -504,11 +504,16 @@ export const getOrgProfileAnswers = createServerFn({ method: "GET" })
     const { data: org, error } = await context.supabase
       .from("orgs")
       .select(
-        "id, name, type, entity_type, description, website, city, country, logo_url, profile_answers, profile_score",
+        "id, name, type, entity_type, description, website, city, country, logo_url, profile_score",
       )
       .eq("id", data.orgId)
       .single();
     if (error) throw new Error(error.message);
+    const { data: privateRows } = await context.supabase.rpc("org_private_details", {
+      _org: data.orgId,
+    });
+    const answers = ((Array.isArray(privateRows) ? privateRows[0] : privateRows)?.profile_answers ??
+      {}) as ProfileAnswers;
     return {
       orgId: org.id as string,
       name: (org.name as string) ?? "",
