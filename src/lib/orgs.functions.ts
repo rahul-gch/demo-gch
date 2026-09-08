@@ -571,3 +571,37 @@ export const leaveOrganizationFn = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/**
+ * Private organization fields (contacts, comments, governance, traceability
+ * notes). Restricted at the database level to the org's own members, orgs with
+ * an accepted connection, and platform admins.
+ */
+export const getOrgPrivateDetails = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ orgId: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { data: rows } = await context.supabase.rpc("org_private_details", {
+      _org: data.orgId,
+    });
+    const row = (Array.isArray(rows) ? rows[0] : rows) as
+      | {
+          contacts?: unknown;
+          comments?: string | null;
+          governance?: string | null;
+          traceability_notes?: string | null;
+        }
+      | null
+      | undefined;
+    return {
+      contacts: (Array.isArray(row?.contacts) ? row?.contacts : []) as Array<{
+        name?: string;
+        role?: string;
+        email?: string;
+        phone?: string;
+      }>,
+      comments: row?.comments ?? "",
+      governance: row?.governance ?? "",
+      traceabilityNotes: row?.traceability_notes ?? "",
+    };
+  });
