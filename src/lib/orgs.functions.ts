@@ -367,13 +367,8 @@ export const updateOrgProfile = createServerFn({ method: "POST" })
     }
 
     if (data.operatingCountries !== undefined) {
-      const { data: orgData } = await supabase
-        .from("orgs")
-        .select("profile_answers")
-        .eq("id", data.orgId)
-        .maybeSingle();
-      const currentAnswers =
-        ((orgData as { profile_answers?: Record<string, unknown> } | null)?.profile_answers ??
+      const { data: details } = await supabase.rpc("org_private_details", { _org: data.orgId });
+      const currentAnswers = ((Array.isArray(details) ? details[0] : details)?.profile_answers ??
         {}) as Record<string, unknown>;
       patch.profile_answers = {
         ...currentAnswers,
