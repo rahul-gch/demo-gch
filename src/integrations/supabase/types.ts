@@ -1812,6 +1812,16 @@ export type Database = {
         Args: { _project: string; _user: string }
         Returns: boolean
       }
+      org_private_details: {
+        Args: { _org: string }
+        Returns: {
+          comments: string
+          contacts: Json
+          governance: string
+          profile_answers: Json
+          traceability_notes: string
+        }[]
+      }
       orgs_are_connected: {
         Args: { _org_a: string; _org_b: string }
         Returns: boolean
