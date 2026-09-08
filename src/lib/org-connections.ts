@@ -9,6 +9,7 @@ import {
   respondOrgConnection,
   type ConnectionRecord,
 } from "./connections.functions";
+import { useAuthenticatedSessionReady } from "./use-comms";
 
 function canonicalId(id: string): string {
   if (!id) return id;
