@@ -692,8 +692,8 @@ export function PublicOrgProfile({ entity: e }: { entity: Entity }) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-xs">
-                {e.contacts && e.contacts.length > 0 ? (
-                  e.contacts.map((c, i) => (
+                {contacts.length > 0 ? (
+                  contacts.map((c, i) => (
                     <div key={i} className="rounded-lg border bg-muted/20 p-3 space-y-1.5">
                       <div className="flex items-center justify-between">
                         <span className="font-semibold text-foreground">{c.name}</span>
