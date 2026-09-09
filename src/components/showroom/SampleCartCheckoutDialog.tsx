@@ -11,7 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -30,7 +29,7 @@ import { formatSamplePackage } from "@/lib/showroom.functions";
 import type { SampleCartItem } from "@/lib/use-sample-cart";
 import type { Entity } from "@/seed/types";
 import { toast } from "sonner";
-import { Building2, Calendar, Loader2, MapPin, Package, Send, ShoppingBag } from "lucide-react";
+import { Building2, Calendar, Loader2, Package, Send, ShoppingBag } from "lucide-react";
 
 interface SampleCartCheckoutDialogProps {
   open: boolean;
