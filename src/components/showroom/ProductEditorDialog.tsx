@@ -56,6 +56,9 @@ const MATERIAL_SUGGESTIONS = [
   "Regenerative Wool",
 ];
 
+const MAX_IMAGES = 10;
+
+
 function SectionTitle({ step, title, hint }: { step: number; title: string; hint?: string }) {
   return (
     <div className="flex items-baseline gap-2">
@@ -88,6 +91,10 @@ export function ProductEditorDialog({
   const [imageUrlInput, setImageUrlInput] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadDone, setUploadDone] = useState(0);
+  const [uploadTotal, setUploadTotal] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [touchedName, setTouchedName] = useState(false);
 
@@ -148,44 +155,88 @@ export function ProductEditorDialog({
     setImages(next);
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const uploadFiles = async (fileList: File[]) => {
+    if (fileList.length === 0) return;
 
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please select a valid image file (PNG, JPEG, WebP).");
+    const remaining = MAX_IMAGES - images.length;
+    if (remaining <= 0) {
+      toast.error(`You can add up to ${MAX_IMAGES} photos per product.`);
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image size must be less than 5MB.");
-      return;
+    const files = fileList.slice(0, remaining);
+    if (fileList.length > remaining) {
+      toast.error(`Only the first ${remaining} photo${remaining > 1 ? "s" : ""} were added (max ${MAX_IMAGES}).`);
     }
 
     setIsUploading(true);
-    try {
-      const ext = file.name.split(".").pop() ?? "jpg";
-      const filePath = `${orgId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    setUploadTotal(files.length);
+    let done = 0;
+    let failed = 0;
 
-      const { error: uploadError } = await supabase.storage
-        .from(SHOWROOM_BUCKET)
-        .upload(filePath, file, { upsert: true });
+    for (const file of files) {
+      setUploadDone(done);
 
-      if (uploadError) throw uploadError;
+      if (!file.type.startsWith("image/")) {
+        toast.error(`${file.name} is not an image file — skipped.`);
+        failed += 1;
+        done += 1;
+        continue;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`${file.name} is larger than 5MB — skipped.`);
+        failed += 1;
+        done += 1;
+        continue;
+      }
 
-      const ref = makeRef(SHOWROOM_BUCKET, filePath);
-      setImages((prev) => [...prev, ref]);
-      void resolveImage(ref).then((url) => {
-        if (url) setPreviews((prev) => ({ ...prev, [ref]: url }));
-      });
-      toast.success("Image uploaded");
-    } catch (err) {
-      console.warn("Upload failed:", err);
-      toast.error("Could not upload image. You can also paste an image URL instead.");
-    } finally {
-      setIsUploading(false);
-      if (e.target) e.target.value = "";
+      try {
+        const ext = file.name.split(".").pop() ?? "jpg";
+        const filePath = `${orgId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from(SHOWROOM_BUCKET)
+          .upload(filePath, file, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        const ref = makeRef(SHOWROOM_BUCKET, filePath);
+        setImages((prev) => [...prev, ref]);
+        void resolveImage(ref).then((url) => {
+          if (url) setPreviews((prev) => ({ ...prev, [ref]: url }));
+        });
+      } catch (err) {
+        console.warn("Upload failed:", err);
+        toast.error(`Could not upload ${file.name}.`);
+        failed += 1;
+      }
+      done += 1;
+      setUploadDone(done);
     }
+
+    const succeeded = files.length - failed;
+    if (succeeded > 0) {
+      toast.success(`${succeeded} photo${succeeded > 1 ? "s" : ""} uploaded`);
+    }
+
+    setIsUploading(false);
+    setUploadTotal(0);
+    setUploadDone(0);
   };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    await uploadFiles(files);
+    if (e.target) e.target.value = "";
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (isUploading) return;
+    const files = Array.from(e.dataTransfer.files ?? []).filter((f) => f.type.startsWith("image/"));
+    await uploadFiles(files);
+  };
+
 
   const handleRemoveImage = (index: number) => {
     setImages(images.filter((_, i) => i !== index));
