@@ -609,3 +609,37 @@ export const getOrgPrivateDetails = createServerFn({ method: "GET" })
       traceabilityNotes: row?.traceability_notes ?? "",
     };
   });
+
+/** Default shipping address for an organization, taken from its saved profile. Members only. */
+export const getOrgShippingDefault = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ orgId: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: isMember } = await supabase.rpc("is_org_member", {
+      _user: userId,
+      _org: data.orgId,
+    });
+    const { data: isAdmin } = await supabase.rpc("is_platform_admin", { _user: userId });
+    if (!isMember && !isAdmin) {
+      return { name: "", address: "", city: "", zipCode: "", country: "", formatted: "" };
+    }
+
+    const { data: org, error } = await supabase
+      .from("orgs")
+      .select("name, address, city, zip_code, country")
+      .eq("id", data.orgId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+
+    const name = (org?.name as string | null) ?? "";
+    const address = (org?.address as string | null) ?? "";
+    const city = (org?.city as string | null) ?? "";
+    const zipCode = (org?.zip_code as string | null) ?? "";
+    const country = (org?.country as string | null) ?? "";
+
+    const cityLine = [zipCode, city].filter(Boolean).join(" ");
+    const formatted = [name, address, cityLine, country].filter((v) => v && v.trim()).join("\n");
+
+    return { name, address, city, zipCode, country, formatted };
+  });

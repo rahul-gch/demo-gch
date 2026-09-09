@@ -11,7 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -21,14 +20,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ShippingAddressField } from "@/components/showroom/ShippingAddressField";
 import { useCreateBatchSampleOrders } from "@/lib/use-showroom";
+
 import { useMyOrgs } from "@/lib/use-comms";
 import { getEntity } from "@/seed/all-entities";
 import { formatSamplePackage } from "@/lib/showroom.functions";
 import type { SampleCartItem } from "@/lib/use-sample-cart";
 import type { Entity } from "@/seed/types";
 import { toast } from "sonner";
-import { Building2, Calendar, Loader2, MapPin, Package, Send, ShoppingBag } from "lucide-react";
+import { Building2, Calendar, Loader2, Package, Send, ShoppingBag } from "lucide-react";
 
 interface SampleCartCheckoutDialogProps {
   open: boolean;
@@ -62,6 +63,8 @@ export function SampleCartCheckoutDialog({
   }, [buyerOrgId]);
 
   const [address, setAddress] = useState("");
+  const [useCustomAddress, setUseCustomAddress] = useState(false);
+
   const [neededBy, setNeededBy] = useState("");
   const [notes, setNotes] = useState("");
 
@@ -201,19 +204,15 @@ export function SampleCartCheckoutDialog({
           </div>
 
           {/* Shipping destination */}
-          <div className="space-y-2">
-            <Label htmlFor="batch-address" className="flex items-center gap-2 text-xs font-medium">
-              <MapPin className="h-3.5 w-3.5 text-primary" /> Shipping Destination <span className="text-rose-500">*</span>
-            </Label>
-            <Textarea
-              id="batch-address"
-              placeholder="Company name, Attn: recipient, Street address, City, Postal code, Country..."
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              rows={3}
-              required
-            />
-          </div>
+          <ShippingAddressField
+            orgId={buyerOrgId || null}
+            value={address}
+            onChange={setAddress}
+            useCustom={useCustomAddress}
+            onUseCustomChange={setUseCustomAddress}
+            id="batch-address"
+          />
+
 
           {/* Needed By and Notes */}
           <div className="grid gap-4 sm:grid-cols-2">
