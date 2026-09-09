@@ -23,6 +23,8 @@ import { toast } from "sonner";
 import { ShowroomLocked } from "@/components/showroom/ShowroomLocked";
 import { formatSamplePackage } from "@/lib/showroom.functions";
 import { SampleOptionSelector } from "@/components/showroom/SampleOptionSelector";
+import { ShippingAddressField } from "@/components/showroom/ShippingAddressField";
+
 import {
   ArrowLeft,
   Building2,
@@ -62,7 +64,9 @@ export function OrderPage({ entity, productId }: { entity: Entity; productId: st
   const [material, setMaterial] = useState("");
   const [neededBy, setNeededBy] = useState("");
   const [address, setAddress] = useState("");
+  const [useCustomAddress, setUseCustomAddress] = useState(false);
   const [notes, setNotes] = useState("");
+
   const rawCover = product?.images?.[0] ?? null;
   const cover = product?.thumbnails?.[0] ?? (rawCover ? getOptimizedThumbnailUrl(rawCover, { width: 160 }) : null) ?? rawCover;
   const addressOk = address.trim().length >= 3;
@@ -288,19 +292,15 @@ export function OrderPage({ entity, productId }: { entity: Entity; productId: st
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="address" className="text-xs font-medium">
-                  Shipping destination <span className="text-rose-500">*</span>
-                </Label>
-                <Textarea
-                  id="address"
-                  rows={3}
-                  placeholder="Company, attention to, street, city, postal code, country, phone"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  required
-                />
-              </div>
+              <ShippingAddressField
+                orgId={buyerOrgId || null}
+                value={address}
+                onChange={setAddress}
+                useCustom={useCustomAddress}
+                onUseCustomChange={setUseCustomAddress}
+                id="address"
+              />
+
               <div className="space-y-1.5">
                 <Label htmlFor="notes" className="text-xs font-medium">
                   Special requirements (optional)
