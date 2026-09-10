@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { ProductEditorDialog } from "@/components/showroom/ProductEditorDialog";
 import { ProductImage } from "@/components/showroom/ProductImage";
+import { ProductImageLightbox } from "@/components/showroom/ProductImageLightbox";
 import { getOptimizedThumbnailUrl } from "@/lib/org-images";
 import { parseProductDescription } from "@/lib/product-description";
 import { ShowroomLocked } from "@/components/showroom/ShowroomLocked";
@@ -43,6 +44,7 @@ import {
   Loader2,
   Building2,
   ShoppingBag,
+  ZoomIn,
 } from "lucide-react";
 
 interface ProductDetailPageProps {
@@ -67,6 +69,7 @@ export function ProductDetailPage({ entity, productId, mode = "member" }: Produc
 
   const [activeImage, setActiveImage] = useState(0);
   const [editorOpen, setEditorOpen] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const product = data?.product ?? null;
@@ -218,7 +221,21 @@ export function ProductDetailPage({ entity, productId, mode = "member" }: Produc
         {/* Gallery */}
         <div className="space-y-3">
           <div className="relative aspect-square w-full overflow-hidden rounded-xl border bg-muted">
-            <ProductImage src={cover} alt={product.name} fit="contain" />
+            {cover ? (
+              <button
+                type="button"
+                onClick={() => setLightboxOpen(true)}
+                aria-label="Open image preview with zoom"
+                className="group relative block h-full w-full cursor-zoom-in"
+              >
+                <ProductImage src={cover} alt={product.name} fit="contain" />
+                <span className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white opacity-0 transition group-hover:opacity-100">
+                  <ZoomIn className="h-4 w-4" />
+                </span>
+              </button>
+            ) : (
+              <ProductImage src={cover} alt={product.name} fit="contain" />
+            )}
             {!product.isActive && (
               <Badge className="absolute left-3 top-3 bg-slate-800 text-white">Hidden</Badge>
             )}
@@ -351,6 +368,16 @@ export function ProductDetailPage({ entity, productId, mode = "member" }: Produc
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ProductImageLightbox
+        images={images}
+        thumbnails={product.thumbnails ?? undefined}
+        index={Math.min(activeImage, Math.max(images.length - 1, 0))}
+        open={lightboxOpen}
+        onOpenChange={setLightboxOpen}
+        onIndexChange={setActiveImage}
+        alt={product.name}
+      />
 
       <SampleCartDrawer sellerEntity={entity} canOrder={isConnected} />
     </div>
