@@ -78,8 +78,10 @@ export function ProductImageLightbox({
       e.preventDefault();
       const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 100 : 1);
       const rect = el.getBoundingClientRect();
-      const ax = e.clientX - rect.left - rect.width / 2;
-      const ay = e.clientY - rect.top - rect.height / 2;
+      // Image fills the container, so the anchor is the cursor position
+      // relative to the container's top-left corner.
+      const ax = e.clientX - rect.left;
+      const ay = e.clientY - rect.top;
       zoomAtRef.current(viewRef.current.zoom * Math.exp(-dy * 0.0018), ax, ay);
     };
     el.addEventListener("wheel", onWheel, { passive: false });
@@ -118,8 +120,8 @@ export function ProductImageLightbox({
       const [a, b] = [...pointers.current.values()];
       const dist = Math.hypot(a.x - b.x, a.y - b.y);
       const rect = containerElRef.current?.getBoundingClientRect();
-      const ax = rect ? (a.x + b.x) / 2 - rect.left - rect.width / 2 : 0;
-      const ay = rect ? (a.y + b.y) / 2 - rect.top - rect.height / 2 : 0;
+      const ax = rect ? (a.x + b.x) / 2 - rect.left : 0;
+      const ay = rect ? (a.y + b.y) / 2 - rect.top : 0;
       zoomAt(pinchStart.current.zoom * (dist / Math.max(pinchStart.current.dist, 1)), ax, ay);
       return;
     }
