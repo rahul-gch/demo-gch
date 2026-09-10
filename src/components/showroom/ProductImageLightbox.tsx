@@ -67,9 +67,11 @@ export function ProductImageLightbox({
   }, []);
 
   // Non-passive wheel listener: smooth zoom scaled by delta, anchored at cursor.
-  useEffect(() => {
-    if (!open) return;
-    const el = containerRef.current;
+  // Attached via callback ref so the listener lands exactly when the element mounts
+  // (the dialog renders in a portal, so an effect can run before the node exists).
+  const zoomAtRef = useRef(zoomAt);
+  zoomAtRef.current = zoomAt;
+  const containerRef = useCallback((el: HTMLDivElement | null) => {
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
@@ -77,11 +79,10 @@ export function ProductImageLightbox({
       const rect = el.getBoundingClientRect();
       const ax = e.clientX - rect.left - rect.width / 2;
       const ay = e.clientY - rect.top - rect.height / 2;
-      zoomAt(viewRef.current.zoom * Math.exp(-dy * 0.0018), ax, ay);
+      zoomAtRef.current(viewRef.current.zoom * Math.exp(-dy * 0.0018), ax, ay);
     };
     el.addEventListener("wheel", onWheel, { passive: false });
-    return () => el.removeEventListener("wheel", onWheel);
-  }, [open, zoomAt]);
+  }, []);
 
   // Keyboard navigation.
   useEffect(() => {
