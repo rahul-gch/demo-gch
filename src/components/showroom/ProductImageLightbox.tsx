@@ -70,7 +70,9 @@ export function ProductImageLightbox({
   // (the dialog renders in a portal, so an effect can run before the node exists).
   const zoomAtRef = useRef(zoomAt);
   zoomAtRef.current = zoomAt;
+  const containerElRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useCallback((el: HTMLDivElement | null) => {
+    containerElRef.current = el;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
@@ -115,7 +117,7 @@ export function ProductImageLightbox({
     if (pointers.current.size === 2 && pinchStart.current) {
       const [a, b] = [...pointers.current.values()];
       const dist = Math.hypot(a.x - b.x, a.y - b.y);
-      const rect = containerRef.current?.getBoundingClientRect();
+      const rect = containerElRef.current?.getBoundingClientRect();
       const ax = rect ? (a.x + b.x) / 2 - rect.left - rect.width / 2 : 0;
       const ay = rect ? (a.y + b.y) / 2 - rect.top - rect.height / 2 : 0;
       zoomAt(pinchStart.current.zoom * (dist / Math.max(pinchStart.current.dist, 1)), ax, ay);
