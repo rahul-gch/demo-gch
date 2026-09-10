@@ -35,7 +35,6 @@ export function ProductImageLightbox({
   onIndexChange,
   alt,
 }: ProductImageLightboxProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<ViewState>(RESET);
   const viewRef = useRef(view);
   viewRef.current = view;
