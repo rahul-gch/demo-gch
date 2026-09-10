@@ -53,14 +53,17 @@ export function ProductImageLightbox({
   );
 
   // Apply a zoom change anchored at a point relative to the container centre.
-  const zoomAt = useCallback((nextZoom: number, anchorX = 0, anchorY = 0) => {
+  const zoomAt = useCallback((nextZoom: number, anchorX?: number, anchorY?: number) => {
+    const rect = containerElRef.current?.getBoundingClientRect();
+    const ax = anchorX ?? (rect ? rect.width / 2 : 0);
+    const ay = anchorY ?? (rect ? rect.height / 2 : 0);
     setView((prev) => {
       const zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, nextZoom));
       if (zoom === prev.zoom) return prev;
       const k = zoom / prev.zoom;
       return {
         zoom,
-        offset: { x: anchorX - (anchorX - prev.offset.x) * k, y: anchorY - (anchorY - prev.offset.y) * k },
+        offset: { x: ax - (ax - prev.offset.x) * k, y: ay - (ay - prev.offset.y) * k },
       };
     });
   }, []);
