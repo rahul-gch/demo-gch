@@ -55,6 +55,7 @@ export function MeetingsWorkspace({
         onError: (e) => toast.error(e instanceof Error ? e.message : "Could not update request"),
       },
     );
+  };
 
   const inbound = groupMeetings(meetings, "Received");
   const outbound = groupMeetings(meetings, "Sent");
