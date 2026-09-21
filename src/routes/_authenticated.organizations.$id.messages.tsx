@@ -2,7 +2,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { getEntity } from "@/seed/all-entities";
 import {
-  useActingOrgId,
+  useViewedOrg,
   useConversations,
   useMarkRead,
   useSendMessage,
@@ -50,7 +50,7 @@ export const Route = createFileRoute("/_authenticated/organizations/$id/messages
 
 function OrgMessagesPage() {
   const { entity: viewer } = Route.useLoaderData();
-  const orgId = useActingOrgId(viewer.orgUuid ?? null);
+  const { orgId, isMember } = useViewedOrg(viewer.orgUuid ?? null);
   const { conversations, isLoading } = useConversations(orgId);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [filter, setFilter] = useState("");
@@ -63,9 +63,9 @@ function OrgMessagesPage() {
   const sendMessage = useSendMessage(orgId);
 
   useEffect(() => {
-    if (active && active.unread > 0) markRead.mutate(active.id);
+    if (isMember && active && active.unread > 0) markRead.mutate(active.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active?.id, active?.unread]);
+  }, [active?.id, active?.unread, isMember]);
 
   const activeEntity = active?.entity ?? null;
 
@@ -83,6 +83,11 @@ function OrgMessagesPage() {
           Conversations from <span className="font-medium">{viewer.name}</span> with matched
           organizations.
         </p>
+        {!isMember && (
+          <p className="mt-2 inline-flex rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs text-amber-800">
+            Viewing as platform admin — read only. You are not a member of {viewer.name}.
+          </p>
+        )}
       </header>
       <div
         className={cn(
@@ -110,12 +115,18 @@ function OrgMessagesPage() {
                 infoOpen={infoOpen}
               />
               <MessageList messages={messages} entity={activeEntity} />
-              <MessageComposer
-                value={draft}
-                onChange={setDraft}
-                onSend={send}
-                placeholder={`Reply to ${activeEntity.name}…`}
-              />
+              {isMember ? (
+                <MessageComposer
+                  value={draft}
+                  onChange={setDraft}
+                  onSend={send}
+                  placeholder={`Reply to ${activeEntity.name}…`}
+                />
+              ) : (
+                <div className="border-t px-4 py-3 text-center text-xs text-muted-foreground">
+                  Read-only view — only members of {viewer.name} can reply.
+                </div>
+              )}
             </>
           ) : (
             <div className="flex flex-1 flex-col items-center justify-center gap-2 p-10 text-center">

@@ -50,8 +50,9 @@ function Row({ n }: { n: NotificationItem }) {
   );
 }
 
-export function NotificationBell() {
-  const orgId = useActingOrgId();
+export function NotificationBell({ orgId: scopedOrgId }: { orgId?: string | null } = {}) {
+  const actingOrgId = useActingOrgId();
+  const orgId = scopedOrgId !== undefined ? scopedOrgId : actingOrgId;
   const { items, isLoading } = useNotifications(orgId);
   const markAll = useMarkAllNotificationsRead(orgId);
   const count = items.length;

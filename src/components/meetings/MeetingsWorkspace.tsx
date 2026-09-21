@@ -22,16 +22,23 @@ export function MeetingsWorkspace({
   meetings,
   orgId,
   isLoading,
+  readOnly = false,
 }: {
   meetings: MeetingRequest[];
   orgId: string | null;
   isLoading: boolean;
+  /** Platform admins viewing another organization can read but not act. */
+  readOnly?: boolean;
 }) {
   const [direction, setDirection] = useState<MeetingDirection>("Received");
   const [details, setDetails] = useState<MeetingRequest | null>(null);
   const respond = useSetMeetingStatus(orgId);
 
-  const act = (id: string, status: "confirmed" | "declined" | "cancelled") =>
+  const act = (id: string, status: "confirmed" | "declined" | "cancelled") => {
+    if (readOnly) {
+      toast.error("Read-only view — only members of this organization can respond.");
+      return;
+    }
     respond.mutate(
       { id, status },
       {
@@ -48,6 +55,7 @@ export function MeetingsWorkspace({
         onError: (e) => toast.error(e instanceof Error ? e.message : "Could not update request"),
       },
     );
+  };
 
   const inbound = groupMeetings(meetings, "Received");
   const outbound = groupMeetings(meetings, "Sent");
@@ -87,6 +95,7 @@ export function MeetingsWorkspace({
                 <MeetingCard
                   key={m.id}
                   m={m}
+                  readOnly={readOnly}
                   busy={respond.isPending}
                   onRespond={(id, status) => act(id, status)}
                   onWithdraw={(id) => act(id, "cancelled")}

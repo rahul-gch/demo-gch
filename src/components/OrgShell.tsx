@@ -12,11 +12,13 @@ import { UserMenu } from "./UserMenu";
 import { NotificationBell } from "./NotificationBell";
 import { NavHistoryButtons } from "./NavHistoryButtons";
 import type { Entity } from "@/seed/types";
-import { useActingOrgId, useRealtimeComms } from "@/lib/use-comms";
+import { useRealtimeComms } from "@/lib/use-comms";
 import { amIPlatformAdmin } from "@/lib/admin.functions";
 
 export function OrgShell({ entity, children }: { entity: Entity; children: ReactNode }) {
-  useRealtimeComms(useActingOrgId(entity.orgUuid ?? null));
+  // Always scoped to the organization in the URL — never the viewer's own org.
+  const viewedOrgId = entity.orgUuid ?? null;
+  useRealtimeComms(viewedOrgId);
   const checkPlatformAdmin = useServerFn(amIPlatformAdmin);
   const adminQuery = useQuery({
     queryKey: ["platform-admin"],
@@ -63,7 +65,7 @@ export function OrgShell({ entity, children }: { entity: Entity; children: React
               </span>
             </div>
 
-            <NotificationBell />
+            <NotificationBell orgId={viewedOrgId} />
             <UserMenu />
           </header>
           <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 sm:py-8">{children}</main>
