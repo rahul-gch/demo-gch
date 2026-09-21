@@ -34,7 +34,11 @@ export function MeetingsWorkspace({
   const [details, setDetails] = useState<MeetingRequest | null>(null);
   const respond = useSetMeetingStatus(orgId);
 
-  const act = (id: string, status: "confirmed" | "declined" | "cancelled") =>
+  const act = (id: string, status: "confirmed" | "declined" | "cancelled") => {
+    if (readOnly) {
+      toast.error("Read-only view — only members of this organization can respond.");
+      return;
+    }
     respond.mutate(
       { id, status },
       {
