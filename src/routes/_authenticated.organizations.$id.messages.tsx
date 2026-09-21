@@ -2,7 +2,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { getEntity } from "@/seed/all-entities";
 import {
-  useActingOrgId,
+  useViewedOrg,
   useConversations,
   useMarkRead,
   useSendMessage,
@@ -50,7 +50,7 @@ export const Route = createFileRoute("/_authenticated/organizations/$id/messages
 
 function OrgMessagesPage() {
   const { entity: viewer } = Route.useLoaderData();
-  const orgId = useActingOrgId(viewer.orgUuid ?? null);
+  const { orgId, isMember } = useViewedOrg(viewer.orgUuid ?? null);
   const { conversations, isLoading } = useConversations(orgId);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [filter, setFilter] = useState("");
@@ -63,9 +63,9 @@ function OrgMessagesPage() {
   const sendMessage = useSendMessage(orgId);
 
   useEffect(() => {
-    if (active && active.unread > 0) markRead.mutate(active.id);
+    if (isMember && active && active.unread > 0) markRead.mutate(active.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active?.id, active?.unread]);
+  }, [active?.id, active?.unread, isMember]);
 
   const activeEntity = active?.entity ?? null;
 
