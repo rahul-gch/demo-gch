@@ -90,6 +90,7 @@ export function MeetingsWorkspace({
                 <MeetingCard
                   key={m.id}
                   m={m}
+                  readOnly={readOnly}
                   busy={respond.isPending}
                   onRespond={(id, status) => act(id, status)}
                   onWithdraw={(id) => act(id, "cancelled")}

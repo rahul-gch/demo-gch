@@ -29,17 +29,19 @@ export function MeetingCard({
   onWithdraw,
   onOpenDetails,
   busy,
+  readOnly = false,
 }: {
   m: MeetingRequest;
   onRespond: (id: string, status: "confirmed" | "declined") => void;
   onWithdraw: (id: string) => void;
   onOpenDetails: (m: MeetingRequest) => void;
   busy?: boolean;
+  readOnly?: boolean;
 }) {
   const dt = new Date(m.proposedFor);
   const entity = getEntity(m.orgId);
-  const canRespond = m.status === "Pending" && m.direction === "Received";
-  const canWithdraw = m.status === "Pending" && m.direction === "Sent";
+  const canRespond = !readOnly && m.status === "Pending" && m.direction === "Received";
+  const canWithdraw = !readOnly && m.status === "Pending" && m.direction === "Sent";
 
   return (
     <Card className="rounded-2xl shadow-sm transition-shadow hover:shadow-md">
