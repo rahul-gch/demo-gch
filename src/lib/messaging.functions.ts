@@ -9,12 +9,12 @@ export const listConversations = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<ConversationSummary[]> => {
     const { supabase, userId } = context;
 
-    // Only members of the org may list its inbox — platform admins included.
-    const { data: isMember } = await supabase.rpc("is_org_member", {
-      _user: userId,
-      _org: data.orgId,
-    });
-    if (!isMember) return [];
+    // Members of the org may list its inbox; platform admins get read-only access.
+    const [{ data: isMember }, { data: isAdmin }] = await Promise.all([
+      supabase.rpc("is_org_member", { _user: userId, _org: data.orgId }),
+      supabase.rpc("is_platform_admin", { _user: userId }),
+    ]);
+    if (!isMember && !isAdmin) return [];
 
     const { data: mine, error: mineErr } = await supabase
       .from("conversation_participants")

@@ -92,6 +92,22 @@ export function useActingOrgId(preferred?: string | null): string | null {
   return ids[0] ?? null;
 }
 
+/**
+ * Organization-scoped pages must always speak for the organization in the URL —
+ * never silently fall back to one of the viewer's own organizations. Returns the
+ * requested org plus whether the viewer actually belongs to it.
+ */
+export function useViewedOrg(orgUuid?: string | null): {
+  orgId: string | null;
+  isMember: boolean;
+} {
+  const ids = useMyOrgIds();
+  return {
+    orgId: orgUuid ?? null,
+    isMember: Boolean(orgUuid && ids.includes(orgUuid)),
+  };
+}
+
 export interface ConversationView extends ConversationSummary {
   entity: NonNullable<ReturnType<typeof getEntity>>;
 }
