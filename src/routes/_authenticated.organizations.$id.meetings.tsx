@@ -1,6 +1,6 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { getEntity } from "@/seed/all-entities";
-import { useActingOrgId, useMeetings } from "@/lib/use-comms";
+import { useViewedOrg, useMeetings } from "@/lib/use-comms";
 import { MeetingsWorkspace } from "@/components/meetings/MeetingsWorkspace";
 import { refreshRegistry } from "@/lib/registry";
 
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/_authenticated/organizations/$id/meetings
 
 function OrgMeetingsPage() {
   const { entity } = Route.useLoaderData();
-  const orgId = useActingOrgId(entity.orgUuid ?? null);
+  const { orgId, isMember } = useViewedOrg(entity.orgUuid ?? null);
   const { meetings, isLoading } = useMeetings(orgId);
 
   return (
@@ -45,9 +45,19 @@ function OrgMeetingsPage() {
         <p className="mt-1 text-sm text-muted-foreground">
           Requests received and sent by <span className="font-medium">{entity.name}</span>.
         </p>
+        {!isMember && (
+          <p className="mt-2 inline-flex rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs text-amber-800">
+            Viewing as platform admin — read only. You are not a member of {entity.name}.
+          </p>
+        )}
       </header>
 
-      <MeetingsWorkspace meetings={meetings} orgId={orgId} isLoading={isLoading} />
+      <MeetingsWorkspace
+        meetings={meetings}
+        orgId={orgId}
+        isLoading={isLoading}
+        readOnly={!isMember}
+      />
     </div>
   );
 }

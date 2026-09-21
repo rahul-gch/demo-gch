@@ -22,10 +22,13 @@ export function MeetingsWorkspace({
   meetings,
   orgId,
   isLoading,
+  readOnly = false,
 }: {
   meetings: MeetingRequest[];
   orgId: string | null;
   isLoading: boolean;
+  /** Platform admins viewing another organization can read but not act. */
+  readOnly?: boolean;
 }) {
   const [direction, setDirection] = useState<MeetingDirection>("Received");
   const [details, setDetails] = useState<MeetingRequest | null>(null);
