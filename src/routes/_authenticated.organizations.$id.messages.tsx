@@ -115,12 +115,18 @@ function OrgMessagesPage() {
                 infoOpen={infoOpen}
               />
               <MessageList messages={messages} entity={activeEntity} />
-              <MessageComposer
-                value={draft}
-                onChange={setDraft}
-                onSend={send}
-                placeholder={`Reply to ${activeEntity.name}…`}
-              />
+              {isMember ? (
+                <MessageComposer
+                  value={draft}
+                  onChange={setDraft}
+                  onSend={send}
+                  placeholder={`Reply to ${activeEntity.name}…`}
+                />
+              ) : (
+                <div className="border-t px-4 py-3 text-center text-xs text-muted-foreground">
+                  Read-only view — only members of {viewer.name} can reply.
+                </div>
+              )}
             </>
           ) : (
             <div className="flex flex-1 flex-col items-center justify-center gap-2 p-10 text-center">
