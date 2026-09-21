@@ -83,6 +83,11 @@ function OrgMessagesPage() {
           Conversations from <span className="font-medium">{viewer.name}</span> with matched
           organizations.
         </p>
+        {!isMember && (
+          <p className="mt-2 inline-flex rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs text-amber-800">
+            Viewing as platform admin — read only. You are not a member of {viewer.name}.
+          </p>
+        )}
       </header>
       <div
         className={cn(
