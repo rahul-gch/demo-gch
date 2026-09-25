@@ -8,21 +8,23 @@ import {
   type NotificationItem,
   type SharedCounts,
 } from "@/lib/notifications.functions";
+import { useAuthenticatedSessionReady } from "@/lib/use-comms";
 
 export type { NotificationItem, SharedCounts };
 
 export function useNotifications(orgId: string | null) {
   const queryClient = useQueryClient();
+  const hasSession = useAuthenticatedSessionReady();
 
   const query = useQuery({
     queryKey: ["notifications", orgId],
-    enabled: !!orgId,
+    enabled: !!orgId && hasSession,
     queryFn: () => listNotifications({ data: { orgId: orgId! } }),
-    refetchInterval: 60_000,
+    refetchInterval: hasSession ? 60_000 : false,
   });
 
   useEffect(() => {
-    if (!orgId) return;
+    if (!orgId || !hasSession) return;
     const invalidate = () => queryClient.invalidateQueries({ queryKey: ["notifications", orgId] });
     const channel = supabase
       .channel(`notifications-${orgId}`)
@@ -36,7 +38,7 @@ export function useNotifications(orgId: string | null) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [orgId, queryClient]);
+  }, [orgId, hasSession, queryClient]);
 
   return { items: query.data ?? [], isLoading: query.isLoading };
 }
@@ -53,9 +55,10 @@ export function useMarkAllNotificationsRead(orgId: string | null) {
 }
 
 export function useSharedCounts(orgId: string | null, counterpartOrgId: string | null) {
+  const hasSession = useAuthenticatedSessionReady();
   const query = useQuery({
     queryKey: ["shared-counts", orgId, counterpartOrgId],
-    enabled: !!orgId && !!counterpartOrgId,
+    enabled: !!orgId && !!counterpartOrgId && hasSession,
     queryFn: () =>
       orgSharedCounts({ data: { orgId: orgId!, counterpartOrgId: counterpartOrgId! } }),
     staleTime: 60_000,
