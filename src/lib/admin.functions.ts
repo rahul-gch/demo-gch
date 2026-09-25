@@ -293,3 +293,78 @@ export const acceptPlatformInvite = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { orgId: (orgId as string | null) ?? null };
   });
+
+export interface AdminOrgVisibilityRow {
+  id: string;
+  name: string;
+  slug: string;
+  type: string | null;
+  country: string | null;
+  logo_url: string | null;
+  is_hidden: boolean;
+}
+
+/** Every organization with its public-visibility state (platform admins only). */
+export const listOrgVisibility = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({ search: z.string().trim().max(120).optional().default("") })
+      .parse(data ?? {}),
+  )
+  .handler(async ({ data, context }): Promise<AdminOrgVisibilityRow[]> => {
+    await assertAdmin(context);
+    let query = context.supabase
+      .from("orgs")
+      .select("id, name, slug, type, country, logo_url, is_hidden")
+      .order("name", { ascending: true })
+      .limit(100);
+    if (data.search) query = query.ilike("name", `%${data.search}%`);
+    const { data: rows, error } = await query;
+    if (error) throw new Error(error.message);
+    return (rows ?? []) as AdminOrgVisibilityRow[];
+  });
+
+/** Hide or unhide an organization from public discovery (platform admins only). */
+export const setOrgVisibility = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ orgId: z.string().uuid(), isHidden: z.boolean() }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { error } = await context.supabase
+      .from("orgs")
+      .update({ is_hidden: data.isHidden })
+      .eq("id", data.orgId);
+    if (error) throw new Error(error.message);
+
+    await context.supabase.from("security_events").insert({
+      user_id: context.userId,
+      org_id: data.orgId,
+      action: data.isHidden ? "org_hidden_from_public" : "org_made_public",
+      target_type: "org",
+      target_id: data.orgId,
+      detail: {},
+    });
+    return { ok: true, isHidden: data.isHidden };
+  });
+
+/**
+ * Minimal teaser for an organization the viewer is not allowed to see.
+ * Returns only a name and logo so a signed-in user can request a connection.
+ */
+export const getRestrictedOrgTeaser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ idOrSlug: z.string().min(1).max(200) }).parse(data))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const id = data.idOrSlug;
+    const query = supabaseAdmin.from("orgs").select("id, name, logo_url, is_hidden");
+    const { data: row } = uuidRe.test(id)
+      ? await query.eq("id", id).maybeSingle()
+      : await query.or(`slug.eq.${id},legacy_id.eq.${id}`).limit(1).maybeSingle();
+    if (!row || row.is_hidden !== true) return null;
+    return { orgUuid: row.id as string, name: row.name as string, logoUrl: (row.logo_url as string | null) ?? null };
+  });
