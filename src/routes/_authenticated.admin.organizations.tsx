@@ -22,14 +22,16 @@ import { ORG_TYPES } from "@/lib/org-types";
 import {
   amIPlatformAdmin,
   createPlatformInvite,
+  listOrgVisibility,
   listPlatformInvites,
   listRecentSignups,
   revokePlatformInvite,
+  setOrgVisibility,
 } from "@/lib/admin.functions";
 import { toast } from "sonner";
-import { Copy, Loader2, ShieldAlert } from "lucide-react";
+import { Copy, Eye, EyeOff, Loader2, ShieldAlert } from "lucide-react";
 
-const TABS = ["signups", "invites", "add"] as const;
+const TABS = ["signups", "invites", "visibility", "add"] as const;
 type TabId = (typeof TABS)[number];
 
 export const Route = createFileRoute("/_authenticated/admin/organizations")({
@@ -91,9 +93,10 @@ function AdminOrganizationsPage() {
             value={tab ?? "signups"}
             onValueChange={(v) => navigate({ search: { tab: v as TabId }, replace: true })}
           >
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="signups">Recent signups</TabsTrigger>
               <TabsTrigger value="invites">Onboarding links</TabsTrigger>
+              <TabsTrigger value="visibility">Profile visibility</TabsTrigger>
               <TabsTrigger value="add">Add organization</TabsTrigger>
             </TabsList>
             <TabsContent value="signups" className="pt-4">
