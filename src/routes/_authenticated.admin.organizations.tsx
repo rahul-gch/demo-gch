@@ -105,6 +105,9 @@ function AdminOrganizationsPage() {
             <TabsContent value="invites" className="pt-4">
               <OnboardingInvites />
             </TabsContent>
+            <TabsContent value="visibility" className="pt-4">
+              <ProfileVisibility />
+            </TabsContent>
             <TabsContent value="add" className="pt-4">
               <Card>
                 <CardHeader>
