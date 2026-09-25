@@ -36,6 +36,7 @@ export function rowToEntity(row: OrgRow): Entity {
     id: str(row.slug) || str(row.legacy_id) || str(row.id),
     isSeeded: !!str(row.legacy_id),
     orgUuid: str(row.id),
+    isHidden: row.is_hidden === true,
     slug: str(row.slug),
     gchNumber: str(row.gch_number),
     name: str(row.name),
