@@ -49,6 +49,8 @@ export interface Entity extends ReliabilityFields {
   isSeeded?: boolean;
   /** Database UUID of the organization row (differs from `id` for imported registry orgs). */
   orgUuid?: string;
+  /** Hidden from public discovery by a platform admin (visible to members, connected partners, admins). */
+  isHidden?: boolean;
   slug?: string;
   logoUrl?: string;
   bannerUrls?: string[];
