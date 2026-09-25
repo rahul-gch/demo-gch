@@ -20,6 +20,7 @@ export const Route = createFileRoute("/_authenticated/directory/$id/showroom/$pr
   component: () => {
     const { entity } = parent.useLoaderData();
     const { productId } = Route.useParams();
+    if (!entity) return null;
     return <OrderPage entity={entity} productId={productId} />;
   },
 });

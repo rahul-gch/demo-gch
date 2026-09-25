@@ -8,6 +8,13 @@
       "when": 1789989622995,
       "tag": "0000_platform_admin_read_comms",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790336233665,
+      "tag": "0001_org_hidden_visibility",
+      "breakpoints": true
     }
   ]
 }

@@ -287,6 +287,14 @@ export function PublicOrgProfile({ entity: e }: { entity: Entity }) {
 
               {/* Action Buttons */}
               <div className="flex flex-wrap items-center gap-2.5 pt-2 sm:pt-0">
+                {e.isHidden && (
+                  <Badge
+                    variant="outline"
+                    className="gap-1.5 border-amber-300 py-2 px-4 text-xs font-semibold text-amber-700 dark:text-amber-400"
+                  >
+                    Hidden from public — connected partners only
+                  </Badge>
+                )}
                 {connectionStatus === "connected" ? (
                   <Badge variant="secondary" className="gap-1.5 bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 py-2 px-4 text-xs font-semibold shadow-sm">
                     <Check className="h-4 w-4" /> Connected Partner

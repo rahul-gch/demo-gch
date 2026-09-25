@@ -19,6 +19,7 @@ export const Route = createFileRoute("/_authenticated/directory/$id/showroom/")(
   }),
   component: () => {
     const { entity } = parent.useLoaderData();
+    if (!entity) return null;
     return <PublicShowroomPage entity={entity} />;
   },
 });

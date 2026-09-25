@@ -22,14 +22,16 @@ import { ORG_TYPES } from "@/lib/org-types";
 import {
   amIPlatformAdmin,
   createPlatformInvite,
+  listOrgVisibility,
   listPlatformInvites,
   listRecentSignups,
   revokePlatformInvite,
+  setOrgVisibility,
 } from "@/lib/admin.functions";
 import { toast } from "sonner";
-import { Copy, Loader2, ShieldAlert } from "lucide-react";
+import { Copy, Eye, EyeOff, Loader2, ShieldAlert } from "lucide-react";
 
-const TABS = ["signups", "invites", "add"] as const;
+const TABS = ["signups", "invites", "visibility", "add"] as const;
 type TabId = (typeof TABS)[number];
 
 export const Route = createFileRoute("/_authenticated/admin/organizations")({
@@ -91,9 +93,10 @@ function AdminOrganizationsPage() {
             value={tab ?? "signups"}
             onValueChange={(v) => navigate({ search: { tab: v as TabId }, replace: true })}
           >
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="signups">Recent signups</TabsTrigger>
               <TabsTrigger value="invites">Onboarding links</TabsTrigger>
+              <TabsTrigger value="visibility">Profile visibility</TabsTrigger>
               <TabsTrigger value="add">Add organization</TabsTrigger>
             </TabsList>
             <TabsContent value="signups" className="pt-4">
@@ -101,6 +104,9 @@ function AdminOrganizationsPage() {
             </TabsContent>
             <TabsContent value="invites" className="pt-4">
               <OnboardingInvites />
+            </TabsContent>
+            <TabsContent value="visibility" className="pt-4">
+              <ProfileVisibility />
             </TabsContent>
             <TabsContent value="add" className="pt-4">
               <Card>
@@ -384,5 +390,100 @@ function OnboardingInvites() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function ProfileVisibility() {
+  const qc = useQueryClient();
+  const fetchOrgs = useServerFn(listOrgVisibility);
+  const setVisibility = useServerFn(setOrgVisibility);
+  const [search, setSearch] = useState("");
+  const [query, setQuery] = useState("");
+
+  const orgs = useQuery({
+    queryKey: ["admin-org-visibility", query],
+    queryFn: () => fetchOrgs({ data: { search: query } }),
+  });
+
+  const toggle = useMutation({
+    mutationFn: ({ orgId, isHidden }: { orgId: string; isHidden: boolean }) =>
+      setVisibility({ data: { orgId, isHidden } }),
+    onSuccess: (res) => {
+      toast.success(
+        res.isHidden
+          ? "Profile hidden — only connected partners and admins can see it."
+          : "Profile is public again.",
+      );
+      qc.invalidateQueries({ queryKey: ["admin-org-visibility"] });
+      qc.invalidateQueries({ queryKey: ["entities", "registry"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Could not change visibility"),
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Profile visibility</CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Hidden organizations disappear from the directory, map, search and matchmaking. Their own
+          team, accepted connected partners and platform admins keep full access.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <form
+          className="flex gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            setQuery(search.trim());
+          }}
+        >
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search organizations by name"
+          />
+          <Button type="submit" variant="secondary">
+            Search
+          </Button>
+        </form>
+
+        {orgs.isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
+        {orgs.isError && (
+          <p className="text-sm text-destructive">
+            {orgs.error instanceof Error ? orgs.error.message : "Could not load organizations"}
+          </p>
+        )}
+        {orgs.data?.length === 0 && (
+          <p className="text-sm text-muted-foreground">No organizations match that search.</p>
+        )}
+        {orgs.data?.map((o) => (
+          <div
+            key={o.id}
+            className="flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium">{o.name}</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {[o.type, o.country].filter(Boolean).join(" · ") || "—"}
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <Badge variant={o.is_hidden ? "outline" : "secondary"} className="gap-1">
+                {o.is_hidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                {o.is_hidden ? "Hidden" : "Public"}
+              </Badge>
+              <Button
+                size="sm"
+                variant={o.is_hidden ? "default" : "outline"}
+                disabled={toggle.isPending}
+                onClick={() => toggle.mutate({ orgId: o.id, isHidden: !o.is_hidden })}
+              >
+                {o.is_hidden ? "Make public" : "Hide from public"}
+              </Button>
+            </div>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
   );
 }

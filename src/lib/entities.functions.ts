@@ -13,7 +13,8 @@ const BASE_COLUMNS = `
   confidence_score, risk_level, evidence_count, verified_cert_count,
   expired_cert_count, missing_data_count, profile_completeness, verification_status,
   preferred_channel, kpi_readiness, traceability_readiness, matchmaking_readiness, missing_fields,
-  recommended_next_action, rating, on_time_rate, avg_delay_days, delivery_timeframe_days
+  recommended_next_action, rating, on_time_rate, avg_delay_days, delivery_timeframe_days,
+  is_hidden
 `;
 
 type OrgRow = Record<string, unknown>;
@@ -35,6 +36,7 @@ export function rowToEntity(row: OrgRow): Entity {
     id: str(row.slug) || str(row.legacy_id) || str(row.id),
     isSeeded: !!str(row.legacy_id),
     orgUuid: str(row.id),
+    isHidden: row.is_hidden === true,
     slug: str(row.slug),
     gchNumber: str(row.gch_number),
     name: str(row.name),

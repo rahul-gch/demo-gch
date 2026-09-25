@@ -687,6 +687,7 @@ export type Database = {
           gch_number: string | null
           governance: string | null
           id: string
+          is_hidden: boolean
           kpi_readiness: number
           latitude: number | null
           lead_time_days: number | null
@@ -750,6 +751,7 @@ export type Database = {
           gch_number?: string | null
           governance?: string | null
           id?: string
+          is_hidden?: boolean
           kpi_readiness?: number
           latitude?: number | null
           lead_time_days?: number | null
@@ -813,6 +815,7 @@ export type Database = {
           gch_number?: string | null
           governance?: string | null
           id?: string
+          is_hidden?: boolean
           kpi_readiness?: number
           latitude?: number | null
           lead_time_days?: number | null
@@ -1843,6 +1846,10 @@ export type Database = {
       user_org_role: {
         Args: { _org: string; _user: string }
         Returns: Database["public"]["Enums"]["org_role"]
+      }
+      viewer_can_see_hidden_org: {
+        Args: { _org: string; _user: string }
+        Returns: boolean
       }
     }
     Enums: {
