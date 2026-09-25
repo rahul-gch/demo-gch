@@ -32,5 +32,6 @@ export const Route = createFileRoute("/_authenticated/directory/$id/")({
 
 function DirectoryProfilePage() {
   const { entity } = parent.useLoaderData();
+  if (!entity) return null;
   return <PublicOrgProfile entity={entity} />;
 }
