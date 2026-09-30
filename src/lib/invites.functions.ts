@@ -53,7 +53,12 @@ export const createInvite = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertOrgRole(context.supabase, context.userId, data.orgId, "admin");
+    await assertOrgRole(
+      context.supabase,
+      context.userId,
+      data.orgId,
+      data.role === "owner" ? "owner" : "admin",
+    );
 
     const expiresAt = new Date(Date.now() + data.expiresInDays * 86400_000).toISOString();
     const { data: row, error } = await context.supabase
