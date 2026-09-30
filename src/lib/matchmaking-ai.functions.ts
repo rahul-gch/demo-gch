@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { generateText, Output, NoObjectGeneratedError } from "ai";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const inputSchema = z.object({ query: z.string().trim().min(2).max(500) });
 
@@ -18,6 +19,7 @@ const filterSchema = z.object({
 export type PartnerSearchFilters = z.infer<typeof filterSchema>;
 
 export const aiSearchPartners = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => inputSchema.parse(data))
   .handler(async ({ data }): Promise<PartnerSearchFilters> => {
     const key = process.env.LOVABLE_API_KEY;
