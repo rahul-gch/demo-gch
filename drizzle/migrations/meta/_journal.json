@@ -15,6 +15,13 @@
       "when": 1790336233665,
       "tag": "0001_org_hidden_visibility",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790763143932,
+      "tag": "0002_tighten_orgs_insert_invites_branding",
+      "breakpoints": true
     }
   ]
 }
