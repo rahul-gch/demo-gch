@@ -2,14 +2,21 @@ import { createServerFn } from "@tanstack/react-start";
 import { generateText, Output } from "ai";
 import { z } from "zod";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
-import { supabase } from "@/integrations/supabase/client";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import {
+  assertOrgEditor,
+  assertOrgMemberOrAdmin,
+  readProfileAnswers,
+  resolveOrgUuid,
+  writeProfileAnswers,
+} from "./org-access.server";
 import type { ResearchRun } from "@/seed/research-runs";
 
 const InputSchema = z.object({
-  query: z.string().min(1),
-  countries: z.string().optional().default(""),
-  industry: z.string().optional().default(""),
-  entityType: z.string().optional().default(""),
+  query: z.string().trim().min(1).max(2000),
+  countries: z.string().max(500).optional().default(""),
+  industry: z.string().max(200).optional().default(""),
+  entityType: z.string().max(200).optional().default(""),
   limit: z.number().int().min(1).max(50).optional().default(20),
 });
 
@@ -28,6 +35,7 @@ const CandidateSchema = z.object({
 });
 
 export const runAiResearch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => InputSchema.parse(data))
   .handler(async ({ data }) => {
     const key = process.env.LOVABLE_API_KEY;
@@ -88,99 +96,63 @@ Return concise, structured candidates with a one-sentence rationale per candidat
     }
   });
 
-// Resilient memory store for runs across sessions
-const researchRunsMemory = new Map<string, ResearchRun[]>();
+async function loadRuns(supabase: any, orgId: string): Promise<ResearchRun[]> {
+  const answers = await readProfileAnswers(supabase, orgId);
+  return Array.isArray(answers.research_runs) ? (answers.research_runs as ResearchRun[]) : [];
+}
 
 export const getOrgResearchRuns = createServerFn({ method: "GET" })
-  .inputValidator((data: unknown) => z.object({ orgId: z.string() }).parse(data))
-  .handler(async ({ data }) => {
-    const orgId = data.orgId;
-    if (researchRunsMemory.has(orgId)) {
-      return researchRunsMemory.get(orgId)!;
-    }
-
-    try {
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orgId);
-      const sb = supabase as any;
-      const query = sb.from("orgs").select("id, profile_answers");
-      const { data: org } = isUuid ? await query.eq("id", orgId).maybeSingle() : await query.eq("slug", orgId).maybeSingle();
-      const meta = org?.profile_answers as Record<string, unknown> | undefined;
-      if (meta?.research_runs && Array.isArray(meta.research_runs)) {
-        const loaded = meta.research_runs as ResearchRun[];
-        researchRunsMemory.set(orgId, loaded);
-        return loaded;
-      }
-    } catch {
-      // fallback
-    }
-
-    return [];
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ orgId: z.string().min(1).max(200) }).parse(data))
+  .handler(async ({ data, context }) => {
+    const orgId = await resolveOrgUuid(context.supabase, data.orgId);
+    if (!orgId) return [];
+    await assertOrgMemberOrAdmin(context.supabase, context.userId, orgId);
+    return loadRuns(context.supabase, orgId);
   });
 
 export const saveOrgResearchRun = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
     z
       .object({
-        run: z.any(),
+        run: z
+          .object({ id: z.string().min(1).max(200), orgId: z.string().min(1).max(200) })
+          .passthrough(),
       })
       .parse(data),
   )
-  .handler(async ({ data }) => {
-    const run = data.run as ResearchRun;
-    const orgId = run.orgId;
-    const existing = researchRunsMemory.get(orgId) ?? [];
+  .handler(async ({ data, context }) => {
+    const run = data.run as unknown as ResearchRun;
+    const orgId = await resolveOrgUuid(context.supabase, run.orgId);
+    if (!orgId) throw new Error("Organization not found");
+    await assertOrgEditor(context.supabase, context.userId, orgId);
+
+    const answers = await readProfileAnswers(context.supabase, orgId);
+    const existing = Array.isArray(answers.research_runs)
+      ? (answers.research_runs as ResearchRun[])
+      : [];
     const idx = existing.findIndex((r) => r.id === run.id);
-    const updated = idx >= 0
-      ? existing.map((r) => (r.id === run.id ? run : r))
-      : [run, ...existing];
-
-    researchRunsMemory.set(orgId, updated);
-
-    try {
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orgId);
-      const sb = supabase as any;
-      const query = sb.from("orgs").select("id, profile_answers");
-      const { data: org } = isUuid ? await query.eq("id", orgId).maybeSingle() : await query.eq("slug", orgId).maybeSingle();
-      if (org) {
-        const existingMeta = (org.profile_answers as Record<string, unknown> | undefined) || {};
-        const newMeta = { ...existingMeta, research_runs: updated };
-        await sb.from("orgs").update({ profile_answers: newMeta }).eq("id", org.id);
-      }
-    } catch {
-      // memory cached
-    }
-
+    const updated = idx >= 0 ? existing.map((r) => (r.id === run.id ? run : r)) : [run, ...existing];
+    await writeProfileAnswers(context.supabase, orgId, { ...answers, research_runs: updated });
     return { ok: true, runs: updated };
   });
 
 export const deleteOrgResearchRun = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
-    z
-      .object({
-        orgId: z.string(),
-        runId: z.string(),
-      })
-      .parse(data),
+    z.object({ orgId: z.string().min(1).max(200), runId: z.string().min(1).max(200) }).parse(data),
   )
-  .handler(async ({ data }) => {
-    const { orgId, runId } = data;
-    const existing = researchRunsMemory.get(orgId) ?? [];
-    const updated = existing.filter((r) => r.id !== runId);
-    researchRunsMemory.set(orgId, updated);
+  .handler(async ({ data, context }) => {
+    const orgId = await resolveOrgUuid(context.supabase, data.orgId);
+    if (!orgId) throw new Error("Organization not found");
+    await assertOrgEditor(context.supabase, context.userId, orgId);
 
-    try {
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orgId);
-      const sb = supabase as any;
-      const query = sb.from("orgs").select("id, profile_answers");
-      const { data: org } = isUuid ? await query.eq("id", orgId).maybeSingle() : await query.eq("slug", orgId).maybeSingle();
-      if (org) {
-        const existingMeta = (org.profile_answers as Record<string, unknown> | undefined) || {};
-        const newMeta = { ...existingMeta, research_runs: updated };
-        await sb.from("orgs").update({ profile_answers: newMeta }).eq("id", org.id);
-      }
-    } catch {
-      // memory cached
-    }
-
+    const answers = await readProfileAnswers(context.supabase, orgId);
+    const existing = Array.isArray(answers.research_runs)
+      ? (answers.research_runs as ResearchRun[])
+      : [];
+    const updated = existing.filter((r) => r.id !== data.runId);
+    await writeProfileAnswers(context.supabase, orgId, { ...answers, research_runs: updated });
     return { ok: true, runs: updated };
   });

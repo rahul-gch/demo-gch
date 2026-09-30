@@ -1,6 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabase } from "@/integrations/supabase/client";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import {
+  assertOrgEditor,
+  assertOrgMemberOrAdmin,
+  readProfileAnswers,
+  resolveOrgUuid,
+  writeProfileAnswers,
+} from "./org-access.server";
 import type { MatchPreferences } from "./match-preferences";
 import { DEFAULT_PREFERENCES } from "./match-preferences";
 
@@ -14,61 +21,27 @@ const prefsSchema = z.object({
   minOnTimeRate: z.number().nullable().optional(),
 });
 
-// Resilient server-side memory store with cross-session sync
-const memoryStore = new Map<string, MatchPreferences>();
-
 export const getOrgMatchPreferences = createServerFn({ method: "GET" })
-  .inputValidator((data: unknown) => z.object({ orgId: z.string() }).parse(data))
-  .handler(async ({ data }) => {
-    const orgId = data.orgId;
-    if (memoryStore.has(orgId)) {
-      return memoryStore.get(orgId)!;
-    }
-
-    try {
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orgId);
-      const sb = supabase as any;
-      const query = sb.from("orgs").select("id, slug, profile_answers");
-      const res = isUuid ? await query.eq("id", orgId).maybeSingle() : await query.eq("slug", orgId).maybeSingle();
-      const meta = res.data?.profile_answers as Record<string, unknown> | undefined;
-      if (meta?.match_preferences) {
-        const loaded = meta.match_preferences as MatchPreferences;
-        memoryStore.set(orgId, loaded);
-        return loaded;
-      }
-    } catch {
-      // fallback to default
-    }
-
-    return DEFAULT_PREFERENCES;
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ orgId: z.string().min(1).max(200) }).parse(data))
+  .handler(async ({ data, context }): Promise<MatchPreferences> => {
+    const orgId = await resolveOrgUuid(context.supabase, data.orgId);
+    if (!orgId) return DEFAULT_PREFERENCES;
+    await assertOrgMemberOrAdmin(context.supabase, context.userId, orgId);
+    const answers = await readProfileAnswers(context.supabase, orgId);
+    return (answers.match_preferences as MatchPreferences | undefined) ?? DEFAULT_PREFERENCES;
   });
 
 export const saveOrgMatchPreferences = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
-    z
-      .object({
-        orgId: z.string(),
-        prefs: prefsSchema,
-      })
-      .parse(data),
+    z.object({ orgId: z.string().min(1).max(200), prefs: prefsSchema }).parse(data),
   )
-  .handler(async ({ data }) => {
-    const { orgId, prefs } = data;
-    memoryStore.set(orgId, prefs);
-
-    try {
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orgId);
-      const sb = supabase as any;
-      const query = sb.from("orgs").select("id, profile_answers");
-      const { data: org } = isUuid ? await query.eq("id", orgId).maybeSingle() : await query.eq("slug", orgId).maybeSingle();
-      if (org) {
-        const existingMeta = (org.profile_answers as Record<string, unknown> | undefined) || {};
-        const newMeta = { ...existingMeta, match_preferences: prefs };
-        await sb.from("orgs").update({ profile_answers: newMeta }).eq("id", org.id);
-      }
-    } catch {
-      // server memory cached
-    }
-
-    return { ok: true, prefs };
+  .handler(async ({ data, context }) => {
+    const orgId = await resolveOrgUuid(context.supabase, data.orgId);
+    if (!orgId) throw new Error("Organization not found");
+    await assertOrgEditor(context.supabase, context.userId, orgId);
+    const answers = await readProfileAnswers(context.supabase, orgId);
+    await writeProfileAnswers(context.supabase, orgId, { ...answers, match_preferences: data.prefs });
+    return { ok: true, prefs: data.prefs };
   });
