@@ -152,6 +152,15 @@ export const createFeedPost = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }): Promise<{ id: string }> => {
     const { supabase, userId, claims } = context;
+
+    const [{ data: isMember }, { data: isAdmin }] = await Promise.all([
+      supabase.rpc("is_org_member", { _user: userId, _org: data.orgId }),
+      supabase.rpc("is_platform_admin", { _user: userId }),
+    ]);
+    if (!isMember && !isAdmin) {
+      throw new Error("Forbidden: you can only publish posts for organizations you belong to.");
+    }
+
     const fallback =
       (claims as { email?: string; user_metadata?: { full_name?: string } })?.user_metadata
         ?.full_name ||
@@ -242,7 +251,33 @@ export const deleteFeedPost = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ postId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }): Promise<{ ok: true }> => {
-    const { error } = await context.supabase.from("feed_posts").delete().eq("id", data.postId);
+    const { supabase, userId } = context;
+
+    const { data: post, error: readErr } = await supabase
+      .from("feed_posts")
+      .select("id, org_id, author_user_id")
+      .eq("id", data.postId)
+      .maybeSingle();
+
+    if (readErr) throw new Error(readErr.message);
+    if (!post) throw new Error("Post not found");
+
+    const isAuthor = post.author_user_id === userId;
+    let canDelete = isAuthor;
+
+    if (!canDelete) {
+      const [{ data: isOrgAdmin }, { data: isPlatformAdmin }] = await Promise.all([
+        supabase.rpc("user_can_manage", { _user: userId, _org: post.org_id }),
+        supabase.rpc("is_platform_admin", { _user: userId }),
+      ]);
+      canDelete = !!(isOrgAdmin || isPlatformAdmin);
+    }
+
+    if (!canDelete) {
+      throw new Error("Forbidden: you can only delete your own posts or posts from your organization.");
+    }
+
+    const { error } = await supabase.from("feed_posts").delete().eq("id", data.postId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
