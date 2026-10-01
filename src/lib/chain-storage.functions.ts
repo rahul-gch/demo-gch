@@ -1,98 +1,87 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabase } from "@/integrations/supabase/client";
-
-// Resilient in-memory server store with cross-device sync
-const memoryChainStore = new Map<string, Set<string>>();
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import {
+  assertOrgEditor,
+  assertOrgMemberOrAdmin,
+  readProfileAnswers,
+  resolveOrgUuid,
+  writeProfileAnswers,
+} from "./org-access.server";
 
 export const getOrgChainIds = createServerFn({ method: "GET" })
-  .inputValidator((data: unknown) => z.object({ orgId: z.string() }).parse(data))
-  .handler(async ({ data }) => {
-    const orgId = data.orgId;
-    if (memoryChainStore.has(orgId)) {
-      return Array.from(memoryChainStore.get(orgId)!);
-    }
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ orgId: z.string().min(1).max(200) }).parse(data))
+  .handler(async ({ data, context }): Promise<string[]> => {
+    const orgId = await resolveOrgUuid(context.supabase, data.orgId);
+    if (!orgId) return [];
 
-    try {
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orgId);
-      const sb = supabase as any;
-      const query = sb.from("orgs").select("id, profile_answers");
-      const { data: org } = isUuid ? await query.eq("id", orgId).maybeSingle() : await query.eq("slug", orgId).maybeSingle();
-      const meta = org?.profile_answers as Record<string, unknown> | undefined;
-      if (meta?.chain_draft_ids && Array.isArray(meta.chain_draft_ids)) {
-        const list = meta.chain_draft_ids as string[];
-        memoryChainStore.set(orgId, new Set(list));
-        return list;
-      }
-    } catch {
-      // fallback to memory
-    }
-
-    return [];
+    await assertOrgMemberOrAdmin(context.supabase, context.userId, orgId);
+    const answers = await readProfileAnswers(context.supabase, orgId);
+    const list = answers?.chain_draft_ids;
+    return Array.isArray(list) ? (list as string[]) : [];
   });
 
 export const addOrgChainId = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
     z
       .object({
-        orgId: z.string(),
-        entityId: z.string(),
+        orgId: z.string().min(1).max(200),
+        entityId: z.string().min(1).max(200),
       })
       .parse(data),
   )
-  .handler(async ({ data }) => {
-    const { orgId, entityId } = data;
-    const current = memoryChainStore.get(orgId) ?? new Set<string>();
-    current.add(entityId);
-    memoryChainStore.set(orgId, current);
-    const list = Array.from(current);
+  .handler(async ({ data, context }) => {
+    const orgId = await resolveOrgUuid(context.supabase, data.orgId);
+    if (!orgId) throw new Error("Organization not found");
 
-    try {
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orgId);
-      const sb = supabase as any;
-      const query = sb.from("orgs").select("id, profile_answers");
-      const { data: org } = isUuid ? await query.eq("id", orgId).maybeSingle() : await query.eq("slug", orgId).maybeSingle();
-      if (org) {
-        const existingMeta = (org.profile_answers as Record<string, unknown> | undefined) || {};
-        const newMeta = { ...existingMeta, chain_draft_ids: list };
-        await sb.from("orgs").update({ profile_answers: newMeta }).eq("id", org.id);
-      }
-    } catch {
-      // memory store updated
-    }
+    await assertOrgEditor(context.supabase, context.userId, orgId);
+    const answers = await readProfileAnswers(context.supabase, orgId);
+    const currentList = Array.isArray(answers?.chain_draft_ids)
+      ? (answers.chain_draft_ids as string[])
+      : [];
 
-    return { ok: true, ids: list };
+    const set = new Set(currentList);
+    set.add(data.entityId);
+    const updatedList = Array.from(set);
+
+    await writeProfileAnswers(context.supabase, orgId, {
+      ...answers,
+      chain_draft_ids: updatedList,
+    });
+
+    return { ok: true, ids: updatedList };
   });
 
 export const removeOrgChainId = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
     z
       .object({
-        orgId: z.string(),
-        entityId: z.string(),
+        orgId: z.string().min(1).max(200),
+        entityId: z.string().min(1).max(200),
       })
       .parse(data),
   )
-  .handler(async ({ data }) => {
-    const { orgId, entityId } = data;
-    const current = memoryChainStore.get(orgId) ?? new Set<string>();
-    current.delete(entityId);
-    memoryChainStore.set(orgId, current);
-    const list = Array.from(current);
+  .handler(async ({ data, context }) => {
+    const orgId = await resolveOrgUuid(context.supabase, data.orgId);
+    if (!orgId) throw new Error("Organization not found");
 
-    try {
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orgId);
-      const sb = supabase as any;
-      const query = sb.from("orgs").select("id, profile_answers");
-      const { data: org } = isUuid ? await query.eq("id", orgId).maybeSingle() : await query.eq("slug", orgId).maybeSingle();
-      if (org) {
-        const existingMeta = (org.profile_answers as Record<string, unknown> | undefined) || {};
-        const newMeta = { ...existingMeta, chain_draft_ids: list };
-        await sb.from("orgs").update({ profile_answers: newMeta }).eq("id", org.id);
-      }
-    } catch {
-      // memory store updated
-    }
+    await assertOrgEditor(context.supabase, context.userId, orgId);
+    const answers = await readProfileAnswers(context.supabase, orgId);
+    const currentList = Array.isArray(answers?.chain_draft_ids)
+      ? (answers.chain_draft_ids as string[])
+      : [];
 
-    return { ok: true, ids: list };
+    const set = new Set(currentList);
+    set.delete(data.entityId);
+    const updatedList = Array.from(set);
+
+    await writeProfileAnswers(context.supabase, orgId, {
+      ...answers,
+      chain_draft_ids: updatedList,
+    });
+
+    return { ok: true, ids: updatedList };
   });
