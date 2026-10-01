@@ -29,6 +29,13 @@
       "when": 1790887466743,
       "tag": "0003_fix_c1_c4_security",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790887474621,
+      "tag": "0004_grant_is_hidden_select",
+      "breakpoints": true
     }
   ]
 }
