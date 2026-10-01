@@ -8,6 +8,15 @@ export const listMeetings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ orgId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }): Promise<MeetingRequest[]> => {
+    // Defense-in-depth: caller must be a member of the requested org or a platform admin
+    const [{ data: isMember }, { data: isAdmin }] = await Promise.all([
+      context.supabase.rpc("is_org_member", { _user: context.userId, _org: data.orgId }),
+      context.supabase.rpc("is_platform_admin", { _user: context.userId }),
+    ]);
+    if (!isMember && !isAdmin) {
+      throw new Error("Forbidden: you are not a member of this organization.");
+    }
+
     const { data: rows, error } = await context.supabase
       .from("meeting_requests")
       .select(
@@ -33,6 +42,15 @@ export const createMeetingRequest = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
+    // H3: Verify caller actually belongs to requesterOrgId (prevents spoofing)
+    const [{ data: isMember }, { data: isAdmin }] = await Promise.all([
+      context.supabase.rpc("is_org_member", { _user: context.userId, _org: data.requesterOrgId }),
+      context.supabase.rpc("is_platform_admin", { _user: context.userId }),
+    ]);
+    if (!isMember && !isAdmin) {
+      throw new Error("Forbidden: you are not a member of the requesting organization.");
+    }
+
     const { error } = await context.supabase.from("meeting_requests").insert({
       requester_org_id: data.requesterOrgId,
       recipient_org_id: data.recipientOrgId,
@@ -52,12 +70,21 @@ export const setMeetingStatus = createServerFn({ method: "POST" })
       .object({
         id: z.string().uuid(),
         status: z.enum(DB_STATUSES),
-        /** Org the caller is acting as; required for withdraw. */
-        actingOrgId: z.string().uuid().optional(),
+        /** H2: actingOrgId is strictly required (prevents recipient auth bypass) */
+        actingOrgId: z.string().uuid(),
       })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
+    // H2: Verify caller belongs to the acting organization
+    const [{ data: isMember }, { data: isAdmin }] = await Promise.all([
+      context.supabase.rpc("is_org_member", { _user: context.userId, _org: data.actingOrgId }),
+      context.supabase.rpc("is_platform_admin", { _user: context.userId }),
+    ]);
+    if (!isMember && !isAdmin) {
+      throw new Error("Forbidden: you are not a member of the acting organization.");
+    }
+
     const { data: row, error: readErr } = await context.supabase
       .from("meeting_requests")
       .select("id, status, requester_org_id, recipient_org_id")
@@ -67,12 +94,15 @@ export const setMeetingStatus = createServerFn({ method: "POST" })
     if (!row) throw new Error("Meeting request not found");
     if (row.status !== "pending") throw new Error("This request has already been answered");
 
+    // H2: Enforce that only requester can cancel, and only recipient can confirm/decline
     if (data.status === "cancelled") {
-      if (!data.actingOrgId || data.actingOrgId !== row.requester_org_id) {
+      if (data.actingOrgId !== row.requester_org_id && !isAdmin) {
         throw new Error("Only the organization that sent the request can withdraw it");
       }
-    } else if (data.actingOrgId && data.actingOrgId !== row.recipient_org_id) {
-      throw new Error("Only the invited organization can answer this request");
+    } else {
+      if (data.actingOrgId !== row.recipient_org_id && !isAdmin) {
+        throw new Error("Only the invited organization can answer this request");
+      }
     }
 
     const { error } = await context.supabase
