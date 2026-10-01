@@ -2,7 +2,14 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { InboxRequest, Project } from "@/lib/projects-types";
-import { groupBy, loadOrgIndex, mapProject, mapRequest, resolveOrgRow } from "@/lib/projects.server";
+import {
+  assertProjectAccess,
+  groupBy,
+  loadOrgIndex,
+  mapProject,
+  mapRequest,
+  resolveOrgRow,
+} from "@/lib/projects.server";
 import { assertOrgRole, getOrgUserRole } from "@/lib/rbac.server";
 
 const orgInput = z.object({ orgId: z.string().min(1) });
@@ -220,8 +227,14 @@ export const invitePartnerFn = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const actorUuid = (await resolveOrgRow(supabase, data.actorOrgId))?.id ?? data.actorOrgId;
-    await assertOrgRole(supabase, userId, actorUuid, "admin");
+    const access = await assertProjectAccess(supabase, userId, data.projectId, data.actorOrgId, "admin");
+    const actorUuid = access.actorUuid;
+    if (!access.isOwner) {
+      const perms = (access.partner?.permissions ?? {}) as Record<string, boolean>;
+      if (!perms.invite) {
+        throw new Error("You need the invite permission on this project to invite partners.");
+      }
+    }
 
     const idx = await loadOrgIndex(supabase);
     const partnerUuid = idx.toUuid(data.partnerRef);
@@ -295,18 +308,14 @@ export const removePartnerFn = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const actorUuid = (await resolveOrgRow(supabase, data.actorOrgId))?.id ?? data.actorOrgId;
+    const access = await assertProjectAccess(supabase, userId, data.projectId, data.actorOrgId, "admin");
+    const actorUuid = access.actorUuid;
+    const project = access.project;
 
     const idx = await loadOrgIndex(supabase);
     const partnerUuid = idx.toUuid(data.partnerRef);
     if (!partnerUuid) throw new Error("Unknown organization");
 
-    const { data: project } = await supabase
-      .from("projects")
-      .select("id, owner_org_id")
-      .eq("id", data.projectId)
-      .maybeSingle();
-    if (!project) throw new Error("Project not found");
     if ((project.owner_org_id as string) === partnerUuid) {
       throw new Error("The organization that owns the project cannot be removed.");
     }
@@ -361,8 +370,8 @@ export const setPartnerPermissionFn = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const actorUuid = (await resolveOrgRow(supabase, data.actorOrgId))?.id ?? data.actorOrgId;
-    await assertOrgRole(supabase, userId, actorUuid, "admin");
+    const access = await assertProjectAccess(supabase, userId, data.projectId, data.actorOrgId, "admin");
+    const actorUuid = access.actorUuid;
 
     const idx = await loadOrgIndex(supabase);
     const partnerUuid = idx.toUuid(data.partnerRef);
@@ -413,8 +422,9 @@ export const createRequestFn = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const access = await assertProjectAccess(supabase, userId, data.projectId, data.actorOrgId, "editor");
     const idx = await loadOrgIndex(supabase);
-    const actorUuid = idx.toUuid(data.actorOrgId) ?? data.actorOrgId;
+    const actorUuid = access.actorUuid;
 
     const { error } = await supabase.from("project_requests").insert({
       project_id: data.projectId,
@@ -453,8 +463,9 @@ export const setRequestStatusFn = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const access = await assertProjectAccess(supabase, userId, data.projectId, data.actorOrgId, "editor");
     const idx = await loadOrgIndex(supabase);
-    const actorUuid = idx.toUuid(data.actorOrgId) ?? data.actorOrgId;
+    const actorUuid = access.actorUuid;
 
     const { data: row, error } = await supabase
       .from("project_requests")
@@ -490,8 +501,9 @@ export const addRequestCommentFn = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const access = await assertProjectAccess(supabase, userId, data.projectId, data.actorOrgId, "editor");
     const idx = await loadOrgIndex(supabase);
-    const actorUuid = idx.toUuid(data.actorOrgId) ?? data.actorOrgId;
+    const actorUuid = access.actorUuid;
 
     const { data: row } = await supabase
       .from("project_requests")
@@ -549,8 +561,9 @@ export const uploadDocumentFn = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const access = await assertProjectAccess(supabase, userId, data.projectId, data.actorOrgId, "editor");
     const idx = await loadOrgIndex(supabase);
-    const actorUuid = idx.toUuid(data.actorOrgId) ?? data.actorOrgId;
+    const actorUuid = access.actorUuid;
 
     const { data: existing } = await supabase
       .from("project_documents")
@@ -605,8 +618,9 @@ export const addDiscussionFn = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const access = await assertProjectAccess(supabase, userId, data.projectId, data.actorOrgId, "editor");
     const idx = await loadOrgIndex(supabase);
-    const actorUuid = idx.toUuid(data.actorOrgId) ?? data.actorOrgId;
+    const actorUuid = access.actorUuid;
 
     const { data: member } = await supabase
       .from("org_members")
@@ -641,14 +655,17 @@ export const replyDiscussionFn = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const idx = await loadOrgIndex(supabase);
-    const actorUuid = idx.toUuid(data.actorOrgId) ?? data.actorOrgId;
-
     const { data: row } = await supabase
       .from("project_discussions")
-      .select("replies")
+      .select("replies, project_id")
       .eq("id", data.threadId)
       .maybeSingle();
+    if (!row) throw new Error("Discussion thread not found");
+
+    const access = await assertProjectAccess(supabase, userId, row.project_id as string, data.actorOrgId, "editor");
+    const idx = await loadOrgIndex(supabase);
+    const actorUuid = access.actorUuid;
+
     const { data: member } = await supabase
       .from("org_members")
       .select("display_name")
@@ -681,12 +698,22 @@ export const reactDiscussionFn = createServerFn({ method: "POST" })
     z.object({ threadId: z.string().uuid(), emoji: z.string().min(1).max(8) }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
     const { data: row } = await supabase
       .from("project_discussions")
-      .select("reactions")
+      .select("reactions, project_id")
       .eq("id", data.threadId)
       .maybeSingle();
+    if (!row) throw new Error("Discussion thread not found");
+
+    const { data: isMember } = await supabase.rpc("is_project_member", {
+      _user: userId,
+      _project: row.project_id,
+    });
+    if (!isMember) {
+      const { data: isAdmin } = await supabase.rpc("is_platform_admin", { _user: userId });
+      if (!isAdmin) throw new Error("Forbidden: you are not a member of this project.");
+    }
     const reactions = { ...((row?.reactions ?? {}) as Record<string, number>) };
     reactions[data.emoji] = (reactions[data.emoji] ?? 0) + 1;
     const { error } = await supabase
@@ -715,8 +742,9 @@ export const scheduleMeetingFn = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const access = await assertProjectAccess(supabase, userId, data.projectId, data.actorOrgId, "editor");
     const idx = await loadOrgIndex(supabase);
-    const actorUuid = idx.toUuid(data.actorOrgId) ?? data.actorOrgId;
+    const actorUuid = access.actorUuid;
 
     const { error } = await supabase.from("project_meetings").insert({
       project_id: data.projectId,
@@ -746,12 +774,22 @@ export const toggleActionItemFn = createServerFn({ method: "POST" })
     z.object({ meetingId: z.string().uuid(), itemId: z.string().min(1) }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
     const { data: row } = await supabase
       .from("project_meetings")
-      .select("action_items")
+      .select("action_items, project_id")
       .eq("id", data.meetingId)
       .maybeSingle();
+    if (!row) throw new Error("Meeting not found");
+
+    const { data: isMember } = await supabase.rpc("is_project_member", {
+      _user: userId,
+      _project: row.project_id,
+    });
+    if (!isMember) {
+      const { data: isAdmin } = await supabase.rpc("is_platform_admin", { _user: userId });
+      if (!isAdmin) throw new Error("Forbidden: you are not a member of this project.");
+    }
     const items = ((row?.action_items ?? []) as { id: string; done: boolean }[]).map((a) =>
       a.id === data.itemId ? { ...a, done: !a.done } : a,
     );

@@ -11,6 +11,7 @@ import type {
   ProjectPartner,
   ProjectRequest,
 } from "@/lib/projects-types";
+import { assertOrgRole } from "@/lib/rbac.server";
 
 type Row = Record<string, unknown>;
 type AnyClient = {
@@ -268,3 +269,45 @@ export function groupBy<T extends Row>(rows: T[], key: string): Map<string, T[]>
   }
   return m;
 }
+
+/**
+ * Asserts that the actor is authorized to perform mutations on a project:
+ * 1. Actor user is a member of the actor organization with minRole.
+ * 2. Actor organization is either the owner of the project or an active partner.
+ */
+export async function assertProjectAccess(
+  supabase: any,
+  userId: string,
+  projectId: string,
+  actorOrgId: string,
+  minRole: "viewer" | "editor" | "admin" = "editor",
+) {
+  const actorUuid = (await resolveOrgRow(supabase, actorOrgId))?.id ?? actorOrgId;
+  await assertOrgRole(supabase, userId, actorUuid, minRole);
+
+  const { data: project } = await supabase
+    .from("projects")
+    .select("id, owner_org_id, name")
+    .eq("id", projectId)
+    .maybeSingle();
+
+  if (!project) throw new Error("Project not found");
+
+  if (project.owner_org_id === actorUuid) {
+    return { project, actorUuid, isOwner: true, partner: null };
+  }
+
+  const { data: partner } = await supabase
+    .from("project_partners")
+    .select("id, status, permissions")
+    .eq("project_id", projectId)
+    .eq("org_id", actorUuid)
+    .maybeSingle();
+
+  if (!partner) {
+    throw new Error("Forbidden: your organization is not part of this project.");
+  }
+
+  return { project, actorUuid, isOwner: false, partner };
+}
+
