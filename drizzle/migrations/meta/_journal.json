@@ -22,6 +22,13 @@
       "when": 1790763143932,
       "tag": "0002_tighten_orgs_insert_invites_branding",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790887466743,
+      "tag": "0003_fix_c1_c4_security",
+      "breakpoints": true
     }
   ]
 }
