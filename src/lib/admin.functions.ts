@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-async function assertAdmin(context: { supabase: any; userId: string }) {
+export async function assertAdmin(context: { supabase: any; userId: string }) {
   const { data, error } = await context.supabase.rpc("is_platform_admin", {
     _user: context.userId,
   });
@@ -364,9 +364,16 @@ export const getRestrictedOrgTeaser = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    const id = data.idOrSlug;
+    const safeSlugRe = /^[a-zA-Z0-9_-]{1,100}$/;
+    const id = data.idOrSlug.trim();
+    const isUuid = uuidRe.test(id);
+    const isSafeSlug = safeSlugRe.test(id);
+
+    // Reject inputs that are neither a valid UUID nor a safe slug to prevent PostgREST filter injection
+    if (!isUuid && !isSafeSlug) return null;
+
     const query = supabaseAdmin.from("orgs").select("id, name, logo_url, is_hidden");
-    const { data: row } = uuidRe.test(id)
+    const { data: row } = isUuid
       ? await query.eq("id", id).maybeSingle()
       : await query.or(`slug.eq.${id},legacy_id.eq.${id}`).limit(1).maybeSingle();
     if (!row || row.is_hidden !== true) return null;

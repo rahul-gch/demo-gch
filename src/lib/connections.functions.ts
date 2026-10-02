@@ -18,15 +18,20 @@ const UUID_RE =
  * Accepts an organization UUID, a legacy seed id, or a slug and resolves it to
  * the database UUID. Returns null when nothing matches.
  */
+const SAFE_SLUG_RE = /^[a-zA-Z0-9_-]{1,100}$/;
+
 async function resolveOrgUuid(
   supabase: SupabaseClient,
   id: string,
 ): Promise<string | null> {
-  if (UUID_RE.test(id)) return id;
+  const trimmed = id.trim();
+  if (UUID_RE.test(trimmed)) return trimmed;
+  if (!SAFE_SLUG_RE.test(trimmed)) return null;
+
   const { data } = await supabase
     .from("orgs")
     .select("id")
-    .or(`legacy_id.eq.${id},slug.eq.${id}`)
+    .or(`legacy_id.eq.${trimmed},slug.eq.${trimmed}`)
     .limit(1)
     .maybeSingle();
   return (data?.id as string | undefined) ?? null;

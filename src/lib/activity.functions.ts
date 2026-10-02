@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertAdmin } from "@/lib/admin.functions";
 import type { AdminFeedEvent, FeedEventKind, FeedSeverity } from "@/lib/admin-feed";
 
 interface OrgInfo {
@@ -13,6 +14,7 @@ interface OrgInfo {
 export const listPlatformActivity = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<AdminFeedEvent[]> => {
+    await assertAdmin(context);
     const { supabase } = context;
 
     const [{ data: posts }, { data: activity }, { data: meetings }, { data: docs }] =

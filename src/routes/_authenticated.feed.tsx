@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,10 +30,39 @@ import {
 import { CommunityFeed } from "@/components/feed/CommunityFeed";
 import { useQuery } from "@tanstack/react-query";
 import { listPlatformActivity } from "@/lib/activity.functions";
+import { amIPlatformAdmin } from "@/lib/admin.functions";
+import { myOrgMemberships } from "@/lib/orgs.functions";
+import { refreshRegistry } from "@/lib/registry";
+import { getEntity } from "@/seed/all-entities";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuthenticatedSessionReady, withSession } from "@/lib/use-comms";
 
 export const Route = createFileRoute("/_authenticated/feed")({
+  beforeLoad: async ({ context }) => {
+    // Only Global Chain Hub platform admins see the platform operations feed.
+    // Regular organization members are redirected to their organization's workspace feed.
+    await refreshRegistry((context as any).queryClient);
+    const [admin, memberships] = await Promise.all([
+      amIPlatformAdmin().catch(() => ({ isAdmin: false })),
+      myOrgMemberships().catch(() => [] as { org_id: string }[]),
+    ]);
+    if (admin?.isAdmin) return;
+    const first = memberships[0];
+    if (first) {
+      let entity = getEntity(first.org_id);
+      if (!entity) {
+        await refreshRegistry((context as any).queryClient);
+        entity = getEntity(first.org_id);
+      }
+      const targetId = entity?.slug || entity?.id || first.org_id;
+      throw redirect({
+        to: "/organizations/$id/feed",
+        params: { id: targetId },
+        replace: true,
+      });
+    }
+    throw redirect({ to: "/welcome", replace: true });
+  },
   validateSearch: (search: Record<string, unknown>): { tab?: "activity" | "community" } =>
     search.tab === "community" || search.tab === "activity" ? { tab: search.tab } : {},
   head: () => ({
@@ -116,6 +145,7 @@ function FeedPage() {
   const navigate = Route.useNavigate();
   const tab = tabParam ?? "activity";
   const setTab = (v: "activity" | "community") => navigate({ search: { tab: v }, replace: true });
+
   return (
     <AppShell>
       <div className="w-full space-y-6">
