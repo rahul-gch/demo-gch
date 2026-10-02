@@ -352,12 +352,16 @@ export const setOrgVisibility = createServerFn({ method: "POST" })
 
 /**
  * Minimal teaser for an organization the viewer is not allowed to see.
- * Returns only a name and logo so a signed-in user can request a connection.
+ * The organization's identity (name, logo, uuid) is only revealed to callers
+ * who already have a relationship with it — members, platform admins, or
+ * organizations with an existing connection request. Everyone else gets a
+ * generic, identity-free "private organization" teaser so hidden
+ * organizations stay confidential.
  */
 export const getRestrictedOrgTeaser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.object({ idOrSlug: z.string().min(1).max(200) }).parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     const id = data.idOrSlug;
@@ -366,5 +370,42 @@ export const getRestrictedOrgTeaser = createServerFn({ method: "POST" })
       ? await query.eq("id", id).maybeSingle()
       : await query.or(`slug.eq.${id},legacy_id.eq.${id}`).limit(1).maybeSingle();
     if (!row || row.is_hidden !== true) return null;
-    return { orgUuid: row.id as string, name: row.name as string, logoUrl: (row.logo_url as string | null) ?? null };
+
+    const generic = { orgUuid: null, name: null, logoUrl: null };
+
+    // Members, platform admins and accepted partners can already see the full
+    // profile through the normal path — no teaser needed.
+    const { data: canSee } = await context.supabase.rpc("viewer_can_see_hidden_org", {
+      _user: context.userId,
+      _org: row.id,
+    });
+    if (canSee) return null;
+
+    // Reveal the identity only when the caller's own organization already has
+    // a connection (of any status) with the hidden organization.
+    const { data: memberships } = await context.supabase
+      .from("org_members")
+      .select("org_id")
+      .eq("user_id", context.userId);
+    const myOrgIds = (memberships ?? []).map((m) => m.org_id);
+    if (myOrgIds.length > 0) {
+      const { data: link } = await context.supabase
+        .from("org_connections")
+        .select("id")
+        .or(
+          `and(from_org_id.in.(${myOrgIds.join(",")}),to_org_id.eq.${row.id}),` +
+            `and(to_org_id.in.(${myOrgIds.join(",")}),from_org_id.eq.${row.id})`,
+        )
+        .limit(1)
+        .maybeSingle();
+      if (link) {
+        return {
+          orgUuid: row.id as string,
+          name: row.name as string,
+          logoUrl: (row.logo_url as string | null) ?? null,
+        };
+      }
+    }
+
+    return generic;
   });
