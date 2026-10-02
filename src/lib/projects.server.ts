@@ -109,13 +109,34 @@ export async function resolveOrgRow(supabase: AnyClient, ref: string) {
       .maybeSingle();
     return data as { id: string; name: string; country: string | null; created_by?: string | null; slug?: string } | null;
   }
-  const clean = ref.trim().toLowerCase();
-  const { data } = await supabase
-    .from("orgs")
-    .select("id, name, country, created_by, slug")
-    .or(`slug.ilike.${clean},legacy_id.ilike.${clean},name.ilike.${clean}`)
-    .maybeSingle();
-  return data as { id: string; name: string; country: string | null; created_by?: string | null; slug?: string } | null;
+  return (await lookupOrgByRef(supabase, ref, "id, name, country, created_by, slug")) as {
+    id: string;
+    name: string;
+    country: string | null;
+    created_by?: string | null;
+    slug?: string;
+  } | null;
+}
+
+/**
+ * Safe slug / legacy id / name lookup. Each column is queried separately with a
+ * parameterized filter (no string-built PostgREST `or()`), and LIKE wildcards
+ * are escaped so the caller's text is matched literally.
+ */
+export async function lookupOrgByRef(supabase: AnyClient, ref: string, columns: string) {
+  const clean = ref.trim();
+  if (!clean || clean.length > 200) return null;
+  const literal = clean.replace(/[\\%_]/g, (c) => `\\${c}`);
+  for (const col of ["slug", "legacy_id", "name"]) {
+    const { data } = await supabase
+      .from("orgs")
+      .select(columns)
+      .ilike(col, literal)
+      .limit(1)
+      .maybeSingle();
+    if (data) return data as Record<string, unknown>;
+  }
+  return null;
 }
 
 export type OrgIndex = Awaited<ReturnType<typeof loadOrgIndex>>;
