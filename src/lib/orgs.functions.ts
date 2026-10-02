@@ -546,12 +546,10 @@ export const leaveOrganizationFn = createServerFn({ method: "POST" })
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.orgId);
     let targetOrgId = data.orgId;
     if (!isUuid) {
-      const { data: orgRow } = await supabase
-        .from("orgs")
-        .select("id")
-        .or(`slug.ilike.${data.orgId},legacy_id.ilike.${data.orgId},name.ilike.${data.orgId}`)
-        .maybeSingle();
-      if (orgRow?.id) targetOrgId = orgRow.id;
+      const { lookupOrgByRef } = await import("@/lib/projects.server");
+      const orgRow = await lookupOrgByRef(supabase, data.orgId, "id");
+      if (!orgRow?.id) throw new Error("Organization not found");
+      targetOrgId = orgRow.id as string;
     }
 
     const { data: member } = await supabase

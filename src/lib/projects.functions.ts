@@ -114,7 +114,8 @@ export const listOrgRequests = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<InboxRequest[]> => {
     const { supabase } = context;
     const org = await resolveOrgRow(supabase, data.orgId);
-    const targetOrgId = org?.id ?? data.orgId;
+    if (!org?.id) return [];
+    const targetOrgId = org.id;
 
     const { data: rows, error } = await supabase
       .from("project_requests")
