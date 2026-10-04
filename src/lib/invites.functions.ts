@@ -2,12 +2,18 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertOrgRole } from "@/lib/rbac.server";
+import { assertRateLimit, getClientIp } from "@/lib/rate-limit.server";
 
-// Public lookup — token-gated. Runs server-side only via the privileged client,
+// Public lookup — token-gated and rate-limited. Runs server-side only via the privileged client,
 // so the RPC itself no longer needs to be executable by anonymous callers.
 export const lookupInvite = createServerFn({ method: "GET" })
-  .inputValidator((data: unknown) => z.object({ token: z.string().min(4).max(200) }).parse(data))
+  .inputValidator((data: unknown) =>
+    z.object({ token: z.string().trim().min(16).max(100) }).parse(data),
+  )
   .handler(async ({ data }) => {
+    const ip = await getClientIp();
+    assertRateLimit("invite_lookup", ip, { windowMs: 60_000, max: 15 });
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: rows, error } = await supabaseAdmin.rpc("get_invite_by_token", {
       _token: data.token,
@@ -18,18 +24,21 @@ export const lookupInvite = createServerFn({ method: "GET" })
     return row;
   });
 
-// Accept invite — authenticated only
+// Accept invite — authenticated only and rate-limited
 export const acceptInvite = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
     z
       .object({
-        token: z.string().min(4).max(200),
+        token: z.string().trim().min(16).max(100),
         displayName: z.string().trim().max(80).optional(),
       })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
+    const ip = await getClientIp();
+    assertRateLimit("invite_accept", ip, { windowMs: 60_000, max: 10 });
+
     const { data: orgId, error } = await context.supabase.rpc("accept_invite", {
       _token: data.token,
       _display_name: data.displayName,

@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertRateLimit, getClientIp } from "@/lib/rate-limit.server";
 
 export async function assertAdmin(context: { supabase: any; userId: string }) {
   const { data, error } = await context.supabase.rpc("is_platform_admin", {
@@ -262,10 +263,15 @@ export const revokePlatformInvite = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-// Public lookup of an onboarding invite — token-gated, server-side only.
+// Public lookup of an onboarding invite — token-gated and rate-limited.
 export const lookupPlatformInvite = createServerFn({ method: "GET" })
-  .inputValidator((data: unknown) => z.object({ token: z.string().min(4).max(200) }).parse(data))
+  .inputValidator((data: unknown) =>
+    z.object({ token: z.string().trim().min(16).max(100) }).parse(data),
+  )
   .handler(async ({ data }) => {
+    const ip = await getClientIp();
+    assertRateLimit("platform_invite_lookup", ip, { windowMs: 60_000, max: 15 });
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: rows, error } = await supabaseAdmin.rpc("get_platform_invite_by_token", {
       _token: data.token,
@@ -280,12 +286,15 @@ export const acceptPlatformInvite = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
     z
       .object({
-        token: z.string().min(4).max(200),
+        token: z.string().trim().min(16).max(100),
         displayName: z.string().trim().max(80).optional(),
       })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
+    const ip = await getClientIp();
+    assertRateLimit("platform_invite_accept", ip, { windowMs: 60_000, max: 10 });
+
     const { data: orgId, error } = await context.supabase.rpc("accept_platform_invite", {
       _token: data.token,
       _display_name: data.displayName,

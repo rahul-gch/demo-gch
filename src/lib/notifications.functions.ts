@@ -26,8 +26,16 @@ export const listNotifications = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(orgInput)
   .handler(async ({ data, context }): Promise<NotificationItem[]> => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
     const orgId = data.orgId;
+
+    // Caller must belong to the organization or be a platform admin
+    const [{ data: isMember }, { data: isAdmin }] = await Promise.all([
+      supabase.rpc("is_org_member", { _user: userId, _org: orgId }),
+      supabase.rpc("is_platform_admin", { _user: userId }),
+    ]);
+    if (!isMember && !isAdmin) return [];
+
     const items: NotificationItem[] = [];
 
     // --- unread messages ---
@@ -221,8 +229,19 @@ export const markAllNotificationsRead = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(orgInput)
   .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    // Verify caller belongs to the organization
+    const [{ data: isMember }, { data: isAdmin }] = await Promise.all([
+      supabase.rpc("is_org_member", { _user: userId, _org: data.orgId }),
+      supabase.rpc("is_platform_admin", { _user: userId }),
+    ]);
+    if (!isMember && !isAdmin) {
+      throw new Error("Forbidden: not a member of this organization.");
+    }
+
     try {
-      const { error } = await context.supabase
+      const { error } = await supabase
         .from("conversation_participants")
         .update({ last_read_at: new Date().toISOString() })
         .eq("org_id", data.orgId);
@@ -240,8 +259,18 @@ export const orgSharedCounts = createServerFn({ method: "POST" })
     z.object({ orgId: z.string().uuid(), counterpartOrgId: z.string().uuid() }).parse(d),
   )
   .handler(async ({ data, context }): Promise<SharedCounts> => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
     const { orgId, counterpartOrgId } = data;
+
+    // Caller must belong to at least one of the two organizations, or be a platform admin
+    const [{ data: isMemberA }, { data: isMemberB }, { data: isAdmin }] = await Promise.all([
+      supabase.rpc("is_org_member", { _user: userId, _org: orgId }),
+      supabase.rpc("is_org_member", { _user: userId, _org: counterpartOrgId }),
+      supabase.rpc("is_platform_admin", { _user: userId }),
+    ]);
+    if (!isMemberA && !isMemberB && !isAdmin) {
+      return { projects: 0, documents: 0, pendingRequests: 0 };
+    }
 
     try {
       const [{ data: ownedA }, { data: ownedB }, { data: partnerA }, { data: partnerB }] =

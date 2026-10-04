@@ -99,7 +99,31 @@ export const listMessages = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ conversationId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }): Promise<RawMessage[]> => {
-    const { data: rows, error } = await context.supabase
+    const { supabase, userId } = context;
+
+    // Caller must belong to one of the organizations in this conversation, or be platform admin
+    const { data: parts, error: partErr } = await supabase
+      .from("conversation_participants")
+      .select("org_id")
+      .eq("conversation_id", data.conversationId);
+    if (partErr) throw new Error(partErr.message);
+    if (!parts || parts.length === 0) return [];
+
+    const participantOrgIds = parts.map((p) => p.org_id);
+    const [{ data: memberships }, { data: isAdmin }] = await Promise.all([
+      supabase
+        .from("org_members")
+        .select("org_id")
+        .eq("user_id", userId)
+        .in("org_id", participantOrgIds),
+      supabase.rpc("is_platform_admin", { _user: userId }),
+    ]);
+
+    if (!isAdmin && (!memberships || memberships.length === 0)) {
+      throw new Error("Forbidden: you are not a participant in this conversation.");
+    }
+
+    const { data: rows, error } = await supabase
       .from("messages")
       .select("id, conversation_id, sender_org_id, author_name, author_role, body, created_at")
       .eq("conversation_id", data.conversationId)
@@ -114,7 +138,18 @@ export const ensureConversation = createServerFn({ method: "POST" })
     z.object({ myOrgId: z.string().uuid(), counterpartOrgId: z.string().uuid() }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { data: id, error } = await context.supabase.rpc("get_or_create_conversation", {
+    const { supabase, userId } = context;
+
+    // Verify caller actually belongs to the requesting organization
+    const [{ data: isMember }, { data: isAdmin }] = await Promise.all([
+      supabase.rpc("is_org_member", { _user: userId, _org: data.myOrgId }),
+      supabase.rpc("is_platform_admin", { _user: userId }),
+    ]);
+    if (!isMember && !isAdmin) {
+      throw new Error("Forbidden: you are not a member of the requesting organization.");
+    }
+
+    const { data: id, error } = await supabase.rpc("get_or_create_conversation", {
       _org_a: data.myOrgId,
       _org_b: data.counterpartOrgId,
     });
@@ -196,7 +231,18 @@ export const markConversationRead = createServerFn({ method: "POST" })
     z.object({ conversationId: z.string().uuid(), orgId: z.string().uuid() }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
+    const { supabase, userId } = context;
+
+    // Verify caller belongs to the organization whose read status is being marked
+    const [{ data: isMember }, { data: isAdmin }] = await Promise.all([
+      supabase.rpc("is_org_member", { _user: userId, _org: data.orgId }),
+      supabase.rpc("is_platform_admin", { _user: userId }),
+    ]);
+    if (!isMember && !isAdmin) {
+      throw new Error("Forbidden: you are not a member of this organization.");
+    }
+
+    const { error } = await supabase
       .from("conversation_participants")
       .update({ last_read_at: new Date().toISOString() })
       .eq("conversation_id", data.conversationId)
