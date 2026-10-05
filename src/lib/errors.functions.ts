@@ -38,15 +38,14 @@ export const listAppErrors = createServerFn({ method: "GET" })
 
     if (data.source !== "all") query = query.eq("source", data.source);
     if (data.unresolvedOnly) query = query.is("resolved_at", null);
-    // Strip PostgREST filter syntax characters and escape LIKE wildcards.
+    // Strip PostgREST filter syntax characters and LIKE wildcards.
     const cleaned = data.search
       .trim()
-      .replace(/[,()."'\\:*]/g, " ")
-      .replace(/[%_]/g, (c) => `\\${c}`)
+      .replace(/[,()."'\\:*%_]/g, " ")
       .trim();
     if (cleaned) {
       const term = `%${cleaned}%`;
-      query = query.or(`message.ilike."${term}",route.ilike."${term}"`);
+      query = query.or(`message.ilike.${term},route.ilike.${term}`);
     }
 
     const { data: rows, error } = await query;
