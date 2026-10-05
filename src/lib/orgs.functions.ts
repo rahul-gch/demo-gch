@@ -370,6 +370,9 @@ export const updateOrgProfile = createServerFn({ method: "POST" })
       if (value !== undefined) patch[column] = value;
     }
 
+    // The on-time delivery rate feeds matchmaking scores, so only platform admins may set it.
+    if (!isAdmin) delete patch["on_time_rate"];
+
     if (data.operatingCountries !== undefined) {
       const { data: details } = await supabase.rpc("org_private_details", { _org: data.orgId });
       const currentAnswers = ((Array.isArray(details) ? details[0] : details)?.profile_answers ??
