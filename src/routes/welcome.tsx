@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Building2, Globe2, Loader2, Mail, Plus } from "lucide-react";
 import { JoinWithInviteForm } from "@/components/signup/JoinWithInviteForm";
+import { CreateOrgForm } from "@/components/signup/CreateOrgForm";
 
 export const Route = createFileRoute("/welcome")({
   ssr: false,
@@ -101,7 +102,7 @@ function WelcomePage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <button
                   type="button"
-                  onClick={() => nav({ to: "/onboarding" })}
+                  onClick={() => setStep("create")}
                   className="group rounded-xl border bg-card p-5 text-left transition hover:border-primary hover:shadow-md"
                 >
                   <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -126,6 +127,11 @@ function WelcomePage() {
                   </p>
                 </button>
               </div>
+            ) : step === "create" ? (
+              <CreateOrgForm
+                signedIn
+                onCreated={(id) => nav({ to: "/onboarding/org/$id", params: { id }, replace: true })}
+              />
             ) : (
               <JoinWithInviteForm />
             )}

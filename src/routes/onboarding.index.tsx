@@ -49,10 +49,6 @@ function OnboardingStart() {
         nav({ to: "/onboarding/org/$id", params: { id: pending.org_id }, replace: true });
         return;
       }
-      if (memberships.length > 0) {
-        nav({ to: "/", replace: true });
-        return;
-      }
       setReady(true);
     })();
     return () => {
