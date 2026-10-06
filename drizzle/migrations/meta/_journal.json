@@ -36,6 +36,13 @@
       "when": 1790887474621,
       "tag": "0004_grant_is_hidden_select",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791198778045,
+      "tag": "0005_restrict_on_time_rate_to_admins",
+      "breakpoints": true
     }
   ]
 }
