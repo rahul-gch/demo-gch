@@ -1,4 +1,5 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
+import { AdminOnly } from "@/components/AdminOnly";
 import { getEntity } from "@/seed/all-entities";
 import { ResearchWorkspace } from "@/components/ResearchWorkspace";
 import { refreshRegistry } from "@/lib/registry";
@@ -13,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/organizations/$id/research
     if (!entity) throw notFound();
     return { entity };
   },
-  component: OrgResearchPage,
+  component: () => <AdminOnly><OrgResearchPage /></AdminOnly>,
 });
 
 function OrgResearchPage() {

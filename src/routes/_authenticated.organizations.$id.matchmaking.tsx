@@ -1,4 +1,5 @@
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
+import { AdminOnly } from "@/components/AdminOnly";
 import { useMemo, useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -43,7 +44,7 @@ export const Route = createFileRoute("/_authenticated/organizations/$id/matchmak
     if (!entity) throw notFound();
     return { entity };
   },
-  component: OrgMatchmakingPage,
+  component: () => <AdminOnly><OrgMatchmakingPage /></AdminOnly>,
 });
 
 function OrgMatchmakingPage() {

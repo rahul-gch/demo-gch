@@ -76,7 +76,6 @@ export function AppSidebar() {
           ? [{ title: "My organization", url: primaryOrgPath, icon: Building2 }]
           : []),
         { title: "Organizations", url: "/organizations", icon: Building2 },
-        { title: "Matchmaking", url: "/matchmaking", icon: Sparkles },
         { title: "Messages", url: "/messages", icon: MessageSquare, badgeKind: "unread" },
         { title: "Meetings", url: "/meetings", icon: Calendar },
         { title: "Settings", url: "/settings", icon: Settings },

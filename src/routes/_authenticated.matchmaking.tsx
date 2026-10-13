@@ -1,4 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { AdminOnly } from "@/components/AdminOnly";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,7 +49,7 @@ export const Route = createFileRoute("/_authenticated/matchmaking")({
       },
     ],
   }),
-  component: MatchmakingPage,
+  component: () => <AdminOnly><MatchmakingPage /></AdminOnly>,
 });
 
 function MatchmakingPage() {
