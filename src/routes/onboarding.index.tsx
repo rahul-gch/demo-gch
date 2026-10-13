@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import {
   markVerificationLater,
@@ -10,8 +10,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { createOrg, myOrgMemberships } from "@/lib/orgs.functions";
 import { refreshRegistry } from "@/lib/registry";
 import { useQueryClient } from "@tanstack/react-query";
-import { OnboardingLayout } from "@/components/onboarding/OnboardingLayout";
-import { CreateOrgForm } from "@/components/signup/CreateOrgForm";
 
 export const Route = createFileRoute("/onboarding/")({
   ssr: false,
@@ -37,7 +35,6 @@ export const Route = createFileRoute("/onboarding/")({
 
 function OnboardingStart() {
   const nav = useNavigate();
-  const [ready, setReady] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -92,38 +89,22 @@ function OnboardingStart() {
           nav({ to: "/onboarding/org/$id", params: { id: res.id }, replace: true });
           return;
         } catch {
-          /* fall back to the manual form below */
+          /* fall through to the welcome page */
         }
       }
       if (!alive) return;
-      setReady(true);
+      // No organization and no pending signup details — let the user choose
+      // how to proceed (create or join) on the welcome page.
+      nav({ to: "/welcome", replace: true });
     })();
     return () => {
       alive = false;
     };
   }, [nav, queryClient]);
 
-  if (!ready) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
   return (
-    <OnboardingLayout
-      step={0}
-      total={2}
-      title="Create your organization"
-      description="Just the basics — you'll answer a few tailored questions next."
-    >
-      <div className="mx-auto w-full max-w-2xl">
-        <CreateOrgForm
-          signedIn
-          onCreated={(id) => nav({ to: "/onboarding/org/$id", params: { id }, replace: true })}
-        />
-      </div>
-    </OnboardingLayout>
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+    </div>
   );
 }
