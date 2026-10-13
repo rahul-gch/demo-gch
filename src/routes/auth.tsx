@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Globe2 } from "lucide-react";
 import { EmailAuthForm } from "@/components/auth/EmailAuthForm";
+import gchLogo from "@/assets/gch-logo.png";
 
 const searchSchema = z.object({ next: z.string().optional() });
 
@@ -60,9 +60,7 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/40 p-6">
       <Card className="w-full max-w-md shadow-sm">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <Globe2 className="h-6 w-6" />
-          </div>
+          <img src={gchLogo} alt="Global Chain Hub" className="mx-auto mb-3 h-14 w-14" />
           <CardTitle className="text-xl">Sign in to Global Chain Hub</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
             Sustainability-first supply chain collaboration.
