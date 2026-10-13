@@ -41,12 +41,12 @@ describe("organization registration types", () => {
   });
 });
 import { describe as d2, it as i2, expect as e2 } from "vitest";
-import { getEntityProfile, withLegacyLocations } from "./entity-profiles";
+import { getProfileDef, withLegacyLocations } from "./entity-profiles";
 d2("manufacturer locations", () => {
   i2("asks for locations only once", () => {
-    const fields = getEntityProfile("Manufacturer").fields;
-    e2(fields.filter((f) => f.kind === "locations")).toHaveLength(1);
-    e2(fields.some((f) => f.id === "factoryLocations")).toBe(false);
+    const fields = getProfileDef("Manufacturer").fields;
+    e2(fields.filter((f: { kind: string }) => f.kind === "locations")).toHaveLength(1);
+    e2(fields.some((f: { id: string }) => f.id === "factoryLocations")).toBe(false);
   });
   i2("carries old factory text into the first location", () => {
     e2(withLegacyLocations({ factoryLocations: "Dhaka, Bangladesh" }).locations).toEqual([{ address: "Dhaka, Bangladesh" }]);
