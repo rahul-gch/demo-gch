@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 /** Dot-and-connector rail: completed, current and remaining onboarding steps. */
 export function OnboardingProgress({
@@ -22,14 +23,16 @@ export function OnboardingProgress({
           const clickable = Boolean(onSelect) && done;
           return (
             <div key={i} className="flex min-w-0 flex-1 items-center gap-1.5 last:flex-none">
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon"
                 aria-label={`Step ${i + 1}`}
                 aria-current={current ? "step" : undefined}
                 disabled={!clickable}
                 onClick={() => clickable && onSelect?.(i)}
                 className={cn(
-                  "h-2.5 w-2.5 shrink-0 rounded-full transition-colors",
+                  "h-3 w-3 min-w-0 shrink-0 rounded-full p-0 transition-colors disabled:opacity-100",
                   done || current ? "bg-primary" : "bg-muted-foreground/25",
                   current && "ring-4 ring-primary/15",
                   clickable && "cursor-pointer",
