@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { BadgeCheck, Globe2, Lock, Network } from "lucide-react";
+import { BadgeCheck, Lock, Network } from "lucide-react";
+import gchLogo from "@/assets/gch-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -73,9 +74,7 @@ function SignupPage() {
     <div className="grid min-h-screen bg-background lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
       <aside className="hidden h-screen lg:sticky lg:top-0 flex-col justify-between bg-primary p-10 text-primary-foreground lg:flex xl:p-14">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-brand text-brand-foreground">
-            <Globe2 className="h-5 w-5" />
-          </div>
+          <img src={gchLogo} alt="Global Chain Hub" className="h-9 w-9" />
           <span className="text-sm font-semibold tracking-tight">Global Chain Hub</span>
         </div>
         <div className="max-w-md space-y-8">
@@ -109,9 +108,7 @@ function SignupPage() {
       <main className="flex items-start justify-center px-5 py-10 sm:px-10 lg:py-14">
         <div className="w-full max-w-xl">
           <div className="mb-8 flex items-center gap-2 lg:hidden">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <Globe2 className="h-4 w-4" />
-            </div>
+            <img src={gchLogo} alt="Global Chain Hub" className="h-8 w-8" />
             <span className="text-sm font-semibold">Global Chain Hub</span>
           </div>
           <div className="mb-8 space-y-1.5">
