@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, Check, CheckCircle2, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CheckCircle2, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,12 +13,14 @@ import {
   completeOnboarding,
   getOrgProfileAnswers,
   saveOrgProfileAnswers,
+  updateOrgProfile,
 } from "@/lib/orgs.functions";
-import { getProfileSteps, normalizeEntityType, type ProfileAnswers } from "@/lib/entity-profiles";
+import { normalizeEntityType, type ProfileAnswers } from "@/lib/entity-profiles";
 import { computeProfileScore } from "@/lib/profile-score";
 import { refreshRegistry } from "@/lib/registry";
 
-const ONBOARDING_STEP_LIMIT = 2;
+import { getOnboardingPages, getOnboardingSections, canFinishOnboarding } from "@/lib/onboarding-sections";
+import { OrganizationReviewFields, type OrganizationReviewValues } from "@/components/onboarding/OrganizationReviewFields";
 
 export const Route = createFileRoute("/onboarding/org/$id")({
   ssr: false,
@@ -49,6 +51,7 @@ function OnboardingProfilePage() {
   const load = useServerFn(getOrgProfileAnswers);
   const save = useServerFn(saveOrgProfileAnswers);
   const finishFn = useServerFn(completeOnboarding);
+  const updateProfile = useServerFn(updateOrgProfile);
 
   const [authed, setAuthed] = useState(false);
   useEffect(() => {
@@ -63,7 +66,7 @@ function OnboardingProfilePage() {
     };
   }, [nav]);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["org-profile-answers", id],
     queryFn: () => load({ data: { orgId: id } }),
     enabled: authed,
@@ -71,27 +74,25 @@ function OnboardingProfilePage() {
 
   const [answers, setAnswers] = useState<ProfileAnswers>({});
   const [step, setStep] = useState(0);
+  const [core, setCore] = useState<OrganizationReviewValues>({ name: "", country: "", description: "", website: "", city: "" });
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
 
   useEffect(() => {
-    if (data?.answers) setAnswers(data.answers);
+    if (data) {
+      setAnswers(data.answers);
+      setCore({ name: data.name, ...data.core });
+    }
   }, [data]);
 
   const entityType = data?.entityType ?? "";
-  const steps = useMemo(() => getProfileSteps(entityType), [entityType]);
-  // Keep first-run onboarding short: only the first two tailored steps. The
-  // rest is completed optionally from the dashboard or settings.
-  const questionSteps = useMemo(
-    () => steps.filter((s) => s.bucket !== "basic").slice(0, ONBOARDING_STEP_LIMIT),
-    [steps],
-  );
-  const current = questionSteps[Math.min(step, Math.max(questionSteps.length - 1, 0))];
-
-  const score = useMemo(
-    () => computeProfileScore(entityType, answers, data?.core ?? {}),
-    [entityType, answers, data],
-  );
+  const sections = useMemo(() => getOnboardingSections(entityType), [entityType]);
+  const pages = useMemo(() => getOnboardingPages(entityType), [entityType]);
+  const current = pages[step - 1];
+  const isReview = step === 0;
+  const isSummary = step === pages.length + 1;
+  const progressStep = isReview ? 0 : isSummary ? sections.length + 1 : (current?.sectionIndex ?? 0) + 1;
+  const score = useMemo(() => computeProfileScore(entityType, answers, core), [entityType, answers, core]);
 
   const setAnswer = (fieldId: string, value: ProfileAnswers[string]) =>
     setAnswers((prev) => ({ ...prev, [fieldId]: value }));
@@ -99,7 +100,8 @@ function OnboardingProfilePage() {
   const finish = async () => {
     setSaving(true);
     try {
-      await save({ data: { orgId: id, answers: answers as never } });
+      if (!canFinishOnboarding(score.score) || !(await persist())) return;
+      setSaving(true);
       await finishFn({ data: { orgId: id } });
       await queryClient.invalidateQueries({ queryKey: ["org-profile-answers", id] });
       queryClient.removeQueries({ queryKey: ["my-org-memberships-gate"] });
@@ -115,6 +117,10 @@ function OnboardingProfilePage() {
   const persist = async () => {
     setSaving(true);
     try {
+      if (core.name.trim().length < 2) throw new Error("Enter your organization name before continuing.");
+      if (data && (core.name !== data.name || core.country !== data.core.country || core.city !== data.core.city || core.website !== data.core.website || core.description !== data.core.description)) {
+        await updateProfile({ data: { orgId: id, name: core.name, country: core.country, city: core.city, website: core.website, description: core.description } });
+      }
       await save({ data: { orgId: id, answers: answers as never } });
       return true;
     } catch (err) {
@@ -125,7 +131,14 @@ function OnboardingProfilePage() {
     }
   };
 
-  if (!authed || isLoading || !current) {
+  const goTo = async (next: number) => {
+    if (saving || next === step) return;
+    if (await persist()) setStep(next);
+  };
+
+  if (error) return <OnboardingLayout step={0} total={1} title="Could not load your profile"><p role="alert" className="text-destructive">{error instanceof Error ? error.message : "Please try again."}</p><Button onClick={() => void queryClient.invalidateQueries({ queryKey: ["org-profile-answers", id] })}>Try again</Button></OnboardingLayout>;
+
+  if (!authed || isLoading || !data) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -136,8 +149,8 @@ function OnboardingProfilePage() {
   if (done) {
     return (
       <OnboardingLayout
-        step={questionSteps.length}
-        total={questionSteps.length + 1}
+        step={sections.length + 1}
+        total={sections.length + 2}
         title="You're all set."
         description="Your organization profile is ready."
       >
@@ -149,56 +162,49 @@ function OnboardingProfilePage() {
     );
   }
 
-  const isLast = step === questionSteps.length - 1;
 
   return (
     <OnboardingLayout
-      // step 0 of the whole flow was creating the organization
-      step={step + 1}
-      total={questionSteps.length + 1}
-      title={current.title}
+      step={progressStep}
+      total={sections.length + 2}
+      title={isReview ? "Review your organization" : isSummary ? "Your profile readiness" : current?.title ?? "Complete your profile"}
       description="Complete what you know now. You can finish the remaining details from your dashboard."
-      onStepSelect={(i) => setStep(Math.max(0, i - 1))}
+      stepLabel={current && current.total > 1 ? `Questions ${current.batch + 1} of ${current.total}` : undefined}
+      onStepSelect={(i) => {
+        const target = i === 0 ? 0 : pages.findIndex((p) => p.sectionIndex === i - 1) + 1;
+        void goTo(target);
+      }}
       footer={
         <>
           <Button
             type="button"
             variant="ghost"
-            disabled={step === 0 || saving}
-            onClick={() => setStep((s) => Math.max(0, s - 1))}
+            disabled={saving}
+            onClick={() => isReview ? void finish() : void goTo(step - 1)}
             className="w-full sm:w-auto"
           >
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back
+            {isReview ? "Finish later" : <><ArrowLeft className="mr-2 h-4 w-4" /> Back</>}
           </Button>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <Button
               type="button"
               variant="outline"
               disabled={saving}
-              onClick={() => {
-                if (isLast) void finish();
-                else setStep((s) => s + 1);
-              }}
+              onClick={() => isSummary ? void goTo(0) : void goTo(step + 1)}
               className="w-full sm:w-auto"
             >
-              Skip
+              {isSummary ? "Review details" : isReview ? "Continue" : "Skip"}
             </Button>
             <Button
               type="button"
               disabled={saving}
               className="w-full sm:w-auto"
-              onClick={async () => {
-                if (isLast) {
-                  await finish();
-                  return;
-                }
-                if (await persist()) setStep((s) => s + 1);
-              }}
+              onClick={() => isSummary ? void finish() : void goTo(step + 1)}
             >
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isLast ? (
+              {isSummary ? (
                 <>
-                  <Check className="mr-2 h-4 w-4" /> Finish setup
+                  <Check className="mr-2 h-4 w-4" /> Go to dashboard
                 </>
               ) : (
                 <>
@@ -212,8 +218,8 @@ function OnboardingProfilePage() {
     >
       <div className="space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-          <Badge variant="outline" className="w-fit gap-1">
-            <Sparkles className="h-3 w-3" /> {normalizeEntityType(entityType)}
+          <Badge variant="brand" className="w-fit max-w-full whitespace-normal px-3 py-1.5 text-sm">
+            {normalizeEntityType(entityType)}
           </Badge>
           <div className="min-w-40 flex-1">
             <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
@@ -229,7 +235,23 @@ function OnboardingProfilePage() {
           </div>
         </div>
 
-        <ProfileFieldGroup fields={current.fields} answers={answers} onChange={setAnswer} />
+        {isReview ? <OrganizationReviewFields values={core} entityType={normalizeEntityType(entityType)} onChange={setCore} /> : isSummary ? (
+          <div className="space-y-5">
+            <h2 className="text-lg font-semibold">{score.score > 80 ? "Your profile is ready for partners" : "Aim for more than 80% completeness"}</h2>
+            <p className="text-sm text-muted-foreground">{score.score > 80 ? "You can update your details anytime from your workspace." : "You can continue to your dashboard now and complete these details later."}</p>
+            <div className="divide-y">
+              {score.buckets.filter((b) => b.missing.length > 0).map((bucket) => <div key={bucket.bucket} className="flex flex-col justify-between gap-2 py-3 sm:flex-row sm:items-center">
+                <div className="min-w-0"><p className="text-sm font-medium">{bucket.label}</p><p className="text-xs text-muted-foreground">{bucket.missing.map((m) => m.label).join(", ")}</p></div>
+                <Button variant="ghost" size="sm" className="shrink-0" onClick={() => {
+                  const pageIndex = pages.findIndex((p) => p.fields.some((f) => f.bucket === bucket.bucket));
+                  void goTo(bucket.bucket === "basic" ? 0 : Math.max(0, pageIndex + 1));
+                }}>Review <ArrowRight className="ml-2 h-4 w-4" /></Button>
+              </div>)}
+            </div>
+            <p className="text-xs text-muted-foreground">Credential answers are self-declared. Uploaded documents are verified separately by an administrator.</p>
+          </div>
+        ) : current ? <ProfileFieldGroup fields={current.fields} answers={answers} onChange={setAnswer} /> : null}
+        {!isReview && !isSummary && <Button type="button" variant="ghost" size="sm" disabled={saving} onClick={() => void finish()} className="text-muted-foreground">Finish later</Button>}
       </div>
     </OnboardingLayout>
   );
