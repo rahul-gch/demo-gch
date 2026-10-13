@@ -1778,3 +1778,13 @@ export function isAnswered(value: unknown): boolean {
   if (typeof value === "number") return Number.isFinite(value) && value > 0;
   return String(value).trim().length > 0;
 }
+
+/** Carries the retired single "factoryLocations" text into the locations list when none exist yet. */
+export function withLegacyLocations(answers: ProfileAnswers): ProfileAnswers {
+  const legacy = answers?.factoryLocations;
+  const locs = answers?.locations;
+  if (typeof legacy === "string" && legacy.trim() && (!Array.isArray(locs) || locs.length === 0)) {
+    return { ...answers, locations: [{ address: legacy.trim().slice(0, 255) }] };
+  }
+  return answers;
+}

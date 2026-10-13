@@ -1,3 +1,4 @@
+import { withLegacyLocations } from "@/lib/entity-profiles";
 import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -80,7 +81,7 @@ function OnboardingProfilePage() {
 
   useEffect(() => {
     if (data) {
-      setAnswers(data.answers);
+      setAnswers(withLegacyLocations(data.answers));
       setCore({ name: data.name, ...data.core });
     }
   }, [data]);
