@@ -43,6 +43,13 @@
       "when": 1791198778045,
       "tag": "0005_restrict_on_time_rate_to_admins",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791898407177,
+      "tag": "0006_org_verification_and_credentials",
+      "breakpoints": true
     }
   ]
 }
