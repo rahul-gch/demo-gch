@@ -16,11 +16,20 @@ import { KpiTable } from "@/components/KpiTable";
 import { BenchmarkChart } from "@/components/BenchmarkChart";
 import { ReportUploader } from "@/components/ReportUploader";
 import { ReadinessChecklist } from "@/components/verification/ReadinessChecklist";
+import { ProfileCompletionPanel } from "@/components/dashboard/ProfileCompletionPanel";
 import type { Entity } from "@/seed/types";
 
 import { refreshRegistry } from "@/lib/registry";
 
 export const Route = createFileRoute("/_authenticated/organizations/$id/")({
+  head: () => ({ meta: [
+    { title: "Organization workspace — Global Chain Hub" },
+    { name: "description", content: "Manage your organization profile, readiness, and collaboration in Global Chain Hub." },
+    { property: "og:title", content: "Organization workspace — Global Chain Hub" },
+    { property: "og:description", content: "Your organization workspace for profile completion and collaboration." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   loader: async ({ params, context }) => {
     let entity = getEntity(params.id);
     if (!entity) {
@@ -50,6 +59,8 @@ function OverviewMissionControl({ e }: { e: Entity }) {
   return (
     <div className="space-y-5">
       <HeroPassport entity={e} />
+
+      {e.orgUuid && <ProfileCompletionPanel orgId={e.orgUuid} routeId={e.id} />}
 
       {e.orgUuid && <ReadinessChecklist orgId={e.orgUuid} routeId={e.id} />}
 
