@@ -296,6 +296,11 @@ export function EmailAuthForm({
             I already have an account
           </button>
         )}
+        {mode === "signin" && initialMode === "signup" && (
+          <button type="button" className="mr-auto text-primary hover:underline" onClick={() => setMode("signup")}>
+            Create an account
+          </button>
+        )}
         {mode === "signin" && (
           <button
             type="button"

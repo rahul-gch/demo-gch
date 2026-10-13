@@ -2,7 +2,9 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { myOrgMemberships } from "@/lib/orgs.functions";
+import { createOrg, myOrgMemberships } from "@/lib/orgs.functions";
+import { refreshRegistry } from "@/lib/registry";
+import { useQueryClient } from "@tanstack/react-query";
 import { OnboardingLayout } from "@/components/onboarding/OnboardingLayout";
 import { CreateOrgForm } from "@/components/signup/CreateOrgForm";
 
@@ -31,6 +33,7 @@ export const Route = createFileRoute("/onboarding/")({
 function OnboardingStart() {
   const nav = useNavigate();
   const [ready, setReady] = useState(false);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     let alive = true;
@@ -44,17 +47,49 @@ function OnboardingStart() {
       // An org may already exist (refresh mid-flow) — continue where we left off.
       const memberships = await myOrgMemberships().catch(() => []);
       if (!alive) return;
-      const pending = memberships.find((m) => !m.onboarding_completed_at);
-      if (pending) {
-        nav({ to: "/onboarding/org/$id", params: { id: pending.org_id }, replace: true });
+      const unfinished = memberships.find((m) => !m.onboarding_completed_at);
+      if (unfinished) {
+        nav({ to: "/onboarding/org/$id", params: { id: unfinished.org_id }, replace: true });
         return;
       }
+      // Direct company signup stored the organization basics on the account —
+      // create it now so the user lands straight in the tailored questions.
+      const pending = data.user.user_metadata?.pending_org as
+        | { name?: string; type?: string; country?: string }
+        | undefined;
+      if (memberships.length === 0 && pending?.name && pending.type && pending.country) {
+        try {
+          const slug =
+            pending.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 64) || "org";
+          const res = await createOrg({
+            data: {
+              name: pending.name,
+              slug,
+              type: pending.type,
+              country: pending.country,
+              city: null,
+              address: null,
+              zipCode: null,
+              operatingCountries: [pending.country],
+              website: null,
+            },
+          });
+          await supabase.auth.updateUser({ data: { pending_org: null } });
+          await refreshRegistry(queryClient);
+          if (!alive) return;
+          nav({ to: "/onboarding/org/$id", params: { id: res.id }, replace: true });
+          return;
+        } catch {
+          /* fall back to the manual form below */
+        }
+      }
+      if (!alive) return;
       setReady(true);
     })();
     return () => {
       alive = false;
     };
-  }, [nav]);
+  }, [nav, queryClient]);
 
   if (!ready) {
     return (
