@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Building2, Globe2, Loader2, Mail, Plus } from "lucide-react";
+import { Building2, Loader2, Mail, Plus } from "lucide-react";
+import { GchLogo } from "@/components/GchLogo";
 import { JoinWithInviteForm } from "@/components/signup/JoinWithInviteForm";
 import { CreateOrgForm } from "@/components/signup/CreateOrgForm";
 

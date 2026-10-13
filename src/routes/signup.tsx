@@ -77,11 +77,8 @@ function SignupPage() {
         <div className="max-w-md space-y-8">
           <div className="space-y-3">
             <h1 className="text-3xl font-semibold leading-tight tracking-tight">
-              The verified network for textile and apparel supply chains.
+              B2B Partnership Platform for the Global Textile Supply Chain
             </h1>
-            <p className="text-sm text-primary-foreground/70">
-              Connect with brands, mills and factories, share credentials once, and run projects with your partners.
-            </p>
           </div>
           <ul className="space-y-4 text-sm">
             {[
