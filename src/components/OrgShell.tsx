@@ -15,7 +15,10 @@ import type { Entity } from "@/seed/types";
 import { useRealtimeComms } from "@/lib/use-comms";
 import { usePlatformAdmin } from "@/lib/use-platform-admin";
 
+import { GchLogo } from "./GchLogo";
+
 export function OrgShell({ entity, children }: { entity: Entity; children: ReactNode }) {
+  const base = `/organizations/${entity.slug || entity.id}`;
   // Always scoped to the organization in the URL — never the viewer's own org.
   const viewedOrgId = entity.orgUuid ?? null;
   useRealtimeComms(viewedOrgId);
@@ -31,6 +34,13 @@ export function OrgShell({ entity, children }: { entity: Entity; children: React
             <div className="flex shrink-0 items-center gap-1">
               <SidebarTrigger />
               <NavHistoryButtons className="flex" />
+              <Link
+                to={base}
+                className="shrink-0 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label="GCH — Global Chain Hub home"
+              >
+                <GchLogo size="sm" />
+              </Link>
               {isAdmin && (
                 <TooltipProvider delayDuration={300}>
                   <Tooltip>
