@@ -18,12 +18,10 @@ export function AppShell({ children }: { children: ReactNode }) {
           <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur">
             <SidebarTrigger />
             <NavHistoryButtons className="flex" />
-            <div className="min-w-0 flex-1 truncate">
-              <GchLogo />
+            <div className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
+              <span className="hidden sm:inline">Global Chain Hub · Admin</span>
+              <span className="sm:hidden">GCH · Admin</span>
             </div>
-            <span className="rounded-full border bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              Admin
-            </span>
             <NotificationBell />
             <UserMenu />
           </header>
