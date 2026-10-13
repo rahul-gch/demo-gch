@@ -149,12 +149,16 @@ export function EcosystemGoogleMap({
         zIndex: isSelected ? 999 : 1,
       });
       marker.addListener("click", () => {
+        const esc = (v: unknown) =>
+          String(v ?? "").replace(/[&<>"']/g, (c) =>
+            ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
+          );
         infoRef.current.setContent(
           `<div style="font-family:Inter,system-ui;padding:4px 6px;min-width:160px">
-             <div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#64748b">${e.gchNumber}</div>
-             <div style="font-weight:600;font-size:13px;margin-top:2px;color:#0f172a">${e.name}</div>
-             <div style="font-size:11px;color:#475569;margin-top:2px">${e.entityType} · ${e.country}</div>
-             <a href="/organizations/${e.id}" style="display:inline-block;margin-top:6px;font-size:11px;color:#2563eb;text-decoration:none">View profile →</a>
+             <div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#64748b">${esc(e.gchNumber)}</div>
+             <div style="font-weight:600;font-size:13px;margin-top:2px;color:#0f172a">${esc(e.name)}</div>
+             <div style="font-size:11px;color:#475569;margin-top:2px">${esc(e.entityType)} · ${esc(e.country)}</div>
+             <a href="/organizations/${encodeURIComponent(String(e.id))}" style="display:inline-block;margin-top:6px;font-size:11px;color:#2563eb;text-decoration:none">View profile →</a>
            </div>`,
         );
         infoRef.current.open(mapRef.current, marker);
