@@ -28,6 +28,7 @@ import { Badge } from "@/components/ui/badge";
 import type { Entity } from "@/seed/types";
 import { usePendingMeetingCount, useUnreadTotal } from "@/lib/use-comms";
 import { usePendingSampleOrderCount } from "@/lib/use-showroom";
+import { useIsPlatformAdmin } from "@/lib/use-platform-admin";
 
 export function OrgSidebar({ entity }: { entity: Entity }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -35,6 +36,7 @@ export function OrgSidebar({ entity }: { entity: Entity }) {
   const orgUuid = entity.orgUuid ?? entity.id;
   const inbox = useUnreadTotal(orgUuid) + usePendingMeetingCount(orgUuid);
   const pendingOrders = usePendingSampleOrderCount(orgUuid);
+  const { isAdmin } = useIsPlatformAdmin();
 
   const items = [
     { title: "Home / Feed", url: `${base}/feed`, icon: Rss },
@@ -42,8 +44,8 @@ export function OrgSidebar({ entity }: { entity: Entity }) {
     { title: "Showroom", url: `${base}/showroom`, icon: Store, badge: pendingOrders },
     { title: "Projects", url: `${base}/projects`, icon: FolderKanban },
     { title: "Supply Chain Mapping", url: `${base}/supply-chain`, icon: Network },
-    { title: "Matchmaking & Partnerships", url: `${base}/matchmaking`, icon: Sparkles },
-    { title: "Research Database", url: `${base}/research`, icon: Search },
+    ...(isAdmin ? [{ title: "Matchmaking & Partnerships", url: `${base}/matchmaking`, icon: Sparkles }] : []),
+    ...(isAdmin ? [{ title: "Research Database", url: `${base}/research`, icon: Search }] : []),
     {
       title: "Messages & Meetings",
       url: `${base}/messages`,
