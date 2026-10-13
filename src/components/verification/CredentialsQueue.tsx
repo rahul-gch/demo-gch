@@ -27,6 +27,16 @@ export function CredentialsQueue() {
       return data ?? [];
     },
   });
+  const counts = useQuery({
+    queryKey: ["admin-credentials", "counts"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("org_credentials").select("status").limit(5000);
+      if (error) throw error;
+      const c: Record<string, number> = {};
+      for (const r of data ?? []) c[r.status] = (c[r.status] ?? 0) + 1;
+      return c;
+    },
+  });
 
   const act = async (id: string, status: "verified" | "rejected") => {
     const { data: u } = await supabase.auth.getUser();
@@ -54,14 +64,19 @@ export function CredentialsQueue() {
         <div className="flex gap-1">
           {(["self_declared", "verified", "rejected"] as const).map((s) => (
             <Button key={s} size="sm" variant={filter === s ? "default" : "outline"} onClick={() => setFilter(s)}>
-              {s === "self_declared" ? "Pending" : s === "verified" ? "Approved" : "Rejected"}
+              {s === "self_declared" ? "Pending" : s === "verified" ? "Approved" : "Rejected"} ({counts.data?.[s] ?? 0})
             </Button>
           ))}
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
         {q.isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
-        {!q.isLoading && (q.data ?? []).length === 0 && <p className="text-sm text-muted-foreground">Nothing here.</p>}
+        {q.isError && <p className="text-sm text-destructive">Could not load credentials: {(q.error as Error).message}</p>}
+        {!q.isLoading && !q.isError && (q.data ?? []).length === 0 && (
+          <p className="text-sm text-muted-foreground">
+            {filter === "self_declared" ? "No credentials waiting for review." : filter === "verified" ? "No approved credentials yet." : "No rejected credentials yet."}
+          </p>
+        )}
         {(q.data ?? []).map((r) => {
           const org = r.orgs as { name?: string; country?: string } | null;
           return (
@@ -75,6 +90,7 @@ export function CredentialsQueue() {
                   {[org?.name, org?.country, r.reference, r.score, r.scope, r.expires_at && `Expires ${r.expires_at}`].filter(Boolean).join(" · ")}
                 </div>
                 {r.review_note && <div className="mt-1 text-xs text-muted-foreground">Note: {r.review_note}</div>}
+                {r.reviewed_at && <div className="mt-1 text-xs text-muted-foreground">Reviewed {new Date(r.reviewed_at).toLocaleString()}</div>}
               </div>
               {r.document_path ? (
                 <Button size="sm" variant="outline" onClick={() => open(r.document_path!)}>View document</Button>
