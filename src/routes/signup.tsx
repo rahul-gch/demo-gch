@@ -45,9 +45,11 @@ function SignupPage() {
       ? { name: orgName.trim(), type, country }
       : null;
 
+  const signupTypes = ENTITY_TYPES.filter((t) => t !== "Seed");
+
   return (
     <div className="flex min-h-screen items-start justify-center bg-muted/40 p-6">
-      <div className="w-full max-w-lg py-10">
+      <div className="w-full max-w-4xl py-10">
         <div className="mb-6 flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Globe2 className="h-5 w-5" />
@@ -62,22 +64,22 @@ function SignupPage() {
               Tell us about your organization and set up your login. It takes under a minute.
             </p>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <section className="space-y-4">
-              <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Organization
-              </h2>
-              <div className="space-y-1.5">
-                <Label htmlFor="org-name">Organization name</Label>
-                <Input
-                  id="org-name"
-                  value={orgName}
-                  onChange={(e) => setOrgName(e.target.value)}
-                  placeholder="Acme Cotton Mills"
-                  autoComplete="organization"
-                />
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
+          <CardContent>
+            <div className="grid gap-8 md:grid-cols-2 md:gap-10">
+              <section className="space-y-4">
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Organization
+                </h2>
+                <div className="space-y-1.5">
+                  <Label htmlFor="org-name">Organization name</Label>
+                  <Input
+                    id="org-name"
+                    value={orgName}
+                    onChange={(e) => setOrgName(e.target.value)}
+                    placeholder="Acme Cotton Mills"
+                    autoComplete="organization"
+                  />
+                </div>
                 <div className="space-y-1.5">
                   <Label>Organization type</Label>
                   <Select value={type} onValueChange={setType}>
@@ -85,7 +87,7 @@ function SignupPage() {
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent className="max-h-72">
-                      {ENTITY_TYPES.map((t) => (
+                      {signupTypes.map((t) => (
                         <SelectItem key={t} value={t}>
                           {t}
                         </SelectItem>
@@ -102,21 +104,21 @@ function SignupPage() {
                     placeholder="Select country"
                   />
                 </div>
-              </div>
-            </section>
+              </section>
 
-            <section className="space-y-4 border-t pt-5">
-              <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Your login
-              </h2>
-              <EmailAuthForm
-                mode="signup"
-                pendingOrg={pendingOrg}
-                onSignedIn={() => nav({ to: "/onboarding", replace: true })}
-              />
-            </section>
+              <section className="space-y-4 border-t pt-6 md:border-l md:border-t-0 md:pl-10 md:pt-0">
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Your login
+                </h2>
+                <EmailAuthForm
+                  mode="signup"
+                  pendingOrg={pendingOrg}
+                  onSignedIn={() => nav({ to: "/onboarding", replace: true })}
+                />
+              </section>
+            </div>
 
-            <div className="border-t pt-4 text-center text-xs text-muted-foreground">
+            <div className="mt-8 border-t pt-4 text-center text-xs text-muted-foreground">
               Already registered?{" "}
               <Link to="/auth" className="text-primary hover:underline">
                 Sign in
