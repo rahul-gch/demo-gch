@@ -35,7 +35,6 @@ export const Route = createFileRoute("/onboarding/")({
 
 function OnboardingStart() {
   const nav = useNavigate();
-  const [ready, setReady] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
