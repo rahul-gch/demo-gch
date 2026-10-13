@@ -30,7 +30,7 @@ export function EmailAuthForm({
   onSignedIn?: () => void;
   compact?: boolean;
   /** Direct company signup: the organization is created right after sign-up. */
-  pendingOrg?: { name: string; type: string; country: string } | null;
+  pendingOrg?: { name: string; type: string; country: string; verification?: string } | null;
 }) {
   const queryClient = useQueryClient();
   const [mode, setMode] = useState<Mode>(initialMode ?? "signin");
@@ -73,7 +73,7 @@ export function EmailAuthForm({
           return;
         }
         if (pendingOrg === null) {
-          toast.error("Add your organization name, type and country first");
+          toast.error("Complete your organization details and business verification first");
           return;
         }
         const { data, error } = await supabase.auth.signUp({

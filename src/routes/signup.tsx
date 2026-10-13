@@ -1,25 +1,23 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { BadgeCheck, Globe2, Lock, Network } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Globe2 } from "lucide-react";
 import { EmailAuthForm } from "@/components/auth/EmailAuthForm";
 import { CountrySelect } from "@/components/CountrySelect";
+import { VerificationUpload } from "@/components/verification/VerificationUpload";
 import { ENTITY_TYPES } from "@/lib/entity-profiles";
+import { stashPendingVerificationFile, verificationChoiceValid } from "@/lib/verification";
 
 export const Route = createFileRoute("/signup")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Create your company workspace — Global Chain Hub" },
-      {
-        name: "description",
-        content: "Register your organization on Global Chain Hub in one short step.",
-      },
-      { property: "og:title", content: "Create your company workspace — Global Chain Hub" },
+      { title: "Register your company — Global Chain Hub" },
+      { name: "description", content: "Register your organization on Global Chain Hub in one short step." },
+      { property: "og:title", content: "Register your company — Global Chain Hub" },
       { property: "og:description", content: "Register your organization on Global Chain Hub." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -28,11 +26,30 @@ export const Route = createFileRoute("/signup")({
   component: SignupPage,
 });
 
+function Step({ n, title, hint, children }: { n: number; title: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <section className="space-y-4">
+      <div className="flex items-center gap-3">
+        <span className="flex h-6 w-6 items-center justify-center rounded-full border text-xs font-semibold tabular-nums">
+          {n}
+        </span>
+        <div>
+          <h2 className="text-sm font-semibold leading-none">{title}</h2>
+          {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+        </div>
+      </div>
+      <div className="space-y-4 pl-9">{children}</div>
+    </section>
+  );
+}
+
 function SignupPage() {
   const nav = useNavigate();
   const [orgName, setOrgName] = useState("");
   const [type, setType] = useState("");
   const [country, setCountry] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [later, setLater] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -40,50 +57,91 @@ function SignupPage() {
     });
   }, [nav]);
 
+  useEffect(() => {
+    void stashPendingVerificationFile(file);
+  }, [file]);
+
+  const verificationOk = verificationChoiceValid(file, later);
   const pendingOrg =
-    orgName.trim().length >= 2 && type && country
-      ? { name: orgName.trim(), type, country }
+    orgName.trim().length >= 2 && type && country && verificationOk
+      ? { name: orgName.trim(), type, country, verification: file ? "upload" : "later" }
       : null;
 
   const signupTypes = ENTITY_TYPES.filter((t) => t !== "Seed");
 
   return (
-    <div className="flex min-h-screen items-start justify-center bg-muted/40 p-6">
-      <div className="w-full max-w-4xl py-10">
-        <div className="mb-6 flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+    <div className="grid min-h-screen bg-background lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+      <aside className="hidden h-screen lg:sticky lg:top-0 flex-col justify-between bg-primary p-10 text-primary-foreground lg:flex xl:p-14">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-brand text-brand-foreground">
             <Globe2 className="h-5 w-5" />
           </div>
-          <div className="text-sm font-semibold">Global Chain Hub</div>
+          <span className="text-sm font-semibold tracking-tight">Global Chain Hub</span>
         </div>
-
-        <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle>Create your company workspace</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Tell us about your organization and set up your login. It takes under a minute.
+        <div className="max-w-md space-y-8">
+          <div className="space-y-3">
+            <h1 className="text-3xl font-semibold leading-tight tracking-tight">
+              The verified network for textile and apparel supply chains.
+            </h1>
+            <p className="text-sm text-primary-foreground/70">
+              Connect with brands, mills and factories, share credentials once, and run projects with your partners.
             </p>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-8 md:grid-cols-2 md:gap-10">
-              <section className="space-y-4">
-                <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Organization
-                </h2>
-                <div className="space-y-1.5">
-                  <Label htmlFor="org-name">Organization name</Label>
-                  <Input
-                    id="org-name"
-                    value={orgName}
-                    onChange={(e) => setOrgName(e.target.value)}
-                    placeholder="Acme Cotton Mills"
-                    autoComplete="organization"
-                  />
+          </div>
+          <ul className="space-y-4 text-sm">
+            {[
+              { icon: BadgeCheck, t: "Verified organizations", d: "Every company is reviewed before receiving a verified badge." },
+              { icon: Network, t: "Matchmaking that fits", d: "Partners are suggested from your capabilities and credentials." },
+              { icon: Lock, t: "Private by default", d: "Documents are shared only with organizations you connect with." },
+            ].map(({ icon: Icon, t, d }) => (
+              <li key={t} className="flex gap-3">
+                <Icon className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
+                <div>
+                  <div className="font-medium">{t}</div>
+                  <div className="text-primary-foreground/60">{d}</div>
                 </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <p className="text-xs text-primary-foreground/50">© {new Date().getFullYear()} Global Chain Hub</p>
+      </aside>
+
+      <main className="flex items-start justify-center px-5 py-10 sm:px-10 lg:py-14">
+        <div className="w-full max-w-xl">
+          <div className="mb-8 flex items-center gap-2 lg:hidden">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
+              <Globe2 className="h-4 w-4" />
+            </div>
+            <span className="text-sm font-semibold">Global Chain Hub</span>
+          </div>
+          <div className="mb-8 space-y-1.5">
+            <h1 className="text-2xl font-semibold tracking-tight">Register your company</h1>
+            <p className="text-sm text-muted-foreground">
+              Already registered?{" "}
+              <Link to="/auth" className="font-medium text-foreground underline-offset-4 hover:underline">
+                Sign in
+              </Link>
+            </p>
+          </div>
+
+          <div className="space-y-8">
+            <Step n={1} title="Organization" hint="Shown on your public profile.">
+              <div className="space-y-1.5">
+                <Label htmlFor="org-name">Organization name</Label>
+                <Input
+                  id="org-name"
+                  value={orgName}
+                  onChange={(e) => setOrgName(e.target.value)}
+                  placeholder="Acme Cotton Mills"
+                  autoComplete="organization"
+                  className="h-10"
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label>Organization type</Label>
                   <Select value={type} onValueChange={setType}>
-                    <SelectTrigger aria-label="Organization type">
+                    <SelectTrigger aria-label="Organization type" className="h-10">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent className="max-h-72">
@@ -97,38 +155,29 @@ function SignupPage() {
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="org-country">Headquarters country</Label>
-                  <CountrySelect
-                    id="org-country"
-                    value={country}
-                    onChange={setCountry}
-                    placeholder="Select country"
-                  />
+                  <CountrySelect id="org-country" value={country} onChange={setCountry} placeholder="Select country" />
                 </div>
-              </section>
+              </div>
+            </Step>
 
-              <section className="space-y-4 border-t pt-6 md:border-l md:border-t-0 md:pl-10 md:pt-0">
-                <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Your login
-                </h2>
-                <EmailAuthForm
-                  mode="signup"
-                  pendingOrg={pendingOrg}
-                  onSignedIn={() => nav({ to: "/onboarding", replace: true })}
-                />
-              </section>
-            </div>
+            <Step n={2} title="Business verification" hint="Proof that your company is registered. Reviewed by our team.">
+              <VerificationUpload file={file} onFile={setFile} later={later} onLater={setLater} />
+            </Step>
 
-            <div className="mt-8 border-t pt-4 text-center text-xs text-muted-foreground">
-              Already registered?{" "}
-              <Link to="/auth" className="text-primary hover:underline">
-                Sign in
-              </Link>
-              {" · "}
-              Invited by a colleague? Open the invite link from your email.
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            <Step n={3} title="Your login" hint="You'll be the owner of this workspace.">
+              <EmailAuthForm
+                mode="signup"
+                pendingOrg={pendingOrg}
+                onSignedIn={() => nav({ to: "/onboarding", replace: true })}
+              />
+            </Step>
+          </div>
+
+          <p className="mt-10 border-t pt-5 text-xs text-muted-foreground">
+            Invited by a colleague? Open the invite link from your email to join their workspace.
+          </p>
+        </div>
+      </main>
     </div>
   );
 }

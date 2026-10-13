@@ -495,6 +495,72 @@ export type Database = {
           },
         ]
       }
+      org_credentials: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          document_path: string | null
+          expires_at: string | null
+          id: string
+          issued_at: string | null
+          kind: string
+          org_id: string
+          reference: string | null
+          scope: string | null
+          score: string | null
+          standard: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          document_path?: string | null
+          expires_at?: string | null
+          id?: string
+          issued_at?: string | null
+          kind: string
+          org_id: string
+          reference?: string | null
+          scope?: string | null
+          score?: string | null
+          standard: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          document_path?: string | null
+          expires_at?: string | null
+          id?: string
+          issued_at?: string | null
+          kind?: string
+          org_id?: string
+          reference?: string | null
+          scope?: string | null
+          score?: string | null
+          standard?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_credentials_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_credentials_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       org_documents: {
         Row: {
           category: Database["public"]["Enums"]["doc_category"]
@@ -658,6 +724,63 @@ export type Database = {
             foreignKeyName: "org_members_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_verification: {
+        Row: {
+          created_at: string
+          document_name: string | null
+          document_path: string | null
+          note: string | null
+          org_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submitted_at: string | null
+          submitted_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          document_name?: string | null
+          document_path?: string | null
+          note?: string | null
+          org_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          document_name?: string | null
+          document_path?: string | null
+          note?: string | null
+          org_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_verification_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: true
+            referencedRelation: "org_public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_verification_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: true
             referencedRelation: "orgs"
             referencedColumns: ["id"]
           },

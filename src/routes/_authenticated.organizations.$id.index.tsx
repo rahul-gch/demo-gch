@@ -15,6 +15,7 @@ import { OperationsOverview } from "@/components/dashboard/OperationsOverview";
 import { KpiTable } from "@/components/KpiTable";
 import { BenchmarkChart } from "@/components/BenchmarkChart";
 import { ReportUploader } from "@/components/ReportUploader";
+import { ReadinessChecklist } from "@/components/verification/ReadinessChecklist";
 import type { Entity } from "@/seed/types";
 
 import { refreshRegistry } from "@/lib/registry";
@@ -49,6 +50,8 @@ function OverviewMissionControl({ e }: { e: Entity }) {
   return (
     <div className="space-y-5">
       <HeroPassport entity={e} />
+
+      {e.orgUuid && <ReadinessChecklist orgId={e.orgUuid} routeId={e.id} />}
 
       <KpiRow entity={e} />
 
