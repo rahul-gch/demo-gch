@@ -26,6 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { usePlatformAdmin } from "@/lib/use-platform-admin";
+import { GchLogo } from "@/components/GchLogo";
 import { useActingOrgId, useMyOrgs, useUnreadTotal } from "@/lib/use-comms";
 import { getEntity } from "@/seed/all-entities";
 
