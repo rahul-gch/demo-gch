@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { GchLogo } from "@/components/GchLogo";
 import { AppSidebar } from "./AppSidebar";
 import { UserMenu } from "./UserMenu";
 import { NotificationBell } from "./NotificationBell";
