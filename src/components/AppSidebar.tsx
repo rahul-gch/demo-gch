@@ -78,13 +78,11 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-2 py-3 group-data-[collapsible=icon]:hidden">
-          <div className="flex min-w-0 flex-col">
-            <span className="truncate text-sm font-semibold leading-tight">Global Chain Hub</span>
-            <span className="truncate text-[11px] text-muted-foreground">
-              {admin ? "Admin Console" : (primaryOrg?.name ?? "Workspace")}
-            </span>
-          </div>
+        <div className="flex flex-col gap-1 px-3 py-3 group-data-[collapsible=icon]:hidden">
+          <GchLogo />
+          <span className="truncate text-[11px] text-muted-foreground">
+            {admin ? "Admin Console" : (primaryOrg?.name ?? "Workspace")}
+          </span>
         </div>
       </SidebarHeader>
 
