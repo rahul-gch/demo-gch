@@ -92,38 +92,22 @@ function OnboardingStart() {
           nav({ to: "/onboarding/org/$id", params: { id: res.id }, replace: true });
           return;
         } catch {
-          /* fall back to the manual form below */
+          /* fall through to the welcome page */
         }
       }
       if (!alive) return;
-      setReady(true);
+      // No organization and no pending signup details — let the user choose
+      // how to proceed (create or join) on the welcome page.
+      nav({ to: "/welcome", replace: true });
     })();
     return () => {
       alive = false;
     };
   }, [nav, queryClient]);
 
-  if (!ready) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
   return (
-    <OnboardingLayout
-      step={0}
-      total={2}
-      title="Create your organization"
-      description="Just the basics — you'll answer a few tailored questions next."
-    >
-      <div className="mx-auto w-full max-w-2xl">
-        <CreateOrgForm
-          signedIn
-          onCreated={(id) => nav({ to: "/onboarding/org/$id", params: { id }, replace: true })}
-        />
-      </div>
-    </OnboardingLayout>
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+    </div>
   );
 }
