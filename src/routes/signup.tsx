@@ -71,7 +71,7 @@ function SignupPage() {
 
   return (
     <div className="grid min-h-screen bg-background lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-      <aside className="hidden flex-col justify-between bg-primary p-10 text-primary-foreground lg:flex xl:p-14">
+      <aside className="hidden h-screen lg:sticky lg:top-0 flex-col justify-between bg-primary p-10 text-primary-foreground lg:flex xl:p-14">
         <div className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-md bg-brand text-brand-foreground">
             <Globe2 className="h-5 w-5" />
