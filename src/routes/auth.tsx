@@ -4,7 +4,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmailAuthForm } from "@/components/auth/EmailAuthForm";
-import gchLogo from "@/assets/gch-logo.png";
+import { GchLogo } from "@/components/GchLogo";
 
 const searchSchema = z.object({ next: z.string().optional() });
 
@@ -60,9 +60,8 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/40 p-6">
       <Card className="w-full max-w-md shadow-sm">
         <CardHeader className="text-center">
-          <div className="mb-3 flex items-center justify-center gap-2">
-            <img src={gchLogo} alt="GCH" className="h-9 w-9" />
-            <span className="text-xl font-bold tracking-tight">GCH</span>
+          <div className="mb-4 flex justify-center">
+            <GchLogo />
           </div>
           <CardTitle className="text-xl">Sign in to Global Chain Hub</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
