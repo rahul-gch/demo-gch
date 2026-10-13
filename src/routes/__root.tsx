@@ -88,12 +88,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "Sustainability-first supply chain collaboration platform for brands, manufacturers, auditors, and NGOs.",
+          "B2B Partnership Platform for the Global Textile Supply Chain",
       },
       { property: "og:title", content: "Global Chain Hub" },
       {
         property: "og:description",
-        content: "Sustainability-first supply chain collaboration platform.",
+        content: "B2B Partnership Platform for the Global Textile Supply Chain",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
