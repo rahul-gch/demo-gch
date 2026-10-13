@@ -492,7 +492,7 @@ export const saveOrgProfileAnswers = createServerFn({ method: "POST" })
         const n = typeof value === "number" ? value : Number(value);
         patch[column] = Number.isFinite(n) && n > 0 ? Math.round(n) : null;
       } else {
-        patch[column] = value === null || value === "" ? null : String(value);
+        patch[column] = value === null || value === "" ? null : typeof value === "number" && field.suffix ? `${value.toLocaleString("en-US")} ${field.suffix}` : String(value);
       }
     }
 

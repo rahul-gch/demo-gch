@@ -294,6 +294,7 @@ const monthlyCapacity = (label: string, suffix: string): ProfileField => ({
   kind: "number",
   bucket: "capacity",
   suffix,
+  column: "capacity",
 });
 const multi = (id: string, label: string, bucket: Bucket, options: string[], column?: OrgColumn): ProfileField => ({
   id,
@@ -732,7 +733,7 @@ export const ENTITY_PROFILES: Record<EntityTypeName, EntityProfileDef> = {
         column: "capabilities",
       },
       multi("millMaterials", "Materials handled", "offering", ["Cotton (conventional)", "Organic cotton", "In-conversion cotton", "Better Cotton", "Regenerative cotton", "Recycled cotton (pre-consumer)", "Recycled cotton (post-consumer)", "Pima / Supima / ELS cotton", "Giza cotton", "Linen / Flax", "Hemp", "Jute", "Ramie"], "materials"),
-      multi("inHouseServices", "In-house services", "capabilities", ["Yarn dyeing", "Piece dyeing", "Printing", "Finishing", "Lab dips", "Fabric testing lab", "Design studio / CAD", "Greige stock", "Ready-stock / stock-service fabrics", "Small-run / sampling yardage"], "capabilities"),
+      multi("inHouseServices", "In-house services", "capabilities", ["Yarn dyeing", "Piece dyeing", "Printing", "Finishing", "Lab dips", "Fabric testing lab", "Design studio / CAD", "Greige stock", "Ready-stock / stock-service fabrics", "Small-run / sampling yardage", "In-house dyeing", "Sampling"], "capabilities"),
       {
         id: "gsmWidth",
         label: "GSM range / width",
@@ -740,24 +741,9 @@ export const ENTITY_PROFILES: Record<EntityTypeName, EntityProfileDef> = {
         bucket: "capabilities",
         placeholder: "e.g. 120-320 GSM, 150-180 cm",
       },
-      fCapacity,
       monthlyCapacity("Monthly fabric capacity", "metres / month"),
       fMoq,
       fLead,
-      {
-        id: "manufacturingCapabilities",
-        label: "Manufacturing capabilities",
-        kind: "multi",
-        bucket: "capabilities",
-        options: [
-          "In-house dyeing",
-          "Printing",
-          "Finishing",
-          "Lab dips",
-          "Sampling",
-          "Yarn dyeing",
-        ],
-      },
       fLocations,
       fCerts,
       fMarkets,
@@ -798,14 +784,6 @@ export const ENTITY_PROFILES: Record<EntityTypeName, EntityProfileDef> = {
       multi("chemicalFinishing", "Chemical & functional finishing", "capabilities", ["Mercerising", "Softening", "Enzyme / bio-polish", "Water-repellent (PFAS-free)", "Anti-microbial"], "capabilities"),
       multi("garmentWashing", "Garment washing", "capabilities", ["Stone wash", "Enzyme wash", "Ozone", "Laser", "Bleach", "Acid wash", "Low-water / eco-wash", "Garment-dye overdye", "Destroy / vintage effects"], "capabilities"),
       fMaterials,
-      {
-        id: "dyeingCapacity",
-        label: "Dyeing capacity",
-        kind: "text",
-        bucket: "capacity",
-        placeholder: "e.g. 15 tonnes / day",
-        column: "capacity",
-      },
       monthlyCapacity("Monthly processing capacity", "kg / month"),
       {
         id: "finishingCapabilities",
@@ -951,26 +929,8 @@ export const ENTITY_PROFILES: Record<EntityTypeName, EntityProfileDef> = {
         options: mergeOptions(PRODUCT_CATEGORIES, ["Polo shirts", "Shirts & blouses", "Dresses", "Skirts", "Trousers & chinos", "Sweatshirts & hoodies", "Shorts"]),
         column: "productCategories",
       },
-      multi("processCapabilities", "Process capabilities", "capabilities", ["Pattern making", "Grading", "Marker making (CAD)", "Sampling", "3D sampling (CLO / Browzwear)", "Automatic cutting", "Bonding / seam taping / welding", "Fully-fashioned / whole-garment knitting", "Embroidery", "Screen / DTG / DTF printing", "Garment washing", "Garment dyeing", "Pressing & finishing", "In-house quality lab"], "capabilities"),
-      {
-        id: "manufacturingCapabilities",
-        label: "Manufacturing capabilities",
-        kind: "multi",
-        bucket: "capabilities",
-        options: [
-          "Cut & sew",
-          "Knitting",
-          "Embroidery",
-          "Printing",
-          "Washing",
-          "Sampling",
-          "Pattern making",
-          "Quality control",
-        ],
-        column: "capabilities",
-      },
+      multi("processCapabilities", "Process capabilities", "capabilities", ["Pattern making", "Grading", "Marker making (CAD)", "Sampling", "3D sampling (CLO / Browzwear)", "Automatic cutting", "Bonding / seam taping / welding", "Fully-fashioned / whole-garment knitting", "Embroidery", "Screen / DTG / DTF printing", "Garment washing", "Garment dyeing", "Pressing & finishing", "In-house quality lab", "Cut & sew", "Knitting", "Printing", "Washing", "Quality control"], "capabilities"),
       fMaterials,
-      fCapacity,
       monthlyCapacity("Monthly production capacity", "pcs / month"),
       fMoq,
       {
@@ -1780,11 +1740,25 @@ export function isAnswered(value: unknown): boolean {
 }
 
 /** Carries the retired single "factoryLocations" text into the locations list when none exist yet. */
+/** Carry answers from retired duplicate questions into the kept ones (old keys stay saved). */
 export function withLegacyLocations(answers: ProfileAnswers): ProfileAnswers {
-  const legacy = answers?.factoryLocations;
-  const locs = answers?.locations;
+  let out = answers ?? {};
+  const legacy = out.factoryLocations;
+  const locs = out.locations;
   if (typeof legacy === "string" && legacy.trim() && (!Array.isArray(locs) || locs.length === 0)) {
-    return { ...answers, locations: [{ address: legacy.trim().slice(0, 255) }] };
+    out = { ...out, locations: [{ address: legacy.trim().slice(0, 255) }] };
   }
-  return answers;
+  if (out.monthlyCapacity === undefined || out.monthlyCapacity === null || out.monthlyCapacity === "") {
+    const text = [out.capacity, out.dyeingCapacity].find((v) => typeof v === "string" && /\d/.test(v)) as string | undefined;
+    const n = text ? Number(text.replace(/,/g, "").match(/\d+(\.\d+)?/)?.[0]) : NaN;
+    if (Number.isFinite(n) && n > 0) out = { ...out, monthlyCapacity: n };
+  }
+  const oldCaps = out.manufacturingCapabilities;
+  if (Array.isArray(oldCaps) && oldCaps.length) {
+    for (const key of ["processCapabilities", "inHouseServices"]) {
+      const cur = out[key];
+      if (!Array.isArray(cur) || cur.length === 0) out = { ...out, [key]: oldCaps };
+    }
+  }
+  return out;
 }
