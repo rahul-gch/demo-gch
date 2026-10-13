@@ -32,7 +32,7 @@ import {
 import { toast } from "sonner";
 import { Copy, Eye, EyeOff, Loader2, ShieldAlert } from "lucide-react";
 
-const TABS = ["signups", "invites", "visibility", "add"] as const;
+const TABS = ["signups", "invites", "verification", "visibility", "add"] as const;
 type TabId = (typeof TABS)[number];
 
 export const Route = createFileRoute("/_authenticated/admin/organizations")({
