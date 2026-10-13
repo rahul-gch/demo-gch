@@ -98,12 +98,7 @@ export function VerificationUpload({
             }}
             className="mt-0.5"
           />
-          <span>
-            I'll upload this later
-            <span className="block text-xs text-muted-foreground">
-              Your workspace works right away. Verified organizations get a badge and rank higher in matchmaking.
-            </span>
-          </span>
+          <span>I'll upload this later</span>
         </label>
       )}
     </div>

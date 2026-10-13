@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { BadgeCheck, Lock, Network } from "lucide-react";
-import gchLogo from "@/assets/gch-logo.png";
+import { GchLogo } from "@/components/GchLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -73,12 +73,7 @@ function SignupPage() {
   return (
     <div className="grid min-h-screen bg-background lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
       <aside className="hidden h-screen lg:sticky lg:top-0 flex-col justify-between bg-primary p-10 text-primary-foreground lg:flex xl:p-14">
-        <div className="flex items-center gap-2.5">
-          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/95 p-1">
-            <img src={gchLogo} alt="GCH" className="h-8 w-8" />
-          </span>
-          <span className="text-lg font-bold tracking-tight">GCH</span>
-        </div>
+        <GchLogo invert />
         <div className="max-w-md space-y-8">
           <div className="space-y-3">
             <h1 className="text-3xl font-semibold leading-tight tracking-tight">
@@ -109,9 +104,8 @@ function SignupPage() {
 
       <main className="flex items-start justify-center px-5 py-10 sm:px-10 lg:py-14">
         <div className="w-full max-w-xl">
-          <div className="mb-8 flex items-center gap-2 lg:hidden">
-            <img src={gchLogo} alt="GCH" className="h-8 w-8" />
-            <span className="text-lg font-bold tracking-tight">GCH</span>
+          <div className="mb-8 lg:hidden">
+            <GchLogo />
           </div>
           <div className="mb-8 space-y-1.5">
             <h1 className="text-2xl font-semibold tracking-tight">Register your company</h1>
