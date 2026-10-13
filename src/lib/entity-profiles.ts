@@ -989,13 +989,6 @@ export const ENTITY_PROFILES: Record<EntityTypeName, EntityProfileDef> = {
         options: ["OEM", "ODM", "Private label", "Full package (FOB)", "CMT"],
         column: "specializations",
       },
-      {
-        id: "factoryLocations",
-        label: "Factory locations",
-        kind: "textarea",
-        bucket: "markets",
-        placeholder: "City, country for each production site",
-      },
       fLocations,
       fCerts,
       fMarkets,
