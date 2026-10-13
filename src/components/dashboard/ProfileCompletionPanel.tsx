@@ -1,3 +1,4 @@
+import { withLegacyLocations } from "@/lib/entity-profiles";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -49,7 +50,7 @@ function AuthorizedProfileCompletion({ orgId, routeId }: { orgId: string; routeI
       for (let i = 0; i < s.fields.length; i += 3) chunks.push({ ...s, fields: s.fields.slice(i, i + 3) });
       return chunks;
     }));
-    setAnswers(data.answers);
+    setAnswers(withLegacyLocations(data.answers));
     setPatch({});
     setIndex(0);
     setOpen(true);
