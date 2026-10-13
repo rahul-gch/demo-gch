@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ProfileFieldGroup } from "@/components/profile/ProfileFields";
 import { getOrgProfileAnswers, saveOrgProfileAnswers } from "@/lib/orgs.functions";
-import { getProfileSteps, normalizeEntityType, type ProfileAnswers } from "@/lib/entity-profiles";
+import { getProfileSteps, normalizeEntityType, withLegacyLocations, type ProfileAnswers } from "@/lib/entity-profiles";
 import { computeProfileScore } from "@/lib/profile-score";
 import { refreshRegistry } from "@/lib/registry";
 import { useOrgRole } from "@/lib/use-org-role";
@@ -27,7 +27,7 @@ export function EntityProfilePanel({ orgId }: { orgId: string }) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (data?.answers) setAnswers(data.answers);
+    if (data?.answers) setAnswers(withLegacyLocations(data.answers));
   }, [data]);
 
   const entityType = data?.entityType ?? "";
