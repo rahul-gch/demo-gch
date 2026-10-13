@@ -499,6 +499,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          document_name: string | null
           document_path: string | null
           expires_at: string | null
           id: string
@@ -506,6 +507,9 @@ export type Database = {
           kind: string
           org_id: string
           reference: string | null
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
           scope: string | null
           score: string | null
           standard: string
@@ -515,6 +519,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          document_name?: string | null
           document_path?: string | null
           expires_at?: string | null
           id?: string
@@ -522,6 +527,9 @@ export type Database = {
           kind: string
           org_id: string
           reference?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           scope?: string | null
           score?: string | null
           standard: string
@@ -531,6 +539,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          document_name?: string | null
           document_path?: string | null
           expires_at?: string | null
           id?: string
@@ -538,6 +547,9 @@ export type Database = {
           kind?: string
           org_id?: string
           reference?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           scope?: string | null
           score?: string | null
           standard?: string
