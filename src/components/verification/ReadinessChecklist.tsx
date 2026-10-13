@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CheckCircle2, Circle, Clock } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -14,11 +15,18 @@ export function ReadinessChecklist({ orgId, routeId }: { orgId: string; routeId:
   const qc = useQueryClient();
   const v = useQuery({ queryKey: ["org-verification", orgId], queryFn: () => getVerification(orgId) });
   const creds = useCredentials(orgId);
+  const manage = useQuery({
+    queryKey: ["can-manage", orgId],
+    queryFn: async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return false;
+      const { data } = await supabase.rpc("user_can_manage", { _user: u.user.id, _org: orgId });
+      return !!data;
+    },
+  });
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
-  if (v.isLoading || creds.isLoading) return null;
-  // Only org managers can read verification; others get null and see nothing.
-  if (v.data === null && v.isFetched && !creds.data) return null;
+  if (v.isLoading || creds.isLoading || !manage.data) return null;
 
   const status = v.data?.status ?? "not_submitted";
   const has = (k: string) => (creds.data ?? []).some((c) => c.kind === k);

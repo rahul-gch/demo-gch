@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { VerificationQueue } from "@/components/verification/VerificationQueue";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -96,6 +97,7 @@ function AdminOrganizationsPage() {
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="signups">Recent signups</TabsTrigger>
               <TabsTrigger value="invites">Onboarding links</TabsTrigger>
+              <TabsTrigger value="verification">Verification</TabsTrigger>
               <TabsTrigger value="visibility">Profile visibility</TabsTrigger>
               <TabsTrigger value="add">Add organization</TabsTrigger>
             </TabsList>
@@ -104,6 +106,9 @@ function AdminOrganizationsPage() {
             </TabsContent>
             <TabsContent value="invites" className="pt-4">
               <OnboardingInvites />
+            </TabsContent>
+            <TabsContent value="verification" className="pt-4">
+              <VerificationQueue />
             </TabsContent>
             <TabsContent value="visibility" className="pt-4">
               <ProfileVisibility />
