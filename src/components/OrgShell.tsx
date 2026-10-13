@@ -15,7 +15,10 @@ import type { Entity } from "@/seed/types";
 import { useRealtimeComms } from "@/lib/use-comms";
 import { usePlatformAdmin } from "@/lib/use-platform-admin";
 
+import { GchLogo } from "./GchLogo";
+
 export function OrgShell({ entity, children }: { entity: Entity; children: ReactNode }) {
+  const base = `/organizations/${entity.slug || entity.id}`;
   // Always scoped to the organization in the URL — never the viewer's own org.
   const viewedOrgId = entity.orgUuid ?? null;
   useRealtimeComms(viewedOrgId);
