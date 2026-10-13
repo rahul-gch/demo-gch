@@ -19,7 +19,7 @@ import { normalizeEntityType, type ProfileAnswers } from "@/lib/entity-profiles"
 import { computeProfileScore } from "@/lib/profile-score";
 import { refreshRegistry } from "@/lib/registry";
 
-import { getOnboardingPages, getOnboardingSections, canFinishOnboarding } from "@/lib/onboarding-sections";
+import { getOnboardingPages, getOnboardingSections, hasReachedProfileGoal } from "@/lib/onboarding-sections";
 import { OrganizationReviewFields, type OrganizationReviewValues } from "@/components/onboarding/OrganizationReviewFields";
 
 export const Route = createFileRoute("/onboarding/org/$id")({
@@ -100,7 +100,7 @@ function OnboardingProfilePage() {
   const finish = async () => {
     setSaving(true);
     try {
-      if (!canFinishOnboarding(score.score) || !(await persist())) return;
+      if (!(await persist())) return;
       setSaving(true);
       await finishFn({ data: { orgId: id } });
       await queryClient.invalidateQueries({ queryKey: ["org-profile-answers", id] });
@@ -237,8 +237,8 @@ function OnboardingProfilePage() {
 
         {isReview ? <OrganizationReviewFields values={core} entityType={normalizeEntityType(entityType)} onChange={setCore} /> : isSummary ? (
           <div className="space-y-5">
-            <h2 className="text-lg font-semibold">{score.score > 80 ? "Your profile is ready for partners" : "Aim for more than 80% completeness"}</h2>
-            <p className="text-sm text-muted-foreground">{score.score > 80 ? "You can update your details anytime from your workspace." : "You can continue to your dashboard now and complete these details later."}</p>
+            <h2 className="text-lg font-semibold">{hasReachedProfileGoal(score.score) ? "Your profile is ready for partners" : "Aim for more than 80% completeness"}</h2>
+            <p className="text-sm text-muted-foreground">{hasReachedProfileGoal(score.score) ? "You can update your details anytime from your workspace." : "You can continue to your dashboard now and complete these details later."}</p>
             <div className="divide-y">
               {score.buckets.filter((b) => b.missing.length > 0).map((bucket) => <div key={bucket.bucket} className="flex flex-col justify-between gap-2 py-3 sm:flex-row sm:items-center">
                 <div className="min-w-0"><p className="text-sm font-medium">{bucket.label}</p><p className="text-xs text-muted-foreground">{bucket.missing.map((m) => m.label).join(", ")}</p></div>

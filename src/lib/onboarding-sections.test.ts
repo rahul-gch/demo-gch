@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ENTITY_TYPES, getProfileDef, type ProfileAnswers } from "./entity-profiles";
 import { computeProfileScore } from "./profile-score";
-import { canFinishOnboarding, getOnboardingPages, getOnboardingSections } from "./onboarding-sections";
+import { hasReachedProfileGoal, getOnboardingPages, getOnboardingSections } from "./onboarding-sections";
 
 describe("extended optional onboarding", () => {
   it.each(ENTITY_TYPES)("exposes every question once for %s", (type) => {
@@ -16,9 +16,9 @@ describe("extended optional onboarding", () => {
     for (const f of getProfileDef(type).fields) answers[f.id] = f.kind === "multi" ? [f.options?.[0] ?? "Cotton"] : f.kind === "number" ? 10 : f.options?.[0] ?? "Test value";
     expect(computeProfileScore(type, answers, { description: "Textile company", website: "https://example.org", city: "Berlin", country: "Germany" }).score).toBeGreaterThan(80);
   });
-  it("permits finishing below 80%", () => {
-    expect(canFinishOnboarding(0)).toBe(true);
-    expect(canFinishOnboarding(79)).toBe(true);
-    expect(canFinishOnboarding(81)).toBe(true);
+  it("requires more than 80% for the optional goal", () => {
+    expect(hasReachedProfileGoal(79)).toBe(false);
+    expect(hasReachedProfileGoal(80)).toBe(false);
+    expect(hasReachedProfileGoal(81)).toBe(true);
   });
 });

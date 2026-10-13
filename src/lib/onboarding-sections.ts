@@ -30,7 +30,7 @@ export function getOnboardingPages(entityType: string) {
   });
 }
 
-/** The 80% goal is optional, never an access requirement. */
-export function canFinishOnboarding(_score: number) {
-  return true;
+/** Goal messaging only; dashboard access never depends on this result. */
+export function hasReachedProfileGoal(score: number) {
+  return score > 80;
 }
