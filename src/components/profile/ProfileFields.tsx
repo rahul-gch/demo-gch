@@ -9,9 +9,48 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { ProfileAnswers, ProfileField } from "@/lib/entity-profiles";
+import { Plus, Trash2 } from "lucide-react";
+import { CountrySelect } from "@/components/CountrySelect";
+import type { LocationRow, ProfileAnswers, ProfileAnswerValue, ProfileField } from "@/lib/entity-profiles";
 
-type Value = string | number | string[] | null | undefined;
+type Value = ProfileAnswerValue;
+
+function LocationsInput({ field, value, onChange }: { field: ProfileField; value: Value; onChange: (v: Value) => void }) {
+  const rows: LocationRow[] = Array.isArray(value)
+    ? (value as unknown[]).filter((r): r is LocationRow => !!r && typeof r === "object")
+    : [];
+  const list = rows.length ? rows : [{}];
+  const update = (i: number, patch: Partial<LocationRow>) =>
+    onChange(list.map((r, j) => (j === i ? { ...r, ...patch } : r)));
+  return (
+    <div className="space-y-3">
+      <Label>{field.label}</Label>
+      {list.map((row, i) => (
+        <div key={i} className="space-y-2 rounded-md border bg-muted/20 p-3">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-medium text-muted-foreground">Location {i + 1}</span>
+            {list.length > 1 && (
+              <Button type="button" variant="ghost" size="sm" aria-label={`Remove location ${i + 1}`} onClick={() => onChange(list.filter((_, j) => j !== i))}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Input aria-label="Site name" placeholder="Site name" value={row.name ?? ""} onChange={(e) => update(i, { name: e.target.value })} />
+            <Input aria-label="Address" placeholder="Address" value={row.address ?? ""} onChange={(e) => update(i, { address: e.target.value })} />
+            <Input aria-label="City" placeholder="City" value={row.city ?? ""} onChange={(e) => update(i, { city: e.target.value })} />
+            <CountrySelect value={row.country ?? ""} onChange={(c) => update(i, { country: c })} />
+          </div>
+        </div>
+      ))}
+      {list.length < 20 && (
+        <Button type="button" variant="outline" size="sm" onClick={() => onChange([...list, {}])}>
+          <Plus className="mr-1 h-4 w-4" /> Add location
+        </Button>
+      )}
+    </div>
+  );
+}
 
 /** Renders one questionnaire field; multi-selects use toggleable chips. */
 export function ProfileFieldInput({
@@ -25,8 +64,11 @@ export function ProfileFieldInput({
 }) {
   const id = `pf-${field.id}`;
 
+  if (field.kind === "locations") return <LocationsInput field={field} value={value} onChange={onChange} />;
+
   if (field.kind === "multi") {
-    const selected = Array.isArray(value) ? value : [];
+    const selected = Array.isArray(value) ? (value as unknown[]).filter((v): v is string => typeof v === "string") : [];
+    const allOptions = [...(field.options ?? []), ...selected.filter((v) => !(field.options ?? []).includes(v))];
     const toggle = (option: string) =>
       onChange(
         selected.includes(option) ? selected.filter((s) => s !== option) : [...selected, option],
@@ -35,7 +77,7 @@ export function ProfileFieldInput({
       <div className="space-y-2">
         <Label id={`${id}-label`}>{field.label}</Label>
         <div role="group" aria-labelledby={`${id}-label`} className="flex flex-wrap gap-2">
-          {(field.options ?? []).map((option) => {
+          {allOptions.map((option) => {
             const on = selected.includes(option);
             return (
               <Button key={option} type="button" aria-pressed={on} onClick={() => toggle(option)} variant={on ? "default" : "outline"} size="sm" className="h-auto min-h-9 max-w-full whitespace-normal rounded-md px-3 py-2 text-left text-sm leading-snug">
