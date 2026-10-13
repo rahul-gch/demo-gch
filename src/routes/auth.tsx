@@ -65,7 +65,7 @@ function AuthPage() {
           </div>
           <CardTitle className="text-xl">Sign in to Global Chain Hub</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
-            Sustainability-first supply chain collaboration.
+            B2B Partnership Platform for the Global Textile Supply Chain
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
