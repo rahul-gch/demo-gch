@@ -46,7 +46,7 @@ function OnboardingStart() {
       const { data } = await supabase.auth.getUser();
       if (!alive) return;
       if (!data.user) {
-        nav({ to: "/auth", search: { next: "/onboarding" }, replace: true });
+        nav({ to: "/signup", replace: true });
         return;
       }
       // An org may already exist (refresh mid-flow) — continue where we left off.
