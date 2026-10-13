@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { Globe2 } from "lucide-react";
+import { GchLogo } from "@/components/GchLogo";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 import { OnboardingProgress } from "./OnboardingProgress";
@@ -36,29 +37,28 @@ export function OnboardingLayout({
   };
 
   return (
-    <div className="min-h-screen w-full bg-slate-50">
+    <div className="min-h-screen w-full bg-background text-foreground">
       <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-6 sm:px-6 sm:py-10">
-        <div className="mb-6 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <Globe2 className="h-5 w-5" />
-            </div>
-            <span className="text-sm font-semibold tracking-tight">Global Chain Hub</span>
+        <div className="mb-8 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+          <div className="min-w-0">
+            <GchLogo />
           </div>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={signOut}
-            className="text-xs text-muted-foreground hover:underline"
+            className="shrink-0 text-xs text-muted-foreground"
           >
             Sign out
-          </button>
+          </Button>
         </div>
 
-        <div className="w-full rounded-2xl border bg-card shadow-sm">
+        <div className="w-full overflow-hidden rounded-lg border bg-card shadow-sm">
           <div className="border-b px-5 py-5 sm:px-8 sm:py-6">
             <OnboardingProgress step={step} total={total} onSelect={onStepSelect} />
-            <h1 className="mt-4 text-xl font-semibold tracking-tight sm:text-2xl">{title}</h1>
-            {description && <p className="mt-1.5 text-sm text-muted-foreground">{description}</p>}
+            <h1 className="mt-4 text-xl font-semibold tracking-normal sm:text-2xl">{title}</h1>
+            {description && <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">{description}</p>}
             {stepLabel && (
               <p className="mt-1 text-xs uppercase tracking-wide text-muted-foreground">
                 {stepLabel}
@@ -68,7 +68,7 @@ export function OnboardingLayout({
 
           <div
             key={step}
-            className="animate-in fade-in slide-in-from-right-2 px-5 py-6 duration-200 sm:px-8 sm:py-8"
+            className="px-5 py-6 sm:px-8 sm:py-8"
           >
             {children}
           </div>
@@ -81,7 +81,7 @@ export function OnboardingLayout({
         </div>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          Your progress is saved automatically at each step.
+          Your answers are saved when you continue.
         </p>
       </div>
     </div>

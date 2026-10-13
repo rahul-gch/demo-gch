@@ -81,7 +81,7 @@ function OnboardingProfilePage() {
   const entityType = data?.entityType ?? "";
   const steps = useMemo(() => getProfileSteps(entityType), [entityType]);
   // Keep first-run onboarding short: only the first two tailored steps. The
-  // rest of the profile is completed later from the organization settings.
+  // rest is completed optionally from the dashboard or settings.
   const questionSteps = useMemo(
     () => steps.filter((s) => s.bucket !== "basic").slice(0, ONBOARDING_STEP_LIMIT),
     [steps],
@@ -127,7 +127,7 @@ function OnboardingProfilePage() {
 
   if (!authed || isLoading || !current) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
       </div>
     );
@@ -157,7 +157,7 @@ function OnboardingProfilePage() {
       step={step + 1}
       total={questionSteps.length + 1}
       title={current.title}
-      description="Two quick steps. Skip anything you don't have yet — the rest of your profile can be completed later from Settings."
+      description="Complete what you know now. You can finish the remaining details from your dashboard."
       onStepSelect={(i) => setStep(Math.max(0, i - 1))}
       footer={
         <>

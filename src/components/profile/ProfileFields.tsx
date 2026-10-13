@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -33,19 +33,14 @@ export function ProfileFieldInput({
       );
     return (
       <div className="space-y-2">
-        <Label>{field.label}</Label>
-        <div className="flex flex-wrap gap-2">
+        <Label id={`${id}-label`}>{field.label}</Label>
+        <div role="group" aria-labelledby={`${id}-label`} className="flex flex-wrap gap-2">
           {(field.options ?? []).map((option) => {
             const on = selected.includes(option);
             return (
-              <button key={option} type="button" onClick={() => toggle(option)}>
-                <Badge
-                  variant={on ? "default" : "outline"}
-                  className="cursor-pointer px-3 py-1 text-xs font-medium"
-                >
-                  {option}
-                </Badge>
-              </button>
+              <Button key={option} type="button" aria-pressed={on} onClick={() => toggle(option)} variant={on ? "default" : "outline"} size="sm" className="h-auto min-h-9 max-w-full whitespace-normal rounded-md px-3 py-2 text-left text-sm leading-snug">
+                {option}
+              </Button>
             );
           })}
         </div>
@@ -56,7 +51,7 @@ export function ProfileFieldInput({
   if (field.kind === "single") {
     return (
       <div className="space-y-2">
-        <Label>{field.label}</Label>
+        <Label htmlFor={id}>{field.label}</Label>
         <Select
           value={typeof value === "string" && value ? value : undefined}
           onValueChange={(v) => onChange(v)}
