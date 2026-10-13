@@ -60,7 +60,10 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/40 p-6">
       <Card className="w-full max-w-md shadow-sm">
         <CardHeader className="text-center">
-          <img src={gchLogo} alt="Global Chain Hub" className="mx-auto mb-3 h-14 w-14" />
+          <div className="mb-3 flex items-center justify-center gap-2">
+            <img src={gchLogo} alt="GCH" className="h-9 w-9" />
+            <span className="text-xl font-bold tracking-tight">GCH</span>
+          </div>
           <CardTitle className="text-xl">Sign in to Global Chain Hub</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
             Sustainability-first supply chain collaboration.
