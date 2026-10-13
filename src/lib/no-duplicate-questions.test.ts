@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { getEntityProfile, withLegacyLocations } from "./entity-profiles";
+import { getProfileDef, withLegacyLocations } from "./entity-profiles";
 
-const ids = (t: string) => getEntityProfile(t).fields.map((f) => f.id);
+const ids = (t: string) => getProfileDef(t).fields.map((f) => f.id);
 
 describe("no repeated questions", () => {
   for (const t of ["Manufacturer", "Mill", "Dye House"]) {
