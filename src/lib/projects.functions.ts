@@ -372,6 +372,9 @@ export const setPartnerPermissionFn = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const access = await assertProjectAccess(supabase, userId, data.projectId, data.actorOrgId, "admin");
+    if (!access.isOwner) {
+      throw new Error("Forbidden: only the project owner organization can change partner permissions.");
+    }
     const actorUuid = access.actorUuid;
 
     const idx = await loadOrgIndex(supabase);
