@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { FileText, Paperclip, Plus, Trash2 } from "lucide-react";
+import { validateVerificationFile, verificationDocumentUrl } from "@/lib/verification";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -36,8 +37,18 @@ function AddForm({ orgId, kind }: { orgId: string; kind: Kind }) {
   const [reference, setReference] = useState("");
   const [extra, setExtra] = useState("");
   const [expires, setExpires] = useState("");
+  const [file, setFile] = useState<File | null>(null);
   const add = useMutation({
     mutationFn: async () => {
+      let document_path: string | null = null;
+      if (file) {
+        const bad = validateVerificationFile(file);
+        if (bad) throw new Error(bad);
+        const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-80);
+        document_path = `${orgId}/credentials/${crypto.randomUUID()}-${safe}`;
+        const { error: up } = await supabase.storage.from("org-verification").upload(document_path, file, { contentType: file.type });
+        if (up) throw up;
+      }
       const { error } = await supabase.from("org_credentials").insert({
         org_id: orgId,
         kind,
@@ -46,13 +57,15 @@ function AddForm({ orgId, kind }: { orgId: string; kind: Kind }) {
         score: kind === "audit" ? extra.trim().slice(0, 40) || null : null,
         scope: kind === "certificate" ? extra.trim().slice(0, 200) || null : null,
         expires_at: expires || null,
+        document_path,
+        document_name: file?.name.slice(0, 200) ?? null,
       });
       if (error) throw error;
     },
     onSuccess: () => {
-      setStandard(""); setReference(""); setExtra(""); setExpires("");
+      setStandard(""); setReference(""); setExtra(""); setExpires(""); setFile(null);
       qc.invalidateQueries({ queryKey: ["org-credentials", orgId] });
-      toast.success("Added as self-declared");
+      toast.success(file ? "Submitted for review" : "Added as self-declared");
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -71,6 +84,11 @@ function AddForm({ orgId, kind }: { orgId: string; kind: Kind }) {
       ) : <div />}
       <div className="space-y-1"><Label className="text-xs">{kind === "membership" ? "Renewal" : "Expiry"}</Label><Input type="date" value={expires} onChange={(e) => setExpires(e.target.value)} /></div>
       <Button size="sm" disabled={!standard || add.isPending} onClick={() => add.mutate()}><Plus className="mr-1 h-4 w-4" />Add</Button>
+      <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground sm:col-span-5">
+        <Paperclip className="h-3.5 w-3.5" />
+        <span className="truncate">{file ? file.name : `Attach ${kind === "audit" ? "audit report" : kind === "certificate" ? "certificate" : "proof"} (PDF, JPG, PNG, max 10 MB) — required for verification`}</span>
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="sr-only" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+      </label>
     </div>
   );
 }
@@ -109,8 +127,13 @@ export function CredentialsPanel({ orgId, canEdit }: { orgId: string; canEdit: b
                         {[r.reference, r.score, r.scope, r.expires_at && `Expires ${r.expires_at}`].filter(Boolean).join(" · ") || "No details"}
                       </div>
                     </div>
-                    <Badge variant={r.status === "verified" ? "default" : "secondary"}>
-                      {r.status === "verified" ? "Verified" : r.status === "rejected" ? "Rejected" : "Self-declared"}
+                    {r.document_path && (
+                      <button aria-label="View document" className="rounded p-1 text-muted-foreground hover:bg-muted" onClick={async () => { const u = await verificationDocumentUrl(r.document_path!); if (u) window.open(u, "_blank", "noopener"); }}>
+                        <FileText className="h-4 w-4" />
+                      </button>
+                    )}
+                    <Badge variant={r.status === "verified" ? "default" : r.status === "rejected" ? "destructive" : "secondary"}>
+                      {r.status === "verified" ? "Verified" : r.status === "rejected" ? "Rejected" : r.document_path ? "In review" : "Self-declared"}
                     </Badge>
                     {canEdit && (
                       <button aria-label="Remove" className="rounded p-1 text-muted-foreground hover:bg-muted" onClick={() => del(r.id)}>

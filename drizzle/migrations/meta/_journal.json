@@ -50,6 +50,13 @@
       "when": 1791898407177,
       "tag": "0006_org_verification_and_credentials",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791899957790,
+      "tag": "0007_credential_review",
+      "breakpoints": true
     }
   ]
 }
