@@ -18,6 +18,8 @@ import { getProfileSteps, normalizeEntityType, type ProfileAnswers } from "@/lib
 import { computeProfileScore } from "@/lib/profile-score";
 import { refreshRegistry } from "@/lib/registry";
 
+const ONBOARDING_STEP_LIMIT = 2;
+
 export const Route = createFileRoute("/onboarding/org/$id")({
   ssr: false,
   head: () => ({
@@ -78,7 +80,12 @@ function OnboardingProfilePage() {
 
   const entityType = data?.entityType ?? "";
   const steps = useMemo(() => getProfileSteps(entityType), [entityType]);
-  const questionSteps = useMemo(() => steps.filter((s) => s.bucket !== "basic"), [steps]);
+  // Keep first-run onboarding short: only the first two tailored steps. The
+  // rest of the profile is completed later from the organization settings.
+  const questionSteps = useMemo(
+    () => steps.filter((s) => s.bucket !== "basic").slice(0, ONBOARDING_STEP_LIMIT),
+    [steps],
+  );
   const current = questionSteps[Math.min(step, Math.max(questionSteps.length - 1, 0))];
 
   const score = useMemo(
@@ -150,7 +157,7 @@ function OnboardingProfilePage() {
       step={step + 1}
       total={questionSteps.length + 1}
       title={current.title}
-      description="Skip anything you don't have yet — you can finish later from Settings."
+      description="Two quick steps. Skip anything you don't have yet — the rest of your profile can be completed later from Settings."
       onStepSelect={(i) => setStep(Math.max(0, i - 1))}
       footer={
         <>

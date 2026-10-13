@@ -17,6 +17,10 @@ export const Route = createFileRoute("/auth")({
     meta: [
       { title: "Sign in — Global Chain Hub" },
       { name: "description", content: "Sign in to access your Global Chain Hub workspace." },
+      { property: "og:title", content: "Sign in — Global Chain Hub" },
+      { property: "og:description", content: "Sign in to your Global Chain Hub workspace." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: AuthPage,
@@ -53,8 +57,8 @@ function AuthPage() {
   }, [nav, next]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-6">
-      <Card className="w-full max-w-md shadow-lg">
+    <div className="flex min-h-screen items-center justify-center bg-muted/40 p-6">
+      <Card className="w-full max-w-md shadow-sm">
         <CardHeader className="text-center">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <Globe2 className="h-6 w-6" />
@@ -70,9 +74,9 @@ function AuthPage() {
             onSignedIn={() => nav({ to: sanitizeNext(next), replace: true })}
           />
           <p className="text-center text-xs text-muted-foreground">
-            Setting up a new organization?{" "}
+            New to Global Chain Hub?{" "}
             <Link to="/signup" className="text-primary hover:underline">
-              Create an account
+              Register your company
             </Link>
           </p>
         </CardContent>

@@ -20,39 +20,28 @@ export const POLICY_VERSIONS: Record<PolicyType, string> = {
 /* Password policy                                                             */
 /* -------------------------------------------------------------------------- */
 
-export const PASSWORD_MIN_LENGTH = 12;
+export const PASSWORD_MIN_LENGTH = 8;
 
-export const PASSWORD_RULES = [
-  "At least 12 characters",
-  "One uppercase and one lowercase letter",
-  "At least one number",
-  "At least one symbol",
-] as const;
+export const PASSWORD_RULES = ["At least 8 characters"] as const;
 
 /** Returns an error message, or null when the password satisfies the policy. */
 export function validatePassword(password: string): string | null {
   if (password.length < PASSWORD_MIN_LENGTH) {
     return `Password must be at least ${PASSWORD_MIN_LENGTH} characters`;
   }
-  if (!/[a-z]/.test(password) || !/[A-Z]/.test(password)) {
-    return "Password must include both uppercase and lowercase letters";
-  }
-  if (!/\d/.test(password)) return "Password must include at least one number";
-  if (!/[^A-Za-z0-9]/.test(password)) return "Password must include at least one symbol";
   return null;
 }
 
 export function passwordStrength(password: string): { label: string; tone: string; pct: number } {
   if (!password) return { label: "", tone: "text-muted-foreground", pct: 0 };
-  const score =
-    Number(password.length >= PASSWORD_MIN_LENGTH) +
+  if (password.length < PASSWORD_MIN_LENGTH) return { label: "Too short", tone: "text-destructive", pct: 25 };
+  const variety =
     Number(/[a-z]/.test(password) && /[A-Z]/.test(password)) +
     Number(/\d/.test(password)) +
     Number(/[^A-Za-z0-9]/.test(password)) +
-    Number(password.length >= 16);
-  if (score <= 2) return { label: "Weak", tone: "text-destructive", pct: 25 };
-  if (score === 3) return { label: "Fair", tone: "text-amber-600", pct: 55 };
-  if (score === 4) return { label: "Strong", tone: "text-emerald-600", pct: 80 };
+    Number(password.length >= 12);
+  if (variety <= 1) return { label: "Good", tone: "text-amber-600", pct: 55 };
+  if (variety <= 2) return { label: "Strong", tone: "text-emerald-600", pct: 80 };
   return { label: "Very strong", tone: "text-emerald-700", pct: 100 };
 }
 

@@ -41,7 +41,7 @@ export const Route = createFileRoute("/_authenticated/organizations/$id/requests
   }),
   errorComponent: ({ error }) => (
     <div role="alert" className="p-8 text-sm text-muted-foreground">
-      {error.message}
+      {error instanceof Error ? error.message : "Something went wrong"}
     </div>
   ),
   notFoundComponent: () => <div className="p-8 text-sm text-muted-foreground">Not found.</div>,
