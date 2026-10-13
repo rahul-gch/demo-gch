@@ -31,6 +31,13 @@ export function OrgShell({ entity, children }: { entity: Entity; children: React
             <div className="flex shrink-0 items-center gap-1">
               <SidebarTrigger />
               <NavHistoryButtons className="flex" />
+              <Link
+                to={base}
+                className="shrink-0 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label="GCH — Global Chain Hub home"
+              >
+                <GchLogo size="sm" />
+              </Link>
               {isAdmin && (
                 <TooltipProvider delayDuration={300}>
                   <Tooltip>
