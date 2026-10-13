@@ -28,3 +28,8 @@ export function usePlatformAdmin() {
     staleTime: 5 * 60_000,
   });
 }
+
+export function useIsPlatformAdmin() {
+  const q = usePlatformAdmin();
+  return { isAdmin: !!q.data?.isAdmin, isLoading: q.isPending && q.fetchStatus !== "idle" ? true : q.isLoading };
+}

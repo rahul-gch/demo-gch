@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { amIPlatformAdmin } from "@/lib/admin.functions";
+import { usePlatformAdmin } from "@/lib/use-platform-admin";
 import { listAppErrors, resolveAppError } from "@/lib/errors.functions";
 import { toast } from "sonner";
 import { Loader2, ShieldAlert } from "lucide-react";
@@ -40,10 +40,9 @@ export const Route = createFileRoute("/_authenticated/admin/logs")({
 type SourceFilter = "all" | "browser" | "server";
 
 function AdminLogsPage() {
-  const checkPlatformAdmin = useServerFn(amIPlatformAdmin);
   const fetchAppErrors = useServerFn(listAppErrors);
   const resolveAppErrorFn = useServerFn(resolveAppError);
-  const admin = useQuery({ queryKey: ["platform-admin"], queryFn: () => checkPlatformAdmin() });
+  const admin = usePlatformAdmin();
   const queryClient = useQueryClient();
 
   const [hours, setHours] = useState(24);

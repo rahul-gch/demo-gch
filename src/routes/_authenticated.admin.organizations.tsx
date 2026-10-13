@@ -1,3 +1,4 @@
+import { usePlatformAdmin } from "@/lib/use-platform-admin";
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -22,7 +23,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { CreateOrgForm } from "@/components/signup/CreateOrgForm";
 import { ORG_TYPES } from "@/lib/org-types";
 import {
-  amIPlatformAdmin,
   createPlatformInvite,
   listOrgVisibility,
   listPlatformInvites,
@@ -61,8 +61,7 @@ export const Route = createFileRoute("/_authenticated/admin/organizations")({
 function AdminOrganizationsPage() {
   const { tab } = useSearch({ from: "/_authenticated/admin/organizations" });
   const navigate = useNavigate({ from: "/admin/organizations" });
-  const checkPlatformAdmin = useServerFn(amIPlatformAdmin);
-  const admin = useQuery({ queryKey: ["platform-admin"], queryFn: () => checkPlatformAdmin() });
+  const admin = usePlatformAdmin();
 
   return (
     <AppShell>

@@ -13,18 +13,13 @@ import { NotificationBell } from "./NotificationBell";
 import { NavHistoryButtons } from "./NavHistoryButtons";
 import type { Entity } from "@/seed/types";
 import { useRealtimeComms } from "@/lib/use-comms";
-import { amIPlatformAdmin } from "@/lib/admin.functions";
+import { usePlatformAdmin } from "@/lib/use-platform-admin";
 
 export function OrgShell({ entity, children }: { entity: Entity; children: ReactNode }) {
   // Always scoped to the organization in the URL — never the viewer's own org.
   const viewedOrgId = entity.orgUuid ?? null;
   useRealtimeComms(viewedOrgId);
-  const checkPlatformAdmin = useServerFn(amIPlatformAdmin);
-  const adminQuery = useQuery({
-    queryKey: ["platform-admin"],
-    queryFn: () => checkPlatformAdmin(),
-    staleTime: 5 * 60_000,
-  });
+  const adminQuery = usePlatformAdmin();
   const isAdmin = !!adminQuery.data?.isAdmin;
 
   return (

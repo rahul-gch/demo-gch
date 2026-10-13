@@ -26,7 +26,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { amIPlatformAdmin } from "@/lib/admin.functions";
+import { usePlatformAdmin } from "@/lib/use-platform-admin";
 import { useActingOrgId, useMyOrgs, useUnreadTotal } from "@/lib/use-comms";
 import { getEntity } from "@/seed/all-entities";
 
@@ -55,12 +55,7 @@ export function AppSidebar() {
   const actingOrgId = useActingOrgId();
   const unread = useUnreadTotal(actingOrgId);
   const myOrgs = useMyOrgs();
-  const checkPlatformAdmin = useServerFn(amIPlatformAdmin);
-  const isAdmin = useQuery({
-    queryKey: ["platform-admin"],
-    queryFn: () => checkPlatformAdmin(),
-    staleTime: 5 * 60_000,
-  });
+  const isAdmin = usePlatformAdmin();
 
   const admin = !!isAdmin.data?.isAdmin;
   const primaryOrg = myOrgs[0];
