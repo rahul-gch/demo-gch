@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import {
   markVerificationLater,
@@ -10,8 +10,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { createOrg, myOrgMemberships } from "@/lib/orgs.functions";
 import { refreshRegistry } from "@/lib/registry";
 import { useQueryClient } from "@tanstack/react-query";
-import { OnboardingLayout } from "@/components/onboarding/OnboardingLayout";
-import { CreateOrgForm } from "@/components/signup/CreateOrgForm";
 
 export const Route = createFileRoute("/onboarding/")({
   ssr: false,
