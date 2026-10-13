@@ -74,7 +74,9 @@ function SignupPage() {
     <div className="grid min-h-screen bg-background lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
       <aside className="hidden h-screen lg:sticky lg:top-0 flex-col justify-between bg-primary p-10 text-primary-foreground lg:flex xl:p-14">
         <div className="flex items-center gap-2.5">
-          <img src={gchLogo} alt="Global Chain Hub" className="h-9 w-9" />
+          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/95 p-1">
+            <img src={gchLogo} alt="Global Chain Hub" className="h-8 w-8" />
+          </span>
           <span className="text-sm font-semibold tracking-tight">Global Chain Hub</span>
         </div>
         <div className="max-w-md space-y-8">
