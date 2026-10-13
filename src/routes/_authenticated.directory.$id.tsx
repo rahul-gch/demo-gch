@@ -33,7 +33,7 @@ export const Route = createFileRoute("/_authenticated/directory/$id")({
   ),
   errorComponent: ({ error }) => (
     <div className="flex min-h-screen items-center justify-center p-6 text-sm text-muted-foreground">
-      {error.message}
+      {error instanceof Error ? error.message : "Something went wrong"}
     </div>
   ),
 });
