@@ -24,16 +24,18 @@ export function EmailAuthForm({
   mode: initialMode,
   onSignedIn,
   compact,
+  pendingOrg,
 }: {
   mode?: Mode;
   onSignedIn?: () => void;
   compact?: boolean;
+  /** Direct company signup: the organization is created right after sign-up. */
+  pendingOrg?: { name: string; type: string; country: string } | null;
 }) {
   const queryClient = useQueryClient();
   const [mode, setMode] = useState<Mode>(initialMode ?? "signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
@@ -70,8 +72,8 @@ export function EmailAuthForm({
           toast.error("Please accept the Terms & Conditions and Privacy Policy to continue");
           return;
         }
-        if (password !== confirm) {
-          toast.error("Passwords do not match");
+        if (pendingOrg === null) {
+          toast.error("Add your organization name, type and country first");
           return;
         }
         const { data, error } = await supabase.auth.signUp({
@@ -79,7 +81,10 @@ export function EmailAuthForm({
           password,
           options: {
             emailRedirectTo: window.location.origin + "/auth/callback",
-            data: name.trim() ? { full_name: name.trim() } : undefined,
+            data: {
+              ...(name.trim() ? { full_name: name.trim() } : {}),
+              ...(pendingOrg ? { pending_org: pendingOrg } : {}),
+            },
           },
         });
         if (error) throw error;
@@ -211,28 +216,10 @@ export function EmailAuthForm({
                 <p className={`text-xs ${strength.tone}`}>Password strength: {strength.label}</p>
               </div>
             )}
-            <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">
-              {PASSWORD_RULES.map((rule) => (
-                <li key={rule}>• {rule}</li>
-              ))}
-            </ul>
+            <p className="text-xs text-muted-foreground">At least 8 characters</p>
           </>
         )}
       </div>
-      {mode === "signup" && (
-        <div className="space-y-1.5">
-          <Label htmlFor="auth-confirm">Confirm password</Label>
-          <Input
-            id="auth-confirm"
-            type="password"
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-            placeholder="••••••••"
-            autoComplete="new-password"
-            required
-          />
-        </div>
-      )}
       {mode === "signup" && (
         <div className="space-y-2.5 rounded-md border bg-muted/30 p-3">
           <label className="flex items-start gap-2.5 text-xs leading-relaxed">
@@ -294,19 +281,21 @@ export function EmailAuthForm({
       <Button
         type="submit"
         className="w-full"
-        disabled={busy || (mode === "signup" && !acceptPolicies)}
+        disabled={busy || (mode === "signup" && (!acceptPolicies || pendingOrg === null))}
       >
         {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         {mode === "signup" ? "Create account" : "Sign in"}
       </Button>
-      <div className="flex items-center justify-between text-xs">
-        <button
-          type="button"
-          className="text-primary hover:underline"
-          onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
-        >
-          {mode === "signup" ? "I already have an account" : "Create an account"}
-        </button>
+      <div className="flex items-center justify-end gap-3 text-xs empty:hidden">
+        {mode === "signup" && pendingOrg === undefined && (
+          <button
+            type="button"
+            className="text-primary hover:underline"
+            onClick={() => setMode("signin")}
+          >
+            I already have an account
+          </button>
+        )}
         {mode === "signin" && (
           <button
             type="button"
