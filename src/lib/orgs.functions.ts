@@ -407,7 +407,20 @@ const answersSchema = z.object({
   orgId: z.string().uuid(),
   answers: z.record(
     z.string().max(80),
-    z.union([z.string().max(4000), z.number(), z.array(z.string().max(120)).max(60), z.null()]),
+    z.union([
+      z.string().max(4000),
+      z.number(),
+      z.array(z.string().max(160)).max(80),
+      z.array(
+        z.object({
+          name: z.string().max(120).optional(),
+          address: z.string().max(255).optional(),
+          city: z.string().max(120).optional(),
+          country: z.string().max(120).optional(),
+        }),
+      ).max(20),
+      z.null(),
+    ]),
   ),
 });
 
@@ -472,7 +485,7 @@ export const saveOrgProfileAnswers = createServerFn({ method: "POST" })
       const column = columnMap[field.column];
       if (!column) continue;
       if (arrayColumns.has(column)) {
-        const next = Array.isArray(value) ? value : value ? [String(value)] : [];
+        const next = Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : value ? [String(value)] : [];
         const prev = (patch[column] as string[] | undefined) ?? [];
         patch[column] = Array.from(new Set([...prev, ...next]));
       } else if (column === "lead_time_days") {

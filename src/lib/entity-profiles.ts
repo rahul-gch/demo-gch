@@ -119,7 +119,7 @@ export const BUCKET_ORDER: Bucket[] = [
   "needs",
 ];
 
-export type FieldKind = "text" | "textarea" | "number" | "single" | "multi";
+export type FieldKind = "text" | "textarea" | "number" | "single" | "multi" | "locations";
 
 /** Org columns an answer can be mirrored into. */
 export type OrgColumn =
@@ -187,6 +187,19 @@ const MATERIALS = [
   "Leather",
   "Blends",
 ];
+/** Merges option lists, keeping order and skipping case-insensitive duplicates. */
+export function mergeOptions(...lists: string[][]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const o of lists.flat()) {
+    const k = o.trim().toLowerCase();
+    if (!k || seen.has(k)) continue;
+    seen.add(k);
+    out.push(o);
+  }
+  return out;
+}
+
 const PRODUCT_CATEGORIES = [
   "T-shirts",
   "Knitwear",
@@ -269,6 +282,27 @@ const fSustain: ProfileField = {
   bucket: "sustainability",
   options: SUSTAINABILITY,
 };
+const fLocations: ProfileField = {
+  id: "locations",
+  label: "Production locations",
+  kind: "locations",
+  bucket: "markets",
+};
+const monthlyCapacity = (label: string, suffix: string): ProfileField => ({
+  id: "monthlyCapacity",
+  label,
+  kind: "number",
+  bucket: "capacity",
+  suffix,
+});
+const multi = (id: string, label: string, bucket: Bucket, options: string[], column?: OrgColumn): ProfileField => ({
+  id,
+  label,
+  kind: "multi",
+  bucket,
+  options,
+  ...(column ? { column } : {}),
+});
 const fMoq: ProfileField = {
   id: "moq",
   label: "Minimum order quantity (MOQ)",
@@ -684,18 +718,21 @@ export const ENTITY_PROFILES: Record<EntityTypeName, EntityProfileDef> = {
           "Canvas",
           "Performance",
           "Interlock",
+          "Chambray", "Oxford", "Twill / chino", "Canvas / duck", "Corduroy", "Velvet / velour", "Seersucker", "Jersey", "Piqué", "French terry",
         ],
         column: "productTypes",
       },
+      multi("millFacilityType", "Facility type", "offering", ["Weaving mill", "Circular-knitting mill", "Flat-knitting mill", "Warp-knitting mill", "Nonwovens producer", "Vertical mill (yarn → finished fabric)"], "specializations"),
       {
         id: "fabricConstruction",
         label: "Fabric construction",
         kind: "multi",
         bucket: "capabilities",
-        options: ["Circular knit", "Flat knit", "Warp knit", "Woven", "Non-woven"],
+        options: ["Woven – plain", "Woven – jacquard", "Knit – single jersey", "Knit – interlock", "Knit – rib", "Knit – piqué", "Knit – fleece / terry", "Knit – jacquard", "Warp knit – tricot / raschel / mesh", "Nonwoven – spunbond / spunlace / needlepunch / meltblown"],
         column: "capabilities",
       },
-      fMaterials,
+      multi("millMaterials", "Materials handled", "offering", ["Cotton (conventional)", "Organic cotton", "In-conversion cotton", "Better Cotton", "Regenerative cotton", "Recycled cotton (pre-consumer)", "Recycled cotton (post-consumer)", "Pima / Supima / ELS cotton", "Giza cotton", "Linen / Flax", "Hemp", "Jute", "Ramie"], "materials"),
+      multi("inHouseServices", "In-house services", "capabilities", ["Yarn dyeing", "Piece dyeing", "Printing", "Finishing", "Lab dips", "Fabric testing lab", "Design studio / CAD", "Greige stock", "Ready-stock / stock-service fabrics", "Small-run / sampling yardage"], "capabilities"),
       {
         id: "gsmWidth",
         label: "GSM range / width",
@@ -704,6 +741,7 @@ export const ENTITY_PROFILES: Record<EntityTypeName, EntityProfileDef> = {
         placeholder: "e.g. 120-320 GSM, 150-180 cm",
       },
       fCapacity,
+      monthlyCapacity("Monthly fabric capacity", "metres / month"),
       fMoq,
       fLead,
       {
@@ -720,6 +758,7 @@ export const ENTITY_PROFILES: Record<EntityTypeName, EntityProfileDef> = {
           "Yarn dyeing",
         ],
       },
+      fLocations,
       fCerts,
       fMarkets,
     ],
@@ -753,6 +792,11 @@ export const ENTITY_PROFILES: Record<EntityTypeName, EntityProfileDef> = {
         ],
         column: "productTypes",
       },
+      multi("dyeFacilityType", "Facility type", "offering", ["Fibre / yarn dye house", "Fabric dye house", "Garment dye & wash house", "Denim laundry", "Printing house", "Finishing plant", "Coating / laminating", "Embellishment (embroidery, sequins, transfers)"], "specializations"),
+      multi("printingTypes", "Printing types", "capabilities", ["Rotary screen", "Flatbed screen", "Digital – reactive / pigment", "Digital – sublimation", "Heat-transfer", "Discharge", "Burn-out (devoré)", "Foil / puff", "Garment screen (plastisol / water-based)", "DTG", "DTF"], "capabilities"),
+      multi("mechanicalFinishing", "Mechanical finishing", "capabilities", ["Sanforising / compacting", "Calendering", "Raising / brushing", "Peaching / sanding", "Shearing"], "capabilities"),
+      multi("chemicalFinishing", "Chemical & functional finishing", "capabilities", ["Mercerising", "Softening", "Enzyme / bio-polish", "Water-repellent (PFAS-free)", "Anti-microbial"], "capabilities"),
+      multi("garmentWashing", "Garment washing", "capabilities", ["Stone wash", "Enzyme wash", "Ozone", "Laser", "Bleach", "Acid wash", "Low-water / eco-wash", "Garment-dye overdye", "Destroy / vintage effects"], "capabilities"),
       fMaterials,
       {
         id: "dyeingCapacity",
@@ -762,6 +806,7 @@ export const ENTITY_PROFILES: Record<EntityTypeName, EntityProfileDef> = {
         placeholder: "e.g. 15 tonnes / day",
         column: "capacity",
       },
+      monthlyCapacity("Monthly processing capacity", "kg / month"),
       {
         id: "finishingCapabilities",
         label: "Finishing capabilities",
@@ -794,6 +839,8 @@ export const ENTITY_PROFILES: Record<EntityTypeName, EntityProfileDef> = {
           "Heat recovery",
         ],
       },
+      multi("environmentalInfrastructure", "Environmental infrastructure", "sustainability", ["Effluent treatment plant (ETP)", "Zero liquid discharge (ZLD)", "Water recycling", "Low-liquor-ratio machines", "Heat recovery", "Renewable energy on site", "Biomass / electric boiler", "Rainwater harvesting", "Chemical inventory list (CIL)", "Sludge management"]),
+      fLocations,
       fCerts,
       fMarkets,
     ],
@@ -901,9 +948,10 @@ export const ENTITY_PROFILES: Record<EntityTypeName, EntityProfileDef> = {
         label: "Products manufactured",
         kind: "multi",
         bucket: "offering",
-        options: PRODUCT_CATEGORIES,
+        options: mergeOptions(PRODUCT_CATEGORIES, ["Polo shirts", "Shirts & blouses", "Dresses", "Skirts", "Trousers & chinos", "Sweatshirts & hoodies", "Shorts"]),
         column: "productCategories",
       },
+      multi("processCapabilities", "Process capabilities", "capabilities", ["Pattern making", "Grading", "Marker making (CAD)", "Sampling", "3D sampling (CLO / Browzwear)", "Automatic cutting", "Bonding / seam taping / welding", "Fully-fashioned / whole-garment knitting", "Embroidery", "Screen / DTG / DTF printing", "Garment washing", "Garment dyeing", "Pressing & finishing", "In-house quality lab"], "capabilities"),
       {
         id: "manufacturingCapabilities",
         label: "Manufacturing capabilities",
@@ -923,6 +971,7 @@ export const ENTITY_PROFILES: Record<EntityTypeName, EntityProfileDef> = {
       },
       fMaterials,
       fCapacity,
+      monthlyCapacity("Monthly production capacity", "pcs / month"),
       fMoq,
       {
         id: "sampleLeadTimeDays",
@@ -947,6 +996,7 @@ export const ENTITY_PROFILES: Record<EntityTypeName, EntityProfileDef> = {
         bucket: "markets",
         placeholder: "City, country for each production site",
       },
+      fLocations,
       fCerts,
       fMarkets,
     ],
@@ -1703,7 +1753,14 @@ export const ENTITY_PROFILES: Record<EntityTypeName, EntityProfileDef> = {
   },
 };
 
-export type ProfileAnswers = Record<string, string | number | string[] | null | undefined>;
+export interface LocationRow {
+  name?: string;
+  address?: string;
+  city?: string;
+  country?: string;
+}
+export type ProfileAnswerValue = string | number | string[] | LocationRow[] | null | undefined;
+export type ProfileAnswers = Record<string, ProfileAnswerValue>;
 
 export function getProfileDef(type: string | undefined | null): EntityProfileDef {
   return ENTITY_PROFILES[normalizeEntityType(type)];
@@ -1721,7 +1778,10 @@ export function getProfileSteps(type: string | undefined | null) {
 
 export function isAnswered(value: unknown): boolean {
   if (value === null || value === undefined) return false;
-  if (Array.isArray(value)) return value.length > 0;
+  if (Array.isArray(value))
+    return value.some((v) =>
+      typeof v === "string" ? v.trim().length > 0 : !!v && typeof v === "object" && !!((v as LocationRow).city?.trim() || (v as LocationRow).country?.trim()),
+    );
   if (typeof value === "number") return Number.isFinite(value) && value > 0;
   return String(value).trim().length > 0;
 }
