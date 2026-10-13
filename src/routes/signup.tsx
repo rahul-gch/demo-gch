@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { EmailAuthForm } from "@/components/auth/EmailAuthForm";
 import { CountrySelect } from "@/components/CountrySelect";
 import { VerificationUpload } from "@/components/verification/VerificationUpload";
-import { ENTITY_TYPES } from "@/lib/entity-profiles";
+import { SIGNUP_ENTITY_TYPES } from "@/lib/entity-profiles";
 import { stashPendingVerificationFile, verificationChoiceValid } from "@/lib/verification";
 
 export const Route = createFileRoute("/signup")({
@@ -68,8 +68,6 @@ function SignupPage() {
       ? { name: orgName.trim(), type, country, verification: file ? "upload" : "later" }
       : null;
 
-  const signupTypes = ENTITY_TYPES.filter((t) => t !== "Seed");
-
   return (
     <div className="grid min-h-screen bg-background lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
       <aside className="hidden h-screen lg:sticky lg:top-0 flex-col justify-between bg-primary p-10 text-primary-foreground lg:flex xl:p-14">
@@ -122,7 +120,7 @@ function SignupPage() {
                   id="org-name"
                   value={orgName}
                   onChange={(e) => setOrgName(e.target.value)}
-                  placeholder="Acme Cotton Mills"
+                  placeholder="Organization name"
                   autoComplete="organization"
                   className="h-10"
                 />
@@ -135,7 +133,7 @@ function SignupPage() {
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent className="max-h-72">
-                      {signupTypes.map((t) => (
+                      {SIGNUP_ENTITY_TYPES.map((t) => (
                         <SelectItem key={t} value={t}>
                           {t}
                         </SelectItem>

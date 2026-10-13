@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Loader2, Plus, X } from "lucide-react";
-import { ENTITY_TYPES } from "@/lib/entity-profiles";
+import { SIGNUP_ENTITY_TYPES } from "@/lib/entity-profiles";
 import { CountrySelect } from "@/components/CountrySelect";
 import { FEATURED_COUNTRIES } from "@/lib/countries";
 
@@ -119,7 +119,7 @@ export function CreateOrgForm({
             id="org-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Acme Cotton Mills"
+            placeholder="Organization name"
           />
         </div>
         <div className="space-y-1.5 sm:col-span-2">
@@ -129,7 +129,7 @@ export function CreateOrgForm({
               <SelectValue placeholder="Select entity type" />
             </SelectTrigger>
             <SelectContent className="max-h-72">
-              {ENTITY_TYPES.map((t) => (
+              {SIGNUP_ENTITY_TYPES.map((t) => (
                 <SelectItem key={t} value={t}>
                   {t}
                 </SelectItem>

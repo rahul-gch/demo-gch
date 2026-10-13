@@ -17,6 +17,9 @@ export const ENTITY_TYPES = [
   "Mill",
   "Dye House",
   "Supplier",
+  "Trims / Accessories",
+  "Agent",
+  "Recycling Company",
   "Manufacturer",
   "Brand",
   "Retailer",
@@ -31,7 +34,10 @@ export const ENTITY_TYPES = [
 
 export type EntityTypeName = (typeof ENTITY_TYPES)[number];
 
-/** Older / imported type labels mapped onto the canonical 18. */
+/** New registrations exclude retired choices; existing records keep their definitions. */
+export const SIGNUP_ENTITY_TYPES = ENTITY_TYPES.filter((type) => type !== "Seed" && type !== "Supplier");
+
+/** Older / imported type labels mapped onto canonical entity types. */
 const LEGACY_TYPE_MAP: Record<string, EntityTypeName> = {
   "fabric mill": "Mill",
   mill: "Mill",
@@ -48,10 +54,15 @@ const LEGACY_TYPE_MAP: Record<string, EntityTypeName> = {
   seed: "Seed",
   brand: "Brand",
   retailer: "Retailer",
-  "trader / agent": "Supplier",
-  "trims & accessories supplier": "Supplier",
+  "trader / agent": "Agent",
+  agent: "Agent",
+  "trims & accessories supplier": "Trims / Accessories",
+  "trims / accessories": "Trims / Accessories",
+  "trims & accessories": "Trims / Accessories",
   supplier: "Supplier",
-  recycler: "Clothing Banks",
+  recycler: "Recycling Company",
+  "recycling company": "Recycling Company",
+  "recycling companies": "Recycling Company",
   "clothing banks": "Clothing Banks",
   "logistics provider": "Logistics",
   logistics: "Logistics",
@@ -788,6 +799,36 @@ export const ENTITY_PROFILES: Record<EntityTypeName, EntityProfileDef> = {
     ],
   },
 
+  "Trims / Accessories": {
+    weights: { offering: 25, capabilities: 20, capacity: 20, markets: 10, certifications: 15, sustainability: 5, needs: 5 },
+    fields: [
+      { id: "productsSupplied", label: "Trims / accessories produced", kind: "multi", bucket: "offering", options: ["Buttons", "Zippers", "Labels", "Threads", "Elastics", "Tapes", "Buckles", "Packaging", "Other"], column: "productTypes" },
+      fMaterials,
+      { id: "trimCapabilities", label: "Production capabilities", kind: "multi", bucket: "capabilities", options: ["Custom design", "Dyeing", "Printing", "Embroidery", "Metal finishing", "Moulding", "Private label"], column: "capabilities" },
+      fMoq, fCapacity, fLead, fMarkets, fCerts, fSustain, fNeeds,
+    ],
+  },
+  Agent: {
+    weights: { offering: 25, capabilities: 25, capacity: 5, markets: 20, certifications: 10, sustainability: 5, needs: 10 },
+    fields: [
+      { id: "productsSupplied", label: "Products / materials represented", kind: "multi", bucket: "offering", options: ["Fibres", "Yarns", "Fabrics", "Garments", "Trims & accessories", "Packaging"], column: "productTypes" },
+      { id: "brandsProducts", label: "Organizations / product lines represented", kind: "textarea", bucket: "offering" },
+      { id: "agentServices", label: "Services offered", kind: "multi", bucket: "capabilities", options: ["Sourcing", "Sales representation", "Supplier coordination", "Quality inspection", "Order management", "Export support"], column: "capabilities" },
+      { id: "representationModel", label: "Representation model", kind: "single", bucket: "capabilities", options: ["Buyer representative", "Supplier representative", "Both"] },
+      fMarkets, fCerts, fSustain, fNeeds, fPartnerTypes,
+    ],
+  },
+  "Recycling Company": {
+    weights: { offering: 25, capabilities: 25, capacity: 20, markets: 10, certifications: 10, sustainability: 5, needs: 5 },
+    fields: [
+      fMaterials,
+      { id: "wasteSources", label: "Textile waste accepted", kind: "multi", bucket: "offering", options: ["Pre-consumer waste", "Post-consumer textiles", "Cutting scraps", "Yarn waste", "Blended textiles"], column: "productCategories" },
+      { id: "recyclingProcesses", label: "Recycling processes", kind: "multi", bucket: "capabilities", options: ["Mechanical recycling", "Chemical recycling", "Fibre-to-fibre recycling", "Sorting", "Shredding", "Downcycling"], column: "capabilities" },
+      { id: "recyclingOutputs", label: "Recycled outputs", kind: "multi", bucket: "capabilities", options: ["Recycled fibres", "Recycled yarns", "Recycled fabrics", "Nonwovens", "Industrial materials"], column: "productTypes" },
+      { id: "collectionCapacity", label: "Processing capacity", kind: "text", bucket: "capacity", placeholder: "e.g. 80 tonnes / month", column: "capacity" },
+      fMoq, fLead, fMarkets, fCerts, fSustain, fNeeds,
+    ],
+  },
   Supplier: {
     weights: {
       offering: 25,
