@@ -79,11 +79,8 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-2 py-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <Globe2 className="h-4 w-4" />
-          </div>
-          <div className="flex min-w-0 flex-col group-data-[collapsible=icon]:hidden">
+        <div className="flex items-center gap-2 px-2 py-3 group-data-[collapsible=icon]:hidden">
+          <div className="flex min-w-0 flex-col">
             <span className="truncate text-sm font-semibold leading-tight">Global Chain Hub</span>
             <span className="truncate text-[11px] text-muted-foreground">
               {admin ? "Admin Console" : (primaryOrg?.name ?? "Workspace")}
