@@ -1,6 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
+import {
+  markVerificationLater,
+  submitVerificationDocument,
+  takePendingVerificationFile,
+} from "@/lib/verification";
 import { supabase } from "@/integrations/supabase/client";
 import { createOrg, myOrgMemberships } from "@/lib/orgs.functions";
 import { refreshRegistry } from "@/lib/registry";
@@ -55,7 +60,7 @@ function OnboardingStart() {
       // Direct company signup stored the organization basics on the account —
       // create it now so the user lands straight in the tailored questions.
       const pending = data.user.user_metadata?.pending_org as
-        | { name?: string; type?: string; country?: string }
+        | { name?: string; type?: string; country?: string; verification?: string }
         | undefined;
       if (memberships.length === 0 && pending?.name && pending.type && pending.country) {
         try {
@@ -74,6 +79,13 @@ function OnboardingStart() {
               website: null,
             },
           });
+          try {
+            const file = await takePendingVerificationFile();
+            if (file) await submitVerificationDocument(res.id, file);
+            else await markVerificationLater(res.id);
+          } catch {
+            /* the dashboard reminder lets them upload again */
+          }
           await supabase.auth.updateUser({ data: { pending_org: null } });
           await refreshRegistry(queryClient);
           if (!alive) return;
