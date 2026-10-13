@@ -61,15 +61,10 @@ function WelcomePage() {
   }
 
   return (
-    <div className="flex min-h-screen items-start justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-6">
+    <div className="flex min-h-screen items-start justify-center bg-background p-6">
       <div className="w-full max-w-2xl py-10">
         <div className="mb-6 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <Globe2 className="h-5 w-5" />
-            </div>
-            <div className="text-sm font-semibold">Global Chain Hub</div>
-          </div>
+          <GchLogo />
           <button onClick={signOut} className="text-xs text-muted-foreground hover:underline">
             Sign out
           </button>
