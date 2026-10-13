@@ -4,7 +4,6 @@ import {
   Building2,
   Map,
   Settings,
-  Globe2,
   MessageSquare,
   Calendar,
   Sparkles,
