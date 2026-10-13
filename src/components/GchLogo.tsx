@@ -13,21 +13,21 @@ export function GchLogo({
   className?: string;
 }) {
   return (
-    <span className={cn("inline-flex items-center", className)}>
+    <span aria-label="GCH — Global Chain Hub" className={cn("inline-flex max-w-full items-center whitespace-nowrap", className)}>
       <span
         className={cn(
-          "text-[26px] font-bold leading-none tracking-[-0.03em]",
+          "text-[26px] font-bold leading-none tracking-normal",
           invert ? "text-primary-foreground" : "text-foreground",
         )}
       >
         G
       </span>
-      <span className="text-[26px] font-bold leading-none tracking-[-0.03em] text-brand">
+      <span className="text-[26px] font-bold leading-none tracking-normal text-brand">
         C
       </span>
       <span
         className={cn(
-          "text-[26px] font-bold leading-none tracking-[-0.03em]",
+          "text-[26px] font-bold leading-none tracking-normal",
           invert ? "text-primary-foreground" : "text-foreground",
         )}
       >
@@ -35,10 +35,10 @@ export function GchLogo({
       </span>
       <span
         className={cn(
-          "ml-3 border-l pl-3 text-[10px] font-medium uppercase leading-none tracking-[0.25em]",
+          "ml-2 border-l pl-2 text-[10px] font-medium uppercase leading-none tracking-normal sm:ml-3 sm:pl-3",
           invert
             ? "border-primary-foreground/20 text-primary-foreground/60"
-            : "border-border text-muted-foreground",
+            : "border-border text-foreground",
         )}
       >
         Global Chain Hub
