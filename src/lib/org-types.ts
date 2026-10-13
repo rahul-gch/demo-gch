@@ -14,6 +14,9 @@ export const ORG_TYPES = [
   "Trims & Accessories Supplier",
   "Trader / Agent",
   "Recycler",
+  "Trims / Accessories",
+  "Agent",
+  "Recycling Company",
   "Logistics Provider",
   "Certification Body",
   "Auditor / Inspection Body",
@@ -39,9 +42,11 @@ export const MANUFACTURER_TYPES = new Set<string>([
   "Garment Factory",
   "Trims & Accessories Supplier",
   "Recycler",
+  "Trims / Accessories",
+  "Recycling Company",
 ]);
 
-export const BRAND_TYPES = new Set<string>(["Brand", "Retailer", "Trader / Agent"]);
+export const BRAND_TYPES = new Set<string>(["Brand", "Retailer", "Trader / Agent", "Agent"]);
 
 /**
  * True when the organization makes or supplies physical goods, i.e. it can
