@@ -8,6 +8,7 @@ import {
   getOptimizedHighResUrl,
 } from "@/lib/org-images";
 import { getEntity } from "@/seed/all-entities";
+import { assertOrgRole } from "@/lib/rbac.server";
 import type { Database } from "@/integrations/supabase/types";
 
 export interface ShowroomProduct {
@@ -489,8 +490,9 @@ export const setShowroomProductActive = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     initSeedProducts();
-    const { supabase } = context;
+    const { supabase, userId } = context;
     const targetUuid = resolveOrgUuid(data.orgId) ?? data.orgId;
+    await assertOrgRole(supabase, userId, targetUuid, "editor");
 
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
       data.productId,
@@ -537,6 +539,7 @@ export const upsertShowroomProduct = createServerFn({ method: "POST" })
     initSeedProducts();
     const { supabase, userId } = context;
     const targetUuid = resolveOrgUuid(data.orgId) ?? data.orgId;
+    await assertOrgRole(supabase, userId, targetUuid, "editor");
 
     const payload = {
       org_id: targetUuid,
@@ -649,8 +652,9 @@ export const deleteShowroomProduct = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     initSeedProducts();
-    const { supabase } = context;
+    const { supabase, userId } = context;
     const targetUuid = resolveOrgUuid(data.orgId) ?? data.orgId;
+    await assertOrgRole(supabase, userId, targetUuid, "editor");
 
     try {
       await supabase

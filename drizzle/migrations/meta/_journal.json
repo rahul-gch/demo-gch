@@ -71,6 +71,13 @@
       "when": 1791914721462,
       "tag": "0009_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791925000000,
+      "tag": "0010_guard_verification_and_search_path",
+      "breakpoints": true
     }
   ]
 }
