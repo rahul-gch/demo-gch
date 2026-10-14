@@ -8,6 +8,8 @@ import { GchLogo } from "@/components/GchLogo";
 import { JoinWithInviteForm } from "@/components/signup/JoinWithInviteForm";
 import { CreateOrgForm } from "@/components/signup/CreateOrgForm";
 import { checkPlatformAdmin } from "@/lib/admin-check";
+import { useQueryClient } from "@tanstack/react-query";
+import { signOutAndClearSession } from "@/lib/auth-cleanup";
 
 export const Route = createFileRoute("/welcome")({
   ssr: false,
@@ -33,6 +35,7 @@ type Step = "choose" | "create" | "join";
 
 function WelcomePage() {
   const nav = useNavigate();
+  const qc = useQueryClient();
   const [email, setEmail] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [step, setStep] = useState<Step>("choose");
@@ -54,10 +57,10 @@ function WelcomePage() {
     });
   }, [nav]);
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    nav({ to: "/auth", search: { next: undefined }, replace: true });
-  };
+  const signOut = () =>
+    signOutAndClearSession(qc, () =>
+      nav({ to: "/auth", search: { next: undefined }, replace: true }),
+    );
 
   if (!ready) {
     return (

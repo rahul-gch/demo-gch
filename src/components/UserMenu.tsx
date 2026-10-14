@@ -14,6 +14,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, Plus, ShieldCheck } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { signOutAndClearSession } from "@/lib/auth-cleanup";
 
 export function UserMenu() {
   const [email, setEmail] = useState<string | null>(null);
@@ -33,12 +34,8 @@ export function UserMenu() {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  const signOut = async () => {
-    await qc.cancelQueries();
-    qc.clear();
-    await supabase.auth.signOut();
-    nav({ to: "/auth", replace: true });
-  };
+  const signOut = () =>
+    signOutAndClearSession(qc, () => nav({ to: "/auth", replace: true }));
 
   if (!email) return null;
   const initial = email.charAt(0).toUpperCase();
