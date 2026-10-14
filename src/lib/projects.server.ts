@@ -302,6 +302,7 @@ export async function assertProjectAccess(
   projectId: string,
   actorOrgId: string,
   minRole: "viewer" | "editor" | "admin" = "editor",
+  permission?: PermissionKey,
 ) {
   const actorUuid = (await resolveOrgRow(supabase, actorOrgId))?.id ?? actorOrgId;
   await assertOrgRole(supabase, userId, actorUuid, minRole);
@@ -327,6 +328,16 @@ export async function assertProjectAccess(
 
   if (!partner) {
     throw new Error("Forbidden: your organization is not part of this project.");
+  }
+  if (String(partner.status ?? "").toLowerCase() !== "active") {
+    throw new Error("Forbidden: your organization is not an active partner on this project.");
+  }
+  if (permission) {
+    const perms = (partner.permissions ?? {}) as Record<string, boolean>;
+    const allowed = permission === "view" ? perms.view !== false : perms[permission] === true;
+    if (!allowed) {
+      throw new Error(`Forbidden: your organization lacks the "${permission}" permission on this project.`);
+    }
   }
 
   return { project, actorUuid, isOwner: false, partner };

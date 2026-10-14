@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import { GchLogo } from "@/components/GchLogo";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { signOutAndClearSession } from "@/lib/auth-cleanup";
 import { useNavigate } from "@tanstack/react-router";
 import { OnboardingProgress } from "./OnboardingProgress";
 
@@ -30,11 +31,12 @@ export function OnboardingLayout({
   onStepSelect?: (index: number) => void;
 }) {
   const nav = useNavigate();
+  const qc = useQueryClient();
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    nav({ to: "/auth", search: { next: undefined }, replace: true });
-  };
+  const signOut = () =>
+    signOutAndClearSession(qc, () =>
+      nav({ to: "/auth", search: { next: undefined }, replace: true }),
+    );
 
   return (
     <div className="min-h-screen w-full bg-background text-foreground">

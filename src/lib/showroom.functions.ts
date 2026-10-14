@@ -1231,11 +1231,16 @@ export const transitionSampleOrder = createServerFn({ method: "POST" })
     }
     if (data.action === "deliver") patch.delivered_at = now;
 
-    const { error: updErr } = await supabase
+    const { data: updated, error: updErr } = await supabase
       .from("sample_orders")
       .update(patch)
-      .eq("id", data.orderId);
+      .eq("id", data.orderId)
+      .eq("status", order.status)
+      .select("id");
     if (updErr) throw new Error(updErr.message);
+    if (!updated || updated.length === 0) {
+      throw new Error("This order was changed by someone else. Refresh and try again.");
+    }
 
     await supabase.from("sample_order_events").insert({
       order_id: data.orderId,
