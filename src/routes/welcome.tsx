@@ -7,6 +7,7 @@ import { Building2, Loader2, Mail, Plus } from "lucide-react";
 import { GchLogo } from "@/components/GchLogo";
 import { JoinWithInviteForm } from "@/components/signup/JoinWithInviteForm";
 import { CreateOrgForm } from "@/components/signup/CreateOrgForm";
+import { checkPlatformAdmin } from "@/lib/admin-check";
 
 export const Route = createFileRoute("/welcome")({
   ssr: false,
@@ -37,9 +38,15 @@ function WelcomePage() {
   const [step, setStep] = useState<Step>("choose");
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) {
         nav({ to: "/auth", search: { next: "/welcome" }, replace: true });
+        return;
+      }
+      // Platform admins go straight to the operations console.
+      const admin = await checkPlatformAdmin();
+      if (admin.isAdmin) {
+        nav({ to: "/", replace: true });
         return;
       }
       setEmail(data.user.email ?? null);

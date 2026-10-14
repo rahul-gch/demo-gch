@@ -8,6 +8,7 @@ import {
   type AdminDashboardStats,
 } from "@/lib/admin.functions";
 import { myOrgMemberships } from "@/lib/orgs.functions";
+import { checkPlatformAdmin } from "@/lib/admin-check";
 import { listPlatformActivity } from "@/lib/activity.functions";
 
 import { AppShell } from "@/components/AppShell";
@@ -43,7 +44,7 @@ export const Route = createFileRoute("/_authenticated/")({
     // Only Global Chain Hub platform admins see the operations console.
     await refreshRegistry((context as any).queryClient);
     const [admin, memberships] = await Promise.all([
-      amIPlatformAdmin().catch(() => ({ isAdmin: false })),
+      checkPlatformAdmin(),
       myOrgMemberships().catch(() => [] as { org_id: string }[]),
     ]);
     if (admin?.isAdmin) return;

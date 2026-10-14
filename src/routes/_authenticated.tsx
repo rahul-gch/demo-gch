@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureRegistry, retryOnCancel } from "@/lib/registry";
 import { myOrgMemberships } from "@/lib/orgs.functions";
-import { amIPlatformAdmin } from "@/lib/admin.functions";
+import { checkPlatformAdmin } from "@/lib/admin-check";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/_authenticated")({
       }),
       context.queryClient.ensureQueryData({
         queryKey: ["am-i-platform-admin", data.user.id],
-        queryFn: () => amIPlatformAdmin().catch(() => ({ isAdmin: false })),
+        queryFn: () => checkPlatformAdmin(),
         staleTime: 60_000,
       }),
     ]));
