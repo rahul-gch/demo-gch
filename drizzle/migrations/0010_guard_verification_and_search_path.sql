@@ -38,5 +38,3 @@ FOR EACH ROW EXECUTE FUNCTION public.guard_verification_review_fields();
 -- 2. Lock down search_path on elevated SECURITY DEFINER helper functions
 -- Prevents schema search path hijacking
 ALTER FUNCTION public.is_platform_admin(uuid) SET search_path = public;
-ALTER FUNCTION public.is_org_owner(uuid, uuid) SET search_path = public;
-ALTER FUNCTION public.user_can_view(uuid, uuid) SET search_path = public;
