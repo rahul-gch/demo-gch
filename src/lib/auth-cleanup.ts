@@ -24,14 +24,28 @@ export async function signOutAndClearSession(
   queryClient: QueryClient | null | undefined,
   redirect: () => void,
 ) {
+  // Each cleanup step is isolated so one failure never skips backend sign-out.
+  const safe = async (fn: () => unknown) => {
+    try {
+      await fn();
+    } catch (e) {
+      console.warn("[signOut] cleanup step failed", e);
+    }
+  };
   try {
     if (queryClient) {
-      await queryClient.cancelQueries();
-      queryClient.clear();
+      await safe(() => queryClient.cancelQueries());
+      await safe(() => queryClient.clear());
     }
-    await supabase.removeAllChannels();
-    clearOrgStorage();
-    await supabase.auth.signOut();
+    await safe(() => supabase.removeAllChannels());
+    await safe(() => clearOrgStorage());
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.warn("[signOut] backend sign-out failed, clearing local session", error);
+      await safe(() => supabase.auth.signOut({ scope: "local" }));
+    }
+    // Drop anything an in-flight request repopulated during sign-out.
+    await safe(() => queryClient?.clear());
   } finally {
     redirect();
   }
