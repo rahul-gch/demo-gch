@@ -5,8 +5,6 @@ import { reportClientError } from "@/lib/error-log";
 import { isCancelled } from "@/lib/registry";
 
 export function errorMessage(error: unknown): string {
-  if (error instanceof Error && error.message) return error.message;
-  if (typeof error === "string" && error) return error;
   return "Something went wrong while loading this page.";
 }
 

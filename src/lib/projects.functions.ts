@@ -475,9 +475,11 @@ export const setRequestStatusFn = createServerFn({ method: "POST" })
       .from("project_requests")
       .update({ status: data.status } as never)
       .eq("id", data.requestId)
+      .eq("project_id", data.projectId)
       .select("title")
       .maybeSingle();
     if (error) throw new Error(error.message);
+    if (!row) throw new Error("Project request not found");
 
     if (data.status === "Completed") {
       await supabase.from("project_activity").insert({
@@ -513,7 +515,9 @@ export const addRequestCommentFn = createServerFn({ method: "POST" })
       .from("project_requests")
       .select("comments")
       .eq("id", data.requestId)
+      .eq("project_id", data.projectId)
       .maybeSingle();
+    if (!row) throw new Error("Project request not found");
     const { data: member } = await supabase
       .from("org_members")
       .select("display_name")

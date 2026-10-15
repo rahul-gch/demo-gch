@@ -19,6 +19,7 @@ dist-ssr
 # Environment variables (secrets)
 .env
 .env.*
+!.env.example
 
 # Wrangler / Cloudflare
 .wrangler/
@@ -39,6 +40,10 @@ dist-ssr
 docs/
 docs_gch/
 *.pdf
+!docs/
+docs/*
+!docs/staging-environment-plan.md
+!docs/security-review-history.md
 
 # Tests & Test Results
 test/

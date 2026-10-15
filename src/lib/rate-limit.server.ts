@@ -80,13 +80,12 @@ export async function getClientIp(): Promise<string> {
     const { getRequest } = await import("@tanstack/react-start/server");
     const req = getRequest();
     if (!req) return "127.0.0.1";
-    const forwarded = req.headers.get("x-forwarded-for");
-    if (forwarded) {
-      return forwarded.split(",")[0].trim();
-    }
+    // Prefer headers set by the deployment proxy. x-forwarded-for is last
+    // because a client can forge it when the app is reached directly.
     return (
-      req.headers.get("x-real-ip") ||
       req.headers.get("cf-connecting-ip") ||
+      req.headers.get("x-real-ip") ||
+      req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
       "127.0.0.1"
     );
   } catch {

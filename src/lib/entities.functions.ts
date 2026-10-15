@@ -134,6 +134,7 @@ export const listEntities = createServerFn({ method: "GET" }).handler(
       let res = await supabase
         .from("orgs")
         .select(queryCols)
+        .eq("is_hidden", false)
         .order("name", { ascending: true })
         .range(page * pageSize, page * pageSize + pageSize - 1);
 
@@ -142,6 +143,7 @@ export const listEntities = createServerFn({ method: "GET" }).handler(
         res = await supabase
           .from("orgs")
           .select(queryCols)
+          .eq("is_hidden", false)
           .order("name", { ascending: true })
           .range(page * pageSize, page * pageSize + pageSize - 1);
       }
