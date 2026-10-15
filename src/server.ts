@@ -59,12 +59,30 @@ async function normalizeCatastrophicSsrResponse(
   });
 }
 
+function withSecurityHeaders(response: Response): Response {
+  const ct = response.headers.get("content-type") ?? "";
+  if (!ct.includes("text/html")) return response;
+  try {
+    const r = new Response(response.body, response);
+    r.headers.set("X-Content-Type-Options", "nosniff");
+    r.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+    // Allow the Lovable editor preview to frame the app; block everyone else.
+    r.headers.set(
+      "Content-Security-Policy",
+      "frame-ancestors 'self' https://lovable.dev https://*.lovable.dev https://*.lovable.app",
+    );
+    return r;
+  } catch {
+    return response;
+  }
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(request, response);
+      return withSecurityHeaders(await normalizeCatastrophicSsrResponse(request, response));
     } catch (error) {
       if (request.signal?.aborted || isClientAbort(error)) {
         return abortedResponse();
