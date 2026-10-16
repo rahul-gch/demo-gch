@@ -129,13 +129,30 @@ export const listEntities = createServerFn({ method: "GET" }).handler(
     const { data: isAdminRpc } = await supabase.rpc("is_platform_admin" as never);
     const viewerIsAdmin = isAdminRpc === true;
 
+    // Members always see their own organization, even when it is hidden from
+    // everyone else.
+    let ownOrgIds: string[] = [];
+    if (!viewerIsAdmin) {
+      const { data: mem } = await supabase
+        .from("org_members")
+        .select("org_id")
+        .eq("user_id", claims.claims.sub as string);
+      ownOrgIds = (mem ?? [])
+        .map((m: { org_id: string }) => m.org_id)
+        .filter((id) => /^[0-9a-f-]{36}$/i.test(id));
+    }
+    const visibilityFilter = ownOrgIds.length
+      ? `is_hidden.eq.false,id.in.(${ownOrgIds.join(",")})`
+      : null;
+
     const all: Entity[] = [];
     const pageSize = 1000;
     let queryCols = `${BASE_COLUMNS}, operating_countries`;
 
     for (let page = 0; page < 10; page++) {
       let q1 = supabase.from("orgs").select(queryCols);
-      if (!viewerIsAdmin) q1 = q1.eq("is_hidden", false);
+      if (!viewerIsAdmin)
+        q1 = visibilityFilter ? q1.or(visibilityFilter) : q1.eq("is_hidden", false);
       let res = await q1
         .order("name", { ascending: true })
         .range(page * pageSize, page * pageSize + pageSize - 1);
@@ -143,7 +160,8 @@ export const listEntities = createServerFn({ method: "GET" }).handler(
       if (res.error && res.error.message.includes("operating_countries")) {
         queryCols = BASE_COLUMNS;
         let q2 = supabase.from("orgs").select(queryCols);
-        if (!viewerIsAdmin) q2 = q2.eq("is_hidden", false);
+        if (!viewerIsAdmin)
+          q2 = visibilityFilter ? q2.or(visibilityFilter) : q2.eq("is_hidden", false);
         res = await q2
           .order("name", { ascending: true })
           .range(page * pageSize, page * pageSize + pageSize - 1);
