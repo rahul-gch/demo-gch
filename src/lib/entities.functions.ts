@@ -126,24 +126,25 @@ export const listEntities = createServerFn({ method: "GET" }).handler(
     const { data: claims } = await supabase.auth.getClaims(token);
     if (!claims?.claims?.sub) return [];
 
+    const { data: isAdminRpc } = await supabase.rpc("is_platform_admin" as never);
+    const viewerIsAdmin = isAdminRpc === true;
+
     const all: Entity[] = [];
     const pageSize = 1000;
     let queryCols = `${BASE_COLUMNS}, operating_countries`;
 
     for (let page = 0; page < 10; page++) {
-      let res = await supabase
-        .from("orgs")
-        .select(queryCols)
-        .eq("is_hidden", false)
+      let q1 = supabase.from("orgs").select(queryCols);
+      if (!viewerIsAdmin) q1 = q1.eq("is_hidden", false);
+      let res = await q1
         .order("name", { ascending: true })
         .range(page * pageSize, page * pageSize + pageSize - 1);
 
       if (res.error && res.error.message.includes("operating_countries")) {
         queryCols = BASE_COLUMNS;
-        res = await supabase
-          .from("orgs")
-          .select(queryCols)
-          .eq("is_hidden", false)
+        let q2 = supabase.from("orgs").select(queryCols);
+        if (!viewerIsAdmin) q2 = q2.eq("is_hidden", false);
+        res = await q2
           .order("name", { ascending: true })
           .range(page * pageSize, page * pageSize + pageSize - 1);
       }
