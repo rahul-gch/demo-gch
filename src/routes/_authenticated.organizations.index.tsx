@@ -254,6 +254,11 @@ function OrganizationsPage() {
                         >
                           {e.name}
                         </Link>
+                        {(e as { isHidden?: boolean }).isHidden && (
+                          <span className="ml-2 rounded border border-border bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                            Hidden
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell className="text-muted-foreground">{e.entityType}</TableCell>
                       <TableCell className="text-muted-foreground">{e.actorType}</TableCell>
