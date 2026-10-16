@@ -1,5 +1,5 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { amIPlatformAdmin } from "@/lib/admin.functions";
+import { checkPlatformAdmin } from "@/lib/admin-check";
 import { myOrgMemberships } from "@/lib/orgs.functions";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
@@ -31,7 +31,7 @@ export const Route = createFileRoute("/_authenticated/organizations/")({
     // The full registry is a platform-admin surface only. Members are sent to
     // their own organization workspace instead.
     const [admin, memberships] = await Promise.all([
-      amIPlatformAdmin().catch(() => ({ isAdmin: false })),
+      checkPlatformAdmin().catch(() => ({ isAdmin: false })),
       myOrgMemberships().catch(() => [] as { org_id: string }[]),
     ]);
     if (admin?.isAdmin) return;
@@ -254,6 +254,11 @@ function OrganizationsPage() {
                         >
                           {e.name}
                         </Link>
+                        {(e as { isHidden?: boolean }).isHidden && (
+                          <span className="ml-2 rounded border border-border bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                            Hidden
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell className="text-muted-foreground">{e.entityType}</TableCell>
                       <TableCell className="text-muted-foreground">{e.actorType}</TableCell>
