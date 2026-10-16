@@ -131,13 +131,24 @@ export const listRecentSignups = createServerFn({ method: "GET" })
       byOrg.set(m.org_id, list);
     }
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Owner emails are a nice-to-have: never let a lookup failure break the list.
+    let adminClient: any = null;
+    try {
+      adminClient = (await import("@/integrations/supabase/client.server")).supabaseAdmin;
+    } catch (e) {
+      console.error("listRecentSignups: admin client unavailable", e);
+    }
     const emailCache = new Map<string, string | null>();
     const emailFor = async (userId: string | null) => {
-      if (!userId) return null;
+      if (!userId || !adminClient) return null;
       if (emailCache.has(userId)) return emailCache.get(userId)!;
-      const { data: u } = await supabaseAdmin.auth.admin.getUserById(userId);
-      const email = u?.user?.email ?? null;
+      let email: string | null = null;
+      try {
+        const { data: u } = await adminClient.auth.admin.getUserById(userId);
+        email = u?.user?.email ?? null;
+      } catch (e) {
+        console.error("listRecentSignups: email lookup failed", e);
+      }
       emailCache.set(userId, email);
       return email;
     };
