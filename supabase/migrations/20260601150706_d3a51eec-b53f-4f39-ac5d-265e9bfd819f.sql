@@ -1,1 +1,0 @@
-DROP POLICY IF EXISTS "orgs insert by authenticated" ON public.orgs;
