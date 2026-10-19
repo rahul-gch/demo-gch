@@ -5,7 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmailAuthForm } from "@/components/auth/EmailAuthForm";
 import { GchLogo } from "@/components/GchLogo";
-import { DemoQuickLogin } from "@/components/auth/DemoSwitcher";
 
 const searchSchema = z.object({ next: z.string().optional() });
 
@@ -74,7 +73,6 @@ function AuthPage() {
             mode="signin"
             onSignedIn={() => nav({ to: sanitizeNext(next), replace: true })}
           />
-          <DemoQuickLogin />
 
           <p className="text-center text-xs text-muted-foreground">
             New to Global Chain Hub?{" "}

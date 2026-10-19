@@ -5,7 +5,6 @@ import { UserMenu } from "./UserMenu";
 import { NotificationBell } from "./NotificationBell";
 import { NavHistoryButtons } from "./NavHistoryButtons";
 import { useActingOrgId, useRealtimeComms } from "@/lib/use-comms";
-import { DemoRoleSwitcher } from "./auth/DemoSwitcher";
 
 export function AppShell({ children }: { children: ReactNode }) {
   useRealtimeComms(useActingOrgId());
@@ -22,7 +21,6 @@ export function AppShell({ children }: { children: ReactNode }) {
               <span className="hidden sm:inline">Global Chain Hub · Admin</span>
               <span className="sm:hidden">GCH · Admin</span>
             </div>
-            <DemoRoleSwitcher />
             <NotificationBell />
             <UserMenu />
           </header>
