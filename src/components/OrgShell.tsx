@@ -16,6 +16,7 @@ import { useRealtimeComms } from "@/lib/use-comms";
 import { usePlatformAdmin } from "@/lib/use-platform-admin";
 
 import { GchLogo } from "./GchLogo";
+import { DemoRoleSwitcher } from "./auth/DemoSwitcher";
 
 export function OrgShell({ entity, children }: { entity: Entity; children: ReactNode }) {
   const base = `/organizations/${entity.slug || entity.id}`;
@@ -70,6 +71,7 @@ export function OrgShell({ entity, children }: { entity: Entity; children: React
               </span>
             </div>
 
+            <DemoRoleSwitcher />
             <NotificationBell orgId={viewedOrgId} />
             <UserMenu />
           </header>

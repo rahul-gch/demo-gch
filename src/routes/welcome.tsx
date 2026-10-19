@@ -10,6 +10,7 @@ import { CreateOrgForm } from "@/components/signup/CreateOrgForm";
 import { checkPlatformAdmin } from "@/lib/admin-check";
 import { useQueryClient } from "@tanstack/react-query";
 import { signOutAndClearSession } from "@/lib/auth-cleanup";
+import { DemoRoleSwitcher } from "@/components/auth/DemoSwitcher";
 
 export const Route = createFileRoute("/welcome")({
   ssr: false,
@@ -75,9 +76,12 @@ function WelcomePage() {
       <div className="w-full max-w-2xl py-10">
         <div className="mb-6 flex items-center justify-between gap-3">
           <GchLogo />
-          <button onClick={signOut} className="text-xs text-muted-foreground hover:underline">
-            Sign out
-          </button>
+          <div className="flex items-center gap-3">
+            <DemoRoleSwitcher />
+            <button onClick={signOut} className="text-xs text-muted-foreground hover:underline">
+              Sign out
+            </button>
+          </div>
         </div>
 
         <Card className="shadow-lg">
