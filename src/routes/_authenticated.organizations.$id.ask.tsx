@@ -96,7 +96,7 @@ function AskGchPage() {
             <div className="pt-12 text-center">
               <h2 className="text-2xl font-semibold">What are you looking for?</h2>
               <p className="mt-2 text-sm text-muted-foreground">
-                Ask about suppliers by material, city, country, MOQ, lead time or certification.
+                Find sustainable suppliers by material, city, country, MOQ, lead time or certification — or just ask a question.
               </p>
               <div className="mt-8 grid gap-2 sm:grid-cols-2">
                 {SUGGESTIONS.map((s) => (
