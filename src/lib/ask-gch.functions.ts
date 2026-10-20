@@ -81,22 +81,50 @@ const hit = (hay: string[], needles: string[]) =>
 
 export const askGch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ query: z.string().trim().min(2).max(800) }).parse(d))
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        query: z.string().trim().min(1).max(800),
+        history: z.array(z.object({ role: z.enum(["user", "assistant"]), text: z.string().max(2000) })).max(12).optional(),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }): Promise<AskGchAnswer> => {
     let filters: Filters = fallbackFilters(data.query);
+    let intent: "search" | "chat" = GREETING.test(data.query.trim()) || data.query.trim().length < 4 ? "chat" : "search";
+    let reply: string | null = null;
     const key = process.env.LOVABLE_API_KEY;
     if (key) {
       try {
         const gateway = createLovableAiGatewayProvider(key);
+        const hist = (data.history ?? []).map((h) => `${h.role}: ${h.text}`).join("\n");
         const { output } = await generateText({
           model: gateway("google/gemini-3.1-flash-lite"),
           output: Output.object({ schema: filterSchema }),
-          prompt: `Extract supplier-search filters from this apparel supply-chain question. Use null for anything not mentioned; never invent. Countries in English full names (e.g. Turkey, Pakistan). orgTypes like Manufacturer, Mill, Dye House, Brand, Laundry, Trim Supplier. maxMoq = the maximum minimum-order-quantity in units the user accepts. keywords = other important product terms (e.g. jeans, knitwear).\n\nQuestion: ${data.query}`,
+          prompt: `You are Ask GCH, a friendly assistant for the Global Chain Hub — a network of SUSTAINABLE apparel/textile suppliers.
+Decide intent:
+- "chat": greetings, small talk, questions about GCH or about sustainable materials/certifications in general. Put a helpful, concise reply (max 4 sentences) in "reply" and set all filters to null.
+- "search": the user wants to find organizations/suppliers (including follow-ups refining an earlier search — merge with prior filters from the conversation). Put a short one-sentence intro in "reply".
+Sustainability rule: ONLY ever use sustainable materials. Map conventional terms to sustainable equivalents (cotton→organic cotton, denim→organic denim, polyester→recycled polyester, nylon→recycled nylon, wool→responsible wool, viscose→lyocell/tencel, leather→plant-based leather). Never suggest virgin polyester, conventional cotton, virgin nylon, animal leather or other non-sustainable materials.
+Filters: use null when not mentioned; never invent. Countries as English full names. orgTypes like Manufacturer, Mill, Dye House, Brand, Laundry. maxMoq = maximum minimum-order-quantity in units. keywords = other product terms (jeans, knitwear).
+
+Conversation so far:
+${hist || "(none)"}
+
+User: ${data.query}`,
         });
-        filters = output;
+        const { intent: i, reply: r, ...f } = output;
+        intent = i;
+        reply = r;
+        filters = f;
+        if (filters.materials) filters.materials = filters.materials.filter(isSustainable);
       } catch (e) {
         console.error("askGch filter extraction failed", e);
       }
+    }
+
+    if (intent === "chat") {
+      return { summary: reply || CHAT_FALLBACK, filters, results: [] };
     }
 
     const { data: rows, error } = await (context.supabase as any)
