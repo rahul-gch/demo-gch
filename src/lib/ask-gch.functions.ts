@@ -165,36 +165,61 @@ User: ${data.query}`,
         }
         if (filters.maxLeadTimeDays != null && r.lead_time_days != null && r.lead_time_days > filters.maxLeadTimeDays) return null;
         if (filters.keywords?.length) score += filters.keywords.filter((k) => text.includes(k.toLowerCase())).length;
-        return { r, score };
+        const susMats = (r.materials ?? []).filter((m: string) => isSustainable(m));
+        if (susMats.length) score += 1;
+        return { r, score, susMats };
       })
-      .filter(Boolean) as { r: any; score: number }[];
+      .filter(Boolean) as { r: any; score: number; susMats: string[] }[];
+
+    const toResult = ({ r, susMats }: { r: any; susMats: string[] }): AskGchResult => ({
+      id: r.id,
+      slug: r.slug,
+      name: r.name,
+      type: r.organization_type ?? r.type,
+      city: r.city,
+      country: r.country,
+      moq: r.moq,
+      leadTimeDays: r.lead_time_days,
+      materials: susMats,
+      certifications: r.certifications ?? [],
+      description: r.description,
+    });
 
     const hasFilter = Object.values(filters).some((v) => (Array.isArray(v) ? v.length : v != null));
     const list = (hasFilter ? scored : scored.filter((s) => s.score > 0))
       .sort((a, b) => b.score - a.score)
       .slice(0, 12)
-      .map(({ r }) => ({
-        id: r.id,
-        slug: r.slug,
-        name: r.name,
-        type: r.organization_type ?? r.type,
-        city: r.city,
-        country: r.country,
-        moq: r.moq,
-        leadTimeDays: r.lead_time_days,
-        materials: r.materials ?? [],
-        certifications: r.certifications ?? [],
-        description: r.description,
-      }));
+      .map(toResult);
 
     const parts: string[] = [];
     if (filters.materials?.length) parts.push(filters.materials.join(", "));
     if (filters.orgTypes?.length) parts.push(filters.orgTypes.join("/"));
     const where = [...(filters.cities ?? []), ...(filters.countries ?? [])].join(", ");
-    const desc = `${parts.join(" ") || "organizations"}${where ? ` in ${where}` : ""}${filters.certifications?.length ? ` with ${filters.certifications.join(", ")}` : ""}${filters.maxMoq != null ? ` and MOQ up to ${filters.maxMoq.toLocaleString()}` : ""}`;
-    const summary = list.length
-      ? `I found ${scored.length} match${scored.length === 1 ? "" : "es"} for ${desc} in the GCH network${scored.length > list.length ? ` — here are the top ${list.length}` : ""}.`
-      : `I couldn't find any ${desc} in the GCH network. Try widening the location or MOQ.`;
+    const desc = `${parts.join(" ") || "sustainable suppliers"}${where ? ` in ${where}` : ""}${filters.certifications?.length ? ` with ${filters.certifications.join(", ")}` : ""}${filters.maxMoq != null ? ` and MOQ up to ${filters.maxMoq.toLocaleString()}` : ""}`;
+
+    if (!list.length) {
+      // Graceful fallback: show the closest sustainable suppliers instead of a dead end.
+      const nearby = (rows ?? [])
+        .map((r: any) => {
+          const susMats = (r.materials ?? []).filter((m: string) => isSustainable(m));
+          const place = `${r.city ?? ""} ${r.country ?? ""}`.toLowerCase();
+          let score = susMats.length;
+          if ([...(filters.countries ?? []), ...(filters.cities ?? [])].some((c) => place.includes(c.toLowerCase()))) score += 5;
+          return { r, susMats, score };
+        })
+        .filter((x: any) => x.susMats.length)
+        .sort((a: any, b: any) => b.score - a.score)
+        .slice(0, 6)
+        .map(toResult);
+      return {
+        summary: `I couldn't find an exact match for ${desc}. Here are the closest sustainable suppliers in the GCH network — try widening the location or MOQ.`,
+        filters,
+        results: nearby,
+      };
+    }
+
+    const intro = reply ? `${reply} ` : "";
+    const summary = `${intro}I found ${scored.length} match${scored.length === 1 ? "" : "es"} for ${desc}${scored.length > list.length ? ` — here are the top ${list.length}` : ""}.`;
 
     return { summary, filters, results: list };
   });
