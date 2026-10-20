@@ -37,6 +37,7 @@ import { Route as AuthenticatedOrganizationsIdRouteImport } from './routes/_auth
 import { Route as OnboardingOrgIdRouteImport } from './routes/onboarding.org.$id'
 import { Route as AuthenticatedDirectoryIdIndexRouteImport } from './routes/_authenticated.directory.$id.index'
 import { Route as AuthenticatedOrganizationsIdIndexRouteImport } from './routes/_authenticated.organizations.$id.index'
+import { Route as AuthenticatedOrganizationsIdAskRouteImport } from './routes/_authenticated.organizations.$id.ask'
 import { Route as AuthenticatedOrganizationsIdComplianceRouteImport } from './routes/_authenticated.organizations.$id.compliance'
 import { Route as AuthenticatedOrganizationsIdFeedRouteImport } from './routes/_authenticated.organizations.$id.feed'
 import { Route as AuthenticatedOrganizationsIdMatchmakingRouteImport } from './routes/_authenticated.organizations.$id.matchmaking'
@@ -210,6 +211,12 @@ const AuthenticatedOrganizationsIdIndexRoute =
   AuthenticatedOrganizationsIdIndexRouteImport.update({
     id: '/',
     path: '/',
+    getParentRoute: () => AuthenticatedOrganizationsIdRoute,
+  } as any)
+const AuthenticatedOrganizationsIdAskRoute =
+  AuthenticatedOrganizationsIdAskRouteImport.update({
+    id: '/ask',
+    path: '/ask',
     getParentRoute: () => AuthenticatedOrganizationsIdRoute,
   } as any)
 const AuthenticatedOrganizationsIdComplianceRoute =
@@ -401,6 +408,7 @@ export interface FileRoutesByFullPath {
   '/organizations/$id': typeof AuthenticatedOrganizationsIdRouteWithChildren
   '/onboarding/org/$id': typeof OnboardingOrgIdRoute
   '/organizations/': typeof AuthenticatedOrganizationsIndexRoute
+  '/organizations/$id/ask': typeof AuthenticatedOrganizationsIdAskRoute
   '/organizations/$id/compliance': typeof AuthenticatedOrganizationsIdComplianceRoute
   '/organizations/$id/feed': typeof AuthenticatedOrganizationsIdFeedRoute
   '/organizations/$id/matchmaking': typeof AuthenticatedOrganizationsIdMatchmakingRoute
@@ -454,6 +462,7 @@ export interface FileRoutesByTo {
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/onboarding/org/$id': typeof OnboardingOrgIdRoute
   '/organizations': typeof AuthenticatedOrganizationsIndexRoute
+  '/organizations/$id/ask': typeof AuthenticatedOrganizationsIdAskRoute
   '/organizations/$id/compliance': typeof AuthenticatedOrganizationsIdComplianceRoute
   '/organizations/$id/feed': typeof AuthenticatedOrganizationsIdFeedRoute
   '/organizations/$id/matchmaking': typeof AuthenticatedOrganizationsIdMatchmakingRoute
@@ -510,6 +519,7 @@ export interface FileRoutesById {
   '/_authenticated/organizations/$id': typeof AuthenticatedOrganizationsIdRouteWithChildren
   '/onboarding/org/$id': typeof OnboardingOrgIdRoute
   '/_authenticated/organizations/': typeof AuthenticatedOrganizationsIndexRoute
+  '/_authenticated/organizations/$id/ask': typeof AuthenticatedOrganizationsIdAskRoute
   '/_authenticated/organizations/$id/compliance': typeof AuthenticatedOrganizationsIdComplianceRoute
   '/_authenticated/organizations/$id/feed': typeof AuthenticatedOrganizationsIdFeedRoute
   '/_authenticated/organizations/$id/matchmaking': typeof AuthenticatedOrganizationsIdMatchmakingRoute
@@ -568,6 +578,7 @@ export interface FileRouteTypes {
     | '/organizations/$id'
     | '/onboarding/org/$id'
     | '/organizations/'
+    | '/organizations/$id/ask'
     | '/organizations/$id/compliance'
     | '/organizations/$id/feed'
     | '/organizations/$id/matchmaking'
@@ -621,6 +632,7 @@ export interface FileRouteTypes {
     | '/admin/organizations'
     | '/onboarding/org/$id'
     | '/organizations'
+    | '/organizations/$id/ask'
     | '/organizations/$id/compliance'
     | '/organizations/$id/feed'
     | '/organizations/$id/matchmaking'
@@ -676,6 +688,7 @@ export interface FileRouteTypes {
     | '/_authenticated/organizations/$id'
     | '/onboarding/org/$id'
     | '/_authenticated/organizations/'
+    | '/_authenticated/organizations/$id/ask'
     | '/_authenticated/organizations/$id/compliance'
     | '/_authenticated/organizations/$id/feed'
     | '/_authenticated/organizations/$id/matchmaking'
@@ -917,6 +930,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/organizations/$id/'
       preLoaderRoute: typeof AuthenticatedOrganizationsIdIndexRouteImport
+      parentRoute: typeof AuthenticatedOrganizationsIdRoute
+    }
+    '/_authenticated/organizations/$id/ask': {
+      id: '/_authenticated/organizations/$id/ask'
+      path: '/ask'
+      fullPath: '/organizations/$id/ask'
+      preLoaderRoute: typeof AuthenticatedOrganizationsIdAskRouteImport
       parentRoute: typeof AuthenticatedOrganizationsIdRoute
     }
     '/_authenticated/organizations/$id/compliance': {
@@ -1166,6 +1186,7 @@ const AuthenticatedOrganizationsIdProjectsRouteWithChildren =
   )
 
 interface AuthenticatedOrganizationsIdRouteChildren {
+  AuthenticatedOrganizationsIdAskRoute: typeof AuthenticatedOrganizationsIdAskRoute
   AuthenticatedOrganizationsIdComplianceRoute: typeof AuthenticatedOrganizationsIdComplianceRoute
   AuthenticatedOrganizationsIdFeedRoute: typeof AuthenticatedOrganizationsIdFeedRoute
   AuthenticatedOrganizationsIdMatchmakingRoute: typeof AuthenticatedOrganizationsIdMatchmakingRoute
@@ -1185,6 +1206,7 @@ interface AuthenticatedOrganizationsIdRouteChildren {
 
 const AuthenticatedOrganizationsIdRouteChildren: AuthenticatedOrganizationsIdRouteChildren =
   {
+    AuthenticatedOrganizationsIdAskRoute: AuthenticatedOrganizationsIdAskRoute,
     AuthenticatedOrganizationsIdComplianceRoute:
       AuthenticatedOrganizationsIdComplianceRoute,
     AuthenticatedOrganizationsIdFeedRoute:
