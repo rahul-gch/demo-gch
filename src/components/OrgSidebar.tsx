@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Inbox,
   Store,
+  Bot,
 } from "lucide-react";
 import {
   Sidebar,
@@ -41,6 +42,7 @@ export function OrgSidebar({ entity }: { entity: Entity }) {
   const items = [
     { title: "Home / Feed", url: `${base}/feed`, icon: Rss },
     { title: "Dashboard", url: base, icon: LayoutDashboard, exact: true },
+    { title: "Ask GCH", url: `${base}/ask`, icon: Bot },
     { title: "Showroom", url: `${base}/showroom`, icon: Store, badge: pendingOrders },
     { title: "Projects", url: `${base}/projects`, icon: FolderKanban },
     { title: "Supply Chain Mapping", url: `${base}/supply-chain`, icon: Network },
