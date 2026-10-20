@@ -26,10 +26,10 @@ type Msg =
   | { role: "assistant"; answer?: AskGchAnswer; error?: string; pending?: boolean };
 
 const SUGGESTIONS = [
-  "Find denim suppliers in Turkey with MOQ under 1000",
-  "GOTS certified organic cotton manufacturers in India",
-  "Dye houses in Pakistan with lead time under 30 days",
-  "Recycled polyester suppliers with GRS certification",
+  "GOTS organic denim mills in Turkey with MOQ under 1000",
+  "Recycled polyester fabric suppliers with GRS certification",
+  "TENCEL or lyocell knitwear manufacturers in Portugal",
+  "Regenerative or organic cotton producers in India",
 ];
 
 function AskGchPage() {
@@ -51,9 +51,17 @@ function AskGchPage() {
     const q = text.trim();
     if (!q || busy) return;
     setInput("");
+    const history = msgs
+      .slice(-10)
+      .map((m) =>
+        m.role === "user"
+          ? { role: "user" as const, text: m.text }
+          : { role: "assistant" as const, text: (m.answer?.summary ?? m.error ?? "").slice(0, 2000) },
+      )
+      .filter((h) => h.text);
     setMsgs((m) => [...m, { role: "user", text: q }, { role: "assistant", pending: true }]);
     try {
-      const answer = await ask({ data: { query: q } });
+      const answer = await ask({ data: { query: q, history } });
       setMsgs((m) => [...m.slice(0, -1), { role: "assistant", answer }]);
     } catch (e) {
       setMsgs((m) => [
@@ -88,7 +96,7 @@ function AskGchPage() {
             <div className="pt-12 text-center">
               <h2 className="text-2xl font-semibold">What are you looking for?</h2>
               <p className="mt-2 text-sm text-muted-foreground">
-                Ask about suppliers by material, city, country, MOQ, lead time or certification.
+                Find sustainable suppliers by material, city, country, MOQ, lead time or certification — or just ask a question.
               </p>
               <div className="mt-8 grid gap-2 sm:grid-cols-2">
                 {SUGGESTIONS.map((s) => (
