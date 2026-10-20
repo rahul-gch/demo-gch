@@ -5,6 +5,8 @@ import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const filterSchema = z.object({
+  intent: z.enum(["search", "chat"]),
+  reply: z.string().nullable(),
   keywords: z.array(z.string()).nullable(),
   materials: z.array(z.string()).nullable(),
   certifications: z.array(z.string()).nullable(),
@@ -14,7 +16,7 @@ const filterSchema = z.object({
   maxMoq: z.number().nullable(),
   maxLeadTimeDays: z.number().nullable(),
 });
-type Filters = z.infer<typeof filterSchema>;
+type Filters = Omit<z.infer<typeof filterSchema>, "intent" | "reply">;
 
 export type AskGchResult = {
   id: string;
@@ -32,16 +34,30 @@ export type AskGchResult = {
 
 export type AskGchAnswer = { summary: string; filters: Filters; results: AskGchResult[] };
 
-const MATERIALS = ["organic cotton", "recycled polyester", "cotton", "denim", "wool", "viscose", "polyester", "linen", "silk", "leather", "nylon"];
-const CERTS = ["gots", "grs", "ocs", "oeko-tex", "bsci", "sa8000", "fair trade", "bluesign"];
+// Only sustainable materials are ever suggested or shown.
+export const SUSTAINABLE_MATERIALS = [
+  "organic cotton", "recycled cotton", "regenerative cotton", "bci cotton", "organic denim", "recycled denim",
+  "recycled polyester", "rpet", "recycled nylon", "econyl", "tencel", "lyocell", "modal", "ecovero",
+  "hemp", "organic linen", "linen", "responsible wool", "recycled wool", "rws", "deadstock",
+  "bio-based", "plant-based leather", "mushroom leather", "cupro", "piñatex", "organic", "recycled",
+];
+const isSustainable = (m: string) => {
+  const l = m.toLowerCase();
+  return SUSTAINABLE_MATERIALS.some((s) => l.includes(s));
+};
+const CERTS = ["gots", "grs", "ocs", "rcs", "oeko-tex", "bsci", "sa8000", "fair trade", "bluesign", "rws", "fsc", "cradle to cradle", "zdhc", "higg"];
+const GREETING = /^(hi|hello|hey|hola|yo|thanks|thank you|good (morning|afternoon|evening)|how are you|who are you|what can you do|help)\b/i;
 
 function fallbackFilters(q: string): Filters {
   const l = q.toLowerCase();
   const moq = l.match(/moq[^\d]{0,15}(\d[\d,]*)/);
+  const mats = SUSTAINABLE_MATERIALS.filter((m) => l.includes(m));
+  if (l.includes("denim") && !mats.length) mats.push("organic denim");
+  const certs = CERTS.filter((c) => l.includes(c));
   return {
-    keywords: null,
-    materials: MATERIALS.filter((m) => l.includes(m)) || null,
-    certifications: CERTS.filter((c) => l.includes(c)) || null,
+    keywords: l.split(/\W+/).filter((w) => w.length > 3),
+    materials: mats.length ? mats : null,
+    certifications: certs.length ? certs : null,
     countries: null,
     cities: null,
     orgTypes: null,
@@ -49,6 +65,9 @@ function fallbackFilters(q: string): Filters {
     maxLeadTimeDays: null,
   };
 }
+
+const CHAT_FALLBACK =
+  "Hi! I'm Ask GCH, your sustainable sourcing assistant. I search the GCH network for suppliers working with sustainable materials — organic and recycled cotton, recycled polyester, TENCEL™, hemp, responsible wool and more. Try: \"GOTS organic denim mills in Turkey with MOQ under 1000\".";
 
 function parseMoq(v: string | null): number | null {
   if (!v) return null;
