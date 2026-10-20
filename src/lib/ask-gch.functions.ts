@@ -70,7 +70,7 @@ export const askGch = createServerFn({ method: "POST" })
       try {
         const gateway = createLovableAiGatewayProvider(key);
         const { output } = await generateText({
-          model: gateway("google/gemini-2.5-flash-lite"),
+          model: gateway("google/gemini-3.1-flash-lite"),
           output: Output.object({ schema: filterSchema }),
           prompt: `Extract supplier-search filters from this apparel supply-chain question. Use null for anything not mentioned; never invent. Countries in English full names (e.g. Turkey, Pakistan). orgTypes like Manufacturer, Mill, Dye House, Brand, Laundry, Trim Supplier. maxMoq = the maximum minimum-order-quantity in units the user accepts. keywords = other important product terms (e.g. jeans, knitwear).\n\nQuestion: ${data.query}`,
         });
