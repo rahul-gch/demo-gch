@@ -142,6 +142,8 @@ export interface ProfileField {
   placeholder?: string;
   suffix?: string;
   column?: OrgColumn;
+  /** Multi-select country field: shows key countries as chips plus a dropdown of all countries. */
+  countryPicker?: boolean;
 }
 
 export interface EntityProfileDef {
@@ -225,6 +227,26 @@ const REGIONS = [
   "Oceania",
 ];
 const PARTNER_TYPES = [...ENTITY_TYPES] as string[];
+const KEY_SOURCING_COUNTRIES = [
+  "Turkey", "Portugal", "India", "Bangladesh", "Vietnam", "China", "Pakistan",
+  "Morocco", "Egypt", "Italy", "Spain", "Ethiopia", "United States", "Mexico", "Japan",
+];
+const ANNUAL_VOLUME_RANGES = [
+  "Under 10,000 units / year",
+  "10,000 – 50,000 units / year",
+  "50,000 – 250,000 units / year",
+  "250,000 – 1M units / year",
+  "1M – 5M units / year",
+  "Over 5M units / year",
+];
+const MOQ_RANGES = [
+  "Under 100 pcs / style",
+  "100 – 300 pcs / style",
+  "300 – 500 pcs / style",
+  "500 – 1,000 pcs / style",
+  "1,000 – 5,000 pcs / style",
+  "Over 5,000 pcs / style",
+];
 const SUSTAINABILITY = [
   "Renewable energy",
   "Water recycling",
@@ -266,6 +288,7 @@ const fNeeds: ProfileField = {
     "Technology partners",
     "Research collaboration",
     "Training / capacity building",
+    "Manage compliance",
   ],
 };
 const fPartnerTypes: ProfileField = {
@@ -992,9 +1015,9 @@ export const ENTITY_PROFILES: Record<EntityTypeName, EntityProfileDef> = {
       {
         id: "annualVolume",
         label: "Annual sourcing volume",
-        kind: "text",
+        kind: "single",
         bucket: "capacity",
-        placeholder: "e.g. 500,000 units / year",
+        options: ANNUAL_VOLUME_RANGES,
         column: "capacity",
       },
       {
@@ -1022,9 +1045,9 @@ export const ENTITY_PROFILES: Record<EntityTypeName, EntityProfileDef> = {
       {
         id: "targetMoq",
         label: "Target MOQ",
-        kind: "text",
+        kind: "single",
         bucket: "capacity",
-        placeholder: "e.g. up to 1,000 pcs",
+        options: MOQ_RANGES,
         column: "moq",
       },
       {
@@ -1040,20 +1063,8 @@ export const ENTITY_PROFILES: Record<EntityTypeName, EntityProfileDef> = {
         label: "Preferred sourcing countries",
         kind: "multi",
         bucket: "markets",
-        options: [
-          "Turkey",
-          "Portugal",
-          "India",
-          "Bangladesh",
-          "Vietnam",
-          "China",
-          "Pakistan",
-          "Morocco",
-          "Egypt",
-          "Italy",
-          "Spain",
-          "Ethiopia",
-        ],
+        countryPicker: true,
+        options: KEY_SOURCING_COUNTRIES,
       },
       {
         id: "requiredCertifications",
@@ -1149,18 +1160,8 @@ export const ENTITY_PROFILES: Record<EntityTypeName, EntityProfileDef> = {
         label: "Preferred countries",
         kind: "multi",
         bucket: "markets",
-        options: [
-          "Turkey",
-          "Portugal",
-          "India",
-          "Bangladesh",
-          "Vietnam",
-          "China",
-          "Italy",
-          "Spain",
-          "Morocco",
-          "Egypt",
-        ],
+        countryPicker: true,
+        options: KEY_SOURCING_COUNTRIES,
       },
       {
         id: "requiredCertifications",
