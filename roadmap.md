@@ -1,5 +1,5 @@
 # Tasks
-- [ ] Remove profile Health Score, consolidate overlapping recommendations, and move Operations Overview above them; verify the profile.
+- [x] Remove profile Health Score, consolidate overlapping recommendations, and move Operations Overview above them; verify the profile.
 - [x] Update onboarding text branding and mobile presentation.
 - [x] Add an optional guided dashboard panel for unanswered entity-specific questions.
 - [x] Verify saving, resuming, and mobile layout.
