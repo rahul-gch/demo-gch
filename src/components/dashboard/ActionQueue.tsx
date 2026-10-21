@@ -76,6 +76,8 @@ export function ActionQueue({ entity }: { entity: Entity }) {
   for (const a of buildCriticalActions(entity)) {
     if (rows.some((r) => r.id === a.id)) continue;
     if (a.id === "profile" && rows.some((r) => r.id === "missing")) continue;
+    // Skip status-only rows that are already done — they aren't actions.
+    if (!seeded && a.tone === "sky" && ["profile", "certs", "ops"].includes(a.id)) continue;
     rows.push({
       id: a.id,
       tone: a.tone,
