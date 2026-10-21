@@ -59,7 +59,9 @@ function OverviewMissionControl({ e }: { e: Entity }) {
     <div className="space-y-5">
       <HeroPassport entity={e} />
 
-      {e.orgUuid && <ProfileCompletionPanel orgId={e.orgUuid} routeId={e.id} />}
+      {e.orgUuid && e.profileCompleteness < 100 && (
+        <ProfileCompletionPanel orgId={e.orgUuid} routeId={e.id} />
+      )}
 
       {e.orgUuid && <ReadinessChecklist orgId={e.orgUuid} routeId={e.id} />}
 

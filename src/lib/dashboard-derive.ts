@@ -174,9 +174,8 @@ const FIELD_META: Record<string, { label: string; est: number; cta: MissingField
   certifications: { label: "ISO certificate", est: 5, cta: "Upload" },
   capacity: { label: "Production capacity", est: 2, cta: "Estimate" },
   moq: { label: "Minimum order quantity", est: 1, cta: "Edit" },
-  governance: { label: "Governance statement", est: 4, cta: "Edit" },
-  traceabilityNotes: { label: "Traceability notes", est: 4, cta: "Edit" },
-  contacts: { label: "Primary contacts", est: 2, cta: "Edit" },
+  // governance, traceabilityNotes and contacts are private columns that are
+  // not loaded into the shared registry, so they can't be judged as missing here.
 };
 
 export function buildMissingFields(e: Entity): MissingField[] {
