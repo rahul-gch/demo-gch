@@ -9,7 +9,6 @@ import { ActivityTimeline } from "@/components/dashboard/ActivityTimeline";
 import { QuickActionsDock } from "@/components/dashboard/QuickActionsDock";
 import { ActionQueue } from "@/components/dashboard/ActionQueue";
 import { KpiRow } from "@/components/dashboard/KpiRow";
-import { AiBriefCard } from "@/components/dashboard/AiBriefCard";
 import { PassportProgressCard } from "@/components/dashboard/PassportProgressCard";
 import { OperationsOverview } from "@/components/dashboard/OperationsOverview";
 import { KpiTable } from "@/components/KpiTable";
@@ -66,26 +65,18 @@ function OverviewMissionControl({ e }: { e: Entity }) {
 
       <KpiRow entity={e} />
 
+      <OperationsOverview entity={e} />
+
       <div className="grid items-stretch gap-5 lg:grid-cols-12">
-        <div className="lg:col-span-3">
-          <AiBriefCard entity={e} />
-        </div>
-        <div className="lg:col-span-6">
+        <div className="lg:col-span-8">
           <ActionQueue entity={e} />
         </div>
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-4">
           <PassportProgressCard entity={e} />
         </div>
       </div>
 
-      <div className="grid items-stretch gap-5 lg:grid-cols-12">
-        <div className="lg:col-span-7">
-          <OperationsOverview entity={e} />
-        </div>
-        <div className="lg:col-span-5">
-          <ActivityTimeline entity={e} limit={4} />
-        </div>
-      </div>
+      <ActivityTimeline entity={e} limit={4} />
     </div>
   );
 }

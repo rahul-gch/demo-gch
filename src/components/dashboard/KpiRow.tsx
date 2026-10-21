@@ -1,10 +1,9 @@
 import type { Entity } from "@/seed/types";
 import type { LucideIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { computeNhri } from "@/lib/nhri";
 import { buildEcosystemCounts } from "@/lib/dashboard-derive";
 import { useOrgConnections } from "@/lib/org-connections";
-import { ShieldCheck, UserRound, BadgeCheck, Users2 } from "lucide-react";
+import { UserRound, BadgeCheck, Users2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface KpiCardProps {
@@ -54,9 +53,8 @@ function KpiCard({ label, value, unit, caption, icon: Icon, tone = "slate" }: Kp
   );
 }
 
-/** Four core KPIs — the single primary home for each of these numbers. */
+/** Profile, compliance, and network summary metrics. */
 export function KpiRow({ entity: e }: { entity: Entity }) {
-  const nhri = computeNhri(e);
   const eco = buildEcosystemCounts(e);
   const { connectedEntities } = useOrgConnections(e.id);
 
@@ -75,15 +73,7 @@ export function KpiRow({ entity: e }: { entity: Entity }) {
       : "No connections yet";
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <KpiCard
-        label="Health Score"
-        value={nhri.score}
-        unit="/100"
-        caption={nhri.band}
-        icon={ShieldCheck}
-        tone={nhri.bandTone}
-      />
+    <div className="grid gap-4 md:grid-cols-3">
       <KpiCard
         label="Profile"
         value={`${e.profileCompleteness}%`}
