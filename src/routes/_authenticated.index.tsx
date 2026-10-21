@@ -27,7 +27,7 @@ import { VerificationBadge } from "@/components/StatusBadge";
 import { EcosystemGoogleMap } from "@/components/EcosystemGoogleMap";
 import { ALL_ENTITIES as ENTITIES, ENTITY_TYPE_BREAKDOWN, getEntity } from "@/seed/all-entities";
 import { platformNhriAggregate, bandBadgeClasses, computeNhri } from "@/lib/nhri";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, RefreshCw } from "lucide-react";
 import { PriorityList } from "@/components/ops/PriorityList";
 import { QuickActions } from "@/components/ops/QuickActions";
 import { LiveActivity } from "@/components/ops/LiveActivity";
@@ -280,9 +280,23 @@ function DashboardPage() {
       <div className="w-full space-y-8">
         <OpsHero stats={statsQ.data} loading={statsQ.isLoading} />
         {statsQ.isError && (
-          <p className="text-sm text-red-600">
-            Could not load platform statistics. {(statsQ.error as Error)?.message}
-          </p>
+          <div
+            role="alert"
+            className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+          >
+            <span>Platform statistics are temporarily unavailable. Refresh or try again shortly.</span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => void statsQ.refetch()}
+              disabled={statsQ.isFetching}
+              className="shrink-0 border-amber-300 bg-white text-amber-950 hover:bg-amber-100"
+            >
+              <RefreshCw className={`mr-2 h-3.5 w-3.5 ${statsQ.isFetching ? "animate-spin" : ""}`} />
+              Retry
+            </Button>
+          </div>
         )}
         <QuickActions />
 
