@@ -1015,9 +1015,9 @@ export const ENTITY_PROFILES: Record<EntityTypeName, EntityProfileDef> = {
       {
         id: "annualVolume",
         label: "Annual sourcing volume",
-        kind: "text",
+        kind: "single",
         bucket: "capacity",
-        placeholder: "e.g. 500,000 units / year",
+        options: ANNUAL_VOLUME_RANGES,
         column: "capacity",
       },
       {
@@ -1045,9 +1045,9 @@ export const ENTITY_PROFILES: Record<EntityTypeName, EntityProfileDef> = {
       {
         id: "targetMoq",
         label: "Target MOQ",
-        kind: "text",
+        kind: "single",
         bucket: "capacity",
-        placeholder: "e.g. up to 1,000 pcs",
+        options: MOQ_RANGES,
         column: "moq",
       },
       {
@@ -1063,20 +1063,8 @@ export const ENTITY_PROFILES: Record<EntityTypeName, EntityProfileDef> = {
         label: "Preferred sourcing countries",
         kind: "multi",
         bucket: "markets",
-        options: [
-          "Turkey",
-          "Portugal",
-          "India",
-          "Bangladesh",
-          "Vietnam",
-          "China",
-          "Pakistan",
-          "Morocco",
-          "Egypt",
-          "Italy",
-          "Spain",
-          "Ethiopia",
-        ],
+        countryPicker: true,
+        options: KEY_SOURCING_COUNTRIES,
       },
       {
         id: "requiredCertifications",
