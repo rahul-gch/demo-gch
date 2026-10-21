@@ -142,6 +142,8 @@ export interface ProfileField {
   placeholder?: string;
   suffix?: string;
   column?: OrgColumn;
+  /** Multi-select country field: shows key countries as chips plus a dropdown of all countries. */
+  countryPicker?: boolean;
 }
 
 export interface EntityProfileDef {

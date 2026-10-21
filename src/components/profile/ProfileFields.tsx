@@ -86,6 +86,13 @@ export function ProfileFieldInput({
             );
           })}
         </div>
+        {field.countryPicker && (
+          <CountrySelect
+            value=""
+            placeholder="Add another country..."
+            onChange={(c) => c && !selected.includes(c) && onChange([...selected, c])}
+          />
+        )}
       </div>
     );
   }
